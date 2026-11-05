@@ -6,18 +6,22 @@ function contractName(filePath) {
   return path.basename(filePath).replace(/\.contract\.test\.js$/, '');
 }
 
-// Parse TAP output into one { name, result } per named test.
-// describe/suite entries (type 'suite') are skipped; only tests are contracts.
-// A test whose reported name is a file path is a load failure, renamed to the
-// file stem so results compare by a clean name.
-function parseTap(tap, stem) {
+// Parse TAP output into one { name, result, isFile } per named test.
+// - describe/suite entries (type 'suite') are skipped; only tests are contracts.
+// - A TAP directive (# SKIP or # TODO) forces the result to "fail" (Req 4.7), so a
+//   skipped or todo contract can never let a spec pass vacuously.
+// - A "test" whose reported name is a file path is a synthetic "file loaded"
+//   entry (a file with zero real tests, or a file that failed to load), flagged
+//   isFile so the caller can turn a file with zero real contracts into one
+//   failing contract named after the file (Req 4.8).
+function parseTap(tap) {
   const lines = tap.split(/\r?\n/);
   const results = [];
   for (let i = 0; i < lines.length; i++) {
     const m = lines[i].match(/^(\s*)(ok|not ok)\s+\d+\s+-\s+(.*)$/);
     if (!m) continue;
     const indent = m[1].length;
-    const passed = m[2] === 'ok';
+    const ok = m[2] === 'ok';
     let name = m[3];
     let type = 'test';
     for (let j = i + 1; j < lines.length; j++) {
@@ -34,17 +38,25 @@ function parseTap(tap, stem) {
       }
     }
     if (type !== 'test') continue; // skip describe/suite entries
-    if (/\.js$/.test(name) || name.includes('/') || name.includes('\\')) {
-      name = stem; // file failed to load; name it after the file
+    // TAP directives # SKIP / # TODO mean the contract did not actually run;
+    // count it as failing and strip the directive from the name (Req 4.7).
+    let result = ok ? 'pass' : 'fail';
+    const dm = name.match(/^(.*?)\s+#\s+(SKIP|TODO)\b/i);
+    if (dm) {
+      name = dm[1];
+      result = 'fail';
     }
-    results.push({ name, result: passed ? 'pass' : 'fail' });
+    const isFile = name.includes('/') || name.includes('\\') || /\.[mc]?js$/i.test(name);
+    results.push({ name, result, isFile });
   }
   return results;
 }
 
 // Run every frozen contract file for a spec with `node --test --test-reporter=tap`
 // and return one result per named test: { name, path, sha256, result }.
-// A file that fails to load counts as one failing contract named after the file.
+// A file that fails to load, or loads but defines zero real tests, counts as
+// exactly one failing contract named after the file, so a spec can never pass
+// with zero contracts (Req 4.8). Skipped or todo contracts count as failing (Req 4.7).
 export function runContracts(cwd, spec, lock) {
   const entry = lock && lock.specs && lock.specs[spec];
   if (!entry || !entry.contracts) return [];
@@ -60,7 +72,6 @@ export function runContracts(cwd, spec, lock) {
     const absPath = path.join(cwd, c.path);
     const stem = contractName(c.path);
     let tap = '';
-    let loaded = true;
     try {
       tap = execFileSync(process.execPath, ['--test', '--test-reporter=tap', absPath], {
         cwd,
@@ -71,17 +82,16 @@ export function runContracts(cwd, spec, lock) {
       });
     } catch (e) {
       // node --test exits non-zero on any failure; stdout still holds the TAP.
-      loaded = false;
       tap = (e && e.stdout) || '';
     }
-    const parsed = parseTap(tap, stem);
-    if (parsed.length === 0) {
-      if (!loaded) {
-        out.push({ name: stem, path: c.path, sha256: c.sha256, result: 'fail' });
-      }
-      // a file that loaded with zero tests reports nothing
+    const parsed = parseTap(tap);
+    const real = parsed.filter((p) => !p.isFile);
+    if (real.length === 0) {
+      // No real contracts ran: a load failure or a file with zero tests. This
+      // is one failing contract named after the file (Req 4.8).
+      out.push({ name: stem, path: c.path, sha256: c.sha256, result: 'fail' });
     } else {
-      for (const p of parsed) {
+      for (const p of real) {
         out.push({ name: p.name, path: c.path, sha256: c.sha256, result: p.result });
       }
     }

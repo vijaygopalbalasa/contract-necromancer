@@ -14,15 +14,15 @@ Each task writes its test first, then the implementation, then runs `node --test
   - Test first: write `test/contracts.test.js` with fixtures (a passing contract and a failing contract). Assert `runContracts` returns an array with each contract's `name`, `path`, `sha256`, and `result` (`"pass"` or `"fail"`) (4.4); a failing contract's name appears in the results (4.5).
   - Implement: `src/contracts.js` exporting `runContracts(cwd, spec, lock)` — runs each contract file with `node --test --test-reporter=tap <contractPath>` and parses the TAP output so each named test is one contract with its own `"pass"` or `"fail"`; a file that fails to load counts as one failing contract named after the file. Run `node --test` and pass.
 
-- [ ] 3b. **No vacuous passes** (Req 4.7, 4.8)
+- [x] 3b. **No vacuous passes** (Req 4.7, 4.8)
   - Test first: extend `test/contracts.test.js`. Assert a test marked skip or todo is reported as `"fail"` (4.7). Assert a contract file that loads but defines zero tests produces one failing contract named after the file, so a spec can never pass with zero contracts (4.8).
   - Implement: update `src/contracts.js`. Run `npm test` and pass.
 
-- [ ] 4. **Receipts** (Req 5.1, 5.2, 5.3)
+- [x] 4. **Receipts** (Req 5.1, 5.2, 5.3)
   - Test first: write `test/receipts.test.js` with fixtures. Assert a built receipt includes the spec name, git commit (or null), SHA-256 of `requirements.md`, of each contract file, of each imported source file, and the pass/fail result of each contract by name (5.1); `receiptHash` equals `sha256(canonicalJson(receipt without receiptHash and createdAt))` (5.2); two receipts built from identical inputs produce the same `receiptHash` (5.3).
   - Implement: `src/receipts.js` exporting `traceImports`, `buildReceipt`, `computeReceiptHash`, `writeReceipt`. Run `node --test` and pass.
 
-- [ ] 5. **Verify** (Req 6.1, 6.2, 6.3)
+- [x] 5. **Verify** (Req 6.1, 6.2, 6.3)
   - Test first: write `test/verify.test.js` with fixtures. Assert `verify` prints `CONFIRMED` and the receipt hash and exits 0 when every hashed file matches and contracts give the same results (6.1); prints `MISMATCH` with each differing path and exits 1 when a hashed file differs (6.2); prints `MISMATCH` with each differing contract name and exits 1 when a contract result differs (6.3).
   - Implement: `src/verify.js` exporting `verify(cwd, receiptFile)` — recomputes file hashes, re-runs contracts, compares, prints result, returns exit code. Run `node --test` and pass.
 

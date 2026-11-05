@@ -5,7 +5,8 @@ process.stdin.on('data', c => (d += c)).on('end', () => {
   try {
     const p = JSON.parse(d);
     const ti = p.tool_input || {};
-    let what = ti.path || ti.command || '';
+    // Shell commands: keep only the program names, never arguments.
+    let what = ti.path || (ti.command ? String(ti.command).split(/&&|;|\|/).map(c => c.trim().split(/\s+/).filter(w => !w.startsWith('-') && !w.includes('=')).slice(0, 1).join(' ')).join(' && ') : '');
     what = String(what)
       .replace(/\b(authorization\s*[:=]?\s*(bearer\s+)?|bearer\s+)\S+/gi, '$1[redacted]')
       .replace(/\b([A-Z0-9_]*(KEY|TOKEN|SECRET|PASSWORD)[A-Z0-9_]*)\s*=\s*\S+/gi, '$1=[redacted]')

@@ -28,6 +28,18 @@ test('R2.1 failing contract', () => {
 });
 `;
 
+const DIRECTIVES = `import { test } from 'node:test';
+import assert from 'node:assert/strict';
+
+test('R4.7 skipped contract', { skip: true }, () => {});
+test('R4.7 todo contract', { todo: true }, () => {});
+test('R4.7 passing contract', () => { assert.ok(true); });
+`;
+
+const ZERO = `import { test } from 'node:test';
+// loads but defines no tests
+`;
+
 function tmpCwd() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'necro-contracts-'));
 }
@@ -173,6 +185,49 @@ test('runContracts returns [] for a spec not in the lock', () => {
   const cwd = tmpCwd();
   try {
     assert.deepEqual(runContracts(cwd, 'missing', { specs: {} }), []);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.7 a test marked skip or todo is reported as fail', () => {
+  const cwd = tmpCwd();
+  try {
+    writeReq(cwd, 'demo', '# Demo\n');
+    writeContract(cwd, 'demo', 'directives.contract.test.js', DIRECTIVES);
+    const lock = buildLock(cwd, 'demo', [
+      contractEntry(cwd, 'contracts/demo/directives.contract.test.js'),
+    ]);
+    const results = runContracts(cwd, 'demo', lock);
+    const byName = Object.fromEntries(results.map((r) => [r.name, r.result]));
+
+    assert.equal(byName['R4.7 skipped contract'], 'fail', 'skip reported as fail');
+    assert.equal(byName['R4.7 todo contract'], 'fail', 'todo reported as fail');
+    assert.equal(byName['R4.7 passing contract'], 'pass', 'passing stays pass');
+    assert.equal(
+      results.filter((r) => r.path === 'contracts/demo/directives.contract.test.js').length,
+      3,
+      'one result per test',
+    );
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.8 a contract file that loads but defines zero tests is one failing contract named after the file', () => {
+  const cwd = tmpCwd();
+  try {
+    writeReq(cwd, 'demo', '# Demo\n');
+    writeContract(cwd, 'demo', 'empty.contract.test.js', ZERO);
+    const lock = buildLock(cwd, 'demo', [
+      contractEntry(cwd, 'contracts/demo/empty.contract.test.js'),
+    ]);
+    const results = runContracts(cwd, 'demo', lock);
+
+    assert.equal(results.length, 1, 'zero real tests -> exactly one contract');
+    assert.equal(results[0].name, 'empty');
+    assert.equal(results[0].result, 'fail');
+    assert.equal(results[0].path, 'contracts/demo/empty.contract.test.js');
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }
