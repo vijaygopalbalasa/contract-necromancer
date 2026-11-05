@@ -46,6 +46,7 @@ receipts anyone can re-run.
 8. IF a frozen spec's contract files contain zero contracts THEN THE SYSTEM SHALL exit with code 2 and say no contracts ran.
 9. WHEN contracts are run THE SYSTEM SHALL hash each contract file immediately before running it and IF the hash differs from the lock THEN count every contract in that file as failing.
 10. IF a contract name recorded in the lock is missing from a run THEN THE SYSTEM SHALL count it as failing.
+11. WHEN test results are parsed THE SYSTEM SHALL keep every contract name exactly as reported, whatever characters it contains, and SHALL treat an entry as a file load failure only when its name equals that contract file's own path.
 
 ## Requirement 5: Receipts
 **User story:** As a reviewer, I want a receipt that pins every input, so that I can re-run it and get the same answer.

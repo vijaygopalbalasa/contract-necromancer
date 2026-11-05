@@ -42,6 +42,10 @@ Each task writes its test first, then the implementation, then runs `node --test
   - Test first: extend `test/hooks.test.js`. Assert `handlePostToolUse` after `execute_bash` restores a frozen file whose SHA-256 changed from `.necro/frozen/<hash>` and writes the file name to stderr (3.3); exits 0 and prints nothing when no frozen file changed.
   - Implement: add `handlePostToolUse` to `src/hooks.js`. Run `node --test` and pass.
 
+- [ ] 8b. **Hardening from review** (Req 4.11, 6.4, 6.5, 6.6)
+  - Test first: a contract named with a slash or ending in `.js` (for example `handles a/b.js paths`) is kept and reported (4.11); verify reports `MISMATCH` when a receipt's fields were edited so its `receiptHash` no longer matches (6.4); verify rejects a receipt with no requirements or no contracts (6.5); verify reports `MISMATCH` when the receipt's requirements or contract hashes differ from the local lock (6.6).
+  - Implement: update `src/contracts.js` and `src/verify.js`. Run `npm test` and pass.
+
 - [ ] 9. **Stop: session summary** (Req 7.1)
   - Test first: extend `test/hooks.test.js`. Assert `handleStop` prints each frozen spec's count of tasks marked done, count of receipts, and names of contracts failing now (7.1).
   - Implement: add `handleStop` to `src/hooks.js`. Run `node --test` and pass.
