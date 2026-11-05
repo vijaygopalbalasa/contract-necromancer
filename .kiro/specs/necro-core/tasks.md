@@ -2,17 +2,21 @@
 
 Each task writes its test first, then the implementation, then runs `node --test`.
 
-- [ ] 1. **Project scaffold and canonical hashing** (Req 1.1, 1.2, 1.3)
+- [x] 1. **Project scaffold and canonical hashing** (Req 1.1, 1.2, 1.3)
   - Test first: write `test/canon.test.js` asserting `canonicalJson` sorts object keys recursively and produces no whitespace (1.1); `sha256` returns 64 lowercase hex characters for strings and bytes (1.2); the same value with keys in different orders produces the same hash (1.3). Create `package.json` with `"type": "module"`, `"bin": { "necro": "bin/necro.js" }`, and `"engines": { "node": ">=24" }`.
   - Implement: `src/canon.js` exporting `canonicalJson`, `sha256`, `hashFile`. Run `node --test test/canon.test.js` and pass.
 
-- [ ] 2. **Lock file: freeze a spec** (Req 2.1, 2.2, 2.3, 2.4)
+- [x] 2. **Lock file: freeze a spec** (Req 2.1, 2.2, 2.3, 2.4)
   - Test first: write `test/lock.test.js` with fixtures in `test/fixtures/` (a fake spec dir with `requirements.md` and one contract file). Assert `freezeSpec` records the SHA-256 of `requirements.md` and each contract in `.necro/lock.json` (2.1); stores a copy of each frozen file at `.necro/frozen/<sha256>` (2.2); refuses with a plain message when `contracts/<spec>/` has no contract files (2.3); re-freezing replaces the spec's entry and keeps other specs' entries (2.4).
   - Implement: `src/lock.js` exporting `readLock`, `writeLock`, `freezeSpec`, `isSpecFrozen`, `isFrozenPath`, `frozenFiles`, `getExpectedHash`. Run `node --test` and pass.
 
-- [ ] 3. **Contracts runner** (supports Req 4.4, 4.5, 6.1, 6.3)
+- [x] 3. **Contracts runner** (supports Req 4.4, 4.5, 6.1, 6.3)
   - Test first: write `test/contracts.test.js` with fixtures (a passing contract and a failing contract). Assert `runContracts` returns an array with each contract's `name`, `path`, `sha256`, and `result` (`"pass"` or `"fail"`) (4.4); a failing contract's name appears in the results (4.5).
   - Implement: `src/contracts.js` exporting `runContracts(cwd, spec, lock)` — runs each contract file with `node --test --test-reporter=tap <contractPath>` and parses the TAP output so each named test is one contract with its own `"pass"` or `"fail"`; a file that fails to load counts as one failing contract named after the file. Run `node --test` and pass.
+
+- [ ] 3b. **No vacuous passes** (Req 4.7, 4.8)
+  - Test first: extend `test/contracts.test.js`. Assert a test marked skip or todo is reported as `"fail"` (4.7). Assert a contract file that loads but defines zero tests produces one failing contract named after the file, so a spec can never pass with zero contracts (4.8).
+  - Implement: update `src/contracts.js`. Run `npm test` and pass.
 
 - [ ] 4. **Receipts** (Req 5.1, 5.2, 5.3)
   - Test first: write `test/receipts.test.js` with fixtures. Assert a built receipt includes the spec name, git commit (or null), SHA-256 of `requirements.md`, of each contract file, of each imported source file, and the pass/fail result of each contract by name (5.1); `receiptHash` equals `sha256(canonicalJson(receipt without receiptHash and createdAt))` (5.2); two receipts built from identical inputs produce the same `receiptHash` (5.3).
