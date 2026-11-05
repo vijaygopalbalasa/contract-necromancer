@@ -1,0 +1,7 @@
+{
+  "version": "v1",
+  "hooks": [
+    { "name": "Log tool calls for the build record", "trigger": "PostToolUse", "matcher": "*", "timeout": 30,
+      "action": { "type": "command", "command": "node -e \"const fs=require('fs');let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{const p=JSON.parse(d);fs.mkdirSync('.kiro/build-log',{recursive:true});fs.appendFileSync('.kiro/build-log/'+p.session_id+'.jsonl',JSON.stringify({t:new Date().toISOString(),tool:p.tool_name,path:(p.tool_input&&(p.tool_input.path||p.tool_input.command))||''})+'\\n')}catch(e){}})\"" } }
+  ]
+}

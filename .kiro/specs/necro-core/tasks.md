@@ -1,0 +1,43 @@
+# Tasks: necro-core
+
+Each task writes its test first, then the implementation, then runs `node --test`.
+
+- [ ] 1. **Project scaffold and canonical hashing** (Req 1.1, 1.2, 1.3)
+  - Test first: write `test/canon.test.js` asserting `canonicalJson` sorts object keys recursively and produces no whitespace (1.1); `sha256` returns 64 lowercase hex characters for strings and bytes (1.2); the same value with keys in different orders produces the same hash (1.3). Create `package.json` with `"type": "module"`, `"bin": { "necro": "bin/necro.js" }`, and `"engines": { "node": ">=24" }`.
+  - Implement: `src/canon.js` exporting `canonicalJson`, `sha256`, `hashFile`. Run `node --test test/canon.test.js` and pass.
+
+- [ ] 2. **Lock file: freeze a spec** (Req 2.1, 2.2, 2.3, 2.4)
+  - Test first: write `test/lock.test.js` with fixtures in `test/fixtures/` (a fake spec dir with `requirements.md` and one contract file). Assert `freezeSpec` records the SHA-256 of `requirements.md` and each contract in `.necro/lock.json` (2.1); stores a copy of each frozen file at `.necro/frozen/<sha256>` (2.2); refuses with a plain message when `contracts/<spec>/` has no contract files (2.3); re-freezing replaces the spec's entry and keeps other specs' entries (2.4).
+  - Implement: `src/lock.js` exporting `readLock`, `writeLock`, `freezeSpec`, `isSpecFrozen`, `isFrozenPath`, `frozenFiles`, `getExpectedHash`. Run `node --test` and pass.
+
+- [ ] 3. **Contracts runner** (supports Req 4.4, 4.5, 6.1, 6.3)
+  - Test first: write `test/contracts.test.js` with fixtures (a passing contract and a failing contract). Assert `runContracts` returns an array with each contract's `name`, `path`, `sha256`, and `result` (`"pass"` or `"fail"`) (4.4); a failing contract's name appears in the results (4.5).
+  - Implement: `src/contracts.js` exporting `runContracts(cwd, spec, lock)` — runs each contract file with `node --test --test-reporter=tap <contractPath>` and parses the TAP output so each named test is one contract with its own `"pass"` or `"fail"`; a file that fails to load counts as one failing contract named after the file. Run `node --test` and pass.
+
+- [ ] 4. **Receipts** (Req 5.1, 5.2, 5.3)
+  - Test first: write `test/receipts.test.js` with fixtures. Assert a built receipt includes the spec name, git commit (or null), SHA-256 of `requirements.md`, of each contract file, of each imported source file, and the pass/fail result of each contract by name (5.1); `receiptHash` equals `sha256(canonicalJson(receipt without receiptHash and createdAt))` (5.2); two receipts built from identical inputs produce the same `receiptHash` (5.3).
+  - Implement: `src/receipts.js` exporting `traceImports`, `buildReceipt`, `computeReceiptHash`, `writeReceipt`. Run `node --test` and pass.
+
+- [ ] 5. **Verify** (Req 6.1, 6.2, 6.3)
+  - Test first: write `test/verify.test.js` with fixtures. Assert `verify` prints `CONFIRMED` and the receipt hash and exits 0 when every hashed file matches and contracts give the same results (6.1); prints `MISMATCH` with each differing path and exits 1 when a hashed file differs (6.2); prints `MISMATCH` with each differing contract name and exits 1 when a contract result differs (6.3).
+  - Implement: `src/verify.js` exporting `verify(cwd, receiptFile)` — recomputes file hashes, re-runs contracts, compares, prints result, returns exit code. Run `node --test` and pass.
+
+- [ ] 6. **PreToolUse: block edits to frozen files** (Req 3.1, 3.2, 3.4)
+  - Test first: write `test/hooks.test.js` with fixtures (a frozen spec in `.necro/lock.json`). Assert `handlePreToolUse` exits 2 with a reason on stderr for `fs_write` / `str_replace` to a frozen file path (3.1); exits 2 for any path under `.necro/` (3.2); exits 0 and prints nothing when the path is not frozen (3.4).
+  - Implement: `src/hooks.js` with `handlePreToolUse` — resolves the path project-relative, checks `.necro/` and frozen-path conditions. Run `node --test` and pass.
+
+- [ ] 7. **Gate on marking a task done** (Req 4.1, 4.2, 4.3, 4.4, 4.5, 4.6)
+  - Test first: extend `test/hooks.test.js`. Assert `str_replace` on `tasks.md` with more `[x]` in `newStr` than `oldStr` is detected as marking done (4.1); `fs_write` on `tasks.md` with more `[x]` than the file on disk is detected as marking done (4.2); an unfrozen spec exits 2 with a freeze instruction (4.3); contracts are run (4.4); any failing contract exits 2 and lists names (4.5); all passing writes a receipt to `.necro/receipts/<spec>/<hash>.json` and exits 0 (4.6).
+  - Implement: add `countTaskMarks`, `detectTaskDone`, and the gate flow to `handlePreToolUse` in `src/hooks.js` (calls `lock`, `contracts`, `receipts`). Run `node --test` and pass.
+
+- [ ] 8. **PostToolUse: restore frozen files** (Req 3.3)
+  - Test first: extend `test/hooks.test.js`. Assert `handlePostToolUse` after `execute_bash` restores a frozen file whose SHA-256 changed from `.necro/frozen/<hash>` and writes the file name to stderr (3.3); exits 0 and prints nothing when no frozen file changed.
+  - Implement: add `handlePostToolUse` to `src/hooks.js`. Run `node --test` and pass.
+
+- [ ] 9. **Stop: session summary** (Req 7.1)
+  - Test first: extend `test/hooks.test.js`. Assert `handleStop` prints each frozen spec's count of tasks marked done, count of receipts, and names of contracts failing now (7.1).
+  - Implement: add `handleStop` to `src/hooks.js`. Run `node --test` and pass.
+
+- [ ] 10. **CLI entry and init command** (Req 8.1, 8.2, 8.3)
+  - Test first: write `test/cli.test.js`. Assert `necro init` writes `.kiro/hooks/necromancer.json` with PreToolUse, PostToolUse, and Stop hooks calling `necro hook pre` / `post` / `stop` at 300s timeout (8.1); writes `.kiro/steering/necromancer.md` (8.2); leaves existing files unchanged and says so (8.3). Assert the CLI routes `freeze`, `verify`, `init`, and `hook pre|post|stop` subcommands to the right modules.
+  - Implement: `bin/necro.js` (arg parsing + dispatch) and `templates/necromancer.hooks.json`, `templates/necromancer.steering.md`. Run `node --test` and pass.

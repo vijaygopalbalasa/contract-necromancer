@@ -4,6 +4,10 @@
 The `necro` command line tool freezes contracts for a Kiro spec, gates "task done" in Kiro on those contracts, and issues
 receipts anyone can re-run.
 
+## Glossary
+- **Contract file:** a `contracts/<spec>/*.contract.test.js` file.
+- **Contract:** one named `node:test` test inside a contract file, usually named after the EARS criterion it checks (for example `R1.2 ...`). Results are reported per contract, not per file.
+
 ## Requirement 1: Canonical hashing
 **User story:** As a reviewer, I want every hash to be reproducible, so that anyone gets the same receipt hash.
 ### Acceptance criteria
