@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { hashFile } from '../src/canon.js';
 import { runContracts } from '../src/contracts.js';
+import { freezeSpec, readLock } from '../src/lock.js';
 
 // Contract contents are inlined (not stored as .js fixtures) so they are test
 // data, not unit tests that the outer `node --test` runner would discover.
@@ -228,6 +229,60 @@ test('R4.8 a contract file that loads but defines zero tests is one failing cont
     assert.equal(results[0].name, 'empty');
     assert.equal(results[0].result, 'fail');
     assert.equal(results[0].path, 'contracts/demo/empty.contract.test.js');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.9 a contract file changed after freeze makes every contract in it fail', () => {
+  const cwd = tmpCwd();
+  try {
+    writeReq(cwd, 'demo', '# Demo\n');
+    writeContract(cwd, 'demo', 'passing.contract.test.js', PASSING);
+    // Freeze records the contract names and file hashes (Req 2.5).
+    freezeSpec(cwd, 'demo');
+    const lock = readLock(cwd);
+
+    // Tamper with the contract file so its hash no longer matches the lock.
+    writeContract(cwd, 'demo', 'passing.contract.test.js', PASSING + '\n// changed\n');
+
+    const results = runContracts(cwd, 'demo', lock);
+    const fileResults = results.filter((r) => r.path === 'contracts/demo/passing.contract.test.js');
+    assert.ok(fileResults.length > 0, 'results are emitted for the tampered file');
+    assert.ok(
+      fileResults.every((r) => r.result === 'fail'),
+      'every contract in the tampered file fails',
+    );
+    // the failing names are the ones recorded in the lock, not the file stem
+    const names = fileResults.map((r) => r.name).sort();
+    assert.ok(names.includes('R1.1 passing contract'), `uses recorded names: ${names.join(', ')}`);
+    assert.ok(names.includes('R1.2 another passing contract'), `uses recorded names: ${names.join(', ')}`);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.10 a contract name recorded in the lock but missing from a run is reported as failing', () => {
+  const cwd = tmpCwd();
+  try {
+    writeReq(cwd, 'demo', '# Demo\n');
+    writeContract(cwd, 'demo', 'passing.contract.test.js', PASSING);
+    const fileRel = 'contracts/demo/passing.contract.test.js';
+    // Build a lock whose file hash matches (so 4.9 does not fire) but whose
+    // recorded names include a contract the file does not actually define.
+    const lock = buildLock(cwd, 'demo', [
+      {
+        name: 'passing',
+        path: fileRel,
+        sha256: hashFile(path.join(cwd, fileRel)),
+        names: ['R1.1 passing contract', 'R9.9 ghost contract'],
+      },
+    ]);
+
+    const results = runContracts(cwd, 'demo', lock);
+    const byName = Object.fromEntries(results.map((r) => [r.name, r.result]));
+    assert.equal(byName['R1.1 passing contract'], 'pass');
+    assert.equal(byName['R9.9 ghost contract'], 'fail', 'missing contract name reported as failing');
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }

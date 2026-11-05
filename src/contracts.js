@@ -1,5 +1,7 @@
 import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
+import { hashFile } from './canon.js';
 
 // Filename stem of a contract file, e.g. "canon" from "canon.contract.test.js".
 function contractName(filePath) {
@@ -57,6 +59,10 @@ function parseTap(tap) {
 // A file that fails to load, or loads but defines zero real tests, counts as
 // exactly one failing contract named after the file, so a spec can never pass
 // with zero contracts (Req 4.8). Skipped or todo contracts count as failing (Req 4.7).
+// Req 4.9: each contract file is hashed immediately before running; if the hash
+// differs from the lock, every contract in that file is counted as failing.
+// Req 4.10: a contract name recorded in the lock that is missing from the run is
+// counted as failing.
 export function runContracts(cwd, spec, lock) {
   const entry = lock && lock.specs && lock.specs[spec];
   if (!entry || !entry.contracts) return [];
@@ -71,6 +77,24 @@ export function runContracts(cwd, spec, lock) {
   for (const c of entry.contracts) {
     const absPath = path.join(cwd, c.path);
     const stem = contractName(c.path);
+
+    // Req 4.9: hash the contract file immediately before running it. If the hash
+    // differs from the lock (or the file is gone/unreadable), the file moved
+    // during the task, so every contract in it counts as failing.
+    let tampered = false;
+    try {
+      if (hashFile(absPath) !== c.sha256) tampered = true;
+    } catch {
+      tampered = true; // file missing or unreadable
+    }
+    if (tampered) {
+      const names = Array.isArray(c.names) && c.names.length ? c.names : [stem];
+      for (const name of names) {
+        out.push({ name, path: c.path, sha256: c.sha256, result: 'fail' });
+      }
+      continue;
+    }
+
     let tap = '';
     try {
       tap = execFileSync(process.execPath, ['--test', '--test-reporter=tap', absPath], {
@@ -93,6 +117,18 @@ export function runContracts(cwd, spec, lock) {
     } else {
       for (const p of real) {
         out.push({ name: p.name, path: c.path, sha256: c.sha256, result: p.result });
+      }
+    }
+  }
+
+  // Req 4.10: a contract name recorded in the lock that is missing from the run
+  // is failing. This guards against a contract quietly disappearing.
+  const seen = new Set(out.map((r) => r.name));
+  for (const c of entry.contracts) {
+    for (const name of c.names || []) {
+      if (!seen.has(name)) {
+        seen.add(name);
+        out.push({ name, path: c.path, sha256: c.sha256, result: 'fail' });
       }
     }
   }

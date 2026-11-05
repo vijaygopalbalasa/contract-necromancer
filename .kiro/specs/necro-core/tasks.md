@@ -26,19 +26,19 @@ Each task writes its test first, then the implementation, then runs `node --test
   - Test first: write `test/verify.test.js` with fixtures. Assert `verify` prints `CONFIRMED` and the receipt hash and exits 0 when every hashed file matches and contracts give the same results (6.1); prints `MISMATCH` with each differing path and exits 1 when a hashed file differs (6.2); prints `MISMATCH` with each differing contract name and exits 1 when a contract result differs (6.3).
   - Implement: `src/verify.js` exporting `verify(cwd, receiptFile)` — recomputes file hashes, re-runs contracts, compares, prints result, returns exit code. Run `node --test` and pass.
 
-- [ ] 3c. **Pin contract names and check files before running** (Req 2.5, 2.6, 4.9, 4.10)
+- [x] 3c. **Pin contract names and check files before running** (Req 2.5, 2.6, 4.9, 4.10)
   - Test first: extend `test/lock.test.js` and `test/contracts.test.js`. Assert freeze records every contract name in the lock (2.5); a contract path outside the project root is refused at freeze (2.6); a contract file changed after freeze makes all its contracts fail (4.9); a contract name in the lock that is missing from a run is reported as failing (4.10).
   - Implement: update `src/lock.js` and `src/contracts.js`. Run `npm test` and pass.
 
-- [ ] 6. **PreToolUse: block edits to frozen files** (Req 3.1, 3.2, 3.4)
+- [x] 6. **PreToolUse: block edits to frozen files** (Req 3.1, 3.2, 3.4)
   - Test first: write `test/hooks.test.js` with fixtures (a frozen spec in `.necro/lock.json`). Assert `handlePreToolUse` exits 2 with a reason on stderr for `fs_write` / `str_replace` to a frozen file path (3.1); exits 2 for any path under `.necro/` (3.2); exits 0 and prints nothing when the path is not frozen (3.4).
   - Implement: `src/hooks.js` with `handlePreToolUse` — resolves the path project-relative, checks `.necro/` and frozen-path conditions. Run `node --test` and pass.
 
-- [ ] 7. **Gate on marking a task done** (Req 4.1, 4.2, 4.3, 4.4, 4.5, 4.6)
+- [x] 7. **Gate on marking a task done** (Req 4.1, 4.2, 4.3, 4.4, 4.5, 4.6)
   - Test first: extend `test/hooks.test.js`. Assert `str_replace` on `tasks.md` with more `[x]` in `newStr` than `oldStr` is detected as marking done (4.1); `fs_write` on `tasks.md` with more `[x]` than the file on disk is detected as marking done (4.2); an unfrozen spec exits 2 with a freeze instruction (4.3); contracts are run (4.4); any failing contract exits 2 and lists names (4.5); all passing writes a receipt to `.necro/receipts/<spec>/<hash>.json` and exits 0 (4.6).
   - Implement: add `countTaskMarks`, `detectTaskDone`, and the gate flow to `handlePreToolUse` in `src/hooks.js` (calls `lock`, `contracts`, `receipts`). Run `node --test` and pass.
 
-- [ ] 8. **PostToolUse: restore frozen files** (Req 3.3)
+- [x] 8. **PostToolUse: restore frozen files** (Req 3.3)
   - Test first: extend `test/hooks.test.js`. Assert `handlePostToolUse` after `execute_bash` restores a frozen file whose SHA-256 changed from `.necro/frozen/<hash>` and writes the file name to stderr (3.3); exits 0 and prints nothing when no frozen file changed.
   - Implement: add `handlePostToolUse` to `src/hooks.js`. Run `node --test` and pass.
 

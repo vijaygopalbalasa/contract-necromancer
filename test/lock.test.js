@@ -154,3 +154,46 @@ test('writeLock then readLock round-trips and sorts keys', () => {
     fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
+
+test('R2.5 freeze runs the contracts and records the name of every contract in the lock', () => {
+  const cwd = tmpCwd();
+  try {
+    writeReq(cwd, 'demo', REQ);
+    writeContract(cwd, 'demo', 'hello.contract.test.js', CONTRACT);
+    freezeSpec(cwd, 'demo');
+
+    const lock = readLock(cwd);
+    const c = lock.specs.demo.contracts.find((x) => x.path === 'contracts/demo/hello.contract.test.js');
+    assert.ok(c, 'contract entry present');
+    assert.ok(Array.isArray(c.names), 'contract names recorded in the lock');
+    assert.ok(
+      c.names.includes('demo contract'),
+      `names include the contract test name: ${JSON.stringify(c.names)}`,
+    );
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R2.6 a contract path that resolves outside the project root is refused at freeze', () => {
+  const cwd = tmpCwd();
+  let outside = null;
+  try {
+    writeReq(cwd, 'demo', REQ);
+    // Put the real file outside the project root, then symlink it in.
+    outside = fs.mkdtempSync(path.join(os.tmpdir(), 'necro-outside-'));
+    const outsideFile = path.join(outside, 'evil.contract.test.js');
+    fs.writeFileSync(outsideFile, CONTRACT);
+    const contractsDir = path.join(cwd, 'contracts', 'demo');
+    fs.mkdirSync(contractsDir, { recursive: true });
+    fs.symlinkSync(outsideFile, path.join(contractsDir, 'evil.contract.test.js'));
+
+    assert.throws(
+      () => freezeSpec(cwd, 'demo'),
+      /outside the project root/,
+    );
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+    if (outside) fs.rmSync(outside, { recursive: true, force: true });
+  }
+});

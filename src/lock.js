@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { hashFile } from './canon.js';
+import { runContracts } from './contracts.js';
 
 const LOCK_FILE = path.join('.necro', 'lock.json');
 const FROZEN_DIR = path.join('.necro', 'frozen');
@@ -66,11 +67,34 @@ export function freezeSpec(cwd, spec) {
   if (contractPaths.length === 0) {
     throw new Error(`No contracts found for spec '${spec}'. Add at least one file in contracts/${spec}/.`);
   }
+
+  // Req 2.6: a contract path that resolves outside the project root is refused.
+  // Resolve symlinks so a file linked in from elsewhere cannot sneak out.
+  const realCwd = fs.realpathSync(cwd);
+  for (const p of contractPaths) {
+    const real = fs.realpathSync(path.join(cwd, p));
+    if (!insideRoot(realCwd, real)) {
+      throw new Error(`Contract '${p}' resolves outside the project root. Move it inside the project.`);
+    }
+  }
+
   const contracts = contractPaths.map((p) => ({
     name: contractName(p),
     path: p,
     sha256: hashFile(path.join(cwd, p)),
   }));
+
+  // Req 2.5: run the contracts once and record the name of every contract in the
+  // lock. Names come from the run results (one per named test), grouped by file.
+  const partialLock = { specs: { [spec]: { contracts } } };
+  const results = runContracts(cwd, spec, partialLock);
+  const namesByPath = {};
+  for (const r of results) {
+    (namesByPath[r.path] ||= []).push(r.name);
+  }
+  for (const c of contracts) {
+    c.names = namesByPath[c.path] || [];
+  }
 
   const lock = readLock(cwd);
   lock.specs = lock.specs || {};
@@ -86,6 +110,12 @@ export function freezeSpec(cwd, spec) {
   fs.mkdirSync(frozenDir, { recursive: true });
   copyFrozen(frozenDir, reqAbs, reqHash);
   for (const c of contracts) copyFrozen(frozenDir, path.join(cwd, c.path), c.sha256);
+}
+
+// True when `target` is `root` or somewhere beneath it (both resolved to real paths).
+function insideRoot(root, target) {
+  const rel = path.relative(root, target);
+  return rel !== '' && !rel.startsWith('..') && !path.isAbsolute(rel);
 }
 
 function copyFrozen(frozenDir, absPath, hash) {

@@ -60,6 +60,9 @@ receipts anyone can re-run.
 1. WHEN a user runs `necro verify <receiptFile>` and every hashed file matches and the contracts give the same results THE SYSTEM SHALL print `CONFIRMED` and the receipt hash and exit with code 0.
 2. IF a hashed file differs THEN THE SYSTEM SHALL print `MISMATCH` with each differing path and exit with code 1.
 3. IF a contract result differs THEN THE SYSTEM SHALL print `MISMATCH` with each differing contract name and exit with code 1.
+4. WHEN a receipt is verified THE SYSTEM SHALL first recompute its `receiptHash` and IF it differs THEN print `MISMATCH` saying the receipt was altered and exit with code 1.
+5. IF a receipt pins no requirements file or no contracts THEN THE SYSTEM SHALL print `MISMATCH` and exit with code 1.
+6. WHEN the spec is frozen in the local lock THE SYSTEM SHALL also check that the receipt's requirements and contract hashes match the lock and IF not THEN print `MISMATCH` with each differing path.
 
 ## Requirement 7: Session summary
 **User story:** As a developer, I want a summary when the agent stops, so that a false "done" is visible.
