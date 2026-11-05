@@ -22,6 +22,8 @@ receipts anyone can re-run.
 2. WHEN a user runs `necro freeze <spec>` THE SYSTEM SHALL store a copy of each frozen file at `.necro/frozen/<sha256>`.
 3. IF `contracts/<spec>/` has no contract files THEN THE SYSTEM SHALL refuse to freeze and say that at least one contract is needed.
 4. WHEN a spec is frozen again THE SYSTEM SHALL replace that spec's entry and keep other specs' entries unchanged.
+5. WHEN a user runs `necro freeze <spec>` THE SYSTEM SHALL run the contracts once and record the name of every contract in the lock.
+6. IF a contract path resolves outside the project root THEN THE SYSTEM SHALL refuse to freeze it.
 
 ## Requirement 3: Block edits to frozen files
 **User story:** As a developer, I want the agent unable to edit frozen files, so that it fixes code instead of the checks.
@@ -42,6 +44,8 @@ receipts anyone can re-run.
 6. WHEN all contracts pass THE SYSTEM SHALL write a receipt to `.necro/receipts/<spec>/<receiptHash>.json` and exit with code 0.
 7. IF a contract is reported as skipped or todo THEN THE SYSTEM SHALL count it as failing.
 8. IF a frozen spec's contract files contain zero contracts THEN THE SYSTEM SHALL exit with code 2 and say no contracts ran.
+9. WHEN contracts are run THE SYSTEM SHALL hash each contract file immediately before running it and IF the hash differs from the lock THEN count every contract in that file as failing.
+10. IF a contract name recorded in the lock is missing from a run THEN THE SYSTEM SHALL count it as failing.
 
 ## Requirement 5: Receipts
 **User story:** As a reviewer, I want a receipt that pins every input, so that I can re-run it and get the same answer.
