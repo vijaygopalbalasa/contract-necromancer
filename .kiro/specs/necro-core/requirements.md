@@ -39,9 +39,9 @@ receipts anyone can re-run.
 3. WHEN a task is being marked done and the spec is not frozen THE SYSTEM SHALL exit with code 2 and say the spec must be frozen first.
 4. WHEN a task is being marked done THE SYSTEM SHALL run the spec's frozen contracts itself with `node --test`.
 5. IF any contract fails THEN THE SYSTEM SHALL exit with code 2 and list each failing contract by name.
+6. WHEN all contracts pass THE SYSTEM SHALL write a receipt to `.necro/receipts/<spec>/<receiptHash>.json` and exit with code 0.
 7. IF a contract is reported as skipped or todo THEN THE SYSTEM SHALL count it as failing.
 8. IF a frozen spec's contract files contain zero contracts THEN THE SYSTEM SHALL exit with code 2 and say no contracts ran.
-6. WHEN all contracts pass THE SYSTEM SHALL write a receipt to `.necro/receipts/<spec>/<receiptHash>.json` and exit with code 0.
 
 ## Requirement 5: Receipts
 **User story:** As a reviewer, I want a receipt that pins every input, so that I can re-run it and get the same answer.
