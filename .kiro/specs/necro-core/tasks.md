@@ -46,6 +46,10 @@ Each task writes its test first, then the implementation, then runs `node --test
   - Test first: a contract named with a slash or ending in `.js` (for example `handles a/b.js paths`) is kept and reported (4.11); verify reports `MISMATCH` when a receipt's fields were edited so its `receiptHash` no longer matches (6.4); verify rejects a receipt with no requirements or no contracts (6.5); verify reports `MISMATCH` when the receipt's requirements or contract hashes differ from the local lock (6.6).
   - Implement: update `src/contracts.js` and `src/verify.js`. Run `npm test` and pass.
 
+- [ ] 8c. **Close the bypasses found in review** (Req 3.5, 3.6, 3.7, 4.1, 4.2, 4.12)
+  - Test first: a write to `Contracts/...` (other case) or through a symlink to a frozen file is blocked (3.5); an unknown tool name with a protected path is blocked (3.6); a shell command that ticks a task while contracts fail gets `tasks.md` restored with the failing names on stderr (3.7); a `str_replace` that unticks one task and ticks another is detected as marking done (4.1); results printed by code under test (a fake `ok 1 - name` line) cannot make a contract pass, and names are matched per file (4.12).
+  - Implement: update `src/hooks.js` and `src/contracts.js` (switch to the `node:test` `run()` API). Run `npm test` and pass.
+
 - [ ] 9. **Stop: session summary** (Req 7.1)
   - Test first: extend `test/hooks.test.js`. Assert `handleStop` prints each frozen spec's count of tasks marked done, count of receipts, and names of contracts failing now (7.1).
   - Implement: add `handleStop` to `src/hooks.js`. Run `node --test` and pass.

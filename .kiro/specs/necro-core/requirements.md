@@ -32,12 +32,15 @@ receipts anyone can re-run.
 2. WHEN the PreToolUse handler receives a write tool call to any path under `.necro/` THE SYSTEM SHALL exit with code 2.
 3. WHEN the PostToolUse handler runs after `execute_bash` and a frozen file's SHA-256 no longer matches the lock THE SYSTEM SHALL restore the file from `.necro/frozen/` and write to stderr which file was restored.
 4. WHEN the tool call touches no frozen file THE SYSTEM SHALL exit with code 0 and print nothing.
+5. WHEN a tool call names a path THE SYSTEM SHALL resolve it to its real path (following symbolic links, using the nearest existing parent for a new file) and compare it with frozen paths and `.necro/` case-insensitively.
+6. IF a tool call names a protected path and the tool is not a known read-only tool (`read_file`, `list_directory`, `grep`, `glob`) THEN THE SYSTEM SHALL block it, so an unknown write tool cannot bypass the check.
+7. WHEN the PostToolUse handler runs after `execute_bash` and a task in a frozen spec's `tasks.md` changed from `[ ]` to `[x]` since the last state the gate recorded THEN THE SYSTEM SHALL run that spec's contracts and IF any fail THEN restore `tasks.md` from the recorded state and write the failing contract names to stderr.
 
 ## Requirement 4: Gate on marking a task done
 **User story:** As a developer, I want "done" refused until contracts pass, so that a ticked task means the requirements hold.
 ### Acceptance criteria
-1. WHEN a `str_replace` on `.kiro/specs/<spec>/tasks.md` has more `[x]` marks in `newStr` than in `oldStr` THE SYSTEM SHALL treat it as marking a task done.
-2. WHEN an `fs_write` on `tasks.md` has more `[x]` marks than the file currently on disk THE SYSTEM SHALL treat it as marking a task done.
+1. WHEN a `str_replace` targets `.kiro/specs/<spec>/tasks.md` THE SYSTEM SHALL apply it to the file on disk and treat it as marking a task done IF any task line changes from `[ ]` to `[x]`.
+2. WHEN an `fs_write` targets `tasks.md` THE SYSTEM SHALL compare each task line with the file on disk and treat it as marking a task done IF any task line changes from `[ ]` to `[x]`.
 3. WHEN a task is being marked done and the spec is not frozen THE SYSTEM SHALL exit with code 2 and say the spec must be frozen first.
 4. WHEN a task is being marked done THE SYSTEM SHALL run the spec's frozen contracts itself with `node --test`.
 5. IF any contract fails THEN THE SYSTEM SHALL exit with code 2 and list each failing contract by name.
@@ -47,6 +50,7 @@ receipts anyone can re-run.
 9. WHEN contracts are run THE SYSTEM SHALL hash each contract file immediately before running it and IF the hash differs from the lock THEN count every contract in that file as failing.
 10. IF a contract name recorded in the lock is missing from a run THEN THE SYSTEM SHALL count it as failing.
 11. WHEN test results are parsed THE SYSTEM SHALL keep every contract name exactly as reported, whatever characters it contains, and SHALL treat an entry as a file load failure only when its name equals that contract file's own path.
+12. WHEN contracts are run THE SYSTEM SHALL read results from the Node test runner's structured events (the `node:test` `run()` API), not from text the code under test can print, and SHALL match recorded names per contract file.
 
 ## Requirement 5: Receipts
 **User story:** As a reviewer, I want a receipt that pins every input, so that I can re-run it and get the same answer.
