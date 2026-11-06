@@ -1,0 +1,84 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=9
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Everything passes. Now I'll tick task 15.
+[tool] Replace in File
+[tool] status: Pending
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 15 is done and marked `[x]`. `npm test` passes: 211 tests, 0 failures, up from 205 before my change.
+
+**Test first:** I added six `R4.18` tests to `test/hooks.test.js`. Against the old code, five failed (the sixth is a control that should pass both before and after). The failing ones cover these cases:
+- An added unticked line that reuses a frozen id with different text.
+- A second unticked copy of a frozen line.
+- Both of those added by an `fs_write` tick.
+- The same two decoys with a shell tick.
+- A frozen task reworded in place.
+
+The control test checks that a task still open on exactly one line with its frozen text keeps the tick narrow, so only that task's own contracts are required.
+
+**Fix:** In `requiredNames` in `src/lock.js`, a task now counts as still unticked only if its line is unticked, its id appears on exactly one line, and its text equals the text the lock recorded for that id. If none qualifies, every contract is required.
+
+I did not touch any `requirements.md`, `contracts/`, `.necro/`, or the receipt-viewer spec. `git status` shows `.kiro/specs/receipt-viewer/tasks.md` as modified and `contracts/` as untracked. Both were already that way before I started.

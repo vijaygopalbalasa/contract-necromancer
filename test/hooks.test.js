@@ -1822,6 +1822,84 @@ test('R4.16 added unticked lines do not stop a tick while a frozen task is still
   }
 });
 
+// -- R4.18: decoy lines cannot keep a task open ---------------------------------
+
+// T1 is the last frozen task left unticked. Each decoy below is an unticked line
+// that borrows a frozen id; none of them is a frozen task that is still open.
+const DECOY_DIFFERENT_TEXT = '- [ ] 3. Something else entirely (Req 1.3)';
+const DECOY_COPY = T3; // a second, unticked copy of the frozen line of task 3
+const DONE_AFTER = [tick(T1), tick(T2), tick(T3), tick(T4), tick(T5), tick(T6)];
+
+test('R4.18 an added unticked line that reuses a frozen id with different text does not keep the last task open', () => {
+  const cwd = setupMixed([...DONE_BUT_ONE, ''].join('\n'), [...DONE_BUT_ONE, DECOY_DIFFERENT_TEXT, ''].join('\n'));
+  try {
+    expectAllRequired(cwd, 'str_replace', tickEdit(T1, tick(T1)));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.18 a second unticked copy of a frozen line does not keep the last task open', () => {
+  const cwd = setupMixed([...DONE_BUT_ONE, ''].join('\n'), [...DONE_BUT_ONE, DECOY_COPY, ''].join('\n'));
+  try {
+    expectAllRequired(cwd, 'str_replace', tickEdit(T1, tick(T1)));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.18 the same decoys added by an fs_write that ticks the last frozen task require every contract', () => {
+  for (const decoy of [DECOY_DIFFERENT_TEXT, DECOY_COPY]) {
+    const cwd = setupMixed([...DONE_BUT_ONE, ''].join('\n'));
+    try {
+      expectAllRequired(cwd, 'fs_write', { path: TASKS_REL, text: [...DONE_AFTER, decoy, ''].join('\n') });
+    } finally {
+      fs.rmSync(cwd, { recursive: true, force: true });
+    }
+  }
+});
+
+test('R4.18 a shell tick of the last frozen task next to a decoy line is undone', () => {
+  for (const decoy of [DECOY_DIFFERENT_TEXT, DECOY_COPY]) {
+    const now = [...DONE_BUT_ONE, decoy, ''].join('\n');
+    const cwd = setupMixed([...DONE_BUT_ONE, ''].join('\n'), now);
+    try {
+      bashPre(cwd);
+      fs.writeFileSync(tasksPath(cwd), now.replace(T1, tick(T1)));
+      const res = handlePostToolUse(postPayload(cwd, 'sed -i ... tasks.md'));
+      assert.match(res.stderr, /Contracts failed: R1\.2 failing contract\./);
+      assert.equal(fs.readFileSync(tasksPath(cwd), 'utf8'), now);
+    } finally {
+      fs.rmSync(cwd, { recursive: true, force: true });
+    }
+  }
+});
+
+test('R4.18 an unticked frozen task whose line was reworded no longer counts as open', () => {
+  // Task 2 is the only other frozen task left unticked at freeze, and its line is reworded before the tick.
+  const frozen = [T1, T2, ...[T3, T4, T5, T6].map(tick), ''].join('\n');
+  const reworded = [T1, '- [ ] 2. Task two, reworded (Req 1.2)', ...[T3, T4, T5, T6].map(tick), ''].join('\n');
+  const cwd = setupMixed(frozen, reworded);
+  try {
+    expectAllRequired(cwd, 'str_replace', tickEdit(T1, tick(T1)));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.18 a frozen task that is still unticked, on exactly one line with its frozen text, keeps the tick narrow', () => {
+  // Task 2 is genuinely open (one line, frozen text), so ticking task 1 needs only its own criteria.
+  const frozen = [T1, T2, ...[T3, T4, T5, T6].map(tick), ''].join('\n');
+  const cwd = setupMixed(frozen, frozen + DECOY_DIFFERENT_TEXT + '\n');
+  try {
+    const res = handlePreToolUse(payload(cwd, 'str_replace', tickEdit(T1, tick(T1))));
+    assert.equal(res.exitCode, 0, res.stderr);
+    assert.deepEqual(readReceipts(cwd)[0].required, ['R1.1 passing contract']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
 test('R4.16 a frozen task whose line was removed counts as missing', () => {
   // Tasks 2 to 6 are ticked; task 1 is the only frozen task left unticked, and a line of task 2 is gone.
   const cwd = setupMixed([...DONE_BUT_ONE, ''].join('\n'), [T1, tick(T3), tick(T4), tick(T5), tick(T6), ''].join('\n'));

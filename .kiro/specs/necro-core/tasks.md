@@ -82,7 +82,7 @@ Each task writes its test first, then the implementation, then runs `node --test
   - Test first: `file_search` and `grep_search` on a frozen path are allowed, `code` and any unknown tool are not (3.6); a tick made through `execute_pwsh` or `control_bash_process` is checked like `execute_bash` (3.12); an `fs_append` that adds a ticked task line runs the gate (3.13); `necro init` writes a PostToolUse matcher covering every write and shell tool (8.5). Run each test against the current code and see it fail first.
   - Implement: update `src/hooks.js` and `templates/necromancer.hooks.json`. Run `npm test` and pass.
 
-- [ ] 15. **Decoy lines cannot keep a task open** (Req 4.18)
+- [x] 15. **Decoy lines cannot keep a task open** (Req 4.18)
   - Test first: when the last real frozen task is ticked, an added unticked line that reuses a frozen id with different text, or a second unticked copy of a frozen line, does not stop every contract from being required (4.18). Run the test against the current code and see it fail first.
   - Implement: update `src/lock.js`. Run `npm test` and pass.
 

@@ -1,0 +1,21 @@
+{"t":"2026-11-06T21:27:53.270Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/necro-core/requirements.md"}
+{"t":"2026-11-06T21:27:53.467Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/necro-core/design.md"}
+{"t":"2026-11-06T21:27:53.468Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-06T21:27:53.793Z","tool":"list_directory","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro"}
+{"t":"2026-11-06T21:27:57.187Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/test/lock.test.js"}
+{"t":"2026-11-06T21:27:57.187Z","tool":"list_directory","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/steering"}
+{"t":"2026-11-06T21:27:57.189Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/src/lock.js"}
+{"t":"2026-11-06T21:27:57.489Z","tool":"grep_search","what":""}
+{"t":"2026-11-06T21:28:01.928Z","tool":"grep_search","what":""}
+{"t":"2026-11-06T21:28:50.365Z","tool":"execute_bash","what":"git && git && head && npm && tail"}
+{"t":"2026-11-06T21:28:55.177Z","tool":"grep_search","what":""}
+{"t":"2026-11-06T21:28:57.461Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/test/hooks.test.js"}
+{"t":"2026-11-06T21:28:59.827Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/test/hooks.test.js"}
+{"t":"2026-11-06T21:29:17.576Z","tool":"str_replace","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/test/hooks.test.js"}
+{"t":"2026-11-06T21:29:24.594Z","tool":"execute_bash","what":"node && grep && ✖) && ^ℹ && pass && fail)\""}
+{"t":"2026-11-06T21:29:29.206Z","tool":"str_replace","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/src/lock.js"}
+{"t":"2026-11-06T21:29:30.280Z","tool":"str_replace","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/src/lock.js"}
+{"t":"2026-11-06T21:29:55.006Z","tool":"execute_bash","what":"npm && grep && ^ℹ && pass && fail)\""}
+{"t":"2026-11-06T21:30:00.646Z","tool":"str_replace","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-06T21:30:00.653Z","tool":"execute_bash","what":"git"}
+{"t":"2026-11-06T21:30:05.096Z","tool":"execute_bash","what":"git && git"}

@@ -122,15 +122,27 @@ function taskTable(cwd, spec) {
 // when every contract is required (Req 4.15, 4.16): no identifiable ticked task,
 // an id the lock lacks, a line whose text differs from the lock's, an id on more
 // than one line, no criteria recorded, no contract matching them, or no task the
-// lock records left unticked (lines added after freeze do not count).
+// lock records left unticked (lines added after freeze do not count, and neither
+// do unticked lines that reuse a frozen id with other text or twice, Req 4.18).
 export function requiredNames(lock, spec, ticked, after, names) {
   if (ticked.length === 0) return null;
   const table = (lock && lock.specs && lock.specs[spec] && lock.specs[spec].tasks) || {};
   const lines = parseTasks(after);
 
-  // Req 4.16: the tasks the lock records that are still unticked after the tick.
-  // The count never comes from lines added later.
-  const stillOpen = lines.some((l) => !l.checked && Object.hasOwn(table, l.id));
+  // Req 4.16, 4.18: the tasks the lock records that are still unticked after the
+  // tick. The count never comes from lines added later, and a decoy cannot keep a
+  // task open: only an unticked line whose id is on exactly one line and whose text
+  // equals the text the lock records for that id counts.
+  const idCount = new Map();
+  for (const l of lines) idCount.set(l.id, (idCount.get(l.id) || 0) + 1);
+  const stillOpen = lines.some(
+    (l) =>
+      !l.checked &&
+      Object.hasOwn(table, l.id) &&
+      idCount.get(l.id) === 1 &&
+      typeof table[l.id].text === 'string' &&
+      table[l.id].text === l.text,
+  );
   if (!stillOpen) return null;
 
   const required = new Set();
