@@ -42,3 +42,20 @@ Honest limit shown on the page: contracts re-run in Node with `necro verify`; th
 ### Acceptance criteria
 1. WHEN the page loads THE SYSTEM SHALL use a dark theme with readable contrast (WCAG AA), a passing contract shown as alive and a failing one as a gravestone, and work at phone width without horizontal scrolling.
 2. WHEN a user opens the page with no receipt THE SYSTEM SHALL offer a sample receipt from this repository.
+
+## Requirement 7: Read cleanly
+**User story:** As a reviewer, I want the receipt to read cleanly, so that nothing distracts from the facts.
+### Acceptance criteria
+1. WHEN the task line is shown THE SYSTEM SHALL show it without Markdown emphasis markers (`**`, `__`, backticks).
+2. WHEN contracts are grouped by requirement THE SYSTEM SHALL order requirements and the contracts inside each one by criterion number (`R1.2` before `R1.10`).
+3. WHEN a passing contract was not required THE SYSTEM SHALL label it "not required for this task", and WHEN a failing contract was not required THE SYSTEM SHALL label it "not built yet".
+4. WHEN the page offers the sample or the re-run command THE SYSTEM SHALL use the repository `vijaygopalbalasa/contract-necromancer`, and the README SHALL give the page address `https://vijaygopalbalasa.github.io/contract-necromancer/`.
+
+## Requirement 8: Kiroween look
+**User story:** As a judge opening the page, I want it to feel like a resurrection, so that the idea sticks.
+### Acceptance criteria
+1. WHEN a receipt is shown THE SYSTEM SHALL show a verdict banner first: "Risen" with the count of living contracts when every required contract passes, and "Still buried" with the count of failing required contracts otherwise.
+2. WHEN the page loads THE SYSTEM SHALL show an inline SVG mark (a gravestone with a checkmark) drawn in the page itself, with no external images or fonts, and keep text contrast at WCAG AA.
+3. WHEN the page animates (a drifting fog layer or a contract rising) THE SYSTEM SHALL turn every animation off under `prefers-reduced-motion: reduce`.
+4. WHEN a contract fails THE SYSTEM SHALL draw its row as a gravestone shape, and WHEN it passes THE SYSTEM SHALL draw it as alive, using CSS only, so the page still reads as plain text to a screen reader.
+
