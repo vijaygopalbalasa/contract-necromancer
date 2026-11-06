@@ -35,6 +35,10 @@ receipts anyone can re-run.
 5. WHEN a tool call names a path THE SYSTEM SHALL resolve it to its real path (following symbolic links, using the nearest existing parent for a new file) and compare it with frozen paths and `.necro/` case-insensitively.
 6. IF a tool call names a protected path and the tool is not a known read-only tool (`read_file`, `list_directory`, `grep`, `glob`) THEN THE SYSTEM SHALL block it, so an unknown write tool cannot bypass the check.
 7. WHEN the PostToolUse handler runs after `execute_bash` and a task in a frozen spec's `tasks.md` changed from `[ ]` to `[x]` since the last state the gate recorded THEN THE SYSTEM SHALL run that spec's contracts and IF any fail THEN restore `tasks.md` from the recorded state and write the failing contract names to stderr.
+8. WHEN the PreToolUse handler runs for `execute_bash` THE SYSTEM SHALL record each frozen spec's current `tasks.md` as the state to compare with afterwards, replacing any earlier record.
+9. WHEN the PostToolUse handler runs after `execute_bash` and the recorded state file changed during the command THEN THE SYSTEM SHALL treat every `[x]` task line as newly ticked.
+10. WHEN a write to `tasks.md` has been applied THE SYSTEM SHALL record the state from the file on disk in the PostToolUse handler, not before the write.
+11. IF a tool input string is too long to check or contains a NUL character and the tool is not read-only THEN THE SYSTEM SHALL block the call.
 
 ## Requirement 4: Gate on marking a task done
 **User story:** As a developer, I want "done" refused until contracts pass, so that a ticked task means the requirements hold.
