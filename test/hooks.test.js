@@ -422,107 +422,424 @@ test('R3.3 handlePostToolUse is a no-op for a non-execute_bash tool', () => {
 
 
 // ---------------------------------------------------------------------------
-// Task 8c: Close bypasses (Req 3.5, 3.6, 3.7, 4.1, 4.2, 4.12)
+// Task 8c: Close bypasses (Req 3.5, 3.6, 3.7, 4.1, 4.2)
 // ---------------------------------------------------------------------------
 
-test('R3.5 handlePreToolUse blocks writes to Contracts/ (uppercase) when a frozen path exists', () => {
+const FROZEN_CONTRACT_REL = 'contracts/demo/hello.contract.test.js';
+const TASKS_REL = '.kiro/specs/demo/tasks.md';
+
+function preBlocked(cwd, toolName, toolInput) {
+  return handlePreToolUse(payload(cwd, toolName, toolInput));
+}
+
+test('R3.5 a write whose path differs only in letter case from a frozen file is blocked', () => {
   const cwd = tmpCwd();
   try {
     setupFrozen(cwd, 'demo');
-    // Try to write to Contracts/... (different case) - should block if a frozen
-    // file with the same normalized path exists.
-    const res = handlePreToolUse(
-      payload(cwd, 'fs_write', { path: path.join(cwd, 'Contracts/demo/file.js'), text: 'x' }),
-    );
-    // On case-insensitive filesystems, this should match the frozen contract directory.
-    // The implementation should do case-insensitive comparison on applicable systems.
-    // This is a system-dependent test; on macOS and Windows it should block, on Linux it won't.
-    // For now, we'll test the intent: different casing attempts should be consistently handled.
-    assert.ok(res.exitCode === 0 || res.exitCode === 2, 'respects case handling');
+    for (const p of [
+      'Contracts/demo/hello.contract.test.js',
+      'contracts/DEMO/HELLO.contract.test.js',
+      '.KIRO/specs/demo/Requirements.md',
+    ]) {
+      const res = preBlocked(cwd, 'fs_write', { path: p, text: 'x' });
+      assert.equal(res.exitCode, 2, `${p} is blocked`);
+      assert.match(res.stderr, /frozen file/);
+    }
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
 
-test('R3.6 handlePreToolUse blocks unknown write tools to protected paths', () => {
+test('R3.5 a write whose path differs only in letter case from .necro/ is blocked', () => {
   const cwd = tmpCwd();
   try {
     setupFrozen(cwd, 'demo');
-    // A hypothetical tool name that's not a known read-only tool and not a known write tool.
-    const res = handlePreToolUse({
-      session_id: 's-test',
-      hook_event_name: 'PreToolUse',
-      cwd,
-      tool_name: 'custom_write_tool',
-      tool_input: { path: 'contracts/demo/hello.contract.test.js', text: 'x' },
-    });
-    assert.equal(res.exitCode, 2, 'unknown write tool to frozen file is blocked');
-    assert.match(res.stderr, /frozen file/);
+    for (const p of ['.NECRO/lock.json', '.Necro/receipts/demo/a.json', '.necro']) {
+      const res = preBlocked(cwd, 'str_replace', { path: p, oldStr: 'a', newStr: 'b' });
+      assert.equal(res.exitCode, 2, `${p} is blocked`);
+      assert.match(res.stderr, /\.necro/);
+    }
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
 
-test('R3.7 gate restores tasks.md when shell ticks a task but contracts fail (via PostToolUse hook simulation)', () => {
+test('R3.5 a write through a symbolic link to a frozen file is blocked', () => {
+  const cwd = tmpCwd();
+  try {
+    setupFrozen(cwd, 'demo');
+    fs.mkdirSync(path.join(cwd, 'src'), { recursive: true });
+    fs.symlinkSync(path.join(cwd, FROZEN_CONTRACT_REL), path.join(cwd, 'src', 'alias.js'));
+    // a relative link target works too
+    fs.symlinkSync(`../${FROZEN_CONTRACT_REL}`, path.join(cwd, 'src', 'alias2.js'));
+    for (const p of ['src/alias.js', 'src/alias2.js']) {
+      const res = preBlocked(cwd, 'fs_write', { path: p, text: 'x' });
+      assert.equal(res.exitCode, 2, `${p} is blocked`);
+      assert.ok(res.stderr.includes(FROZEN_CONTRACT_REL), 'stderr names the real frozen path');
+    }
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.5 a new file under a symbolic link to .necro/ is blocked using the nearest existing parent', () => {
+  const cwd = tmpCwd();
+  try {
+    setupFrozen(cwd, 'demo');
+    fs.symlinkSync(path.join(cwd, '.necro'), path.join(cwd, 'shortcut'));
+    const res = preBlocked(cwd, 'fs_write', { path: 'shortcut/receipts/demo/new.json', text: '{}' });
+    assert.equal(res.exitCode, 2);
+    assert.match(res.stderr, /\.necro/);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.5 a project path that is not protected stays allowed even through a symbolic link', () => {
+  const cwd = tmpCwd();
+  try {
+    setupFrozen(cwd, 'demo');
+    fs.mkdirSync(path.join(cwd, 'src'), { recursive: true });
+    fs.writeFileSync(path.join(cwd, 'src', 'a.js'), '');
+    fs.symlinkSync(path.join(cwd, 'src', 'a.js'), path.join(cwd, 'src', 'b.js'));
+    const res = preBlocked(cwd, 'fs_write', { path: 'src/b.js', text: 'x' });
+    assert.equal(res.exitCode, 0);
+    assert.equal(res.stderr, '');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.6 an unknown tool is blocked when any input field names a protected path', () => {
+  const cwd = tmpCwd();
+  try {
+    setupFrozen(cwd, 'demo');
+    const absFrozen = path.join(cwd, FROZEN_CONTRACT_REL);
+    const calls = [
+      ['custom_write_tool', { path: FROZEN_CONTRACT_REL, text: 'x' }],
+      ['delete_file', { explanation: 'tidy', targetFile: absFrozen }],
+      ['fs_append', { path: FROZEN_CONTRACT_REL, text: 'x' }],
+      ['multi_edit', { edits: [{ file: 'src/ok.js' }, { file: '.necro/lock.json' }] }],
+      ['move_files', { paths: ['src/a.js', FROZEN_CONTRACT_REL] }],
+      ['rename', { from: 'src/a.js', to: 'Contracts/demo/HELLO.contract.test.js' }],
+    ];
+    for (const [tool, input] of calls) {
+      const res = preBlocked(cwd, tool, input);
+      assert.equal(res.exitCode, 2, `${tool} is blocked`);
+      assert.notEqual(res.stderr, '', `${tool} gives a reason`);
+    }
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.6 only read_file, list_directory, grep and glob may touch a protected path', () => {
+  const cwd = tmpCwd();
+  try {
+    setupFrozen(cwd, 'demo');
+    for (const tool of ['read_file', 'list_directory', 'grep', 'glob']) {
+      const res = preBlocked(cwd, tool, { path: FROZEN_CONTRACT_REL, pattern: '.necro/lock.json' });
+      assert.equal(res.exitCode, 0, `${tool} is allowed`);
+      assert.equal(res.stderr, '');
+    }
+    // any other tool name, even one that sounds read-only, is treated as a write
+    for (const tool of ['grep_search', 'file_search', 'view_file']) {
+      const res = preBlocked(cwd, tool, { path: FROZEN_CONTRACT_REL });
+      assert.equal(res.exitCode, 2, `${tool} is not a known read-only tool`);
+    }
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.6 an unknown tool that names no protected path is allowed silently', () => {
+  const cwd = tmpCwd();
+  try {
+    setupFrozen(cwd, 'demo');
+    const res = preBlocked(cwd, 'custom_write_tool', { path: 'src/ok.js', other: ['a', { b: 'c' }], n: 3 });
+    assert.equal(res.exitCode, 0);
+    assert.equal(res.stderr, '');
+    assert.equal(res.stdout, '');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.6 a write tool with no tool_input at all does not crash', () => {
+  const cwd = tmpCwd();
+  try {
+    setupFrozen(cwd, 'demo');
+    const res = handlePreToolUse({ cwd, tool_name: 'custom_write_tool' });
+    assert.equal(res.exitCode, 0);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+// -- R3.7: a shell command ticks a task ------------------------------------
+
+const TASKS_TWO = '- [ ] 1. Task one\n- [ ] 2. Task two\n';
+
+function tasksPath(cwd) {
+  return path.join(cwd, TASKS_REL);
+}
+
+function bashPre(cwd) {
+  return handlePreToolUse(payload(cwd, 'execute_bash', { command: 'true' }));
+}
+
+function receiptCount(cwd) {
+  const dir = path.join(cwd, '.necro', 'receipts', 'demo');
+  return fs.existsSync(dir) ? fs.readdirSync(dir).length : 0;
+}
+
+test('R3.7 a shell command that ticks a task while contracts fail gets tasks.md restored, with the failing names on stderr', () => {
   const cwd = tmpCwd();
   try {
     writeReq(cwd, 'demo', REQ);
-    writeContract(cwd, 'demo', 'failing.contract.test.js', FAILING_CONTRACT);
+    writeContract(cwd, 'demo', 'fail.contract.test.js', FAILING_CONTRACT);
     freezeSpec(cwd, 'demo');
-    writeTasks(cwd, 'demo', '- [ ] Task 1\n- [ ] Task 2\n');
+    writeTasks(cwd, 'demo', TASKS_TWO);
 
-    // Simulate a shell command that ticks a task by modifying tasks.md.
-    const originalTasks = fs.readFileSync(path.join(cwd, '.kiro/specs/demo/tasks.md'), 'utf8');
-    const tickedTasks = originalTasks.replace('- [ ] Task 1', '- [x] Task 1');
-    fs.writeFileSync(path.join(cwd, '.kiro/specs/demo/tasks.md'), tickedTasks);
+    const pre = bashPre(cwd); // the gate records tasks.md before the command runs
+    assert.equal(pre.exitCode, 0);
+    assert.equal(pre.stderr, '');
 
-    // Now call the gate (via PreToolUse) to detect the tick.
-    // Since the contract fails, the gate should reject the edit and restore the file.
-    // But in this test, we're simulating what would happen if PostToolUse tries to restore.
-    // Actually, the gate logic should prevent this from happening in PreToolUse.
-    // Let me test the PreToolUse gate directly with a str_replace that marks a task done.
+    fs.writeFileSync(tasksPath(cwd), '- [x] 1. Task one\n- [ ] 2. Task two\n'); // "sed -i" did this
+    const res = handlePostToolUse(postPayload(cwd, "sed -i 's/\\[ \\] 1/[x] 1/' tasks.md"));
+
+    assert.equal(res.exitCode, 0);
+    assert.equal(fs.readFileSync(tasksPath(cwd), 'utf8'), TASKS_TWO, 'tasks.md is back to the recorded state');
+    assert.ok(res.stderr.includes('R1.2 failing contract'), `names the failing contract: ${res.stderr}`);
+    assert.ok(res.stderr.includes(TASKS_REL), 'names the restored file');
+    assert.equal(receiptCount(cwd), 0, 'no receipt for a failed gate');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.7 a shell tick is kept and receipted when every contract passes', () => {
+  const cwd = tmpCwd();
+  try {
+    setupFrozen(cwd, 'demo');
+    writeTasks(cwd, 'demo', TASKS_TWO);
+    bashPre(cwd);
+    const ticked = '- [x] 1. Task one\n- [ ] 2. Task two\n';
+    fs.writeFileSync(tasksPath(cwd), ticked);
+
+    const res = handlePostToolUse(postPayload(cwd, 'echo ticked'));
+    assert.equal(res.exitCode, 0);
+    assert.equal(res.stderr, '');
+    assert.equal(fs.readFileSync(tasksPath(cwd), 'utf8'), ticked);
+    assert.equal(receiptCount(cwd), 1, 'a receipt was written');
+
+    // the new state is recorded: a later failing tick is compared against it
+    fs.writeFileSync(tasksPath(cwd), '- [x] 1. Task one\n- [x] 2. Task two\n');
+    const again = handlePostToolUse(postPayload(cwd, 'echo again'));
+    assert.equal(again.stderr, '');
+    assert.equal(receiptCount(cwd), 1, 'receipt hash is the same so still one file');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.7 a shell tick on a frozen spec with no recorded state is checked against an all-unticked baseline', () => {
+  const cwd = tmpCwd();
+  try {
+    writeReq(cwd, 'demo', REQ);
+    writeContract(cwd, 'demo', 'fail.contract.test.js', FAILING_CONTRACT);
+    freezeSpec(cwd, 'demo');
+    writeTasks(cwd, 'demo', '- [x] 1. Task one\n- [ ] 2. Task two\n');
+
+    const res = handlePostToolUse(postPayload(cwd, 'echo hi'));
+    assert.equal(fs.readFileSync(tasksPath(cwd), 'utf8'), TASKS_TWO, 'the unvetted tick is undone');
+    assert.ok(res.stderr.includes('R1.2 failing contract'));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.7 a shell command that does not tick a task changes nothing and prints nothing', () => {
+  const cwd = tmpCwd();
+  try {
+    writeReq(cwd, 'demo', REQ);
+    writeContract(cwd, 'demo', 'fail.contract.test.js', FAILING_CONTRACT);
+    freezeSpec(cwd, 'demo');
+    writeTasks(cwd, 'demo', '- [x] 1. Task one\n- [ ] 2. Task two\n');
+    bashPre(cwd);
+
+    // unchanged
+    let res = handlePostToolUse(postPayload(cwd, 'ls'));
+    assert.equal(res.stderr, '');
+    // unticking is allowed
+    fs.writeFileSync(tasksPath(cwd), TASKS_TWO);
+    res = handlePostToolUse(postPayload(cwd, 'sed ...'));
+    assert.equal(res.stderr, '');
+    assert.equal(fs.readFileSync(tasksPath(cwd), 'utf8'), TASKS_TWO);
+    // the recorded state followed the untick, so ticking task 1 again is a new tick
+    fs.writeFileSync(tasksPath(cwd), '- [x] 1. Task one\n- [ ] 2. Task two\n');
+    res = handlePostToolUse(postPayload(cwd, 'sed ...'));
+    assert.ok(res.stderr.includes('R1.2 failing contract'));
+    assert.equal(fs.readFileSync(tasksPath(cwd), 'utf8'), TASKS_TWO);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.7 a shell tick in a spec that is not frozen is ignored', () => {
+  const cwd = tmpCwd();
+  try {
+    setupFrozen(cwd, 'demo');
+    writeTasks(cwd, 'other', '- [ ] 1. Task\n');
+    bashPre(cwd);
+    const otherTasks = path.join(cwd, '.kiro', 'specs', 'other', 'tasks.md');
+    fs.writeFileSync(otherTasks, '- [x] 1. Task\n');
+    const res = handlePostToolUse(postPayload(cwd, 'echo hi'));
+    assert.equal(res.stderr, '');
+    assert.equal(fs.readFileSync(otherTasks, 'utf8'), '- [x] 1. Task\n');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.7 a task edit allowed by PreToolUse is recorded, so unticking then re-ticking by shell is caught', () => {
+  const cwd = tmpCwd();
+  try {
+    writeReq(cwd, 'demo', REQ);
+    writeContract(cwd, 'demo', 'fail.contract.test.js', FAILING_CONTRACT);
+    freezeSpec(cwd, 'demo');
+    writeTasks(cwd, 'demo', '- [x] 1. Task one\n- [ ] 2. Task two\n');
+    bashPre(cwd); // records task 1 as ticked
+    // an untick through str_replace is allowed and must update the recorded state
     const res = handlePreToolUse(
-      payload(cwd, 'str_replace', {
-        path: path.join(cwd, '.kiro/specs/demo/tasks.md'),
-        oldStr: '- [ ] Task 1',
-        newStr: '- [x] Task 1',
-      }),
+      payload(cwd, 'str_replace', { path: TASKS_REL, oldStr: '- [x] 1.', newStr: '- [ ] 1.' }),
     );
-    assert.equal(res.exitCode, 2, 'marking task done with failing contracts is rejected');
+    assert.equal(res.exitCode, 0);
+    fs.writeFileSync(tasksPath(cwd), TASKS_TWO); // the tool applied it
+    // now a shell command ticks task 1 again
+    fs.writeFileSync(tasksPath(cwd), '- [x] 1. Task one\n- [ ] 2. Task two\n');
+    const post = handlePostToolUse(postPayload(cwd, 'sed ...'));
+    assert.ok(post.stderr.includes('R1.2 failing contract'), `re-tick is gated: ${post.stderr}`);
+    assert.equal(fs.readFileSync(tasksPath(cwd), 'utf8'), TASKS_TWO);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+// -- R4.1 / R4.2: detecting a tick ------------------------------------------
+
+function detectOnDisk(tasksText, toolName, toolInput) {
+  const cwd = tmpCwd();
+  try {
+    writeTasks(cwd, 'demo', tasksText);
+    return detectTaskDone(cwd, toolName, { path: TASKS_REL, ...toolInput });
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+}
+
+test('R4.1 a str_replace that unticks one task and ticks another is marking a task done', () => {
+  const disk = '- [x] Task A\n- [ ] Task B\n';
+  assert.equal(
+    detectOnDisk(disk, 'str_replace', {
+      oldStr: '- [x] Task A\n- [ ] Task B\n',
+      newStr: '- [ ] Task A\n- [x] Task B\n',
+    }),
+    true,
+  );
+  // only unticking is not marking done
+  assert.equal(
+    detectOnDisk(disk, 'str_replace', { oldStr: '- [x] Task A', newStr: '- [ ] Task A' }),
+    false,
+  );
+});
+
+test('R4.1 a str_replace is applied to the file on disk, so a partial-line edit that ticks a box is caught', () => {
+  const disk = '- [ ] Task A\n- [ ] Task B\n';
+  assert.equal(detectOnDisk(disk, 'str_replace', { oldStr: ' ] Task A', newStr: 'x] Task A' }), true);
+  assert.equal(detectOnDisk(disk, 'str_replace', { oldStr: '[ ] Task A', newStr: '[X] Task A' }), true);
+});
+
+test('R4.1 a str_replace that ticks a task and renames it in the same edit is caught', () => {
+  const disk = '- [ ] Task A\n- [ ] Task B\n';
+  assert.equal(
+    detectOnDisk(disk, 'str_replace', { oldStr: '- [ ] Task A', newStr: '- [x] Task A, renamed' }),
+    true,
+  );
+});
+
+test('R4.1 replace_all ticks every match', () => {
+  const disk = '- [ ] Task A\n- [ ] Task A\n';
+  assert.equal(
+    detectOnDisk(disk, 'str_replace', { oldStr: '- [ ] Task A', newStr: '- [x] Task A', replace_all: true }),
+    true,
+  );
+});
+
+test('R4.1 a str_replace on tasks.md that changes no task line is not marking done', () => {
+  const disk = '- [x] Task A\n- [ ] Task B\nSome notes\n';
+  assert.equal(detectOnDisk(disk, 'str_replace', { oldStr: 'Some notes', newStr: 'Other [x] notes' }), false);
+  assert.equal(detectOnDisk(disk, 'str_replace', { oldStr: 'Task B', newStr: 'Task C' }), false);
+});
+
+test('R4.1 a str_replace through a symbolic link to tasks.md is checked as tasks.md', () => {
+  const cwd = tmpCwd();
+  try {
+    writeReq(cwd, 'demo', REQ);
+    writeContract(cwd, 'demo', 'fail.contract.test.js', FAILING_CONTRACT);
+    freezeSpec(cwd, 'demo');
+    writeTasks(cwd, 'demo', TASKS_TWO);
+    fs.symlinkSync(tasksPath(cwd), path.join(cwd, 'notes.md'));
+    const res = handlePreToolUse(
+      payload(cwd, 'str_replace', { path: 'notes.md', oldStr: '- [ ] 1.', newStr: '- [x] 1.' }),
+    );
+    assert.equal(res.exitCode, 2);
     assert.match(res.stderr, /Contracts failed/);
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
 
-test('R4.1 detectTaskDone detects str_replace that unticks one task and ticks another as marking done', () => {
-  const original = '- [x] Task A\n- [ ] Task B\n';
-  const modified = '- [ ] Task A\n- [x] Task B\n';
-  // One tick removed, one added -> net change is +1 -> marking done
-  assert.ok(
-    detectTaskDone('/cwd', 'str_replace', { path: '.kiro/specs/demo/tasks.md', oldStr: original, newStr: modified }),
-    'unticking and ticking results in net +1 marks',
+test('R4.2 an fs_write that ticks one task and renames another line is caught', () => {
+  assert.equal(
+    detectOnDisk('- [ ] Task A\n- [ ] Task B\n', 'fs_write', { text: '- [x] Task A v2\n- [ ] Task B\n' }),
+    true,
+  );
+  // CRLF files and LF text compare equal line by line
+  assert.equal(
+    detectOnDisk('- [ ] Task A\r\n- [ ] Task B\r\n', 'fs_write', { text: '- [x] Task A\n- [ ] Task B\n' }),
+    true,
+  );
+  assert.equal(
+    detectOnDisk('- [x] Task A\r\n- [ ] Task B\r\n', 'fs_write', { text: '- [x] Task A\n- [ ] Task B\n' }),
+    false,
   );
 });
 
-test('R4.2 detectTaskDone detects fs_write on tasks.md with more [x] than disk as marking done', () => {
+test('R4.2 an fs_write that unticks one task and ticks another is marking done', () => {
+  assert.equal(
+    detectOnDisk('- [x] Task A\n- [ ] Task B\n', 'fs_write', { text: '- [ ] Task A\n- [x] Task B\n' }),
+    true,
+  );
+});
+
+test('R4.2 an fs_write that only unticks or leaves ticks as they were is not marking done', () => {
+  const disk = '- [x] Task A\n- [x] Task B\n';
+  assert.equal(detectOnDisk(disk, 'fs_write', { text: '- [x] Task A\n- [ ] Task B\n' }), false);
+  assert.equal(detectOnDisk(disk, 'fs_write', { text: disk }), false);
+});
+
+test('R4.2 an fs_write that creates tasks.md with a ticked task is marking done', () => {
   const cwd = tmpCwd();
   try {
-    writeReq(cwd, 'demo', REQ);
-    writeContract(cwd, 'demo', 'hello.contract.test.js', CONTRACT);
-    writeTasks(cwd, 'demo', '- [ ] Task 1\n- [ ] Task 2\n');
-
-    // Writing with one task marked done should be detected.
-    const done = detectTaskDone(cwd, 'fs_write', {
-      path: path.join(cwd, '.kiro/specs/demo/tasks.md'),
-      text: '- [x] Task 1\n- [ ] Task 2\n',
-    });
-    assert.ok(done, 'fs_write with more marks than disk is detected as marking done');
+    assert.equal(
+      detectTaskDone(cwd, 'fs_write', { path: TASKS_REL, text: '- [x] Task A\n' }),
+      true,
+    );
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
-
 
 // ---------------------------------------------------------------------------
 // Task 9: Stop handler - session summary (Req 7.1)

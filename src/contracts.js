@@ -1,144 +1,130 @@
-import { execFileSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { hashFile } from './canon.js';
+
+const RUNNER = fileURLToPath(new URL('./contract-runner.js', import.meta.url));
 
 // Filename stem of a contract file, e.g. "canon" from "canon.contract.test.js".
 function contractName(filePath) {
   return path.basename(filePath).replace(/\.contract\.test\.js$/, '');
 }
 
-// Parse TAP output into one { name, result, isFile } per named test.
-// - describe/suite entries (type 'suite') are skipped; only tests are contracts.
-// - A TAP directive (# SKIP or # TODO) forces the result to "fail" (Req 4.7), so a
-//   skipped or todo contract can never let a spec pass vacuously.
-// - Req 4.11: contract names with special characters (slash, .js) are kept as
-//   reported. Only entries that are likely synthetic file error messages are
-//   treated specially. A synthetic entry would be the contract file's path
-//   (relative or absolute) or stem.
-// - Req 4.8: a file with zero real tests generates one failing entry.
-function parseTap(tap, contractFilePath) {
-  const lines = tap.split(/\r?\n/);
-  const results = [];
-  const fileName = path.basename(contractFilePath);
-  const fileStem = fileName.replace(/\.contract\.test\.js$/, '');
-
-  for (let i = 0; i < lines.length; i++) {
-    const m = lines[i].match(/^(\s*)(ok|not ok)\s+\d+\s+-\s+(.*)$/);
-    if (!m) continue;
-    const indent = m[1].length;
-    const ok = m[2] === 'ok';
-    let name = m[3];
-    let type = 'test';
-    for (let j = i + 1; j < lines.length; j++) {
-      const l = lines[j];
-      if (l.trim() === '') continue;
-      const lead = l.length - l.trimStart().length;
-      if (lead <= indent) break; // back to same/lesser indent: next result or summary
-      const trimmed = l.trim();
-      if (trimmed === '...') break; // end of this result's YAML block
-      const tm = trimmed.match(/^type:\s*['"]?([^'"\s]+)['"]?$/);
-      if (tm) {
-        type = tm[1];
-        break;
-      }
-    }
-    if (type !== 'test') continue; // skip describe/suite entries
-    // TAP directives # SKIP / # TODO mean the contract did not actually run;
-    // count it as failing and strip the directive from the name (Req 4.7).
-    let result = ok ? 'pass' : 'fail';
-    const dm = name.match(/^(.*?)\s+#\s+(SKIP|TODO)\b/i);
-    if (dm) {
-      name = dm[1];
-      result = 'fail';
-    }
-    // Req 4.11: keep contract names exactly as reported, even with special chars.
-    // Only filter if the name IS the file itself (synthetic error entry from
-    // the test runner). The file runner outputs absolute paths for file errors.
-    const isFile = name === fileName || 
-                   name === fileStem || 
-                   name === contractFilePath ||
-                   name.endsWith(contractFilePath.split(path.sep).join('/'));
-    results.push({ name, result, isFile });
+// Environment for the runner. The parent test runner sets NODE_TEST_* variables
+// that would make a nested run behave as a child of it, so they are removed.
+function runnerEnv() {
+  const env = { ...process.env };
+  for (const k of Object.keys(env)) {
+    if (k.startsWith('NODE_TEST_')) delete env[k];
   }
-  return results;
+  return env;
 }
 
-// Run every frozen contract file for a spec with `node --test --test-reporter=tap`
-// and return one result per named test: { name, path, sha256, result }.
-// A file that fails to load, or loads but defines zero real tests, counts as
-// exactly one failing contract named after the file, so a spec can never pass
-// with zero contracts (Req 4.8). Skipped or todo contracts count as failing (Req 4.7).
+// Run one contract file through src/contract-runner.js, which uses the node:test
+// run() API. Returns { file, events } or null when the runner itself failed.
+function runFile(cwd, absPath) {
+  const res = spawnSync(process.execPath, [RUNNER, absPath, cwd], {
+    cwd,
+    env: runnerEnv(),
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  if (res.error || res.status !== 0) return null;
+  try {
+    const parsed = JSON.parse(res.stdout);
+    if (parsed && typeof parsed.file === 'string' && Array.isArray(parsed.events)) return parsed;
+  } catch {
+    // fall through: unreadable runner output counts as a failed run
+  }
+  return null;
+}
+
+// Turn the run() events of one contract file into [{ name, result }].
+// - Each named test is a contract. Names are kept exactly as reported (Req 4.11).
+// - A skipped or todo test, or suite, counts as failing (Req 4.7).
+// - A suite is a contract only when it failed for its own reasons (its body
+//   threw, a hook failed) or was skipped; a suite that failed only because a
+//   child failed is already represented by that child.
+// - An entry at nesting 0 whose name is the contract file's own path is the
+//   runner's report about the file, not a contract. When it failed, the file
+//   failed to load or exited badly, and the file counts as failing (Req 4.11).
+//   When it passed, the file had no tests.
+// - A file with no contracts is one failing contract named after the file (Req 4.8).
+function interpret(run, stem) {
+  const contracts = [];
+  let fileFailed = run === null;
+  for (const e of run ? run.events : []) {
+    if (e.kind === 'suite') {
+      if ((e.ok && (e.skip || e.todo)) || (!e.ok && e.failureType !== 'subtestsFailed')) {
+        contracts.push({ name: e.name, result: 'fail' });
+      }
+      continue;
+    }
+    if (e.nesting === 0 && e.name === run.file) {
+      // The runner's own entry for the file: a failure here is a load failure or
+      // a bad exit code. A pass is reported for a file with zero tests.
+      if (!e.ok) fileFailed = true;
+      continue;
+    }
+    contracts.push({ name: e.name, result: e.ok && !e.skip && !e.todo ? 'pass' : 'fail' });
+  }
+  if (fileFailed || contracts.length === 0) contracts.push({ name: stem, result: 'fail' });
+  return contracts;
+}
+
+// Run every frozen contract file for a spec through the node:test run() API and
+// return one result per named test: { name, path, sha256, result } (Req 4.4, 4.12).
+// Req 4.8: a file that fails to load, or loads but defines zero tests, counts as
+// exactly one failing contract named after the file.
 // Req 4.9: each contract file is hashed immediately before running; if the hash
-// differs from the lock, every contract in that file is counted as failing.
-// Req 4.10: a contract name recorded in the lock that is missing from the run is
-// counted as failing. Req 4.11: contract names with special characters are kept
-// and reported exactly as named. Req 4.12: results are matched per file.
+// differs from the lock, every contract in that file counts as failing.
+// Req 4.10: a contract name recorded in the lock that is missing from its file's
+// run counts as failing. Names are matched per contract file, never across files.
 export function runContracts(cwd, spec, lock) {
   const entry = lock && lock.specs && lock.specs[spec];
   if (!entry || !entry.contracts) return [];
-  // Run child `node --test` as a standalone runner. The parent test runner sets
-  // NODE_TEST_* env vars that make a child route results over IPC instead of
-  // stdout, so strip them to keep TAP on stdout.
-  const childEnv = { ...process.env };
-  for (const k of Object.keys(childEnv)) {
-    if (k.startsWith('NODE_TEST_')) delete childEnv[k];
-  }
-  const out = [];
-  for (const c of entry.contracts) {
-    const absPath = path.join(cwd, c.path);
-    const stem = contractName(c.path);
 
-    // Req 4.9: hash the contract file immediately before running it. If the hash
-    // differs from the lock (or the file is gone/unreadable), the file moved
-    // during the task, so every contract in it counts as failing.
+  // One run per file, even if the lock lists a file more than once (verify does
+  // that, one entry per contract); recorded names are merged.
+  const files = new Map();
+  for (const c of entry.contracts) {
+    const known = files.get(c.path);
+    if (known) {
+      for (const n of c.names || []) if (!known.names.includes(n)) known.names.push(n);
+    } else {
+      files.set(c.path, { path: c.path, sha256: c.sha256, names: [...(c.names || [])] });
+    }
+  }
+
+  const out = [];
+  for (const c of files.values()) {
+    const absPath = path.resolve(cwd, c.path);
+    const stem = contractName(c.path);
+    const push = (name, result) => out.push({ name, path: c.path, sha256: c.sha256, result });
+
+    // Req 4.9: if the hash differs from the lock (or the file is gone or
+    // unreadable), the file moved during the task, so everything in it fails.
     let tampered = false;
     try {
       if (hashFile(absPath) !== c.sha256) tampered = true;
     } catch {
-      tampered = true; // file missing or unreadable
+      tampered = true;
     }
     if (tampered) {
-      const names = Array.isArray(c.names) && c.names.length ? c.names : [stem];
-      for (const name of names) {
-        out.push({ name, path: c.path, sha256: c.sha256, result: 'fail' });
-      }
+      for (const name of c.names.length ? c.names : [stem]) push(name, 'fail');
       continue;
     }
 
-    let tap = '';
-    try {
-      tap = execFileSync(process.execPath, ['--test', '--test-reporter=tap', absPath], {
-        cwd,
-        env: childEnv,
-        encoding: 'utf8',
-        stdio: ['ignore', 'pipe', 'pipe'],
-        maxBuffer: 10 * 1024 * 1024,
-      });
-    } catch (e) {
-      // node --test exits non-zero on any failure; stdout still holds the TAP.
-      tap = (e && e.stdout) || '';
-    }
-    const parsed = parseTap(tap, c.path);
-    const real = parsed.filter((p) => !p.isFile);
-    if (real.length === 0) {
-      // No real contracts ran: a load failure or a file with zero tests. This
-      // is one failing contract named after the file (Req 4.8).
-      out.push({ name: stem, path: c.path, sha256: c.sha256, result: 'fail' });
-    } else {
-      for (const p of real) {
-        out.push({ name: p.name, path: c.path, sha256: c.sha256, result: p.result });
-      }
-    }
-  }
+    const contracts = interpret(runFile(cwd, absPath), stem);
+    for (const r of contracts) push(r.name, r.result);
 
-  // Req 4.10: a contract name recorded in the lock that is missing from the run
-  // is failing. This guards against a contract quietly disappearing.
-  const seen = new Set(out.map((r) => r.name));
-  for (const c of entry.contracts) {
-    for (const name of c.names || []) {
+    // Req 4.10, per file.
+    const seen = new Set(contracts.map((r) => r.name));
+    for (const name of c.names) {
       if (!seen.has(name)) {
         seen.add(name);
-        out.push({ name, path: c.path, sha256: c.sha256, result: 'fail' });
+        push(name, 'fail');
       }
     }
   }

@@ -362,7 +362,24 @@ If either target file already exists, it is left unchanged and the user is told 
 `bin/necro.js`.
 
 ## Clarification (contracts are named tests)
-A contract is one named `node:test` test inside a contract file. `runContracts` runs each file with
-`node --test --test-reporter=tap <file>` and parses the TAP lines (`ok N - name`, `not ok N - name`) into one result per test:
-`{ name, file, fileSha256, result }`. A file that fails to load is one failing contract named after the file.
-Receipts and verify compare results by contract name.
+A contract is one named `node:test` test inside a contract file. `runContracts` runs each file through the `node:test`
+`run()` API in a small child process (`src/contract-runner.js`) and builds results from the `test:pass` and `test:fail`
+events, never from text the code under test can print (Req 4.12). It returns one result per test:
+`{ name, path, sha256, result }`. Skipped and todo tests, and suites that threw or were skipped, count as failing. An
+event at nesting 0 whose name is the contract file's own path is the runner's report on the file: a failing one (load
+error, non-zero exit) makes the file one failing contract named after the file, and a file with no tests does the same.
+Recorded names are matched per contract file. Receipts and verify compare results by contract name.
+
+## Clarification (shell ticks, Req 3.7)
+The gate keeps the last `tasks.md` it saw for each frozen spec in `.necro/state/<spec>.tasks.md`. It records the file
+when an allowed `fs_write` or `str_replace` changes it, and before an `execute_bash` call when nothing is recorded yet.
+After `execute_bash`, a task that became `[x]` since the recorded state triggers a contract run. If any contract fails,
+`tasks.md` is written back from the recorded state. With no recorded state the baseline is the current file with every
+task unticked.
+
+## Clarification (protected paths, Req 3.5 and 3.6)
+A tool path is resolved the way the operating system would (links followed, including links in the middle of the path
+and links to files that do not exist yet; the nearest existing parent for a new file) and compared with `.necro/` and
+the frozen paths ignoring letter case and Unicode normal form. Every tool other than `read_file`, `list_directory`,
+`grep` and `glob` is blocked when any string in its input names a protected path. For `fs_write` and `str_replace` the
+`text`, `oldStr` and `newStr` fields are file content and are not checked as paths.

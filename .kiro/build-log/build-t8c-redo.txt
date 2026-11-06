@@ -1,0 +1,207 @@
+I'll start by reading the spec files and steering.
+[tool] List Directory
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=86
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=42
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=60
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=64
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=1362
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=290
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=137
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=181
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=445
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=2406
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=385
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=42
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Replace lines 424–525 with the new section.
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=75
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Append to File
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=933
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=100
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=105
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=263
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=1434
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[ERROR] [KRS] HTTP 500 requestId=ba6c7a90-37e7-49bd-a6c6-5f97c6a23b5d body={"__type":"com.amazon.kiro.runtimeservice#InternalServerException","message":"Encountered unexpectedly high load when processing the request, please try again.","reason":"MODEL_TEMPORARILY_UNAVAILABLE"}
+[ERROR] [KRS] HTTP 500 requestId=0e927ad5-4394-491d-9207-1bc44faf78e5 body={"__type":"com.amazon.kiro.runtimeservice#InternalServerException","message":"Encountered unexpectedly high load when processing the request, please try again.","reason":"MODEL_TEMPORARILY_UNAVAILABLE"}
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=57
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=213
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=673
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=183
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Now I'll write the new top part of `hooks.js` (everything before `handleStop`) and keep `handleStop` as is.
+[tool] Write File
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=2537
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Replace in File
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=468
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=51
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+All 95 tests pass. Now tick 8c.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=33
+Every bullet of 8c is now built, and `npm test` passes (95 tests, 0 failing). I ticked 8c in `tasks.md`. I did not edit `requirements.md`, and this repo has no `contracts/` or `.necro/` yet.
+
+For each bullet I wrote the test first and ran it against the old code. All the new 3.5, 3.6, 3.7 and 4.1/4.2 tests failed for the reasons below. The 4.12 tests are listed after.
+
+- **3.5:** A path's real location is now found by following links, including links in the middle of a path, links to files that don't exist yet, and `..` after a link. It is compared with the frozen paths and `.necro/` ignoring letter case.
+- **3.6:** Only `read_file`, `list_directory`, `grep` and `glob` are exempt. For any other tool, every string in its input (nested objects and arrays included) is checked, so `delete_file` with `targetFile`, `fs_append` and a `paths: [...]` array are all blocked. For `fs_write` and `str_replace` the `text`, `oldStr` and `newStr` fields are skipped, since they hold file content. The old code only looked at `path`, and its read-only list used the wrong names (`grep_search`, `file_search`).
+- **3.7:** The gate now keeps the last `tasks.md` it saw for each frozen spec in `.necro/state/<spec>.tasks.md`. After `execute_bash`, a new `[x]` runs that spec's contracts. If any fail, `tasks.md` is written back from the record and the failing names go to stderr. If all pass, a receipt is written.
+- **4.1/4.2:**
+  - A `str_replace` is applied to the file on disk, and task lines are compared as a multiset.
+  - This catches edits like ` ] Task` → `x] Task`, a tick combined with a rename, and one task unticked while another is ticked.
+  - A new file written with a ticked task is now caught too.
+- **4.12:**
+  - `src/contracts.js` now calls `run()` through a small child script, `src/contract-runner.js`. It reads `test:pass` and `test:fail` events, and TAP is no longer parsed.
+  - The old code was forgeable. A failing test whose assertion message contained `\nok 2 - R1.2 ghost` was read as a passing contract by the TAP parser. A test now covers that case.
+  - Fake `ok` lines printed to stdout were already harmless, because Node 24's TAP reporter prefixes them with `# `. Tests cover that case too.
+  - Recorded names are matched per file. A lock that lists a file twice (as `verify` does) now runs it once.
+  - A passing test that happens to be named after its file stem no longer gets dropped as a load failure.
+  - A non-zero exit after passing tests, and a `describe` that throws or is skipped, now fail the file.
+
+The earlier 8c tests in `test/hooks.test.js` were placeholders. For example, the 3.5 test accepted exit 0 or 2. I replaced them with real ones. I also updated the stale TAP paragraph in `design.md` and added short notes on the 3.7 state and the path rules.
+
+Things you should know:
+- **Matcher gap:** `templates/necromancer.hooks.json` limits PreToolUse to `fs_write|str_replace|execute_bash`. Unknown write tools such as `fs_append` or `delete_file` never reach the 3.6 check in a real project until that matcher is widened. I left it alone because it's outside 8c.
+- **Manual ticks:** If you tick a task by hand in the IDE while contracts fail, the next shell command undoes it, because the gate never recorded that tick.
+- **No recorded state:** If the gate has never recorded a frozen spec's `tasks.md`, the first shell check treats every `[x]` as new. That can untick progress made before the gate was installed.
+- **Not tested:** I did not try forging Node's internal binary result frames, only text. A shell command could also edit `.necro/state/` directly.[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=273
+

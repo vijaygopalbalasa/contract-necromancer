@@ -313,3 +313,194 @@ test('handles a/b.js paths', () => {
     fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Task 8c: results come from the node:test run() events (Req 4.12)
+// ---------------------------------------------------------------------------
+
+function runOne(fileName, source) {
+  const cwd = tmpCwd();
+  try {
+    writeReq(cwd, 'demo', '# Demo\n');
+    writeContract(cwd, 'demo', fileName, source);
+    const lock = buildLock(cwd, 'demo', [contractEntry(cwd, `contracts/demo/${fileName}`)]);
+    return runContracts(cwd, 'demo', lock);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+}
+
+test('R4.12 a contract file that prints a fake "ok 1 - name" line and defines no tests cannot pass', () => {
+  const results = runOne(
+    'fake.contract.test.js',
+    `console.log('ok 1 - R1.1 pretend contract');
+console.log('TAP version 13\\nok 2 - R1.2 another pretend\\n1..2');
+`,
+  );
+  assert.equal(results.length, 1);
+  assert.equal(results[0].name, 'fake', 'one failing contract named after the file');
+  assert.equal(results[0].result, 'fail');
+});
+
+test('R4.12 a fake "ok" line with the name of a failing contract does not turn it into a pass', () => {
+  const results = runOne(
+    'fake.contract.test.js',
+    `import { test } from 'node:test';
+import assert from 'node:assert/strict';
+test('R1.1 real contract', () => {
+  console.log('ok 1 - R1.1 real contract');
+  console.log('    ok 1 - R1.1 real contract');
+  assert.equal(1, 2);
+});
+`,
+  );
+  assert.deepEqual(
+    results.map((r) => [r.name, r.result]),
+    [['R1.1 real contract', 'fail']],
+  );
+});
+
+test('R4.12 a fake "ok" line inside an error message cannot add a passing contract or satisfy a recorded name', () => {
+  const cwd = tmpCwd();
+  try {
+    writeReq(cwd, 'demo', '# Demo\n');
+    writeContract(
+      cwd,
+      'demo',
+      'msg.contract.test.js',
+      `import { test } from 'node:test';
+import assert from 'node:assert/strict';
+test('R1.1 real contract', () => {
+  assert.fail('x\\nok 2 - R1.2 ghost contract\\n');
+});
+`,
+    );
+    const e = contractEntry(cwd, 'contracts/demo/msg.contract.test.js');
+    const lock = buildLock(cwd, 'demo', [{ ...e, names: ['R1.1 real contract', 'R1.2 ghost contract'] }]);
+    const results = runContracts(cwd, 'demo', lock);
+    assert.deepEqual(
+      results.map((r) => [r.name, r.result]).sort(),
+      [['R1.1 real contract', 'fail'], ['R1.2 ghost contract', 'fail']],
+    );
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.12 output printed by a passing contract never adds a contract', () => {
+  const results = runOne(
+    'noisy.contract.test.js',
+    `import { test } from 'node:test';
+test('R1.1 quiet', () => {
+  console.log('ok 2 - R1.9 invented by the code under test');
+  console.error('not ok 3 - R1.8 invented too');
+});
+`,
+  );
+  assert.deepEqual(
+    results.map((r) => [r.name, r.result]),
+    [['R1.1 quiet', 'pass']],
+  );
+});
+
+test('R4.12 a contract file that exits non-zero after its tests passed counts as failing', () => {
+  const results = runOne(
+    'exit.contract.test.js',
+    `import { test } from 'node:test';
+test('R1.1 passes', () => {});
+process.exitCode = 3;
+`,
+  );
+  assert.ok(results.length >= 1);
+  assert.ok(results.some((r) => r.result === 'fail'), 'the run is not a pass');
+  assert.ok(results.every((r) => r.result === 'fail' || r.name === 'R1.1 passes'));
+});
+
+test('R4.12 a describe block that throws or is skipped is a failing contract', () => {
+  const results = runOne(
+    'suites.contract.test.js',
+    `import { test, describe } from 'node:test';
+describe('throwing suite', () => { throw new Error('boom'); });
+describe('skipped suite', { skip: true }, () => { test('R1.1 hidden', () => {}); });
+test('R1.2 fine', () => {});
+`,
+  );
+  const byName = Object.fromEntries(results.map((r) => [r.name, r.result]));
+  assert.equal(byName['throwing suite'], 'fail');
+  assert.equal(byName['skipped suite'], 'fail');
+  assert.equal(byName['R1.2 fine'], 'pass');
+});
+
+test('R4.12 a failing test inside a describe is reported once, by its own name', () => {
+  const results = runOne(
+    'nested.contract.test.js',
+    `import { test, describe } from 'node:test';
+import assert from 'node:assert/strict';
+describe('group', () => {
+  test('R1.1 bad', () => { assert.fail('no'); });
+  test('R1.2 good', () => {});
+});
+`,
+  );
+  assert.deepEqual(
+    results.map((r) => [r.name, r.result]).sort(),
+    [['R1.1 bad', 'fail'], ['R1.2 good', 'pass']],
+  );
+});
+
+test('R4.11 a contract named after its own file stem is a normal contract, not a load failure', () => {
+  const results = runOne(
+    'hello.contract.test.js',
+    `import { test } from 'node:test';
+test('hello', () => {});
+test('hello.contract.test.js', () => {});
+`,
+  );
+  assert.deepEqual(
+    results.map((r) => [r.name, r.result]).sort(),
+    [['hello', 'pass'], ['hello.contract.test.js', 'pass']],
+  );
+});
+
+test('R4.12 recorded names are matched per contract file, not across files', () => {
+  const cwd = tmpCwd();
+  try {
+    writeReq(cwd, 'demo', '# Demo\n');
+    const mk = (title) => `import { test } from 'node:test';
+test('${title}', () => {});
+`;
+    writeContract(cwd, 'demo', 'a.contract.test.js', mk('R1.1 in a'));
+    writeContract(cwd, 'demo', 'b.contract.test.js', mk('R9.9 shared name'));
+    const a = contractEntry(cwd, 'contracts/demo/a.contract.test.js');
+    const b = contractEntry(cwd, 'contracts/demo/b.contract.test.js');
+    // file a claims to define "R9.9 shared name" but only file b does
+    const lock = buildLock(cwd, 'demo', [
+      { ...a, names: ['R1.1 in a', 'R9.9 shared name'] },
+      { ...b, names: ['R9.9 shared name'] },
+    ]);
+    const results = runContracts(cwd, 'demo', lock);
+    const entry = (file, name) => results.find((r) => r.path === `contracts/demo/${file}` && r.name === name);
+    assert.equal(entry('a.contract.test.js', 'R1.1 in a').result, 'pass');
+    assert.equal(entry('a.contract.test.js', 'R9.9 shared name').result, 'fail', 'missing from a');
+    assert.equal(entry('b.contract.test.js', 'R9.9 shared name').result, 'pass');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.12 a lock that lists the same file twice runs it once and reports each contract once', () => {
+  const cwd = tmpCwd();
+  try {
+    writeReq(cwd, 'demo', '# Demo\n');
+    writeContract(cwd, 'demo', 'passing.contract.test.js', PASSING);
+    const e = contractEntry(cwd, 'contracts/demo/passing.contract.test.js');
+    const lock = buildLock(cwd, 'demo', [
+      { ...e, names: ['R1.1 passing contract'] },
+      { ...e, names: ['R1.2 another passing contract'] },
+    ]);
+    const results = runContracts(cwd, 'demo', lock);
+    assert.deepEqual(results.map((r) => r.name).sort(), ['R1.1 passing contract', 'R1.2 another passing contract']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
