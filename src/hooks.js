@@ -7,12 +7,30 @@ import { buildReceipt, writeReceipt } from './receipts.js';
 
 const ALLOW = Object.freeze({ exitCode: 0, stdout: '', stderr: '' });
 
-// Req 3.6: only these tools are known to be read-only. Any other tool is treated
-// as a write when one of its input fields names a protected path.
-const READ_ONLY_TOOLS = new Set(['read_file', 'list_directory', 'grep', 'glob']);
+// Req 3.6: only these tools are known to be read-only: Kiro's documented read
+// tools (read_file, list_directory, file_search, grep_search) and the CLI 2.x
+// names (grep, glob). Any other tool is treated as a write when one of its input
+// fields names a protected path.
+const READ_ONLY_TOOLS = new Set([
+  'read_file',
+  'list_directory',
+  'file_search',
+  'grep_search',
+  'grep',
+  'glob',
+]);
 
-// For the two write tools whose shape is known, these fields hold file content,
-// not paths. For every other tool all fields are checked.
+// Req 3.12: every Kiro shell tool is handled like execute_bash.
+const SHELL_TOOLS = new Set(['execute_bash', 'execute_pwsh', 'control_bash_process', 'control_pwsh_process']);
+
+// Write tools that put file content in their input. For these, the content
+// fields hold text, not paths. For every other tool all fields are checked.
+// delete_file has no content; its path field is `targetFile`.
+const CONTENT_WRITE_TOOLS = new Set(['fs_write', 'str_replace', 'fs_append']);
+
+// Write tools whose `path` (or, for delete_file, `targetFile`) can name a tasks.md.
+const TASK_WRITE_TOOLS = new Set(['fs_write', 'str_replace', 'fs_append', 'delete_file']);
+
 const CONTENT_FIELDS = new Set(['text', 'oldStr', 'newStr']);
 
 // Req 3.11: a string longer than this, or one holding a NUL character, cannot be
@@ -132,7 +150,7 @@ function frozenKeys(cwd, resolve) {
 function findProtected(cwd, toolName, toolInput) {
   const resolve = projectResolver(cwd);
   const frozen = frozenKeys(cwd, resolve);
-  const knownWriteTool = toolName === 'fs_write' || toolName === 'str_replace';
+  const knownWriteTool = CONTENT_WRITE_TOOLS.has(toolName);
   for (const candidate of pathCandidates(toolInput, knownWriteTool ? CONTENT_FIELDS : null)) {
     const hit = resolve(candidate);
     if (!hit) continue;
@@ -147,8 +165,8 @@ function findProtected(cwd, toolName, toolInput) {
 // shell command are not paths, so they may be long.
 function hasUncheckableString(toolName, toolInput) {
   const skip = new Set();
-  if (toolName === 'fs_write' || toolName === 'str_replace') for (const f of CONTENT_FIELDS) skip.add(f);
-  if (toolName === 'execute_bash') skip.add('command');
+  if (CONTENT_WRITE_TOOLS.has(toolName)) for (const f of CONTENT_FIELDS) skip.add(f);
+  if (SHELL_TOOLS.has(toolName)) skip.add('command');
   const bad = (value, top) => {
     if (typeof value === 'string') return value.length > MAX_PATH_STRING || value.includes('\0');
     if (Array.isArray(value)) return value.some((v) => bad(v, false));
@@ -245,7 +263,8 @@ function canonicalSpec(cwd, name) {
 // (exact is false), counting [x] marks anywhere in it, so the check errs
 // towards treating it as a tick (Req 4.13).
 function taskEdit(cwd, toolName, toolInput) {
-  const p = toolInput && toolInput.path;
+  // delete_file names its file in `targetFile`; the other write tools use `path`.
+  const p = toolInput && (toolName === 'delete_file' ? toolInput.targetFile : toolInput.path);
   if (typeof p !== 'string') return null;
   const hit = projectResolver(cwd)(p);
   if (!hit) return null;
@@ -263,6 +282,17 @@ function taskEdit(cwd, toolName, toolInput) {
   if (toolName === 'fs_write') {
     if (typeof toolInput.text !== 'string') return null;
     return { spec, before: disk, after: toolInput.text, exact: true };
+  }
+  // Req 3.13: fs_append adds its text to the end of the file, on a new line when
+  // the file does not end with one (and creates the file when it is missing).
+  if (toolName === 'fs_append') {
+    if (typeof toolInput.text !== 'string') return null;
+    const gap = disk !== '' && !disk.endsWith('\n') ? '\n' : '';
+    return { spec, before: disk, after: disk + gap + toolInput.text, exact: true };
+  }
+  // Req 3.13: delete_file removes the file, which ticks nothing.
+  if (toolName === 'delete_file') {
+    return { spec, before: disk, after: '', exact: true };
   }
   if (toolName === 'str_replace') {
     const { oldStr, newStr } = toolInput;
@@ -377,7 +407,7 @@ export function handlePreToolUse(payload) {
 
   // Req 3.8: before a shell command runs, record each frozen spec's current
   // tasks.md as the state to compare with afterwards, replacing any earlier record.
-  if (toolName === 'execute_bash') {
+  if (SHELL_TOOLS.has(toolName)) {
     const lock = readLock(cwd);
     for (const spec of Object.keys(lock.specs || {})) {
       const current = readText(tasksFile(cwd, spec));
@@ -387,7 +417,7 @@ export function handlePreToolUse(payload) {
   }
 
   // Req 4: if this edit marks a task done, gate it on the frozen contracts.
-  if (toolName === 'str_replace' || toolName === 'fs_write') {
+  if (TASK_WRITE_TOOLS.has(toolName)) {
     const edit = taskEdit(cwd, toolName, toolInput);
     if (edit) {
       if (newlyTicked(edit.before, edit.after)) {
@@ -514,8 +544,8 @@ function checkShellTicks(cwd, lock) {
 
 // Req 3.10: after a write to a frozen spec's tasks.md has been applied, record the
 // file as it is on disk, not as the hook predicted it before the write.
-function recordWrittenTasks(cwd, toolInput) {
-  const p = toolInput && toolInput.path;
+function recordWrittenTasks(cwd, toolName, toolInput) {
+  const p = toolInput && (toolName === 'delete_file' ? toolInput.targetFile : toolInput.path);
   if (typeof p !== 'string' || p === '' || p.includes('\0')) return;
   const hit = projectResolver(cwd)(p);
   if (!hit) return;
@@ -527,20 +557,20 @@ function recordWrittenTasks(cwd, toolInput) {
   if (current !== null) recordState(cwd, spec, current);
 }
 
-// PostToolUse: after execute_bash, restore any frozen file whose SHA-256 changed
+// PostToolUse: after a shell tool (Req 3.12), restore any frozen file whose SHA-256 changed
 // back from its content-addressed copy in .necro/frozen/<hash> (Req 3.3), and
 // undo a task tick that the contracts do not support (Req 3.7).
 //
-// After fs_write or str_replace, record the tasks.md of a frozen spec from the file
+// After fs_write, str_replace, fs_append or delete_file, record the tasks.md of a frozen spec from the file
 // on disk (Req 3.10).
 export function handlePostToolUse(payload) {
   const cwd = payload.cwd;
   const toolName = payload.tool_name;
-  if (cwd && (toolName === 'fs_write' || toolName === 'str_replace')) {
-    recordWrittenTasks(cwd, payload.tool_input);
+  if (cwd && TASK_WRITE_TOOLS.has(toolName)) {
+    recordWrittenTasks(cwd, toolName, payload.tool_input);
     return { exitCode: 0, stdout: '', stderr: '' };
   }
-  if (!cwd || toolName !== 'execute_bash') {
+  if (!cwd || !SHELL_TOOLS.has(toolName)) {
     return { exitCode: 0, stdout: '', stderr: '' };
   }
 

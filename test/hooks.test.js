@@ -534,17 +534,17 @@ test('R3.6 an unknown tool is blocked when any input field names a protected pat
   }
 });
 
-test('R3.6 only read_file, list_directory, grep and glob may touch a protected path', () => {
+test('R3.6 only the documented read tools may touch a protected path', () => {
   const cwd = tmpCwd();
   try {
     setupFrozen(cwd, 'demo');
-    for (const tool of ['read_file', 'list_directory', 'grep', 'glob']) {
-      const res = preBlocked(cwd, tool, { path: FROZEN_CONTRACT_REL, pattern: '.necro/lock.json' });
+    for (const tool of ['read_file', 'list_directory', 'file_search', 'grep_search', 'grep', 'glob']) {
+      const res = preBlocked(cwd, tool, { path: FROZEN_CONTRACT_REL, pattern: '.necro/lock.json', query: '.necro/lock.json' });
       assert.equal(res.exitCode, 0, `${tool} is allowed`);
       assert.equal(res.stderr, '');
     }
     // any other tool name, even one that sounds read-only, is treated as a write
-    for (const tool of ['grep_search', 'file_search', 'view_file']) {
+    for (const tool of ['code', 'view_file', 'search_files']) {
       const res = preBlocked(cwd, tool, { path: FROZEN_CONTRACT_REL });
       assert.equal(res.exitCode, 2, `${tool} is not a known read-only tool`);
     }
@@ -1925,6 +1925,236 @@ test('R1.1 uses the dependency', () => { assert.equal(ok, true); });
     const res = handlePreToolUse(payload(cwd, 'str_replace', tickEdit(U1, tick(U1))));
     assert.equal(res.exitCode, 2);
     assert.match(res.stderr, /R1\.1 uses the dependency/);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Task 14: Kiro's real tool names, in the IDE too (Req 3.6, 3.12, 3.13, 8.5)
+// ---------------------------------------------------------------------------
+
+test('R3.6 file_search and grep_search on a frozen path are allowed; code and unknown tools are not', () => {
+  const cwd = tmpCwd();
+  try {
+    setupFrozen(cwd, 'demo');
+    const absFrozen = path.join(cwd, FROZEN_CONTRACT_REL);
+    for (const [tool, input] of [
+      ['file_search', { query: 'hello.contract.test.js', explanation: 'find it' }],
+      ['file_search', { query: FROZEN_CONTRACT_REL, includeIgnoredFiles: 'yes' }],
+      ['grep_search', { query: 'test', includePattern: FROZEN_CONTRACT_REL }],
+      ['grep_search', { query: '.necro/lock.json', includePattern: '.necro/**', note: TOO_LONG }],
+    ]) {
+      const res = preBlocked(cwd, tool, input);
+      assert.deepEqual(res, { exitCode: 0, stdout: '', stderr: '' }, `${tool} is allowed`);
+    }
+    for (const [tool, input] of [
+      ['code', { operation: 'rename_symbol', file_path: absFrozen, row: 1, column: 1, new_name: 'x' }],
+      ['code', { operation: 'format_code', file_path: FROZEN_CONTRACT_REL }],
+      ['code', { operation: 'pattern_rewrite', path: '.necro/lock.json', pattern: 'a', replacement: 'b' }],
+      ['brand_new_tool', { target: FROZEN_CONTRACT_REL }],
+    ]) {
+      const res = preBlocked(cwd, tool, input);
+      assert.equal(res.exitCode, 2, `${tool} ${JSON.stringify(input)} is blocked`);
+      assert.notEqual(res.stderr, '');
+    }
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+const SHELL_CALLS = [
+  ['execute_bash', { command: 'sed -i s/a/b/ tasks.md' }],
+  ['execute_pwsh', { command: '(Get-Content tasks.md) -replace "a","b" | Set-Content tasks.md' }],
+  ['control_bash_process', { action: 'input', processId: '7', input: 'sed -i s/a/b/ tasks.md\n' }],
+  ['control_pwsh_process', { action: 'input', processId: '7', input: 'Set-Content tasks.md x\n' }],
+];
+
+function shellPostPayload(cwd, toolName, toolInput) {
+  return { session_id: 's-test', hook_event_name: 'PostToolUse', cwd, tool_name: toolName, tool_input: toolInput };
+}
+
+test('R3.12 a tick made through any Kiro shell tool is checked like execute_bash', () => {
+  for (const [tool, input] of SHELL_CALLS) {
+    const cwd = tmpCwd();
+    try {
+      frozenWithFailingContract(cwd);
+      const pre = handlePreToolUse(payload(cwd, tool, input));
+      assert.deepEqual(pre, { exitCode: 0, stdout: '', stderr: '' }, `${tool} is allowed before it runs`);
+      assert.equal(readState(cwd), TASKS_TWO, `${tool}: the state is recorded before the call`);
+
+      fs.writeFileSync(tasksPath(cwd), '- [x] 1. Task one\n- [ ] 2. Task two\n');
+      const res = handlePostToolUse(shellPostPayload(cwd, tool, input));
+      assert.equal(res.exitCode, 0);
+      assert.equal(fs.readFileSync(tasksPath(cwd), 'utf8'), TASKS_TWO, `${tool}: tasks.md is restored`);
+      assert.ok(res.stderr.includes('R1.2 failing contract'), `${tool}: names the failing contract: ${res.stderr}`);
+      assert.equal(receiptCount(cwd), 0);
+    } finally {
+      fs.rmSync(cwd, { recursive: true, force: true });
+    }
+  }
+});
+
+test('R3.12 a shell tick that the contracts support is kept and receipted for every shell tool', () => {
+  for (const [tool, input] of SHELL_CALLS) {
+    const cwd = tmpCwd();
+    try {
+      setupFrozen(cwd, 'demo');
+      writeTasks(cwd, 'demo', TASKS_TWO);
+      handlePreToolUse(payload(cwd, tool, input));
+      const ticked = '- [x] 1. Task one\n- [ ] 2. Task two\n';
+      fs.writeFileSync(tasksPath(cwd), ticked);
+      const res = handlePostToolUse(shellPostPayload(cwd, tool, input));
+      assert.equal(res.stderr, '', tool);
+      assert.equal(fs.readFileSync(tasksPath(cwd), 'utf8'), ticked, tool);
+      assert.equal(receiptCount(cwd), 1, `${tool}: a receipt was written`);
+    } finally {
+      fs.rmSync(cwd, { recursive: true, force: true });
+    }
+  }
+});
+
+test('R3.12 a frozen file changed through any Kiro shell tool is restored', () => {
+  for (const [tool, input] of SHELL_CALLS) {
+    const cwd = tmpCwd();
+    try {
+      setupFrozen(cwd, 'demo');
+      const file = path.join(cwd, FROZEN_CONTRACT_REL);
+      fs.writeFileSync(file, 'tampered');
+      const res = handlePostToolUse(shellPostPayload(cwd, tool, input));
+      assert.equal(fs.readFileSync(file, 'utf8'), CONTRACT, `${tool}: restored`);
+      assert.ok(res.stderr.includes(FROZEN_CONTRACT_REL), `${tool}: names the file`);
+    } finally {
+      fs.rmSync(cwd, { recursive: true, force: true });
+    }
+  }
+});
+
+test('R3.12 a shell tool naming a protected path is blocked, and a long command is not', () => {
+  const cwd = tmpCwd();
+  try {
+    setupFrozen(cwd, 'demo');
+    for (const tool of ['execute_pwsh', 'control_bash_process', 'control_pwsh_process']) {
+      assert.equal(preBlocked(cwd, tool, { cwd: FROZEN_CONTRACT_REL, command: 'ls' }).exitCode, 2, tool);
+      assert.equal(preBlocked(cwd, tool, { command: `echo ${TOO_LONG}` }).exitCode, 0, `${tool} long command`);
+      assert.equal(preBlocked(cwd, tool, { command: 'a\0b' }).exitCode, 0, `${tool} NUL in command`);
+    }
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.12 PostToolUse for a non-shell, non-write tool stays silent', () => {
+  const cwd = tmpCwd();
+  try {
+    frozenWithFailingContract(cwd);
+    fs.writeFileSync(tasksPath(cwd), '- [x] 1. Task one\n- [ ] 2. Task two\n');
+    for (const tool of ['read_file', 'file_search', 'grep_search', 'code']) {
+      const res = handlePostToolUse(shellPostPayload(cwd, tool, { path: TASKS_REL }));
+      assert.deepEqual(res, { exitCode: 0, stdout: '', stderr: '' }, tool);
+    }
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.13 an fs_append that adds a ticked task line runs the gate', () => {
+  const cwd = frozenFailingWithTasks(TASKS_TWO);
+  try {
+    assertGated(handlePreToolUse(payload(cwd, 'fs_append', { path: TASKS_REL, text: '- [x] 3. Task three\n' })));
+    assert.ok(detectTaskDone(cwd, 'fs_append', { path: TASKS_REL, text: '- [x] 3. Task three\n' }));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.13 an fs_append to tasks.md with no final newline starts a new line, and creates a missing file', () => {
+  let cwd = frozenFailingWithTasks('- [ ] 1. Task one');
+  try {
+    assertGated(handlePreToolUse(payload(cwd, 'fs_append', { path: TASKS_REL, text: '- [x] 2. Task two\n' })));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+  cwd = frozenFailingWithTasks(null);
+  try {
+    assertGated(handlePreToolUse(payload(cwd, 'fs_append', { path: TASKS_REL, text: '- [x] 1. Task one\n' })));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.13 an fs_append that ticks no task stays silent, even with long or odd text', () => {
+  const cwd = frozenFailingWithTasks(TASKS_TWO);
+  try {
+    for (const text of ['- [ ] 3. Task three\n', 'Notes\n', `${'line\n'.repeat(50000)}`, 'a\0b', '.necro/lock.json']) {
+      const res = handlePreToolUse(payload(cwd, 'fs_append', { path: TASKS_REL, text }));
+      assert.deepEqual(res, { exitCode: 0, stdout: '', stderr: '' }, JSON.stringify(text.slice(0, 20)));
+    }
+    // a path that is not tasks.md is not gated, whatever it holds
+    const other = handlePreToolUse(payload(cwd, 'fs_append', { path: 'notes.md', text: '- [x] 1. Task one\n' }));
+    assert.equal(other.exitCode, 0);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.13 an fs_append that ticks a task is allowed and receipted when the contracts pass', () => {
+  const cwd = tmpCwd();
+  try {
+    setupFrozen(cwd, 'demo');
+    writeTasks(cwd, 'demo', TASKS_TWO);
+    const res = handlePreToolUse(payload(cwd, 'fs_append', { path: TASKS_REL, text: '- [x] 3. Task three\n' }));
+    assert.equal(res.exitCode, 0);
+    assert.equal(receiptCount(cwd), 1);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.13 fs_append and delete_file on a frozen file or .necro/ are blocked', () => {
+  const cwd = tmpCwd();
+  try {
+    setupFrozen(cwd, 'demo');
+    for (const [tool, input] of [
+      ['fs_append', { path: FROZEN_CONTRACT_REL, text: 'x' }],
+      ['fs_append', { path: '.necro/lock.json', text: 'x' }],
+      ['delete_file', { explanation: 'tidy', targetFile: FROZEN_CONTRACT_REL }],
+      ['delete_file', { explanation: 'tidy', targetFile: '.necro/lock.json' }],
+    ]) {
+      assert.equal(preBlocked(cwd, tool, input).exitCode, 2, `${tool} ${JSON.stringify(input)}`);
+    }
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.13 delete_file on tasks.md is a write to tasks.md: it ticks nothing, and the state is not lost', () => {
+  const cwd = frozenFailingWithTasks(TASKS_TWO);
+  try {
+    const input = { explanation: 'remove tasks', targetFile: TASKS_REL };
+    assert.equal(detectTaskDone(cwd, 'delete_file', input), false);
+    assert.deepEqual(handlePreToolUse(payload(cwd, 'delete_file', input)), { exitCode: 0, stdout: '', stderr: '' });
+    fs.rmSync(tasksPath(cwd));
+    assert.deepEqual(handlePostToolUse(writePostPayload(cwd, 'delete_file', input)), { exitCode: 0, stdout: '', stderr: '' });
+    // writing it back with a tick is still gated
+    assertGated(handlePreToolUse(payload(cwd, 'fs_write', { path: TASKS_REL, text: '- [x] 1. Task one\n' })));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.13 PostToolUse after an fs_append on tasks.md records the file on disk', () => {
+  const cwd = tmpCwd();
+  try {
+    setupFrozen(cwd, 'demo');
+    writeTasks(cwd, 'demo', TASKS_TWO);
+    const edit = { path: TASKS_REL, text: '- [ ] 3. Task three\n' };
+    assert.equal(handlePreToolUse(payload(cwd, 'fs_append', edit)).exitCode, 0);
+    assert.equal(readState(cwd), null, 'nothing is recorded before the write has landed');
+    fs.appendFileSync(tasksPath(cwd), edit.text);
+    const post = handlePostToolUse(writePostPayload(cwd, 'fs_append', edit));
+    assert.deepEqual(post, { exitCode: 0, stdout: '', stderr: '' });
+    assert.equal(readState(cwd), `${TASKS_TWO}${edit.text}`);
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }

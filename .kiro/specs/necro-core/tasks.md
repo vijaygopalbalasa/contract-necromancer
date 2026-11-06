@@ -78,7 +78,7 @@ Each task writes its test first, then the implementation, then runs `node --test
   - Test first: freeze records each task's line text (2.8); ticking a line that reuses an easy task's id and criteria with different text, a duplicated id, and a tick that leaves only added (not frozen) task lines unticked all require every contract (4.16); a contract file that fails to load while holding a required contract blocks the tick (4.17). Run each test against the current code and see it fail first.
   - Implement: update `src/lock.js` and `src/hooks.js`. Run `npm test` and pass.
 
-- [ ] 14. **Kiro's real tool names, in the IDE too** (Req 3.6, 3.12, 3.13, 8.5)
+- [x] 14. **Kiro's real tool names, in the IDE too** (Req 3.6, 3.12, 3.13, 8.5)
   - Test first: `file_search` and `grep_search` on a frozen path are allowed, `code` and any unknown tool are not (3.6); a tick made through `execute_pwsh` or `control_bash_process` is checked like `execute_bash` (3.12); an `fs_append` that adds a ticked task line runs the gate (3.13); `necro init` writes a PostToolUse matcher covering every write and shell tool (8.5). Run each test against the current code and see it fail first.
   - Implement: update `src/hooks.js` and `templates/necromancer.hooks.json`. Run `npm test` and pass.
 

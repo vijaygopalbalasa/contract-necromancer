@@ -1,0 +1,94 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=8
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Let me see the existing tests I'll model on (R3.6, R3.7 shell tick, R3.11, R4.13, R3.10).
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Append to File
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 14 is implemented and ticked `[x]` in `.kiro/specs/necro-core/tasks.md`. For each bullet I wrote the test first and ran it against the old code to watch it fail, then changed the code. `npm test` now passes: 205 tests, 0 failures, up from 192 before I started.
+
+One change you didn't ask for: `.kiro/specs/receipt-viewer/tasks.md` shows as modified in `git status`. It wasn't modified when I started, and I didn't touch it. The diff adds Req 2.3 to task 9. Something else changed it during the session, so check where that edit came from before you commit.
+
+- **3.6, read tools:** `file_search` and `grep_search` are now read-only alongside `read_file`, `list_directory`, `grep` and `glob`. `code` and unknown tools are still blocked when they name a protected path. I rewrote the existing R3.6 test that asserted the old behaviour, because it expected `file_search` and `grep_search` to be blocked.
+- **3.12, shell tools:** `execute_bash`, `execute_pwsh`, `control_bash_process` and `control_pwsh_process` now all get the same treatment. That means state recording before the call, frozen-file restore and tick checks after it, and no length limit on `command`.
+- **3.13, `fs_append` and `delete_file`:**
+  - An `fs_append` to a `tasks.md` is gated on the file it would produce. That is the disk file, plus a newline if it doesn't end with one, plus the text. If the file is missing, it is treated as empty.
+  - `fs_append` text is treated as file content, so long or NUL text and text like `.necro/lock.json` don't trip the path check.
+  - `delete_file` names its file in `targetFile`, not `path`, so I handled that field. Deleting `tasks.md` ticks nothing.
+  - PostToolUse records the on-disk `tasks.md` state after both tools.
+- **8.5, hooks template:** the PostToolUse matcher in `templates/necromancer.hooks.json` now lists all four shell tools and `fs_write`, `str_replace`, `fs_append` and `delete_file`. The tests also check that it doesn't match `code` or the read tools.
+
+I also updated the "protected paths" clarification in `design.md` and added a short section for 3.12, 3.13 and 8.5, since the old text still listed only four read tools. I didn't touch any `requirements.md`, `contracts/` or `.necro/`.
+
+I assumed `control_bash_process` and `control_pwsh_process` take a `command` field like the other shell tools, because I couldn't find their input shape. A long `input` string on those two would still be blocked by the 4096-character check.
+
+The code changes are in `src/hooks.js`. The new tests are in `test/hooks.test.js` and `test/cli.test.js`.

@@ -118,7 +118,17 @@ function assertPostMatcher(config, label) {
   for (const tool of ['execute_bash', 'fs_write', 'str_replace']) {
     assert.ok(matcherMatches(post[0].matcher, tool), `${label}: PostToolUse hook must match ${tool}`);
   }
-  for (const tool of ['read_file', 'grep', 'glob', 'list_directory']) {
+  // Req 8.5: every write and shell tool named in Requirement 3.
+  for (const tool of [
+    'execute_pwsh',
+    'control_bash_process',
+    'control_pwsh_process',
+    'fs_append',
+    'delete_file',
+  ]) {
+    assert.ok(matcherMatches(post[0].matcher, tool), `${label}: PostToolUse hook must match ${tool}`);
+  }
+  for (const tool of ['read_file', 'grep', 'glob', 'list_directory', 'file_search', 'grep_search', 'code']) {
     assert.ok(!matcherMatches(post[0].matcher, tool), `${label}: PostToolUse hook must not match ${tool}`);
   }
   assert.equal(post[0].action.command, 'necro hook post');

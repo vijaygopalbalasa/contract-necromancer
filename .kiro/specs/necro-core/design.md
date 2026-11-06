@@ -396,9 +396,19 @@ are exempt, so large files and long shell commands still go through.
 ## Clarification (protected paths, Req 3.5 and 3.6)
 A tool path is resolved the way the operating system would (links followed, including links in the middle of the path
 and links to files that do not exist yet; the nearest existing parent for a new file) and compared with `.necro/` and
-the frozen paths ignoring letter case and Unicode normal form. Every tool other than `read_file`, `list_directory`,
-`grep` and `glob` is blocked when any string in its input names a protected path. For `fs_write` and `str_replace` the
-`text`, `oldStr` and `newStr` fields are file content and are not checked as paths.
+the frozen paths ignoring letter case and Unicode normal form. Every tool other than the read tools (`read_file`,
+`list_directory`, `file_search`, `grep_search`, and the CLI 2.x names `grep` and `glob`) is blocked when any string in
+its input names a protected path, so `code` and unknown tools are blocked. For `fs_write`, `str_replace` and
+`fs_append` the `text`, `oldStr` and `newStr` fields are file content and are not checked as paths. `delete_file`
+names its file in `targetFile`, which is checked like any path.
+
+## Clarification (Kiro's tool names, Req 3.12, 3.13, 8.5)
+All four Kiro shell tools (`execute_bash`, `execute_pwsh`, `control_bash_process`, `control_pwsh_process`) get the
+`execute_bash` treatment: PreToolUse records the task state, PostToolUse restores frozen files and checks ticks, and
+the `command` field is exempt from the length and NUL check. `fs_append` and `delete_file` are write tools for
+`tasks.md`. An `fs_append` is gated on the file it would produce (the disk file, a newline if it does not end with
+one, then the text); a `delete_file` ticks nothing. PostToolUse records the state after all four write tools. The
+PostToolUse matcher in `templates/necromancer.hooks.json` lists every shell tool and every write tool.
 
 ## Clarification (fail closed on ticks, strict verify, Req 4.13 and 6.7)
 A task line is an optional list marker followed by a checkbox, so `[x] text` without a marker counts. A write to
