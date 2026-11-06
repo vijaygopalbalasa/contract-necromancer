@@ -63,6 +63,7 @@ receipts anyone can re-run.
 14. WHEN a task is being marked done THE SYSTEM SHALL run every frozen contract of the spec and treat as required the contracts whose names start with one of the criteria the lock records for that task id (`R1.2` followed by a space or the end of the name).
 15. IF the ticked task id is not in the lock, or its line in `tasks.md` now names different criteria than the lock records, or the lock records no criteria for it, or no contract matches its criteria, or it is the last unticked task of the spec THEN THE SYSTEM SHALL treat every contract as required.
 16. IF the ticked line's text after the checkbox differs from the text the lock records for its id, or its id appears on more than one line of `tasks.md`, or after the tick every task the lock records is ticked or missing THEN THE SYSTEM SHALL treat every contract as required (the count of unticked tasks comes from the lock's tasks, never from lines added later).
+18. WHEN the gate decides whether a frozen task is still unticked THE SYSTEM SHALL count only an unticked line whose id appears on exactly one line and whose text equals the text the lock records for that id.
 17. IF a contract file that holds a required contract fails to load or run as a whole THEN THE SYSTEM SHALL treat that failure as a failing required contract.
 
 ## Requirement 5: Receipts
