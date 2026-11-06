@@ -63,6 +63,7 @@ receipts anyone can re-run.
 1. WHEN a receipt is written THE SYSTEM SHALL include the spec name, the git commit if available, the SHA-256 of requirements.md, of each contract file, and of each project source file the contracts import, and the pass or fail result of each contract by name.
 2. WHEN a receipt is written THE SYSTEM SHALL set `receiptHash` to the SHA-256 of the canonical JSON of the receipt without the `receiptHash` and `createdAt` fields.
 3. WHEN two receipts are made from identical inputs THE SYSTEM SHALL produce the same `receiptHash`.
+4. WHEN a receipt is written in a git repository THE SYSTEM SHALL record in `uncommitted` the sorted list of pinned paths whose content differs from that file at the recorded commit (or that the commit lacks), and an empty list when every pinned file matches the commit.
 
 ## Requirement 6: Verify
 **User story:** As anyone with the repository, I want to re-run a receipt, so that I do not have to trust the agent or the author.

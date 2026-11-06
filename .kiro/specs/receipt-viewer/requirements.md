@@ -29,6 +29,7 @@ Honest limit shown on the page: contracts re-run in Node with `necro verify`; th
 ### Acceptance criteria
 1. WHEN a user enters a public GitHub repository (owner/name) THE SYSTEM SHALL fetch each pinned file at the receipt's commit from raw.githubusercontent.com, hash it, and mark each file as matching or different.
 2. IF the receipt has no git commit THEN THE SYSTEM SHALL say the file check needs a commit.
+3. WHEN a pinned file is listed in the receipt's `uncommitted` THE SYSTEM SHALL mark it as not in the commit yet (not as different) and say that committing the work and re-running the gate gives a fully public check.
 
 ## Requirement 5: Re-run locally
 **User story:** As a reviewer, I want the exact command to re-run the contracts, so that I do not need to trust the page.
