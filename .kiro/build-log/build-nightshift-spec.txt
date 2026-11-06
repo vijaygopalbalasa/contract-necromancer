@@ -1,0 +1,51 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=11
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+I wrote `design.md` and `tasks.md` in `.kiro/specs/planner/`. `requirements.md` is unchanged. I ran no tests, because no code exists yet. Before writing the design I checked a few time zone facts on Node 24 (offsets, DST dates, Lord Howe's 30-minute gap).
+
+**`design.md`**
+- **`src/` modules:** `zones`, `input`, `resolve`, `night`, `guests`, `kinder`, `page`, `contrast`.
+- **Page logic:** `buildView(search)` in `src/page.js` returns a view model that `site/main.js` renders with `textContent`. Page logic can be tested in Node and the link values are never injected as HTML.
+- **Messages and tests:** the design lists the exact user-facing sentences and a table of which test file covers which requirement.
+
+**`tasks.md`**
+- It has 8 tasks, and each one writes its tests first and names its criteria as (Req x.y).
+- The order is zone primitives, validation, resolve, guest rows with dead-of-night marking, kinder time, page view model, contrast helper with stylesheet, then markup and rendering.
+- The last task includes a manual check that nothing scrolls sideways at 320px width. Node tests can't check that, so it will be reported as manual.
+
+**Decisions to confirm** (the requirements are silent on these; the design also lists them at the end)
+1. I added an optional `pick=earlier|later` query parameter. Without it the choice in Req 1.3 would be lost when the page reloads, and a link without it behaves exactly as Req 4.1 describes.
+2. A guest zone that isn't valid refuses the whole plan with a sentence naming it, rather than silently dropping that guest.
+3. The host is not counted as a guest unless the host's zone is also in `guests`. Dead-of-night counts and the kinder time use only the listed guests.
+4. Rows sort by local date and time together, not by time of day alone.
+5. The kinder time shows up as a link on the page when it beats the current start.
+6. The day label becomes "2 days before/after" when the real gap is two days. That can happen between UTC+14 and UTC−12.
+
+Node 24 also accepts offset strings like `+05:30` as a time zone. The design rejects those, since Req 1.4 asks for IANA names.

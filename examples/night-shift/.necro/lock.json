@@ -1,0 +1,115 @@
+{
+  "specs": {
+    "planner": {
+      "contracts": [
+        {
+          "name": "req1-start-time",
+          "names": [
+            "R1.1 turns a local date, time and zone into the single UTC instant",
+            "R1.2 refuses a local time skipped by clocks jumping forward, naming the skipped range",
+            "R1.3 requires a choice when a local time happens twice, and returns the instant for the choice",
+            "R1.4 refuses an invalid date, time or zone with one plain sentence saying which one"
+          ],
+          "path": "contracts/planner/req1-start-time.contract.test.js",
+          "sha256": "d0b924d61d83a23f8f0bc49926a3544fd399f975acef480fad3ba19de57743be"
+        },
+        {
+          "name": "req2-guest-times",
+          "names": [
+            "R2.1 gives each guest the local date, local HH:MM and UTC offset at the start instant",
+            "R2.2 says whether a guest is on the day before or the day after the host",
+            "R2.3 orders guests by local time at the start instant, earliest first, ties by zone name"
+          ],
+          "path": "contracts/planner/req2-guest-times.contract.test.js",
+          "sha256": "4959865c33757c22c1690a3be8eeefcdcea6acc23d8b312e47c1a8db0395c7b4"
+        },
+        {
+          "name": "req3-dead-of-night",
+          "names": [
+            "R3.1 marks a guest whose local start is from 00:00 up to but not including 06:00",
+            "R3.2 returns the on-the-hour start on the host date with the fewest dead-of-night guests, earliest on ties"
+          ],
+          "path": "contracts/planner/req3-dead-of-night.contract.test.js",
+          "sha256": "ccacc610c393a5b94ac82a83a142398c4fe5d14682e61972fb83e68bf51ca136"
+        },
+        {
+          "name": "req4-page",
+          "names": [
+            "R4.1 shows the party start for every guest in the link, using the same src/ functions as the tests",
+            "R4.2 shows a dead-of-night row with a ghost marker and the words \"dead of night\"",
+            "R4.3 uses a dark AA-contrast theme, no external assets, a phone-width layout and no animation under reduced motion"
+          ],
+          "path": "contracts/planner/req4-page.contract.test.js",
+          "sha256": "b5a73ae9a0f7b19b810f02ddd6a204bf26f3b203a8d310548c944dd897fa39cf"
+        }
+      ],
+      "frozenAt": "2026-11-06T23:51:08.337Z",
+      "requirements": {
+        "path": ".kiro/specs/planner/requirements.md",
+        "sha256": "2684df9934b058fa4bc7af4dd35d16abf9936c8ccf1ae2370a3cf16ec51cbd12"
+      },
+      "tasks": {
+        "1": {
+          "criteria": [
+            "1.4",
+            "2.1"
+          ],
+          "text": "1. Zone primitives"
+        },
+        "2": {
+          "criteria": [
+            "1.4"
+          ],
+          "text": "2. Input validation"
+        },
+        "3": {
+          "criteria": [
+            "1.1",
+            "1.2",
+            "1.3"
+          ],
+          "text": "3. Local time to UTC instant"
+        },
+        "4": {
+          "criteria": [
+            "2.1",
+            "2.2",
+            "2.3",
+            "3.1"
+          ],
+          "text": "4. Guest rows, day labels, ordering and dead-of-night marking"
+        },
+        "5": {
+          "criteria": [
+            "3.2"
+          ],
+          "text": "5. Kinder time"
+        },
+        "6": {
+          "criteria": [
+            "1.2",
+            "1.3",
+            "1.4",
+            "4.1",
+            "4.2"
+          ],
+          "text": "6. Page view model"
+        },
+        "7": {
+          "criteria": [
+            "4.3"
+          ],
+          "text": "7. Contrast helper and stylesheet"
+        },
+        "8": {
+          "criteria": [
+            "4.1",
+            "4.2",
+            "4.3"
+          ],
+          "text": "8. Page markup and rendering, then final check"
+        }
+      }
+    }
+  }
+}

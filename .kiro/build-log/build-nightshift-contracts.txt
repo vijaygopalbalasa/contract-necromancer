@@ -1,0 +1,87 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=7
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+I'll check my hand-computed expected values against Node's own `Intl` before freezing them into tests.
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+I wrote the four contract files in `contracts/planner/`, one per requirement. There are 12 tests, one per acceptance criterion, named `R1.1` to `R4.3`.
+
+With no `src/` or `site/` in the workspace, all of them currently fail with `ERR_MODULE_NOT_FOUND`, as expected.
+
+I also checked that the contracts can be satisfied. In `/tmp` I built a throwaway implementation that follows design.md and ran the contracts against it. After I fixed two mistakes of mine, all 12 passed. I then deleted the throwaway. Two mutation checks on that copy gave mixed results. Adding an `animation` rule outside the reduced-motion block made R4.3 fail, as it should. The second mutation (changing the dead-of-night boundary from `<6` to `<=6`) didn't apply because my `sed` command errored, so I did not check that the dead-of-night boundary tests catch a wrong boundary.
+
+- **Files:**
+  - `req1-start-time.contract.test.js`: R1.1–R1.4.
+  - `req2-guest-times.contract.test.js`: R2.1–R2.3.
+  - `req3-dead-of-night.contract.test.js`: R3.1–R3.2.
+  - `req4-page.contract.test.js`: R4.1–R4.3.
+- **Dynamic imports:** Each test imports the `src/` modules it needs dynamically, with a `// from '../../src/x.js'` comment above each import.
+- **Expected values:** Every expected answer is a hand-written instant or string, cross-checked once against Node's `Intl`. Examples are New York 2026-03-08 02:30 (nonexistent), 2026-11-01 01:30 (twice), Kathmandu +05:45, and a Lord Howe half-hour gap and fold.
+- **Page checks:** The page criteria go through `buildView` and read `site/index.html`, `main.js` and `style.css` as text. R4.3 computes WCAG contrast inside the test, so it doesn't depend on `src/contrast.js`.
+
+- **Imports beyond `node:test` and `node:assert`:** I also import `node:fs/promises`, because reading `site/` as text needs it. Nothing else is imported.
+- **Scenarios I corrected:** London is UTC+0 on 2026-10-31, so a 20:00 New York start is 00:00 for London, which makes London a dead-of-night guest. I corrected that scenario and the kinder-time expectation (02:00 New York, count 0).
+- **Unconfirmed design decisions:** Some assertions rest on items in "Decisions to confirm". Each is marked `Design decision N (unconfirmed)` in a comment. If you decide differently, those assertions need to change:
+  - **1:** the `pick=earlier|later` parameter and the `choose` view.
+  - **2:** a bad guest zone refuses the whole plan.
+  - **4:** sorting by local date and time together, not time of day alone.
+  - **5:** the kinder time offered as a link.
+  - **6:** the "2 days before/after" labels.
+- **`npm test` doesn't run these:** The script only runs `test/*.test.js`. Run the contracts with `node --test contracts/planner/*.contract.test.js`. I did not change `package.json`.
