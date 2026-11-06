@@ -1,0 +1,376 @@
+/* Receipt viewer. Dark theme. Every color is a token on :root; contrast is checked by test/site-style.test.js. */
+
+:root {
+  --bg: #0e0b14;
+  --surface: #1a1426;
+  --text: #ece8f5;
+  --muted: #b9b0cf;
+  --alive: #7dffb3;
+  --grave: #ff9a9a;
+  --accent: #ffa94d;
+  --link: #8ecbff;
+  --border: #6f6588;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 1rem/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  overflow-wrap: anywhere;
+}
+
+main {
+  width: 100%;
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+main > * {
+  min-width: 0;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--accent);
+  line-height: 1.2;
+  margin: 0 0 0.5rem;
+}
+
+h1 {
+  font-size: 1.75rem;
+}
+
+h2 {
+  font-size: 1.25rem;
+}
+
+h3 {
+  font-size: 1.05rem;
+}
+
+p {
+  margin: 0 0 0.75rem;
+}
+
+a {
+  color: var(--link);
+}
+
+code,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+pre {
+  max-width: 100%;
+  margin: 0 0 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  min-width: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.limit {
+  color: var(--muted);
+}
+
+label {
+  display: block;
+  margin: 0 0 0.25rem;
+  font-weight: 600;
+}
+
+.file-label {
+  display: inline-block;
+  margin: 0;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+textarea,
+input[type="text"] {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 0 0.75rem;
+  padding: 0.5rem;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9rem;
+}
+
+input[type="file"] {
+  max-width: 100%;
+  color: var(--text);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: 0 0 0.75rem;
+}
+
+.row > * {
+  min-width: 0;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  background: var(--accent);
+  color: #14101c;
+  border: 0;
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.error {
+  color: var(--grave);
+  margin: 0;
+}
+
+.error:empty,
+.notice:empty,
+.summary:empty,
+.muted:empty {
+  display: none;
+}
+
+.notice {
+  color: var(--accent);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.25rem 0.75rem;
+  margin: 0 0 0.75rem;
+}
+
+.facts dt {
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.summary {
+  font-weight: 600;
+}
+
+.legend .pass {
+  color: var(--alive);
+  font-weight: 700;
+}
+
+.legend .fail {
+  color: var(--grave);
+  font-weight: 700;
+}
+
+/* One list per requirement. A contract is alive (pass) or a gravestone (fail). The word and the glyph carry the
+   state, so color is never the only signal. */
+
+.group {
+  margin: 0 0 1rem;
+}
+
+.contracts,
+.files {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.contract,
+.file {
+  min-width: 0;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 6px;
+}
+
+.contract .state,
+.file .state {
+  font-weight: 700;
+  margin-right: 0.5rem;
+}
+
+.contract .name {
+  overflow-wrap: anywhere;
+}
+
+.contract .note {
+  display: block;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.contract.pass {
+  border-left-color: var(--alive);
+}
+
+.contract.pass .state {
+  color: var(--alive);
+}
+
+.contract.fail {
+  border-left: 8px solid var(--grave);
+}
+
+.contract.fail .state {
+  color: var(--grave);
+}
+
+/* A failing contract that this task did not require is work not done yet, not a broken promise. */
+.contract.notyet {
+  border-left: 8px dashed var(--muted);
+}
+
+.contract.notyet .state {
+  color: var(--muted);
+}
+
+.badge {
+  display: inline-block;
+  margin: 0 0 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.badge:empty {
+  display: none;
+}
+
+.hash-match {
+  color: var(--alive);
+  border-color: var(--alive);
+}
+
+.hash-altered {
+  color: var(--grave);
+  border-color: var(--grave);
+}
+
+.hash-checking {
+  color: var(--muted);
+}
+
+.file .path {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.file .detail {
+  display: block;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.status-match {
+  border-left-color: var(--alive);
+}
+
+.status-match .state {
+  color: var(--alive);
+}
+
+.status-different {
+  border-left: 8px solid var(--grave);
+}
+
+.status-different .state {
+  color: var(--grave);
+}
+
+.status-uncommitted {
+  border-left-color: var(--accent);
+}
+
+.status-uncommitted .state {
+  color: var(--accent);
+}
+
+.status-unavailable {
+  border-left-style: dashed;
+}
+
+.status-unavailable .state {
+  color: var(--muted);
+}
+
+@media (min-width: 40rem) {
+  main {
+    padding: 2rem 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes glow {
+    from {
+      text-shadow: 0 0 2px var(--alive);
+    }
+    to {
+      text-shadow: 0 0 10px var(--alive);
+    }
+  }
+
+  .contract.pass .state {
+    animation: glow 2.4s ease-in-out infinite alternate;
+  }
+}

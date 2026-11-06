@@ -1,0 +1,134 @@
+{
+  "spec": "receipt-viewer",
+  "gitCommit": "71face83c14599802fdd1a12447d4e79f4628d87",
+  "requirements": {
+    "path": ".kiro/specs/receipt-viewer/requirements.md",
+    "sha256": "1239675325ff5d20b11260dfd517199a0637be89434ec3eb6aa464998484896f"
+  },
+  "contracts": [
+    {
+      "name": "R3.1 the receipt hash is recomputed with Web Crypto from canonical JSON",
+      "path": "contracts/receipt-viewer/canon.contract.test.js",
+      "sha256": "09eeb20f187b71e831344c931d30201ecf1dba65b8383ccb8f848df4d6d01eeb",
+      "result": "pass"
+    },
+    {
+      "name": "R3.2 the page and necro compute the same receipt hash",
+      "path": "contracts/receipt-viewer/canon.contract.test.js",
+      "sha256": "09eeb20f187b71e831344c931d30201ecf1dba65b8383ccb8f848df4d6d01eeb",
+      "result": "pass"
+    },
+    {
+      "name": "R4.1 each pinned file is fetched at the commit, hashed, and marked matching or different",
+      "path": "contracts/receipt-viewer/files.contract.test.js",
+      "sha256": "41114194aba14d19cfa52f107c5574af3e9721b66a2d6e4996da05bd45533344",
+      "result": "pass"
+    },
+    {
+      "name": "R4.2 a receipt with no commit gets a message that the file check needs a commit",
+      "path": "contracts/receipt-viewer/files.contract.test.js",
+      "sha256": "41114194aba14d19cfa52f107c5574af3e9721b66a2d6e4996da05bd45533344",
+      "result": "pass"
+    },
+    {
+      "name": "R4.3 a file in uncommitted is marked not in the commit yet, not different",
+      "path": "contracts/receipt-viewer/files.contract.test.js",
+      "sha256": "41114194aba14d19cfa52f107c5574af3e9721b66a2d6e4996da05bd45533344",
+      "result": "pass"
+    },
+    {
+      "name": "R1.3 input that is not a valid receipt gets one plain sentence",
+      "path": "contracts/receipt-viewer/receipt.contract.test.js",
+      "sha256": "26957b085388526c95090abe2549da8a92ae4a7ee70c5f410959e8689f31d5cc",
+      "result": "pass"
+    },
+    {
+      "name": "R2.1 every contract is listed by name with pass or fail, with spec, commit and receipt hash",
+      "path": "contracts/receipt-viewer/receipt.contract.test.js",
+      "sha256": "26957b085388526c95090abe2549da8a92ae4a7ee70c5f410959e8689f31d5cc",
+      "result": "pass"
+    },
+    {
+      "name": "R2.2 contracts named R<n>.<m> are grouped by requirement",
+      "path": "contracts/receipt-viewer/receipt.contract.test.js",
+      "sha256": "26957b085388526c95090abe2549da8a92ae4a7ee70c5f410959e8689f31d5cc",
+      "result": "pass"
+    },
+    {
+      "name": "R1.2 a raw GitHub receipt link in the query is accepted and any other link is refused",
+      "path": "contracts/receipt-viewer/repo.contract.test.js",
+      "sha256": "d15bbc20079dd6623e6681bf8e17cec3e20547aa35a27dd8a16a290f8f453281",
+      "result": "pass"
+    },
+    {
+      "name": "R5.1 a copyable command clones the repository at the commit and runs necro verify on the receipt",
+      "path": "contracts/receipt-viewer/repo.contract.test.js",
+      "sha256": "d15bbc20079dd6623e6681bf8e17cec3e20547aa35a27dd8a16a290f8f453281",
+      "result": "pass"
+    },
+    {
+      "name": "R6.2 the page ships a real sample receipt from this repository and loads it when no receipt is open",
+      "path": "contracts/receipt-viewer/sample.contract.test.js",
+      "sha256": "87ce1e690ac80e4c32994f8b5592ff4978974e41cdf599c361c0d6c58d893d78",
+      "result": "pass"
+    },
+    {
+      "name": "R6.1 dark theme with AA contrast, alive and gravestone contract styles, and a layout that can wrap at phone width",
+      "path": "contracts/receipt-viewer/style.contract.test.js",
+      "sha256": "47e17273eef50b96c039f01d4ab62d0c907bffe8f911b03d90a5dc1d4c19a08f",
+      "result": "pass"
+    }
+  ],
+  "sources": [
+    {
+      "path": "site/lib/canon.js",
+      "sha256": "4b1b1133cc02b53351060f6b5296b5f3f194c56f1bfd46b29e6f8f28cd4e142e"
+    },
+    {
+      "path": "site/lib/files.js",
+      "sha256": "8bee4cd78ef67e5adcd282e1bbca3101266f93a29aa9e0c970972c233981813a"
+    },
+    {
+      "path": "site/lib/receipt.js",
+      "sha256": "90da1617e8d0257d6c790eeb70d9c182a6e9dd2b3940fad028cee0cf4ae077c9"
+    },
+    {
+      "path": "site/lib/repo.js",
+      "sha256": "4786c08d2fffd8e4a3c3426fd3a7e3bf078e66eabb40fdfc7933dba2ce5a17c8"
+    },
+    {
+      "path": "src/canon.js",
+      "sha256": "2b239ed2ebc3639d7444fb6ae952f38881e43fec2b80b4cee43893e172792ae8"
+    },
+    {
+      "path": "src/receipts.js",
+      "sha256": "517c3fa3dc6453228d62dfdb91321c365551c4a744b4768c240a0dd583dc108e"
+    }
+  ],
+  "task": {
+    "id": "14",
+    "line": "14. **Docs and manual check**"
+  },
+  "required": [
+    "R1.2 a raw GitHub receipt link in the query is accepted and any other link is refused",
+    "R1.3 input that is not a valid receipt gets one plain sentence",
+    "R2.1 every contract is listed by name with pass or fail, with spec, commit and receipt hash",
+    "R2.2 contracts named R<n>.<m> are grouped by requirement",
+    "R3.1 the receipt hash is recomputed with Web Crypto from canonical JSON",
+    "R3.2 the page and necro compute the same receipt hash",
+    "R4.1 each pinned file is fetched at the commit, hashed, and marked matching or different",
+    "R4.2 a receipt with no commit gets a message that the file check needs a commit",
+    "R4.3 a file in uncommitted is marked not in the commit yet, not different",
+    "R5.1 a copyable command clones the repository at the commit and runs necro verify on the receipt",
+    "R6.1 dark theme with AA contrast, alive and gravestone contract styles, and a layout that can wrap at phone width",
+    "R6.2 the page ships a real sample receipt from this repository and loads it when no receipt is open"
+  ],
+  "uncommitted": [
+    "site/lib/canon.js",
+    "site/lib/files.js",
+    "site/lib/receipt.js",
+    "site/lib/repo.js"
+  ],
+  "receiptHash": "32b5eeaba9aecf9a59529e95a8b5b75ce124aee66d07646cfe3baa0fe980fc9a",
+  "createdAt": "2026-11-06T21:49:10.540Z"
+}

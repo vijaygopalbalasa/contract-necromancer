@@ -1,0 +1,46 @@
+{
+  "spec": "demo",
+  "gitCommit": "0123456789abcdef0123456789abcdef01234567",
+  "requirements": {
+    "path": ".kiro/specs/demo/requirements.md",
+    "sha256": "fe415c35477bf87fc2267b61d5ea249df434e93f2389e56baa37bdc697d4cee0"
+  },
+  "contracts": [
+    {
+      "name": "R1.1 util works",
+      "path": "contracts/demo/util.contract.test.js",
+      "sha256": "29f45827fbccf0c2f1964958c12431bec69b8cb5b4f18eb1ca88f8bbccde50e7",
+      "result": "pass"
+    },
+    {
+      "name": "R1.2 util again",
+      "path": "contracts/demo/util.contract.test.js",
+      "sha256": "29f45827fbccf0c2f1964958c12431bec69b8cb5b4f18eb1ca88f8bbccde50e7",
+      "result": "pass"
+    },
+    {
+      "name": "R2.1 second file",
+      "path": "contracts/demo/two.contract.test.js",
+      "sha256": "e40c284a1cd264ba5665b977201fed62b70227f219ad54c92500889f14d30525",
+      "result": "pass"
+    }
+  ],
+  "sources": [
+    {
+      "path": "src/util.js",
+      "sha256": "adda783022e5a3b56776068bbbadbee6f12a9f083d9f4dcf5154904a389f92df"
+    }
+  ],
+  "task": {
+    "id": "1",
+    "line": "1. Do it (Req 1.1)"
+  },
+  "required": [
+    "R1.1 util works"
+  ],
+  "receiptHash": "cdf427c181a64db49baaaa05b3388f31b9d6eda3a8f30d0a0af7d15877dd7c66",
+  "createdAt": "2026-11-07T00:00:00.000Z",
+  "uncommitted": [
+    "src/util.js"
+  ]
+}

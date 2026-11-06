@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'">
+  <title>Contract Necromancer: receipt viewer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header class="intro">
+      <h1><span class="glyph" aria-hidden="true">🪦</span> Receipt viewer</h1>
+      <p>
+        A Contract Necromancer receipt says which frozen contracts passed when a task was marked done.
+        Open one here to read it and check it yourself.
+      </p>
+      <p class="limit" id="limit">
+        Contracts re-run in Node with <code>necro verify</code>. The browser checks hashes, not test runs.
+      </p>
+      <p class="legend" id="legend">
+        <span class="pass"><span class="glyph" aria-hidden="true">✦</span> PASS</span> means the contract is alive.
+        <span class="fail"><span class="glyph" aria-hidden="true">🪦</span> FAIL</span> means it is a gravestone.
+      </p>
+    </header>
+
+    <section class="card" id="open" aria-labelledby="open-title">
+      <h2 id="open-title">Open a receipt</h2>
+      <label for="paste">Paste the receipt JSON</label>
+      <textarea id="paste" rows="6" spellcheck="false" autocomplete="off" placeholder="Paste a file from .necro/receipts/"></textarea>
+      <div class="row">
+        <button type="button" id="show">Show receipt</button>
+        <label class="file-label" for="file">or choose a receipt file</label>
+        <input type="file" id="file" accept=".json,application/json">
+      </div>
+      <div class="row" id="sample-row">
+        <button type="button" id="sample">Load the sample</button>
+        <span class="muted">A real receipt from this repository.</span>
+      </div>
+      <p class="error" id="error" role="alert"></p>
+    </section>
+
+    <section class="card" id="receipt" aria-labelledby="receipt-title" hidden>
+      <h2 id="receipt-title">Receipt</h2>
+      <dl class="facts">
+        <dt>Spec</dt><dd id="spec"></dd>
+        <dt>Git commit</dt><dd id="commit"></dd>
+        <dt>Receipt hash</dt><dd id="receipt-hash"></dd>
+        <dt>Created</dt><dd id="created"></dd>
+        <dt>Task</dt><dd id="task"></dd>
+      </dl>
+      <p class="summary" id="summary"></p>
+      <div id="groups"></div>
+    </section>
+
+    <section class="card" id="hash-check" aria-labelledby="hash-title" hidden>
+      <h2 id="hash-title">Receipt hash check</h2>
+      <p class="badge" id="hash-badge" aria-live="polite"></p>
+      <p class="muted" id="hash-detail"></p>
+    </section>
+
+    <section class="card" id="run" aria-labelledby="run-title" hidden>
+      <h2 id="run-title">Re-run it yourself</h2>
+      <p>
+        This command clones the repository at the commit and runs <code>necro verify</code> on the receipt.
+        It assumes the receipt is in the default place, <code>.necro/receipts/</code>.
+      </p>
+      <pre id="command"></pre>
+      <div class="row">
+        <button type="button" id="copy">Copy command</button>
+        <span id="copy-note" aria-live="polite"></span>
+      </div>
+      <p class="muted" id="command-note"></p>
+    </section>
+
+    <section class="card" id="file-check" aria-labelledby="files-title" hidden>
+      <h2 id="files-title">Check the pinned files</h2>
+      <p class="muted">
+        Fetches each pinned file at the receipt's commit from raw.githubusercontent.com and compares its SHA-256.
+        Nothing is fetched until you press the button. A file kept in Git LFS comes back as a pointer file and shows as different.
+      </p>
+      <label for="repo">Public GitHub repository (owner/name)</label>
+      <input type="text" id="repo" spellcheck="false" autocomplete="off" placeholder="owner/name">
+      <div class="row">
+        <button type="button" id="check">Check files</button>
+      </div>
+      <p class="error" id="repo-error" role="alert"></p>
+      <div aria-live="polite">
+        <p class="notice" id="file-notice"></p>
+        <p class="summary" id="file-summary"></p>
+        <ul class="files" id="files"></ul>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="main.js"></script>
+</body>
+</html>
