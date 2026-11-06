@@ -1,0 +1,161 @@
+{
+  "specs": {
+    "receipt-viewer": {
+      "contracts": [
+        {
+          "name": "canon",
+          "names": [
+            "R3.1 the receipt hash is recomputed with Web Crypto from canonical JSON",
+            "R3.2 the page and necro compute the same receipt hash"
+          ],
+          "path": "contracts/receipt-viewer/canon.contract.test.js",
+          "sha256": "09eeb20f187b71e831344c931d30201ecf1dba65b8383ccb8f848df4d6d01eeb"
+        },
+        {
+          "name": "files",
+          "names": [
+            "R4.1 each pinned file is fetched at the commit, hashed, and marked matching or different",
+            "R4.2 a receipt with no commit gets a message that the file check needs a commit",
+            "R4.3 a file in uncommitted is marked not in the commit yet, not different"
+          ],
+          "path": "contracts/receipt-viewer/files.contract.test.js",
+          "sha256": "41114194aba14d19cfa52f107c5574af3e9721b66a2d6e4996da05bd45533344"
+        },
+        {
+          "name": "receipt",
+          "names": [
+            "R1.3 input that is not a valid receipt gets one plain sentence",
+            "R2.1 every contract is listed by name with pass or fail, with spec, commit and receipt hash",
+            "R2.2 contracts named R<n>.<m> are grouped by requirement"
+          ],
+          "path": "contracts/receipt-viewer/receipt.contract.test.js",
+          "sha256": "26957b085388526c95090abe2549da8a92ae4a7ee70c5f410959e8689f31d5cc"
+        },
+        {
+          "name": "repo",
+          "names": [
+            "R1.2 a raw GitHub receipt link in the query is accepted and any other link is refused",
+            "R5.1 a copyable command clones the repository at the commit and runs necro verify on the receipt"
+          ],
+          "path": "contracts/receipt-viewer/repo.contract.test.js",
+          "sha256": "d15bbc20079dd6623e6681bf8e17cec3e20547aa35a27dd8a16a290f8f453281"
+        },
+        {
+          "name": "sample",
+          "names": [
+            "R6.2 the page ships a real sample receipt from this repository and loads it when no receipt is open"
+          ],
+          "path": "contracts/receipt-viewer/sample.contract.test.js",
+          "sha256": "87ce1e690ac80e4c32994f8b5592ff4978974e41cdf599c361c0d6c58d893d78"
+        },
+        {
+          "name": "style",
+          "names": [
+            "R6.1 dark theme with AA contrast, alive and gravestone contract styles, and a layout that can wrap at phone width"
+          ],
+          "path": "contracts/receipt-viewer/style.contract.test.js",
+          "sha256": "47e17273eef50b96c039f01d4ab62d0c907bffe8f911b03d90a5dc1d4c19a08f"
+        }
+      ],
+      "frozenAt": "2026-11-06T21:30:34.808Z",
+      "requirements": {
+        "path": ".kiro/specs/receipt-viewer/requirements.md",
+        "sha256": "1239675325ff5d20b11260dfd517199a0637be89434ec3eb6aa464998484896f"
+      },
+      "tasks": {
+        "1": {
+          "criteria": [
+            "3.1"
+          ],
+          "text": "1. **Canonical JSON and hash module** (Req 3.1)"
+        },
+        "2": {
+          "criteria": [
+            "3.2"
+          ],
+          "text": "2. **Hash parity with the CLI** (Req 3.2)"
+        },
+        "3": {
+          "criteria": [
+            "1.3"
+          ],
+          "text": "3. **Receipt parsing and validation** (Req 1.3)"
+        },
+        "4": {
+          "criteria": [
+            "2.1",
+            "2.2"
+          ],
+          "text": "4. **Summary and grouping by requirement** (Req 2.1, 2.2)"
+        },
+        "5": {
+          "criteria": [
+            "1.2"
+          ],
+          "text": "5. **Repository and URL parsing** (Req 1.2)"
+        },
+        "6": {
+          "criteria": [
+            "5.1"
+          ],
+          "text": "6. **Run command** (Req 5.1)"
+        },
+        "7": {
+          "criteria": [
+            "4.1",
+            "4.2",
+            "4.3"
+          ],
+          "text": "7. **Pinned file check against GitHub** (Req 4.1, 4.2, 4.3)"
+        },
+        "8": {
+          "criteria": [
+            "6.1"
+          ],
+          "text": "8. **Page shell and styling** (Req 6.1)"
+        },
+        "9": {
+          "criteria": [
+            "1.1",
+            "1.2",
+            "1.3",
+            "2.1",
+            "2.2",
+            "2.3",
+            "3.1"
+          ],
+          "text": "9. **App: open a receipt and show it** (Req 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 3.1)"
+        },
+        "10": {
+          "criteria": [
+            "4.1",
+            "4.2",
+            "4.3",
+            "5.1"
+          ],
+          "text": "10. **App: file check and run command** (Req 4.1, 4.2, 4.3, 5.1)"
+        },
+        "11": {
+          "criteria": [
+            "6.2"
+          ],
+          "text": "11. **App: sample receipt button** (Req 6.2)"
+        },
+        "12": {
+          "criteria": [
+            "6.2"
+          ],
+          "text": "12. **Sample receipt from this repository** (Req 6.2)"
+        },
+        "13": {
+          "criteria": [],
+          "text": "13. **GitHub Pages deploy** (supports the page being published)"
+        },
+        "14": {
+          "criteria": [],
+          "text": "14. **Docs and manual check**"
+        }
+      }
+    }
+  }
+}
