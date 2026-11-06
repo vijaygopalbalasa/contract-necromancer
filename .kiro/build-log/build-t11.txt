@@ -1,0 +1,88 @@
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=75
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=50
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=121
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=808
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=95
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+Six fail as expected. The non-git test passes already because it checks that nothing new is added. Now the implementation.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=308
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=48
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=147
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=19
+Task 11 is done and marked `[x]` in `tasks.md`. `npm test` passes 139 of 139, up from 132 before.
+
+I wrote the Req 5.4 tests first. Six of the seven new tests failed against the old code, and the seventh (no git repo, no `uncommitted` field) passed because it only checks that nothing new is added. After the change in `src/receipts.js`, all seven pass.
+
+- **What the receipt records:** in a git repo, `uncommitted` is the sorted, unique list of pinned paths that differ from the file at the recorded commit, or that the commit lacks. Pinned paths are the requirements file, the contract files and the traced sources. The list is `[]` when every pinned file matches the commit.
+- **How it compares:** each file's SHA-256 is checked against `git show <commit>:./<path>`. The `./` makes it work when the project root is a subdirectory of the repo, and one test covers that.
+- **Determinism:** `uncommitted` is part of `receiptHash`, so the hash stays the same for identical inputs. A test also checks that editing the list changes the hash.
+
+Decision for you: when there is no commit to compare against (not a git repo, or a repo with no commits), I leave `uncommitted` out. Writing `[]` there would claim the files match a commit that doesn't exist. Req 5.4 only covers git repositories, so this doesn't contradict it. If you'd rather always have the field, that is a small change.
+
+I also added a short `uncommitted` entry to the receipt section of `design.md`. I did not touch `requirements.md`, `contracts/` or `.necro/`.[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=118
+

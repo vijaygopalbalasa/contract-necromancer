@@ -139,6 +139,9 @@ Pretty-printed JSON. Written when all contracts pass during the gate.
 ```
 
 - `gitCommit` — output of `git rev-parse HEAD` from `cwd`, or `null` if not in a git repo.
+- `uncommitted` — present only when `gitCommit` is set (Req 5.4). The sorted, unique list of pinned paths
+  (requirements, contracts, sources) whose SHA-256 differs from that file at `gitCommit` (`git show <commit>:./<path>`),
+  or that the commit lacks. `[]` when every pinned file matches the commit. It is part of `receiptHash`.
 - `sources` — every project source file transitively imported by the contract files, excluding the contract files
   themselves (already listed under `contracts`) and excluding `node:` builtins. Each entry is unique (deduplicated).
 - `result` — `"pass"` or `"fail"` per contract.

@@ -92,6 +92,33 @@ function gitCommit(cwd) {
   }
 }
 
+// Pinned paths whose content differs from that file at `commit`, or that the
+// commit lacks. Sorted and unique. `./<path>` makes git resolve the path from
+// cwd, so this also works when the project root is below the repository root.
+function uncommittedPaths(cwd, commit, pinnedPaths) {
+  const differs = [];
+  for (const p of new Set(pinnedPaths)) {
+    let committed = null;
+    try {
+      committed = execFileSync('git', ['show', `${commit}:./${p}`], {
+        cwd,
+        stdio: ['ignore', 'pipe', 'ignore'],
+        maxBuffer: 256 * 1024 * 1024,
+      });
+    } catch {
+      // the commit has no such file
+    }
+    let current = null;
+    try {
+      current = hashFile(path.join(cwd, p));
+    } catch {
+      // the file is missing on disk
+    }
+    if (committed === null || current === null || sha256(committed) !== current) differs.push(p);
+  }
+  return differs.sort();
+}
+
 // SHA-256 of the canonical JSON of the receipt with receiptHash and createdAt removed.
 export function computeReceiptHash(receipt) {
   const { receiptHash: _rh, createdAt: _ca, ...rest } = receipt;
@@ -130,13 +157,19 @@ export function buildReceipt(cwd, spec, lock, results) {
     sha256: hashFile(path.join(cwd, p)),
   }));
 
+  const commit = gitCommit(cwd);
   const receipt = {
     spec,
-    gitCommit: gitCommit(cwd),
+    gitCommit: commit,
     requirements,
     contracts,
     sources,
   };
+  // Req 5.4: in a git repository, say which pinned files the commit does not hold.
+  if (commit) {
+    const pinned = [requirements.path, ...contracts.map((c) => c.path), ...sources.map((s) => s.path)];
+    receipt.uncommitted = uncommittedPaths(cwd, commit, pinned.filter(Boolean));
+  }
   receipt.receiptHash = computeReceiptHash(receipt);
   receipt.createdAt = new Date().toISOString();
   return receipt;

@@ -66,6 +66,6 @@ Each task writes its test first, then the implementation, then runs `node --test
   - Test first: write `test/cli.test.js`. Assert `necro init` writes `.kiro/hooks/necromancer.json` with PreToolUse, PostToolUse, and Stop hooks calling `necro hook pre` / `post` / `stop` at 300s timeout (8.1); writes `.kiro/steering/necromancer.md` (8.2); leaves existing files unchanged and says so (8.3). Assert the CLI routes `freeze`, `verify`, `init`, and `hook pre|post|stop` subcommands to the right modules.
   - Implement: `bin/necro.js` (arg parsing + dispatch) and `templates/necromancer.hooks.json`, `templates/necromancer.steering.md`. Run `node --test` and pass.
 
-- [ ] 11. **Receipts say what is not committed yet** (Req 5.4)
+- [x] 11. **Receipts say what is not committed yet** (Req 5.4)
   - Test first: in a temp git repo, a receipt written after editing a pinned source file without committing lists that path in `uncommitted`; after committing, a new receipt has `uncommitted: []`; a pinned file missing from the commit is listed. Run each test against the current code and see it fail first.
   - Implement: update `src/receipts.js` (compare each pinned file's SHA-256 with `git show <commit>:<path>`). Run `npm test` and pass.

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { sha256, canonicalJson, hashFile } from '../src/canon.js';
 import { runContracts } from '../src/contracts.js';
 import { traceImports, buildReceipt, computeReceiptHash, writeReceipt } from '../src/receipts.js';
@@ -194,6 +195,140 @@ test('writeReceipt writes .necro/receipts/<spec>/<receiptHash>.json and reads ba
     assert.deepEqual(written.contracts, receipt.contracts);
     assert.deepEqual(written.sources, receipt.sources);
     assert.deepEqual(written.requirements, receipt.requirements);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+// ---- Req 5.4: receipts list pinned files that differ from the recorded commit ----
+
+function git(cwd, ...args) {
+  return execFileSync(
+    'git',
+    ['-c', 'user.name=Test', '-c', 'user.email=test@example.com', '-c', 'commit.gpgsign=false', ...args],
+    { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
+  );
+}
+
+function initRepo(cwd) {
+  git(cwd, 'init', '-q');
+  git(cwd, 'add', '-A');
+  git(cwd, 'commit', '-q', '-m', 'initial');
+}
+
+function receiptFor(cwd) {
+  const lock = buildLock(cwd);
+  return buildReceipt(cwd, 'demo', lock, runContracts(cwd, 'demo', lock));
+}
+
+test('R5.4 a pinned source edited after the commit is listed in uncommitted', () => {
+  const cwd = tmpCwd();
+  try {
+    setupSpec(cwd);
+    initRepo(cwd);
+    write(cwd, 'src/more.js', MORE.replace('x * 3', 'x * 3 /* edited */'));
+    const receipt = receiptFor(cwd);
+    assert.match(receipt.gitCommit, /^[0-9a-f]{40}$/);
+    assert.deepEqual(receipt.uncommitted, ['src/more.js']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R5.4 after committing, a new receipt has an empty uncommitted list', () => {
+  const cwd = tmpCwd();
+  try {
+    setupSpec(cwd);
+    initRepo(cwd);
+    write(cwd, 'src/more.js', MORE.replace('x * 3', 'x * 3 /* edited */'));
+    assert.deepEqual(receiptFor(cwd).uncommitted, ['src/more.js']);
+    git(cwd, 'add', '-A');
+    git(cwd, 'commit', '-q', '-m', 'edit more');
+    const after = receiptFor(cwd);
+    assert.deepEqual(after.uncommitted, []);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R5.4 a pinned file the commit lacks is listed', () => {
+  const cwd = tmpCwd();
+  try {
+    setupSpec(cwd);
+    // Commit everything except src/more.js, which stays untracked.
+    git(cwd, 'init', '-q');
+    git(cwd, 'add', '-A');
+    git(cwd, 'rm', '-q', '--cached', 'src/more.js');
+    git(cwd, 'commit', '-q', '-m', 'initial without more.js');
+    const receipt = receiptFor(cwd);
+    assert.deepEqual(receipt.uncommitted, ['src/more.js']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R5.4 uncommitted covers requirements, contracts and sources, sorted', () => {
+  const cwd = tmpCwd();
+  try {
+    setupSpec(cwd);
+    initRepo(cwd);
+    write(cwd, 'src/util.js', UTIL + '// edited\n');
+    write(cwd, 'src/more.js', MORE + '// edited\n');
+    write(cwd, '.kiro/specs/demo/requirements.md', REQ + 'edited\n');
+    write(cwd, 'contracts/demo/util.contract.test.js', CONTRACT + '// edited\n');
+    const lock = buildLock(cwd);
+    const receipt = buildReceipt(cwd, 'demo', lock, runContracts(cwd, 'demo', lock));
+    assert.deepEqual(receipt.uncommitted, [
+      '.kiro/specs/demo/requirements.md',
+      'contracts/demo/util.contract.test.js',
+      'src/more.js',
+      'src/util.js',
+    ]);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R5.4 works when the project root is a subdirectory of the repository', () => {
+  const repo = tmpCwd();
+  try {
+    const cwd = path.join(repo, 'proj');
+    fs.mkdirSync(cwd);
+    setupSpec(cwd);
+    initRepo(repo);
+    assert.deepEqual(receiptFor(cwd).uncommitted, []);
+    write(cwd, 'src/more.js', MORE + '// edited\n');
+    assert.deepEqual(receiptFor(cwd).uncommitted, ['src/more.js']);
+  } finally {
+    fs.rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test('R5.4 uncommitted is part of the receiptHash and the hash stays deterministic', () => {
+  const cwd = tmpCwd();
+  try {
+    setupSpec(cwd);
+    initRepo(cwd);
+    const clean = receiptFor(cwd);
+    assert.deepEqual(clean.uncommitted, []);
+    const clean2 = receiptFor(cwd);
+    assert.equal(clean.receiptHash, clean2.receiptHash);
+    assert.equal(computeReceiptHash(clean), clean.receiptHash);
+
+    const tampered = { ...clean, uncommitted: ['src/more.js'] };
+    assert.notEqual(computeReceiptHash(tampered), clean.receiptHash);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R5.4 outside a git repository the receipt records no uncommitted list', () => {
+  const cwd = tmpCwd();
+  try {
+    setupSpec(cwd);
+    const receipt = receiptFor(cwd);
+    assert.equal(receipt.gitCommit, null);
+    assert.ok(!('uncommitted' in receipt));
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }
