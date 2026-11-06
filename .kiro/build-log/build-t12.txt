@@ -1,0 +1,156 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=8
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Append to File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Append to File
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Append to File
+[tool] Run Command
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+Now receipts.js.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Parsing matches the real file. Marking task 12 done.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+Task 12 is done and marked `[x]` in `tasks.md`. `npm test` passes: 172 tests, 0 failures. I did not edit `requirements.md`, `contracts/` or `.necro/`. This repo has no `contracts/` or `.necro/` directory, so the repo's own gate isn't active here.
+
+**Test-first.** I wrote the tests, then ran them against the old code: 15 failed, covering 2.7, 4.14, 5.5 and the 3.7 shell cases. The 4.5 and 4.15 tests passed from the start, because the old code already required every contract. They now guard that behavior against the new narrowing.
+
+**What changed**
+- **`src/lock.js`:**
+  - Freeze now writes `tasks: { "<id>": { criteria: [...] } }` into the lock. The id is the text before the first `.` on the task line. Criteria come from the `(Req …)` parentheses, sorted and unique.
+  - An id that appears on two task lines is recorded with no criteria, so ticking it requires every contract.
+  - `requiredNames(...)` picks the required contracts from the lock's criteria. A contract matches criterion `1.2` if its name is `R1.2` or starts with `R1.2 `.
+  - It returns "all contracts" in every 4.15 case: unknown id, edited criteria on the live line, no criteria recorded, no matching contract, last unticked task, or a tick that can't be read exactly. A lock written before this change has no task table, so it also requires every contract.
+- **`src/hooks.js`:** The gate still runs every contract and now blocks only on failing required ones, listing just those. The shell path (`checkShellTicks`) uses the same logic, taking the union across all newly ticked tasks.
+- **`src/receipts.js`:** `buildReceipt` takes an optional fifth argument `{ task, required }`. Receipts now carry `task: { id, line }` and a sorted `required` list, and every contract's result is still recorded. `verify` is unchanged. I added a test that a receipt with a non-required failure verifies as `CONFIRMED`.
+
+**Decisions to check**
+- `task.line` is the text after the checkbox, so it doesn't change with tick state.
+- When a shell command ticks several tasks, `task.id` is the ids joined with `, ` and `task.line` is the lines joined with newlines.
+- The id rule is literal. A line with no `.` has no id and isn't recorded. A line like `Task (Req 1.1)` gets a junk id that never matches, which fails closed.
+- I changed one existing test (`R3.7 a shell tick is kept and receipted…`). It expected one receipt after two different ticks. The receipt hash now includes `task` and `required`, so each task gets its own receipt and the test now expects 2.

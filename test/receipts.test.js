@@ -333,3 +333,61 @@ test('R5.4 outside a git repository the receipt records no uncommitted list', ()
     fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Task 12: the receipt records the ticked task and the required contracts (Req 5.5)
+// ---------------------------------------------------------------------------
+
+test('R5.5 buildReceipt records task and required, and still records every result', () => {
+  const cwd = tmpCwd();
+  try {
+    setupSpec(cwd);
+    const lock = buildLock(cwd);
+    const results = [
+      { name: 'R5.1 util contract', path: 'contracts/demo/util.contract.test.js', sha256: 'a'.repeat(64), result: 'pass' },
+      { name: 'R5.2 other contract', path: 'contracts/demo/util.contract.test.js', sha256: 'a'.repeat(64), result: 'fail' },
+    ];
+    const task = { id: '12', line: '12. Gate (Req 5.1)' };
+    const receipt = buildReceipt(cwd, 'demo', lock, results, { task, required: ['R5.1 util contract'] });
+    assert.deepEqual(receipt.task, task);
+    assert.deepEqual(receipt.required, ['R5.1 util contract']);
+    assert.deepEqual(receipt.contracts.map((c) => [c.name, c.result]), [
+      ['R5.1 util contract', 'pass'],
+      ['R5.2 other contract', 'fail'],
+    ]);
+    assert.equal(receipt.receiptHash, computeReceiptHash(receipt), 'task and required are part of the hash');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R5.5 required is sorted and unique, and different tasks give different hashes', () => {
+  const cwd = tmpCwd();
+  try {
+    setupSpec(cwd);
+    const lock = buildLock(cwd);
+    const results = runContracts(cwd, 'demo', lock);
+    const a = buildReceipt(cwd, 'demo', lock, results, { task: { id: '1', line: '1. A' }, required: ['b', 'a', 'b'] });
+    const b = buildReceipt(cwd, 'demo', lock, results, { task: { id: '2', line: '2. B' }, required: ['a', 'b'] });
+    assert.deepEqual(a.required, ['a', 'b']);
+    assert.notEqual(a.receiptHash, b.receiptHash);
+    const a2 = buildReceipt(cwd, 'demo', lock, results, { task: { id: '1', line: '1. A' }, required: ['a', 'b'] });
+    assert.equal(a.receiptHash, a2.receiptHash, 'the same inputs give the same hash');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R5.5 without a task, required lists every contract name and task is null', () => {
+  const cwd = tmpCwd();
+  try {
+    setupSpec(cwd);
+    const lock = buildLock(cwd);
+    const results = runContracts(cwd, 'demo', lock);
+    const receipt = buildReceipt(cwd, 'demo', lock, results);
+    assert.equal(receipt.task, null);
+    assert.deepEqual(receipt.required, [...new Set(results.map((r) => r.name))].sort());
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});

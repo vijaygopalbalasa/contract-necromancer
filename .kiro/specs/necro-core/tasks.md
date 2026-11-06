@@ -70,7 +70,7 @@ Each task writes its test first, then the implementation, then runs `node --test
   - Test first: in a temp git repo, a receipt written after editing a pinned source file without committing lists that path in `uncommitted`; after committing, a new receipt has `uncommitted: []`; a pinned file missing from the commit is listed. Run each test against the current code and see it fail first.
   - Implement: update `src/receipts.js` (compare each pinned file's SHA-256 with `git show <commit>:<path>`). Run `npm test` and pass.
 
-- [ ] 12. **Gate on the ticked task's own criteria** (Req 2.7, 4.5, 4.14, 4.15, 5.5)
+- [x] 12. **Gate on the ticked task's own criteria** (Req 2.7, 4.5, 4.14, 4.15, 5.5)
   - Test first: freeze records each task id with its criteria (2.7); ticking a task whose required contracts pass is allowed while another task's contracts fail, and the receipt records `task`, `required` and every result (4.14, 5.5); a failing required contract blocks and is listed (4.5); an edited task line, an unknown task id, a task with no criteria or no matching contract, and the last unticked task all require every contract (4.15); a shell command that ticks several tasks requires the union for those ids (3.7). Run each test against the current code and see it fail first.
   - Implement: update `src/lock.js`, `src/hooks.js`, `src/receipts.js`. `verify` stays as it is (it re-runs every contract against the lock). Run `npm test` and pass.
 

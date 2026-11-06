@@ -197,3 +197,104 @@ test('R2.6 a contract path that resolves outside the project root is refused at 
     if (outside) fs.rmSync(outside, { recursive: true, force: true });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Task 12: freeze records each task id with its criteria (Req 2.7)
+// ---------------------------------------------------------------------------
+
+function writeTasksFile(cwd, spec, content) {
+  const dir = path.join(cwd, '.kiro', 'specs', spec);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'tasks.md'), content);
+}
+
+function freezeWithTasks(tasksText) {
+  const cwd = tmpCwd();
+  writeReq(cwd, 'demo', REQ);
+  writeContract(cwd, 'demo', 'hello.contract.test.js', CONTRACT);
+  if (tasksText !== null) writeTasksFile(cwd, 'demo', tasksText);
+  freezeSpec(cwd, 'demo');
+  return cwd;
+}
+
+test('R2.7 freeze records each task id with the criteria its line names', () => {
+  const cwd = freezeWithTasks(
+    [
+      '# Tasks',
+      '',
+      '- [x] 1. **Scaffold** (Req 1.1, 1.2, 1.3)',
+      '  - Test first: a sub-bullet with (Req 9.9) is not a task line.',
+      '- [ ] 8b. **Hardening** (Req 4.11, 6.4)',
+      '- [ ] 3. **Runner** (supports Req 4.4, 4.5, 6.1)',
+      '',
+    ].join('\n'),
+  );
+  try {
+    const lock = readLock(cwd);
+    assert.deepEqual(lock.specs.demo.tasks['1'], { criteria: ['1.1', '1.2', '1.3'] });
+    assert.deepEqual(lock.specs.demo.tasks['8b'], { criteria: ['4.11', '6.4'] });
+    assert.deepEqual(lock.specs.demo.tasks['3'], { criteria: ['4.4', '4.5', '6.1'] });
+    assert.deepEqual(Object.keys(lock.specs.demo.tasks).sort(), ['1', '3', '8b']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R2.7 the task id is the text before the first dot, and criteria are sorted and unique', () => {
+  const cwd = freezeWithTasks(
+    '- [ ] 12. Do it (Req 4.15, 2.7, 4.5, 2.7)\n* [ ] 3c. Other (Req 2.5)\n[ ] 4. Bare box (Req 5.1)\n',
+  );
+  try {
+    const lock = readLock(cwd);
+    assert.deepEqual(lock.specs.demo.tasks['12'], { criteria: ['2.7', '4.5', '4.15'] });
+    assert.deepEqual(lock.specs.demo.tasks['3c'], { criteria: ['2.5'] });
+    assert.deepEqual(lock.specs.demo.tasks['4'], { criteria: ['5.1'] });
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R2.7 a task whose line names no criteria is recorded with an empty list; parentheses without Req are ignored', () => {
+  const cwd = freezeWithTasks('- [ ] 1. Plain task\n- [ ] 2. Other task (see 3.4 in the design)\n');
+  try {
+    const lock = readLock(cwd);
+    assert.deepEqual(lock.specs.demo.tasks['1'], { criteria: [] });
+    assert.deepEqual(lock.specs.demo.tasks['2'], { criteria: [] });
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R2.7 a task line without a dot has no id and is not recorded; an id used twice is recorded with no criteria', () => {
+  const cwd = freezeWithTasks(
+    '- [ ] Task without a number\n- [ ] 5. First five (Req 1.1)\n- [ ] 5. Second five (Req 1.2)\n- [ ] 6. Six (Req 1.3)\n',
+  );
+  try {
+    const lock = readLock(cwd);
+    assert.deepEqual(Object.keys(lock.specs.demo.tasks).sort(), ['5', '6']);
+    assert.deepEqual(lock.specs.demo.tasks['5'], { criteria: [] }, 'an ambiguous id requires everything');
+    assert.deepEqual(lock.specs.demo.tasks['6'], { criteria: ['1.3'] });
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R2.7 a spec with no tasks.md freezes with an empty task table', () => {
+  const cwd = freezeWithTasks(null);
+  try {
+    assert.deepEqual(readLock(cwd).specs.demo.tasks, {});
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R2.7 re-freezing replaces the task table of that spec', () => {
+  const cwd = freezeWithTasks('- [ ] 1. One (Req 1.1)\n');
+  try {
+    writeTasksFile(cwd, 'demo', '- [ ] 2. Two (Req 1.2)\n');
+    freezeSpec(cwd, 'demo');
+    assert.deepEqual(Object.keys(readLock(cwd).specs.demo.tasks), ['2']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});

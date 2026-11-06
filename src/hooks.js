@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { hashFile, sha256 } from './canon.js';
-import { readLock, isSpecFrozen, frozenFiles } from './lock.js';
+import { readLock, isSpecFrozen, frozenFiles, TASK_LINE, taskIdOf, requiredNames } from './lock.js';
 import { runContracts } from './contracts.js';
 import { buildReceipt, writeReceipt } from './receipts.js';
 
@@ -171,10 +171,6 @@ export function countTaskMarks(text) {
   return matches ? matches.length : 0;
 }
 
-// A task line: an optional list marker, then a checkbox. The marker is optional
-// so a box written without one still counts (Req 4.13).
-const TASK_LINE = /^\s*(?:(?:[-*+]|\d+[.)])\s*)?\[([ xX])\]\s?(.*)$/;
-
 // Multiset of task lines: "<checked or not>\0<task text>" -> how many.
 function taskLines(text) {
   const counts = new Map();
@@ -206,6 +202,25 @@ export function newlyTicked(before, after) {
     if (key.startsWith('x\0') && n > (was.get(key) || 0)) return true;
   }
   return false;
+}
+
+// The text of each task line that is ticked in `after` more often than in
+// `before` (once per extra occurrence), in file order of the map.
+function newlyTickedTexts(before, after) {
+  const was = taskLines(before);
+  const out = [];
+  for (const [key, n] of taskLines(after)) {
+    if (!key.startsWith('x\0')) continue;
+    for (let i = was.get(key) || 0; i < n; i++) out.push(key.slice(2));
+  }
+  return out;
+}
+
+// Number of task lines that are not ticked in a text.
+function untickedCount(text) {
+  let n = 0;
+  for (const [key, count] of taskLines(text)) if (key.startsWith(' \0')) n += count;
+  return n;
 }
 
 // The text with every ticked task line unticked.
@@ -383,7 +398,7 @@ export function handlePreToolUse(payload) {
     const edit = taskEdit(cwd, toolName, toolInput);
     if (edit) {
       if (newlyTicked(edit.before, edit.after)) {
-        const gate = runGate(cwd, edit.spec);
+        const gate = runGate(cwd, edit.spec, edit);
         if (gate.exitCode !== 0) return gate;
       }
       // Req 3.10: the state is recorded by PostToolUse, once the write has landed.
@@ -394,9 +409,31 @@ export function handlePreToolUse(payload) {
   return ALLOW;
 }
 
-// Gate: run the spec's frozen contracts; block unless they all pass. On
-// success, write a receipt and allow the edit (Req 4.3-4.6).
-function runGate(cwd, spec) {
+// Decide a tick (Req 4.5, 4.14, 4.15, 5.5). `change` is { before, after, exact }:
+// tasks.md before and after the change. Every frozen contract of the spec has been
+// run (`results`). The tasks being ticked are the task lines ticked in `after`
+// and not in `before`; which contracts they require comes from the lock, see
+// requiredNames. A change whose lines cannot be read exactly requires everything.
+// Returns { failing, required, task }: the sorted names of failing required
+// contracts, the sorted names that were required, and the ticked task as
+// { id, line } (null when no task line can be named).
+function decideTicks(lock, spec, results, change) {
+  const names = [...new Set(results.map((r) => r.name))].sort();
+  const ticked = change.exact ? newlyTickedTexts(change.before, change.after) : [];
+  const required = requiredNames(lock, spec, ticked, untickedCount(change.after), names) || names;
+  const failing = [...new Set(results.filter((r) => r.result === 'fail' && required.includes(r.name)).map((r) => r.name))].sort();
+  let task = null;
+  if (ticked.length > 0) {
+    const ids = ticked.map(taskIdOf);
+    task = { id: ids.length === 1 ? ids[0] : ids.map((i) => i ?? '?').join(', '), line: ticked.join('\n') };
+  }
+  return { failing, required, task };
+}
+
+// Gate: run the spec's frozen contracts; block unless the contracts the ticked
+// task requires all pass. On success, write a receipt and allow the edit
+// (Req 4.3-4.6, 4.14).
+function runGate(cwd, spec, change) {
   // Req 4.3: the spec must be frozen first.
   if (!isSpecFrozen(cwd, spec)) {
     return {
@@ -407,21 +444,21 @@ function runGate(cwd, spec) {
   }
 
   const lock = readLock(cwd);
-  // Req 4.4: run the frozen contracts with node --test.
+  // Req 4.4, 4.14: run every frozen contract with node --test.
   const results = runContracts(cwd, spec, lock);
+  const { failing, required, task } = decideTicks(lock, spec, results, change);
 
-  // Req 4.5: any failing contract blocks the edit, listing each by name.
-  const failing = results.filter((r) => r.result === 'fail').map((r) => r.name);
+  // Req 4.5: a failing required contract blocks the edit, listing each by name.
   if (failing.length > 0) {
     return {
       exitCode: 2,
       stdout: '',
-      stderr: `Contracts failed: ${failing.sort().join(', ')}.`,
+      stderr: `Contracts failed: ${failing.join(', ')}.`,
     };
   }
 
-  // Req 4.6: all pass -> write a receipt and allow the edit.
-  const receipt = buildReceipt(cwd, spec, lock, results);
+  // Req 4.6, 5.5: the required contracts pass -> write a receipt and allow the edit.
+  const receipt = buildReceipt(cwd, spec, lock, results, { task, required });
   writeReceipt(cwd, spec, receipt);
   return ALLOW;
 }
@@ -455,17 +492,17 @@ function checkShellTicks(cwd, lock) {
     }
 
     const results = runContracts(cwd, spec, lock);
-    const failing = results.filter((r) => r.result === 'fail').map((r) => r.name);
+    const { failing, required, task } = decideTicks(lock, spec, results, { before: baseline, after: current, exact: true });
     if (failing.length > 0) {
       fs.writeFileSync(file, baseline);
       recordState(cwd, spec, baseline);
       const rel = toRel(path.relative(cwd, file));
       messages.push(
-        `Contracts failed: ${failing.sort().join(', ')}. Restored ${rel} to its last recorded state. Fix the code, then tick the task again.`,
+        `Contracts failed: ${failing.join(', ')}. Restored ${rel} to its last recorded state. Fix the code, then tick the task again.`,
       );
       continue;
     }
-    writeReceipt(cwd, spec, buildReceipt(cwd, spec, lock, results));
+    writeReceipt(cwd, spec, buildReceipt(cwd, spec, lock, results, { task, required }));
     recordState(cwd, spec, current);
   }
   return messages;

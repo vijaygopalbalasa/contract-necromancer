@@ -130,7 +130,11 @@ export function computeReceiptHash(receipt) {
 // project source file transitively imported by the contracts, and the pass or
 // fail result of each contract by name. receiptHash is derived from all other
 // fields; createdAt is added after the hash is computed so it never affects it.
-export function buildReceipt(cwd, spec, lock, results) {
+//
+// Req 5.5: `gate.task` is the ticked task as { id, line } (null when unknown) and
+// `gate.required` the names of the contracts that had to pass. Without it every
+// contract counts as required. Every result is recorded either way.
+export function buildReceipt(cwd, spec, lock, results, gate = {}) {
   const entry = (lock && lock.specs && lock.specs[spec]) || {};
   const req = entry.requirements || { path: null, sha256: null };
   const requirements = { path: req.path, sha256: req.sha256 };
@@ -164,6 +168,8 @@ export function buildReceipt(cwd, spec, lock, results) {
     requirements,
     contracts,
     sources,
+    task: gate.task || null,
+    required: [...new Set(gate.required || contracts.map((c) => c.name))].sort(),
   };
   // Req 5.4: in a git repository, say which pinned files the commit does not hold.
   if (commit) {

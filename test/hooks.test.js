@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { sha256 } from '../src/canon.js';
 import { freezeSpec } from '../src/lock.js';
+import { verify } from '../src/verify.js';
 import { handlePreToolUse, handlePostToolUse, handleStop, detectTaskDone, countTaskMarks } from '../src/hooks.js';
 
 const FIXTURES = path.join(import.meta.dirname, 'fixtures');
@@ -642,7 +643,7 @@ test('R3.7 a shell tick is kept and receipted when every contract passes', () =>
     fs.writeFileSync(tasksPath(cwd), '- [x] 1. Task one\n- [x] 2. Task two\n');
     const again = handlePostToolUse(postPayload(cwd, 'echo again'));
     assert.equal(again.stderr, '');
-    assert.equal(receiptCount(cwd), 1, 'receipt hash is the same so still one file');
+    assert.equal(receiptCount(cwd), 2, 'a second tick is another task, so it gets its own receipt (Req 5.5)');
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }
@@ -1306,6 +1307,372 @@ test('R3.11 file content and shell commands may be long or hold NUL; read-only t
       assert.equal(res.exitCode, 0, `${tool} is allowed`);
       assert.equal(res.stderr, '');
     }
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Task 12: gate on the ticked task's own criteria (Req 2.7, 3.7, 4.5, 4.14, 4.15, 5.5)
+// ---------------------------------------------------------------------------
+
+// One contract file: R1.1 and R1.3 pass, R1.2 fails.
+const MIXED_CONTRACT = `import { test } from 'node:test';
+import assert from 'node:assert/strict';
+
+test('R1.1 passing contract', () => { assert.ok(true); });
+test('R1.2 failing contract', () => { assert.equal(1, 2); });
+test('R1.3 other passing contract', () => { assert.ok(true); });
+`;
+
+const T1 = '- [ ] 1. Task one (Req 1.1)';
+const T2 = '- [ ] 2. Task two (Req 1.2)';
+const T3 = '- [ ] 3. Task three (Req 1.3)';
+const T4 = '- [ ] 4. Task four (Req 1.1, 1.2)';
+const T5 = '- [ ] 5. Task five';
+const T6 = '- [ ] 6. Task six (Req 7.7)';
+const TASKS_MIXED = [T1, T2, T3, T4, T5, T6, ''].join('\n');
+
+const tick = (line) => line.replace('[ ]', '[x]');
+
+// A frozen spec whose tasks.md was in place at freeze time. Extra lines can be
+// added to tasks.md afterwards, so the lock does not know them.
+function setupMixed(tasksAtFreeze = TASKS_MIXED, tasksNow = tasksAtFreeze) {
+  const cwd = tmpCwd();
+  writeReq(cwd, 'demo', REQ);
+  writeContract(cwd, 'demo', 'mixed.contract.test.js', MIXED_CONTRACT);
+  writeTasks(cwd, 'demo', tasksAtFreeze);
+  freezeSpec(cwd, 'demo');
+  writeTasks(cwd, 'demo', tasksNow);
+  return cwd;
+}
+
+function tickEdit(oldStr, newStr) {
+  return { path: TASKS_REL, oldStr, newStr };
+}
+
+function readReceipts(cwd) {
+  const dir = path.join(cwd, '.necro', 'receipts', 'demo');
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir).map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')));
+}
+
+test('R4.14 + R5.5 ticking a task whose required contracts pass is allowed while another contract fails, and the receipt says what was required', () => {
+  const cwd = setupMixed();
+  try {
+    const res = handlePreToolUse(payload(cwd, 'str_replace', tickEdit(T1, tick(T1))));
+    assert.equal(res.exitCode, 0, res.stderr);
+    assert.equal(res.stderr, '');
+
+    const receipts = readReceipts(cwd);
+    assert.equal(receipts.length, 1);
+    const r = receipts[0];
+    assert.deepEqual(r.task, { id: '1', line: '1. Task one (Req 1.1)' });
+    assert.deepEqual(r.required, ['R1.1 passing contract']);
+    const byName = Object.fromEntries(r.contracts.map((c) => [c.name, c.result]));
+    assert.deepEqual(byName, {
+      'R1.1 passing contract': 'pass',
+      'R1.2 failing contract': 'fail',
+      'R1.3 other passing contract': 'pass',
+    });
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.14 an fs_write that ticks one task is gated on that task alone', () => {
+  const cwd = setupMixed();
+  try {
+    const res = handlePreToolUse(
+      payload(cwd, 'fs_write', { path: TASKS_REL, text: TASKS_MIXED.replace(T3, tick(T3)) }),
+    );
+    assert.equal(res.exitCode, 0, res.stderr);
+    assert.deepEqual(readReceipts(cwd)[0].required, ['R1.3 other passing contract']);
+    assert.equal(readReceipts(cwd)[0].task.id, '3');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.14 a task that names several criteria requires the contracts of all of them', () => {
+  const cwd = setupMixed();
+  try {
+    const res = handlePreToolUse(payload(cwd, 'str_replace', tickEdit(T4, tick(T4))));
+    assert.equal(res.exitCode, 2);
+    assert.match(res.stderr, /Contracts failed: R1\.2 failing contract\./);
+    assert.equal(readReceipts(cwd).length, 0);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.5 a failing required contract blocks the tick and only required failures are listed', () => {
+  const cwd = setupMixed();
+  try {
+    const res = handlePreToolUse(payload(cwd, 'str_replace', tickEdit(T2, tick(T2))));
+    assert.equal(res.exitCode, 2);
+    assert.equal(res.stderr, 'Contracts failed: R1.2 failing contract.');
+    assert.equal(readReceipts(cwd).length, 0, 'no receipt on failure');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.14 a criterion matches a contract name only up to a space or the end of the name', () => {
+  const cwd = tmpCwd();
+  try {
+    const contract = `import { test } from 'node:test';
+import assert from 'node:assert/strict';
+test('R1.1', () => { assert.ok(true); });
+test('R1.10 not the same criterion', () => { assert.equal(1, 2); });
+test('R1.12 also not', () => { assert.equal(1, 2); });
+`;
+    writeReq(cwd, 'demo', REQ);
+    writeContract(cwd, 'demo', 'names.contract.test.js', contract);
+    writeTasks(cwd, 'demo', '- [ ] 1. One (Req 1.1)\n- [ ] 2. Two (Req 1.10)\n');
+    freezeSpec(cwd, 'demo');
+    const res = handlePreToolUse(
+      payload(cwd, 'str_replace', tickEdit('- [ ] 1. One (Req 1.1)', '- [x] 1. One (Req 1.1)')),
+    );
+    assert.equal(res.exitCode, 0, res.stderr);
+    assert.deepEqual(readReceipts(cwd)[0].required, ['R1.1']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+// -- R4.15: every case where the task's own criteria cannot be trusted ----------
+
+function expectAllRequired(cwd, toolName, input) {
+  const res = handlePreToolUse(payload(cwd, toolName, input));
+  assert.equal(res.exitCode, 2, 'a failing contract elsewhere blocks the tick');
+  assert.match(res.stderr, /Contracts failed: R1\.2 failing contract\./);
+  assert.equal(readReceipts(cwd).length, 0);
+}
+
+test('R4.15 a task line edited to name different criteria requires every contract', () => {
+  const cwd = setupMixed();
+  try {
+    // Task 2 is bound to Req 1.2 in the lock. The agent rewrites the line to name 1.1 while ticking it.
+    const edited = '- [x] 2. Task two (Req 1.1)';
+    expectAllRequired(cwd, 'str_replace', tickEdit(T2, edited));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.15 a task line that drops its criteria while being ticked requires every contract', () => {
+  const cwd = setupMixed();
+  try {
+    expectAllRequired(cwd, 'str_replace', tickEdit(T2, '- [x] 2. Task two'));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.15 a task line that adds a criterion while being ticked requires every contract', () => {
+  const cwd = setupMixed();
+  try {
+    expectAllRequired(cwd, 'str_replace', tickEdit(T1, '- [x] 1. Task one (Req 1.1, 2.2)'));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.15 the same edit with an fs_write is treated the same way', () => {
+  const cwd = setupMixed();
+  try {
+    expectAllRequired(cwd, 'fs_write', { path: TASKS_REL, text: TASKS_MIXED.replace(T2, '- [x] 2. Task two (Req 1.1)') });
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.15 a task id the lock does not know requires every contract', () => {
+  const late = '- [ ] 9. Late task (Req 1.1)';
+  const cwd = setupMixed(TASKS_MIXED, TASKS_MIXED + late + '\n');
+  try {
+    expectAllRequired(cwd, 'str_replace', tickEdit(late, tick(late)));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.15 a task id that was renamed while being ticked requires every contract', () => {
+  const cwd = setupMixed();
+  try {
+    expectAllRequired(cwd, 'str_replace', tickEdit(T1, '- [x] 77. Task one (Req 1.1)'));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.15 a task for which the lock records no criteria requires every contract', () => {
+  const cwd = setupMixed();
+  try {
+    expectAllRequired(cwd, 'str_replace', tickEdit(T5, tick(T5)));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.15 a task whose criteria match no contract requires every contract', () => {
+  const cwd = setupMixed();
+  try {
+    expectAllRequired(cwd, 'str_replace', tickEdit(T6, tick(T6)));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.15 the last unticked task of the spec requires every contract', () => {
+  const others = [tick(T2), tick(T3), tick(T4), tick(T5), tick(T6)];
+  const cwd = setupMixed([T1, ...others, ''].join('\n'));
+  try {
+    expectAllRequired(cwd, 'str_replace', tickEdit(T1, tick(T1)));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.15 a lock written before tasks were recorded requires every contract', () => {
+  const cwd = setupMixed();
+  try {
+    const lockFile = path.join(cwd, '.necro', 'lock.json');
+    const lock = JSON.parse(fs.readFileSync(lockFile, 'utf8'));
+    delete lock.specs.demo.tasks;
+    fs.writeFileSync(lockFile, JSON.stringify(lock));
+    expectAllRequired(cwd, 'str_replace', tickEdit(T1, tick(T1)));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.15 a str_replace that does not apply to the file on disk requires every contract', () => {
+  const cwd = setupMixed();
+  try {
+    expectAllRequired(cwd, 'str_replace', tickEdit('[ ] 1. Task one (Req 1.1) that is not on disk', '[x] 1. Task one (Req 1.1)'));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.14 the criteria come from the lock: editing tasks.md on disk first does not change what is required', () => {
+  const cwd = setupMixed();
+  try {
+    // The agent first rewrites the criteria of task 2 (an untick-neutral edit that ticks nothing), then ticks it.
+    const rewritten = '- [ ] 2. Task two (Req 1.1)';
+    const first = handlePreToolUse(payload(cwd, 'str_replace', tickEdit(T2, rewritten)));
+    assert.equal(first.exitCode, 0, 'an edit that ticks nothing is not gated');
+    fs.writeFileSync(tasksPath(cwd), TASKS_MIXED.replace(T2, rewritten));
+    const second = handlePreToolUse(payload(cwd, 'str_replace', tickEdit(rewritten, tick(rewritten))));
+    assert.equal(second.exitCode, 2);
+    assert.match(second.stderr, /R1\.2 failing contract/);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.14 + R6.1 a receipt written with a failing contract outside the required set verifies as CONFIRMED', () => {
+  const cwd = setupMixed();
+  try {
+    assert.equal(handlePreToolUse(payload(cwd, 'str_replace', tickEdit(T1, tick(T1)))).exitCode, 0);
+    const dir = path.join(cwd, '.necro', 'receipts', 'demo');
+    const file = path.join(dir, fs.readdirSync(dir)[0]);
+    const { code, out } = captureStdout(() => verify(cwd, file));
+    assert.equal(code, 0, out);
+    assert.match(out, /CONFIRMED/);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+// -- R3.7: a shell command ticks several tasks ---------------------------------
+
+test('R3.7 a shell command that ticks one task is gated on that task alone and receipted', () => {
+  const cwd = setupMixed();
+  try {
+    bashPre(cwd);
+    fs.writeFileSync(tasksPath(cwd), TASKS_MIXED.replace(T1, tick(T1)));
+    const res = handlePostToolUse(postPayload(cwd, 'sed -i ... tasks.md'));
+    assert.equal(res.stderr, '');
+    assert.equal(fs.readFileSync(tasksPath(cwd), 'utf8'), TASKS_MIXED.replace(T1, tick(T1)), 'the tick is kept');
+    const [r] = readReceipts(cwd);
+    assert.deepEqual(r.task, { id: '1', line: '1. Task one (Req 1.1)' });
+    assert.deepEqual(r.required, ['R1.1 passing contract']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.7 a shell command that ticks several tasks requires the union of their criteria', () => {
+  const cwd = setupMixed();
+  try {
+    bashPre(cwd);
+    const ticked = TASKS_MIXED.replace(T1, tick(T1)).replace(T3, tick(T3));
+    fs.writeFileSync(tasksPath(cwd), ticked);
+    const res = handlePostToolUse(postPayload(cwd, 'sed -i ... tasks.md'));
+    assert.equal(res.stderr, '');
+    assert.equal(fs.readFileSync(tasksPath(cwd), 'utf8'), ticked, 'both ticks are kept, R1.2 is not required');
+    const [r] = readReceipts(cwd);
+    assert.deepEqual(r.required, ['R1.1 passing contract', 'R1.3 other passing contract']);
+    assert.equal(r.task.id, '1, 3');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.7 a shell command that ticks several tasks is undone when one of them requires a failing contract', () => {
+  const cwd = setupMixed();
+  try {
+    bashPre(cwd);
+    fs.writeFileSync(tasksPath(cwd), TASKS_MIXED.replace(T1, tick(T1)).replace(T2, tick(T2)));
+    const res = handlePostToolUse(postPayload(cwd, 'sed -i ... tasks.md'));
+    assert.equal(fs.readFileSync(tasksPath(cwd), 'utf8'), TASKS_MIXED, 'tasks.md is back to the recorded state');
+    assert.match(res.stderr, /Contracts failed: R1\.2 failing contract\./);
+    assert.ok(!res.stderr.includes('R1.1'), 'a passing required contract is not listed');
+    assert.equal(readReceipts(cwd).length, 0);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.7 + R4.15 a shell command that ticks a task and one the lock does not know requires every contract', () => {
+  const late = '- [ ] 9. Late task (Req 1.1)';
+  const cwd = setupMixed(TASKS_MIXED, TASKS_MIXED + late + '\n');
+  try {
+    bashPre(cwd);
+    fs.writeFileSync(tasksPath(cwd), (TASKS_MIXED + late + '\n').replace(T1, tick(T1)).replace(late, tick(late)));
+    const res = handlePostToolUse(postPayload(cwd, 'sed -i ... tasks.md'));
+    assert.match(res.stderr, /Contracts failed: R1\.2 failing contract\./);
+    assert.equal(fs.readFileSync(tasksPath(cwd), 'utf8'), TASKS_MIXED + late + '\n');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.7 + R4.15 a shell tick that edits the criteria on the task line requires every contract', () => {
+  const cwd = setupMixed();
+  try {
+    bashPre(cwd);
+    fs.writeFileSync(tasksPath(cwd), TASKS_MIXED.replace(T2, '- [x] 2. Task two (Req 1.1)'));
+    const res = handlePostToolUse(postPayload(cwd, 'sed -i ... tasks.md'));
+    assert.match(res.stderr, /Contracts failed: R1\.2 failing contract\./);
+    assert.equal(fs.readFileSync(tasksPath(cwd), 'utf8'), TASKS_MIXED);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.7 + R4.15 a shell tick of the last unticked task requires every contract', () => {
+  const done = [tick(T2), tick(T3), tick(T4), tick(T5), tick(T6)];
+  const cwd = setupMixed([T1, ...done, ''].join('\n'));
+  try {
+    bashPre(cwd);
+    fs.writeFileSync(tasksPath(cwd), [tick(T1), ...done, ''].join('\n'));
+    const res = handlePostToolUse(postPayload(cwd, 'sed -i ... tasks.md'));
+    assert.match(res.stderr, /Contracts failed: R1\.2 failing contract\./);
+    assert.equal(fs.readFileSync(tasksPath(cwd), 'utf8'), [T1, ...done, ''].join('\n'));
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }

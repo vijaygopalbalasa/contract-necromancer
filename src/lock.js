@@ -38,6 +38,102 @@ export function writeLock(cwd, lock) {
   fs.writeFileSync(file, JSON.stringify(sortKeys(lock), null, 2) + '\n');
 }
 
+// ---------------------------------------------------------------------------
+// Tasks and their criteria (Req 2.7, 4.14, 4.15)
+// ---------------------------------------------------------------------------
+
+// A task line: an optional list marker, then a checkbox. The marker is optional
+// so a box written without one still counts (Req 4.13). Group 1 is the box state,
+// group 2 the text after the box.
+export const TASK_LINE = /^\s*(?:(?:[-*+]|\d+[.)])\s*)?\[([ xX])\]\s?(.*)$/;
+
+// Criteria named on a task line: every "N.N" inside a parenthesis that contains
+// the word "Req", as in "(Req 1.2, 3.1)" or "(supports Req 4.4)". Sorted by
+// number and unique, so two lines naming the same set compare equal.
+export function criteriaOf(text) {
+  const found = new Set();
+  for (const group of text.matchAll(/\(([^()]*)\)/g)) {
+    if (!/\bReq\b/.test(group[1])) continue;
+    for (const m of group[1].matchAll(/\d+\.\d+/g)) found.add(m[0]);
+  }
+  const num = (c) => c.split('.').map(Number);
+  return [...found].sort((a, b) => {
+    const [a1, a2] = num(a);
+    const [b1, b2] = num(b);
+    return a1 - b1 || a2 - b2;
+  });
+}
+
+// The task id of a task line's text (the text after the checkbox): everything
+// before the first ".", trimmed. Null when there is no dot or nothing before it.
+export function taskIdOf(text) {
+  const dot = text.indexOf('.');
+  if (dot < 0) return null;
+  const id = text.slice(0, dot).trim();
+  return id === '' ? null : id;
+}
+
+// Every task in a tasks.md text: [{ id, text, criteria }] in file order. A line
+// without an id is skipped.
+export function parseTasks(markdown) {
+  const tasks = [];
+  for (const line of markdown.split(/\r?\n/)) {
+    const m = TASK_LINE.exec(line);
+    if (!m) continue;
+    const text = m[2].trim();
+    const id = taskIdOf(text);
+    if (id !== null) tasks.push({ id, text, criteria: criteriaOf(text) });
+  }
+  return tasks;
+}
+
+// The task table recorded in the lock: { <id>: { criteria: [...] } }. An id that
+// is used by more than one task line is ambiguous, so it is recorded with no
+// criteria, which makes ticking it require every contract (Req 4.15).
+function taskTable(cwd, spec) {
+  let markdown = '';
+  try {
+    markdown = fs.readFileSync(path.join(cwd, '.kiro', 'specs', spec, 'tasks.md'), 'utf8');
+  } catch (e) {
+    if (e.code !== 'ENOENT') throw e;
+  }
+  const table = {};
+  const seen = new Set();
+  for (const t of parseTasks(markdown)) {
+    table[t.id] = { criteria: seen.has(t.id) ? [] : t.criteria };
+    seen.add(t.id);
+  }
+  return table;
+}
+
+// Which contracts must pass before the given tasks may be ticked. `ticked` is the
+// list of ticked task texts (the text after the checkbox). `unticked` is how many
+// task lines stay unticked afterwards. `names` are the contract names of the run.
+//
+// The criteria come only from the lock (Req 4.14). The line in tasks.md is used
+// to find the task id and to notice that the line was edited; it never supplies
+// criteria. Returns a sorted list of names, or null when every contract is
+// required (Req 4.15): no identifiable ticked task, the last unticked task, an
+// id the lock lacks, an edited line, no criteria recorded, or no contract
+// matching them.
+export function requiredNames(lock, spec, ticked, unticked, names) {
+  if (ticked.length === 0 || unticked === 0) return null;
+  const table = (lock && lock.specs && lock.specs[spec] && lock.specs[spec].tasks) || {};
+  const required = new Set();
+  for (const text of ticked) {
+    const id = taskIdOf(text);
+    const recorded = id !== null && Object.hasOwn(table, id) ? table[id] : null;
+    const criteria = recorded && Array.isArray(recorded.criteria) ? recorded.criteria : [];
+    if (criteria.length === 0) return null;
+    // The lock stores criteria in the order criteriaOf returns them.
+    if (criteriaOf(text).join(',') !== criteria.join(',')) return null;
+    const matching = names.filter((n) => criteria.some((c) => n === `R${c}` || n.startsWith(`R${c} `)));
+    if (matching.length === 0) return null;
+    for (const n of matching) required.add(n);
+  }
+  return [...required].sort();
+}
+
 // Filename stem of a contract file, e.g. "canon" from "canon.contract.test.js".
 function contractName(filePath) {
   return path.basename(filePath).replace(/\.contract\.test\.js$/, '');
@@ -102,6 +198,7 @@ export function freezeSpec(cwd, spec) {
     frozenAt: new Date().toISOString(),
     requirements: { path: reqRel, sha256: reqHash },
     contracts,
+    tasks: taskTable(cwd, spec),
   };
   writeLock(cwd, lock);
 
