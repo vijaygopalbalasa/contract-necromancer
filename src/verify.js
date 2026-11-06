@@ -19,6 +19,14 @@ function currentHash(cwd, relPath) {
   }
 }
 
+// Names that appear a different number of times in two lists.
+function diffNames(expected, got) {
+  const count = new Map();
+  for (const n of expected) count.set(n, (count.get(n) || 0) + 1);
+  for (const n of got) count.set(n, (count.get(n) || 0) - 1);
+  return [...count].filter(([, d]) => d !== 0).map(([n]) => n);
+}
+
 // Re-run a receipt: re-hash every pinned file, re-run the contracts, and compare
 // the results by name. Prints CONFIRMED <receiptHash>. and returns 0 when
 // everything matches; prints MISMATCH with the changed paths or contract names
@@ -54,23 +62,34 @@ export function verify(cwd, receiptFile) {
     if (currentHash(cwd, f.path) !== f.sha256) changedFiles.push(f.path);
   }
 
-  // Req 6.6: if the spec is frozen, also check against the lock.
+  // Req 6.6, 6.7: when a lock exists, the receipt must agree with it exactly.
+  const hasLock = fs.existsSync(path.join(cwd, '.necro', 'lock.json'));
   const lock = readLock(cwd);
-  if (lock.specs && lock.specs[receipt.spec]) {
-    const frozenSpec = lock.specs[receipt.spec];
-    // Check requirements hash against lock.
-    if (frozenSpec.requirements && 
-        receipt.requirements.sha256 !== frozenSpec.requirements.sha256) {
+  const frozenSpec = hasLock && lock.specs ? lock.specs[receipt.spec] : null;
+  if (hasLock && !frozenSpec) {
+    console.log(`MISMATCH. Spec '${receipt.spec}' is not in the lock. Run 'necro freeze ${receipt.spec}' first.`);
+    return 1;
+  }
+  const namesChanged = [];
+  if (frozenSpec) {
+    // Requirements hash against the lock.
+    if (!frozenSpec.requirements || receipt.requirements.sha256 !== frozenSpec.requirements.sha256) {
       changedFiles.push(receipt.requirements.path);
     }
-    // Check contract hashes against lock.
-    const frozenContracts = new Map(
-      (frozenSpec.contracts || []).map((c) => [c.path, c.sha256])
-    );
+    // Contract files and hashes: none missing, none extra, none different.
+    const lockFiles = new Map((frozenSpec.contracts || []).map((c) => [c.path, c]));
+    const receiptFiles = new Map();
     for (const c of receipt.contracts) {
-      if (frozenContracts.get(c.path) !== c.sha256) {
-        changedFiles.push(c.path);
-      }
+      if (!receiptFiles.has(c.path)) receiptFiles.set(c.path, { sha256: c.sha256, names: [] });
+      receiptFiles.get(c.path).names.push(c.name);
+      const known = lockFiles.get(c.path);
+      if (!known || known.sha256 !== c.sha256) changedFiles.push(c.path);
+    }
+    for (const p of lockFiles.keys()) if (!receiptFiles.has(p)) changedFiles.push(p);
+    // Contract names, per file: none missing, none extra.
+    for (const [p, known] of lockFiles) {
+      const got = receiptFiles.get(p);
+      if (got) namesChanged.push(...diffNames(known.names || [], got.names));
     }
   }
 
@@ -78,29 +97,33 @@ export function verify(cwd, receiptFile) {
     console.log(`MISMATCH. Files changed: ${[...new Set(changedFiles)].sort().join(', ')}.`);
     return 1;
   }
-
-  // All pinned files match: re-run the contracts and compare results by name.
-  const receiptLock = {
-    specs: {
-      [receipt.spec]: {
-        contracts: (receipt.contracts || []).map((c) => ({ 
-          path: c.path, 
-          sha256: c.sha256,
-          names: [c.name], // Store the contract name for matching
-        })),
-      },
-    },
-  };
-  const fresh = runContracts(cwd, receipt.spec, receiptLock);
-
-  const receiptMap = new Map((receipt.contracts || []).map((c) => [c.name, c.result]));
-  const freshMap = new Map(fresh.map((r) => [r.name, r.result]));
-  const changedContracts = [];
-  for (const [name, result] of receiptMap) {
-    if (!freshMap.has(name) || freshMap.get(name) !== result) changedContracts.push(name);
+  if (namesChanged.length > 0) {
+    console.log(`MISMATCH. Contracts changed: ${[...new Set(namesChanged)].sort().join(', ')}.`);
+    return 1;
   }
-  for (const name of freshMap.keys()) {
-    if (!receiptMap.has(name)) changedContracts.push(name);
+
+  // All pinned files match: re-run the contracts and compare results by file and
+  // name. With a lock, the lock's contracts run, not the receipt's list (Req 6.7).
+  const runLock = frozenSpec
+    ? lock
+    : {
+        specs: {
+          [receipt.spec]: {
+            contracts: receipt.contracts.map((c) => ({ path: c.path, sha256: c.sha256, names: [c.name] })),
+          },
+        },
+      };
+  const fresh = runContracts(cwd, receipt.spec, runLock);
+
+  const key = (c) => `${c.path}\0${c.name}`;
+  const receiptMap = new Map(receipt.contracts.map((c) => [key(c), c]));
+  const freshMap = new Map(fresh.map((r) => [key(r), r]));
+  const changedContracts = [];
+  for (const [k, c] of receiptMap) {
+    if (!freshMap.has(k) || freshMap.get(k).result !== c.result) changedContracts.push(c.name);
+  }
+  for (const [k, r] of freshMap) {
+    if (!receiptMap.has(k)) changedContracts.push(r.name);
   }
   if (changedContracts.length > 0) {
     console.log(`MISMATCH. Contracts changed: ${[...new Set(changedContracts)].sort().join(', ')}.`);

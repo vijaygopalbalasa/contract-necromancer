@@ -883,3 +883,104 @@ test('R7.1 handleStop prints each frozen spec: count of tasks done, count of rec
     fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Task 8d: fail closed on ticks (Req 4.13)
+// ---------------------------------------------------------------------------
+
+// A frozen spec whose only contract fails, so any write the gate lets through
+// is a hole, and any write it stops shows "Contracts failed".
+function frozenFailingWithTasks(tasksText) {
+  const cwd = tmpCwd();
+  writeReq(cwd, 'demo', REQ);
+  writeContract(cwd, 'demo', 'fail.contract.test.js', FAILING_CONTRACT);
+  freezeSpec(cwd, 'demo');
+  if (tasksText !== null) writeTasks(cwd, 'demo', tasksText);
+  return cwd;
+}
+
+function assertGated(res) {
+  assert.equal(res.exitCode, 2, `expected the gate to run, got: ${JSON.stringify(res)}`);
+  assert.match(res.stderr, /Contracts failed: R1\.2 failing contract/);
+}
+
+test('R4.13 an fs_write that creates tasks.md with a ticked line runs the gate', () => {
+  const cwd = frozenFailingWithTasks(null);
+  try {
+    assertGated(handlePreToolUse(payload(cwd, 'fs_write', { path: TASKS_REL, text: '- [x] 1. Task one\n' })));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.13 an fs_write that adds a ticked line with no matching unticked line before it runs the gate', () => {
+  const cwd = frozenFailingWithTasks(TASKS_TWO);
+  try {
+    const text = `${TASKS_TWO}- [x] 3. Task three, never listed before\n`;
+    assertGated(handlePreToolUse(payload(cwd, 'fs_write', { path: TASKS_REL, text })));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.13 a ticked line without a list marker counts as a ticked task line', () => {
+  const cwd = frozenFailingWithTasks(null);
+  try {
+    for (const line of ['[x] 1. Task one', '-[x] 1. Task one', '  [X] 1. Task one']) {
+      assertGated(handlePreToolUse(payload(cwd, 'fs_write', { path: TASKS_REL, text: `${line}\n` })));
+    }
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.13 a bare [ ] -> [x] change on a line without a list marker runs the gate', () => {
+  const cwd = frozenFailingWithTasks('[ ] 1. Task one\n');
+  try {
+    assertGated(
+      handlePreToolUse(payload(cwd, 'str_replace', { path: TASKS_REL, oldStr: '[ ] 1.', newStr: '[x] 1.' })),
+    );
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.13 a partial-line str_replace that does not match the file on disk still runs the gate', () => {
+  // The oldStr is not in the file exactly (extra space on disk), so the edit
+  // cannot be applied here; the hook must not guess it is harmless.
+  const cwd = frozenFailingWithTasks('- [ ]  1. Task one\n');
+  try {
+    assertGated(
+      handlePreToolUse(payload(cwd, 'str_replace', { path: TASKS_REL, oldStr: '[ ] 1.', newStr: '[x] 1.' })),
+    );
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.13 a partial-line str_replace that ticks inside a line, applied to the disk file, runs the gate', () => {
+  const cwd = frozenFailingWithTasks(TASKS_TWO);
+  try {
+    assertGated(
+      handlePreToolUse(payload(cwd, 'str_replace', { path: TASKS_REL, oldStr: ' ] 2.', newStr: 'x] 2.' })),
+    );
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.13 a write that does not raise the ticked count stays silent', () => {
+  const cwd = frozenFailingWithTasks('- [x] 1. Task one\n- [ ] 2. Task two\n');
+  try {
+    const quiet = [
+      ['fs_write', { path: TASKS_REL, text: '- [x] 1. Task one\n- [ ] 2. Task two\nNotes about [x] marks\n' }],
+      ['fs_write', { path: TASKS_REL, text: '- [ ] 1. Task one\n- [ ] 2. Task two\n' }],
+      ['str_replace', { path: TASKS_REL, oldStr: 'Task two', newStr: 'Task 2' }],
+    ];
+    for (const [tool, input] of quiet) {
+      assert.deepEqual(handlePreToolUse(payload(cwd, tool, input)), { exitCode: 0, stdout: '', stderr: '' });
+    }
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});

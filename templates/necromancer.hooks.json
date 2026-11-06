@@ -4,7 +4,6 @@
     {
       "name": "Contract Necromancer PreToolUse",
       "trigger": "PreToolUse",
-      "matcher": "fs_write|str_replace|execute_bash",
       "action": {
         "type": "command",
         "command": "necro hook pre"

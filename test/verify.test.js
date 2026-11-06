@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { hashFile } from '../src/canon.js';
 import { runContracts } from '../src/contracts.js';
-import { buildReceipt, writeReceipt } from '../src/receipts.js';
+import { buildReceipt, writeReceipt, computeReceiptHash } from '../src/receipts.js';
 import { verify } from '../src/verify.js';
 import { readLock, freezeSpec } from '../src/lock.js';
 
@@ -318,6 +318,214 @@ test('R6.6 verify reports MISMATCH when contract hash differs from the frozen lo
     } finally {
       fs.rmSync(cwd2, { recursive: true, force: true });
     }
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Task 8d: strict verify against the lock (Req 6.7)
+// ---------------------------------------------------------------------------
+
+const TWO_TESTS = `import { test } from 'node:test';
+import assert from 'node:assert/strict';
+
+test('R6.7 first contract', () => assert.ok(true));
+test('R6.7 second contract', () => assert.ok(true));
+`;
+
+const OTHER_FILE = `import { test } from 'node:test';
+import assert from 'node:assert/strict';
+
+test('R6.7 other file contract', () => assert.ok(true));
+`;
+
+// Contract that passes now and fails once data.json changes (data.json is not pinned).
+const DATA_FILE = `import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+
+test('R6.7 data contract', () => {
+  assert.equal(JSON.parse(fs.readFileSync(path.join(process.cwd(), 'data.json'), 'utf8')).value, 1);
+});
+`;
+
+// A frozen spec with two contract files, and a genuine receipt for it.
+function frozenWithReceipt(cwd, extra = {}) {
+  write(cwd, '.kiro/specs/demo/requirements.md', REQ);
+  write(cwd, 'contracts/demo/a.contract.test.js', TWO_TESTS);
+  write(cwd, 'contracts/demo/b.contract.test.js', extra.dataFile ? DATA_FILE : OTHER_FILE);
+  if (extra.dataFile) write(cwd, 'data.json', '{"value": 1}\n');
+  freezeSpec(cwd, 'demo');
+  const lock = readLock(cwd);
+  const { receipt, file } = makeReceipt(cwd, 'demo', lock);
+  return { lock, receipt, file };
+}
+
+// Rewrite a receipt with `edit` applied and a receiptHash that matches the new
+// content, so only the lock comparison can catch the change.
+function forge(cwd, file, edit) {
+  const receipt = JSON.parse(fs.readFileSync(path.join(cwd, file), 'utf8'));
+  edit(receipt);
+  const { receiptHash, createdAt, ...rest } = receipt;
+  receipt.receiptHash = computeReceiptHash(rest);
+  const forged = path.join(cwd, 'forged.json');
+  fs.writeFileSync(forged, JSON.stringify(receipt, null, 2) + '\n');
+  return forged;
+}
+
+function verifyForged(cwd, file, edit) {
+  return captureStdout(() => verify(cwd, forge(cwd, file, edit)));
+}
+
+test('R6.7 a genuine receipt for a frozen spec is CONFIRMED', () => {
+  const cwd = tmpCwd();
+  try {
+    const { receipt, file } = frozenWithReceipt(cwd);
+    assert.equal(receipt.contracts.length, 3);
+    const { code, out } = captureStdout(() => verify(cwd, file));
+    assert.equal(code, 0, out);
+    assert.match(out, /CONFIRMED/);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.7 a receipt that leaves out one of the lock\'s contract files is a MISMATCH', () => {
+  const cwd = tmpCwd();
+  try {
+    const { file } = frozenWithReceipt(cwd);
+    const { code, out } = verifyForged(cwd, file, (r) => {
+      r.contracts = r.contracts.filter((c) => c.path !== 'contracts/demo/b.contract.test.js');
+    });
+    assert.equal(code, 1, out);
+    assert.match(out, /MISMATCH/);
+    assert.ok(out.includes('contracts/demo/b.contract.test.js'), out);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.7 a receipt that leaves out one contract of a file is a MISMATCH naming it', () => {
+  const cwd = tmpCwd();
+  try {
+    const { file } = frozenWithReceipt(cwd);
+    const { code, out } = verifyForged(cwd, file, (r) => {
+      r.contracts = r.contracts.filter((c) => c.name !== 'R6.7 second contract');
+    });
+    assert.equal(code, 1, out);
+    assert.match(out, /MISMATCH/);
+    assert.ok(out.includes('R6.7 second contract'), out);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.7 a receipt that adds a contract the lock lacks is a MISMATCH, even when it records a failure', () => {
+  const cwd = tmpCwd();
+  try {
+    const { file } = frozenWithReceipt(cwd);
+    const { code, out } = verifyForged(cwd, file, (r) => {
+      const first = r.contracts.find((c) => c.path === 'contracts/demo/a.contract.test.js');
+      r.contracts.push({ ...first, name: 'R6.7 invented contract', result: 'fail' });
+    });
+    assert.equal(code, 1, out);
+    assert.match(out, /MISMATCH/);
+    assert.ok(out.includes('R6.7 invented contract'), out);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.7 a receipt that adds a contract file the lock lacks is a MISMATCH', () => {
+  const cwd = tmpCwd();
+  try {
+    const { file } = frozenWithReceipt(cwd);
+    write(cwd, 'contracts/demo/extra.contract.test.js', OTHER_FILE);
+    const { code, out } = verifyForged(cwd, file, (r) => {
+      r.contracts.push({
+        name: 'R6.7 other file contract',
+        path: 'contracts/demo/extra.contract.test.js',
+        sha256: hashFile(path.join(cwd, 'contracts/demo/extra.contract.test.js')),
+        result: 'pass',
+      });
+    });
+    assert.equal(code, 1, out);
+    assert.match(out, /MISMATCH/);
+    assert.ok(out.includes('contracts/demo/extra.contract.test.js'), out);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.7 a receipt that changes a recorded contract name is a MISMATCH', () => {
+  const cwd = tmpCwd();
+  try {
+    const { file } = frozenWithReceipt(cwd);
+    const { code, out } = verifyForged(cwd, file, (r) => {
+      r.contracts.find((c) => c.name === 'R6.7 first contract').name = 'R6.7 first contract (renamed)';
+    });
+    assert.equal(code, 1, out);
+    assert.match(out, /MISMATCH/);
+    assert.ok(out.includes('R6.7 first contract'), out);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.7 a receipt for a spec that is not in the lock is a MISMATCH', () => {
+  const cwd = tmpCwd();
+  try {
+    const { file } = frozenWithReceipt(cwd);
+    const { code, out } = verifyForged(cwd, file, (r) => {
+      r.spec = 'other';
+    });
+    assert.equal(code, 1, out);
+    assert.match(out, /MISMATCH/);
+    assert.ok(out.includes("'other'"), out);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.7 an empty lock still means the receipt\'s spec is missing from it', () => {
+  const cwd = tmpCwd();
+  try {
+    const { file } = frozenWithReceipt(cwd);
+    fs.writeFileSync(path.join(cwd, '.necro/lock.json'), JSON.stringify({ specs: {} }));
+    const { code, out } = captureStdout(() => verify(cwd, file));
+    assert.equal(code, 1, out);
+    assert.match(out, /MISMATCH/);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.7 verify runs the lock\'s contracts, so a receipt that hides a now-failing file is a MISMATCH', () => {
+  const cwd = tmpCwd();
+  try {
+    const { file } = frozenWithReceipt(cwd, { dataFile: true });
+    fs.writeFileSync(path.join(cwd, 'data.json'), '{"value": 2}\n');
+    const { code, out } = verifyForged(cwd, file, (r) => {
+      r.contracts = r.contracts.filter((c) => c.path !== 'contracts/demo/b.contract.test.js');
+    });
+    assert.equal(code, 1, out);
+    assert.match(out, /MISMATCH/);
+    assert.ok(out.includes('contracts/demo/b.contract.test.js'), out);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.7 an honest receipt is a MISMATCH when a lock contract fails now', () => {
+  const cwd = tmpCwd();
+  try {
+    const { file } = frozenWithReceipt(cwd, { dataFile: true });
+    fs.writeFileSync(path.join(cwd, 'data.json'), '{"value": 2}\n');
+    const { code, out } = captureStdout(() => verify(cwd, file));
+    assert.equal(code, 1, out);
+    assert.ok(out.includes('R6.7 data contract'), out);
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }

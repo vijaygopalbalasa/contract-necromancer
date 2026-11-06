@@ -1,0 +1,170 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=10
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] List Directory
+[tool] status: InProgress
+[tool] Run Command
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] web_search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Fetch URL
+[tool] status: InProgress
+[tool] Fetch URL
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Fetch URL
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Fetch URL
+[tool] status: InProgress
+[tool] status: Completed
+Pages are JS-rendered. Let me try the redirected URL and the GitHub reference doc.
+[tool] Fetch URL
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Fetch URL
+[tool] status: InProgress
+[tool] Fetch URL
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] Run Command
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Both fail as expected. Let me confirm the `init` failure is the matcher and not the path-with-space issue.
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Now the matcher failure is the real one. Fix the template by removing the `matcher` field (no matcher applies the hook to every tool).
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 8d is done and marked `[x]` in `tasks.md`. `npm test` passes (115 tests, 0 failures). I didn't touch `requirements.md`, `contracts/` or `.necro/`. I also edited `design.md` and `bin/necro.js`, which you didn't mention.
+
+For each bullet I wrote the tests first and ran them against the old code. Not every new test failed there, because the old code already caught some cases.
+
+**4.13 (ticks)**
+- **Failed before:** a ticked line with no list marker (`[x] 1. Task`, `-[x] ...`), a bare `[ ]` to `[x]` change on such a line, and a partial-line `str_replace` whose `oldStr` doesn't match the file on disk.
+- **Already passed:** a new `tasks.md` with a `- [x]` line, an added `[x]` line with no earlier `[ ]` line, and a `str_replace` that applies to the disk file.
+- **Fix in `src/hooks.js`:**
+  - The list marker is now optional in the task-line pattern, and the `untick` baseline for shell edits uses the same pattern.
+  - A write counts as a tick when it has more `[x]` task lines than the disk file.
+  - A `str_replace` that doesn't apply to the file is judged by the count of `[x]` in `oldStr` versus `newStr`.
+
+**6.7 (verify)**
+- **Failed before:** a receipt that omits a lock contract file, a receipt that adds a failing contract name the lock lacks, a receipt for a spec missing from the lock, an empty lock file, and a receipt that hides a file whose contract now fails.
+- **Already caught:** a receipt that adds a contract file the lock lacks, and one that leaves out or renames a single contract.
+- **Fix in `src/verify.js`:**
+  - A lock file on disk is now binding. With no lock file, behaviour is unchanged.
+  - The receipt's spec must be in the lock.
+  - The contract files, hashes and names must equal the lock's exactly, compared per file.
+  - The lock's contracts are what get run, and results are matched by file and name.
+
+**8.4 (matcher)**
+- **Kiro docs:** I couldn't read the official Kiro docs because the pages render with JavaScript. A third-party mirror of the Kiro CLI hooks reference says that no `matcher` applies a hook to every tool. It also lists `"*"` for all tools, but `*` isn't a valid regex, so I didn't use it.
+- **Template change:** I removed the `matcher` field from the PreToolUse hook in `templates/necromancer.hooks.json`. The `read_file`/`list_directory`/`grep`/`glob` exemption in the handler still lets read-only tools through.
+- **Tests:** one test checks the template directly. Another runs `necro init` in a temp directory and checks the written file.
+
+**An unrequested fix in `bin/necro.js`**
+- **Bug:** `necro init` crashed whenever the install path had a space, because it built template paths from the URL-encoded `import.meta.url` (`Judge%20Protocol`).
+- **Fix:** I replaced that with `fileURLToPath`. The new `init` test hit this bug, so it was needed to verify 8.4. It also affects the path this repo lives in.
+
+I appended a short clarification to `design.md` and updated its hook-matcher lines. I didn't run the matcher against a live Kiro session, so it's worth a quick check in the IDE that the PreToolUse hook fires for non-write tools after `necro init`.

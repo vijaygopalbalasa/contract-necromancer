@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -58,4 +59,79 @@ test('Req 8.3: if hook/steering files already exist, necro init leaves them unch
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }
+});
+
+// ---------------------------------------------------------------------------
+// Task 8d: the PreToolUse hook sees every tool (Req 8.4)
+// ---------------------------------------------------------------------------
+
+// How Kiro applies a hook matcher to a tool name. A hook with no matcher (or an
+// empty one) runs for every tool; otherwise the matcher is a regular expression
+// tested against the tool name. "*" is accepted by the Kiro CLI as "all tools"
+// but is not a valid regular expression, so it does not count as matching here:
+// the template must work under both readings, which a missing matcher does.
+function matcherMatches(matcher, toolName) {
+  if (matcher === undefined || matcher === null || matcher === '') return true;
+  if (typeof matcher !== 'string') return false;
+  try {
+    return new RegExp(matcher).test(toolName);
+  } catch {
+    return false;
+  }
+}
+
+const TOOL_NAMES = [
+  'fs_write',
+  'str_replace',
+  'fs_append',
+  'execute_bash',
+  'delete_file',
+  'read_file',
+  'grep_search',
+  'some_future_write_tool',
+  '@server/write_note',
+];
+
+function preHook(config) {
+  const pre = config.hooks.filter((h) => h.trigger === 'PreToolUse');
+  assert.equal(pre.length, 1, 'exactly one PreToolUse hook');
+  return pre[0];
+}
+
+test('Req 8.4: the template PreToolUse hook matches every tool, not a fixed list', () => {
+  const template = JSON.parse(
+    fs.readFileSync(path.join(__dirname, '../templates/necromancer.hooks.json'), 'utf8'),
+  );
+  const hook = preHook(template);
+  for (const tool of TOOL_NAMES) {
+    assert.ok(matcherMatches(hook.matcher, tool), `PreToolUse hook must match ${tool}`);
+  }
+  assert.equal(hook.action.command, 'necro hook pre');
+  assert.equal(hook.timeout, 300);
+});
+
+test('Req 8.4: necro init writes a PreToolUse hook that matches every tool', () => {
+  const cwd = tmpCwd();
+  try {
+    const bin = path.join(__dirname, '../bin/necro.js');
+    const res = spawnSync(process.execPath, [bin, 'init'], { cwd, encoding: 'utf8' });
+    assert.equal(res.status, 0, res.stderr);
+    const written = JSON.parse(fs.readFileSync(path.join(cwd, '.kiro/hooks/necromancer.json'), 'utf8'));
+    const hook = preHook(written);
+    for (const tool of TOOL_NAMES) {
+      assert.ok(matcherMatches(hook.matcher, tool), `written PreToolUse hook must match ${tool}`);
+    }
+    // PostToolUse keeps its narrow matcher: it only needs to see shell commands.
+    const post = written.hooks.find((h) => h.trigger === 'PostToolUse');
+    assert.ok(matcherMatches(post.matcher, 'execute_bash'));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('Req 8.4: the matcher check itself rejects a fixed list and an invalid "*" regex', () => {
+  assert.equal(matcherMatches('fs_write|str_replace|execute_bash', 'read_file'), false);
+  assert.equal(matcherMatches('*', 'fs_write'), false);
+  assert.equal(matcherMatches(undefined, 'anything'), true);
+  assert.equal(matcherMatches('.*', 'anything'), true);
 });

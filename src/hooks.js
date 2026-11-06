@@ -149,7 +149,9 @@ export function countTaskMarks(text) {
   return matches ? matches.length : 0;
 }
 
-const TASK_LINE = /^\s*(?:[-*+]|\d+[.)])\s+\[([ xX])\]\s?(.*)$/;
+// A task line: an optional list marker, then a checkbox. The marker is optional
+// so a box written without one still counts (Req 4.13).
+const TASK_LINE = /^\s*(?:(?:[-*+]|\d+[.)])\s*)?\[([ xX])\]\s?(.*)$/;
 
 // Multiset of task lines: "<checked or not>\0<task text>" -> how many.
 function taskLines(text) {
@@ -163,10 +165,20 @@ function taskLines(text) {
   return counts;
 }
 
+// Number of ticked task lines in a text.
+function tickedCount(text) {
+  let n = 0;
+  for (const [key, count] of taskLines(text)) if (key.startsWith('x\0')) n += count;
+  return n;
+}
+
 // True when `after` has a ticked task line that `before` does not have, which
 // covers a plain [ ] -> [x] change, a tick together with a rename, and one task
-// unticked while another is ticked.
+// unticked while another is ticked. It is also true when `after` has more ticked
+// task lines than `before` even if no line can be matched to an earlier unticked
+// one (a new file, a new ticked line) (Req 4.13).
 export function newlyTicked(before, after) {
+  if (tickedCount(after) > tickedCount(before)) return true;
   const was = taskLines(before);
   for (const [key, n] of taskLines(after)) {
     if (key.startsWith('x\0') && n > (was.get(key) || 0)) return true;
@@ -176,7 +188,7 @@ export function newlyTicked(before, after) {
 
 // The text with every ticked task line unticked.
 function untick(text) {
-  return text.replace(/^(\s*(?:[-*+]|\d+[.)])\s+)\[[xX]\]/gm, '$1[ ]');
+  return text.replace(/^(\s*(?:(?:[-*+]|\d+[.)])\s*)?)\[[xX]\]/gm, '$1[ ]');
 }
 
 // Replace the first match (or every match) of oldStr in text, without treating
@@ -200,7 +212,8 @@ function canonicalSpec(cwd, name) {
 // call: { spec, before, after, exact }. A str_replace is applied to the file on
 // disk (Req 4.1); an fs_write is compared with the file on disk (Req 4.2). When
 // a str_replace does not apply to the file, the edit text itself is compared
-// (exact is false) so the check errs towards treating it as a tick.
+// (exact is false), counting [x] marks anywhere in it, so the check errs
+// towards treating it as a tick (Req 4.13).
 function taskEdit(cwd, toolName, toolInput) {
   const p = toolInput && toolInput.path;
   if (typeof p !== 'string') return null;
@@ -230,7 +243,9 @@ function taskEdit(cwd, toolName, toolInput) {
       const lf = (s) => s.replace(/\r\n/g, '\n');
       after = applyReplace(lf(disk), lf(oldStr), lf(newStr), all);
       if (after !== null) return { spec, before: lf(disk), after, exact: true };
-      return { spec, before: oldStr, after: newStr, exact: false };
+      // One ticked task line per [x] found, so only the count is compared.
+      const marks = (t) => Array(countTaskMarks(t)).fill('- [x] mark').join('\n');
+      return { spec, before: marks(oldStr), after: marks(newStr), exact: false };
     }
     return { spec, before: disk, after, exact: true };
   }

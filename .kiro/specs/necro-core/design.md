@@ -236,7 +236,7 @@ All user-facing messages are short plain sentences that say what to do next (per
 
 ### PreToolUse flow
 
-`necro hook pre` — matcher: `fs_write|str_replace`.
+`necro hook pre` — no matcher, so it runs for every tool (Req 8.4); the handler allows read-only tools itself.
 
 ```
 Read STDIN → parse JSON → resolve path (project-relative)
@@ -350,8 +350,8 @@ All errors are short plain sentences that say what to do next:
 
 `necro init` copies from `templates/`:
 
-- `templates/necromancer.hooks.json` → `.kiro/hooks/necromancer.json`: PreToolUse (matcher
-  `fs_write|str_replace`), PostToolUse (matcher `execute_bash`), and Stop hooks, each calling
+- `templates/necromancer.hooks.json` → `.kiro/hooks/necromancer.json`: PreToolUse (no `matcher` field, which Kiro
+  treats as every tool; `*` is not a valid regular expression, so it is not used), PostToolUse (matcher `execute_bash`), and Stop hooks, each calling
   `necro hook pre` / `necro hook post` / `necro hook stop` with a 300-second timeout.
 - `templates/necromancer.steering.md` → `.kiro/steering/necromancer.md`: tells the agent that frozen contracts
   decide "done" and must not be edited.
@@ -383,3 +383,13 @@ and links to files that do not exist yet; the nearest existing parent for a new 
 the frozen paths ignoring letter case and Unicode normal form. Every tool other than `read_file`, `list_directory`,
 `grep` and `glob` is blocked when any string in its input names a protected path. For `fs_write` and `str_replace` the
 `text`, `oldStr` and `newStr` fields are file content and are not checked as paths.
+
+## Clarification (fail closed on ticks, strict verify, Req 4.13 and 6.7)
+A task line is an optional list marker followed by a checkbox, so `[x] text` without a marker counts. A write to
+`tasks.md` is a tick when the resulting file has more `[x]` task lines than the file on disk (a missing file counts as
+zero) or a `[x]` line the disk file does not have. A `str_replace` that does not apply to the disk file is compared by
+the number of `[x]` marks in `oldStr` and `newStr`.
+
+`verify` treats a lock file that exists as binding: the receipt's spec must be in it, its contract files, hashes and
+names must equal the lock's (compared per file, none missing, none extra), and the lock's contracts are the ones run.
+Results are compared by file and name.

@@ -2,6 +2,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { freezeSpec } from '../src/lock.js';
 import { verify } from '../src/verify.js';
 import { handlePreToolUse, handlePostToolUse, handleStop } from '../src/hooks.js';
@@ -70,8 +71,10 @@ function initProject(cwd) {
   const hookDest = path.join(cwd, '.kiro', 'hooks', 'necromancer.json');
   const steeringDest = path.join(cwd, '.kiro', 'steering', 'necromancer.md');
 
-  const hookSrc = path.join(path.dirname(path.dirname(import.meta.url.replace('file://', ''))), 'templates', 'necromancer.hooks.json');
-  const steeringSrc = path.join(path.dirname(path.dirname(import.meta.url.replace('file://', ''))), 'templates', 'necromancer.steering.md');
+  // fileURLToPath decodes the URL, so install paths with spaces work.
+  const templates = path.join(path.dirname(path.dirname(fileURLToPath(import.meta.url))), 'templates');
+  const hookSrc = path.join(templates, 'necromancer.hooks.json');
+  const steeringSrc = path.join(templates, 'necromancer.steering.md');
 
   let wrote = [];
 

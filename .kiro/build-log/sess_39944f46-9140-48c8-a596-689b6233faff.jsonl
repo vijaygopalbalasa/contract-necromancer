@@ -1,0 +1,40 @@
+{"t":"2026-11-06T20:37:57.946Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/necro-core/requirements.md"}
+{"t":"2026-11-06T20:37:58.045Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/necro-core/design.md"}
+{"t":"2026-11-06T20:37:58.561Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-06T20:37:58.754Z","tool":"list_directory","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro"}
+{"t":"2026-11-06T20:38:01.811Z","tool":"list_directory","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/steering"}
+{"t":"2026-11-06T20:38:02.131Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/src/hooks.js"}
+{"t":"2026-11-06T20:38:02.364Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/src/verify.js"}
+{"t":"2026-11-06T20:38:02.658Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/templates/necromancer.hooks.json"}
+{"t":"2026-11-06T20:38:07.423Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/test/cli.test.js"}
+{"t":"2026-11-06T20:38:07.421Z","tool":"list_directory","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/hooks"}
+{"t":"2026-11-06T20:38:07.423Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/src/contracts.js"}
+{"t":"2026-11-06T20:38:07.427Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/test/verify.test.js"}
+{"t":"2026-11-06T20:38:07.530Z","tool":"execute_bash","what":"git && ls && head && cat"}
+{"t":"2026-11-06T20:38:11.552Z","tool":"remote_web_search","what":""}
+{"t":"2026-11-06T20:38:12.641Z","tool":"execute_bash","what":"ls && cat && cat && cat && cat && npm && tail"}
+{"t":"2026-11-06T20:38:17.047Z","tool":"web_fetch","what":""}
+{"t":"2026-11-06T20:38:17.204Z","tool":"web_fetch","what":""}
+{"t":"2026-11-06T20:38:19.097Z","tool":"web_fetch","what":""}
+{"t":"2026-11-06T20:38:19.453Z","tool":"web_fetch","what":""}
+{"t":"2026-11-06T20:38:21.948Z","tool":"web_fetch","what":""}
+{"t":"2026-11-06T20:38:22.684Z","tool":"web_fetch","what":""}
+{"t":"2026-11-06T20:38:22.875Z","tool":"web_fetch","what":""}
+{"t":"2026-11-06T20:39:00.419Z","tool":"execute_bash","what":"grep && ^const\\ && ^import\\ && ^test(\" && head && wc"}
+{"t":"2026-11-06T20:39:02.663Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/test/hooks.test.js"}
+{"t":"2026-11-06T20:39:03.180Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/test/hooks.test.js"}
+{"t":"2026-11-06T20:39:03.658Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/test/hooks.test.js"}
+{"t":"2026-11-06T20:39:42.852Z","tool":"execute_bash","what":"grep && sed && cat && cat && head"}
+{"t":"2026-11-06T20:40:00.360Z","tool":"execute_bash","what":"cat && writeReq(cwd, && writeContract(cwd, && freezeSpec(cwd, && if && return && } && assert.match(res.stderr, && } && try && } && } && test('R4.13 && try && assertGated(handlePreToolUse(payload(cwd, "}
+{"t":"2026-11-06T20:40:12.426Z","tool":"execute_bash","what":"python3 && \\\\d+[.)])\\\\s+\\\\[([ && \"\"\",\"\"\"// && \\\\d+[.)])\\\\s*)?\\\\[([ && \"\"\") && for && n &&  && 0)) && } && } && \\\\d+[.)])\\\\s+)\\\\[[xX]\\\\]/gm, && }\"\"\",\"\"\"// && for && return && } && const && for && n && "}
+{"t":"2026-11-06T20:40:22.131Z","tool":"execute_bash","what":"python3 && \"\"\",\"\"\" && \"\"\") && grep && ^ℹ && fail)\""}
+{"t":"2026-11-06T20:40:46.566Z","tool":"execute_bash","what":"cat && import && test('R6.7 && test('R6.7 && ` && const && import && test('R6.7 && ` && // && import && import && import && test('R6.7 && }) && ` && // && write(cwd, && write(cwd, && if && freezeSpec("}
+{"t":"2026-11-06T20:40:50.054Z","tool":"str_replace","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/test/verify.test.js"}
+{"t":"2026-11-06T20:40:54.610Z","tool":"execute_bash","what":"npm && grep && ^ℹ && fail)\" && sort"}
+{"t":"2026-11-06T20:41:12.669Z","tool":"execute_bash","what":"python3 && const && const && lock.specs && if && !frozenSpec) && return && } && if &&  && receipt.requirements.sha256 && } &&  && []).map((c) && const && for && receiptFiles.get(c.path).names.push(c.n"}
+{"t":"2026-11-06T20:41:29.597Z","tool":"execute_bash","what":"cat && otherwise &&  && matcher &&  && matcher && if && try && } && } && function && assert.equal(pre.length, && return && } && const && for && } && assert.equal(hook.timeout, && }) && test('Req && tr"}
+{"t":"2026-11-06T20:41:36.826Z","tool":"execute_bash","what":"npm && grep && head"}
+{"t":"2026-11-06T20:41:46.290Z","tool":"execute_bash","what":"python3 && \\n\",\"import && \\nimport && \\n\",1) && \\n && \\n\" && \\n && \\n && \\n\" && grep && ^ℹ && fail)\" && sort"}
+{"t":"2026-11-06T20:41:48.808Z","tool":"str_replace","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/templates/necromancer.hooks.json"}
+{"t":"2026-11-06T20:41:53.223Z","tool":"execute_bash","what":"npm && grep && ^ℹ && fail)\" && sort && git"}
+{"t":"2026-11-06T20:42:03.707Z","tool":"execute_bash","what":"python3 && str_replace`.\",\"`necro && the && str_replace`), && `*` && grep && head && npm && grep && fail)\""}
