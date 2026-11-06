@@ -1,0 +1,305 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=8
+I'll start by reading the spec, steering files, and source.
+[tool] Read File
+[tool] status: InProgress
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+I have the spec, source and existing tests. Next I'll write the contract files, starting with canon and lock.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] Run Command
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Write File
+[tool] Run Command
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Write File
+[tool] Run Command
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] Run Command
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Failed: Replace in File
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Failed: Invalid input for str_replace — path: expected string, received undefined
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+Merge the second R4.19 test into the first so there is one test per criterion.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] Run Command
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Write File
+[tool] Run Command
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Write File
+[tool] Run Command
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] Run Command
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] Run Command
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] Run Command
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Failed: Run Command
+I wrote 68 contracts, one per acceptance criterion in `requirements.md`, in `contracts/necro-core/`. All 68 pass against the current code. Nothing outside that folder changed, so `src/`, `test/`, `requirements.md` and `.necro/` are untouched.
+
+Every criterion could be checked in Node, so no criterion is left without a contract, and the README says so. I did not freeze the spec.
+
+| File | Criteria |
+|---|---|
+| `canon` | R1.1–1.3 |
+| `lock` | R2.1–2.8 |
+| `block` | R3.1, 3.2, 3.4, 3.5, 3.6, 3.11 |
+| `shell` | R3.3, 3.7–3.10, 3.12, 3.13 |
+| `gate` | R4.1–4.6, 4.13, 4.19, 4.20 |
+| `runner` | R4.7–4.12 |
+| `required` | R4.14–4.18 |
+| `receipts` | R5.1–5.5 |
+| `verify` | R6.1–6.7 |
+| `summary` | R7.1 |
+| `init` | R8.1–8.7 |
+| `check` | R9.1–9.4 |
+
+Each file carries its own copy of the helpers and the fixtures it needs. Tests build a throwaway project in a temp directory. They call `bin/necro.js` the way Kiro does, so hooks get a JSON payload on stdin. A few call `src/canon.js` and `src/contracts.js` directly. Some tests need `git`, symbolic links and `/bin/sh`.
+
+Each file also names the modules it uses in a `from '...'` comment. That makes a receipt pin `bin/necro.js` and the rest of `src/`, which an import alone would not.
+
+How I checked them:
+- I copied the repo to a temp folder and ran `necro freeze necro-core`, `check` and `verify` there. All 68 contracts pass, and the receipt confirms.
+- Every task in `tasks.md` names criteria that have a contract.
+- I applied about 70 deliberate bugs to a copy of `src/` and the templates. The contracts caught all of them except a few that turned out to be harmless changes. One of those showed that R6.5 needed a no-lock case, and I added it.
+
+Four things to know before you freeze:
+- **R4.8 (no contracts ran):** The code never says "no contracts ran". For a file with no tests it prints `Contracts failed: <file name>.`, so the contract checks exit 2, that the file is named, and that no receipt is written. The sentence exists only in `src/check.js`, where it can't be reached.
+- **R4.4 (`node --test`):** The code runs files through the `run()` API rather than `node --test`. The contract checks that the Node test runner started each run, and that it ran once per tick.
+- **Run time:** Through necro, each gate, `check` and `verify` takes about 30 seconds, because the files run one after another. `node --test` on the folder takes about 6 seconds. That fits the 300-second hook timeout.
+- **Hook field name:** Only a field named `command` is exempt from the length check, and the shell-tool tests use that field. A long string in another field, such as `input` on `control_bash_process`, would be blocked.
+
+The README lists the lock fields the tests read (`names`, `tasks[id].criteria`, `tasks[id].text`) and the partial-coverage notes. To freeze, run `necro freeze necro-core`.
