@@ -101,3 +101,14 @@ receipts anyone can re-run.
 3. IF those files already exist THEN THE SYSTEM SHALL leave them unchanged and say so.
 4. WHEN `necro init` writes the hooks THE SYSTEM SHALL make the PreToolUse hook match every tool (not a fixed list of write tools), so the Req 3.6 check sees unknown write tools.
 5. WHEN `necro init` writes the hooks THE SYSTEM SHALL make the PostToolUse hook match every write and shell tool named in Requirement 3.
+6. WHEN `necro init` writes the hook commands THE SYSTEM SHALL use the absolute path of the Node.js binary running `init` and the absolute path of `bin/necro.js`, each quoted so paths with spaces work, because the Kiro IDE started from the Dock does not have the shell's PATH.
+7. WHEN `necro init` finishes THE SYSTEM SHALL say that Kiro runs hooks only in a trusted workspace and that after trusting it Kiro must be quit and reopened.
+
+## Requirement 9: Check on demand
+**User story:** As a developer, I want a receipt without ticking a task, so that I can publish one for the commit I just pushed.
+### Acceptance criteria
+1. WHEN a user runs `necro check <spec>` on a frozen spec THE SYSTEM SHALL run every frozen contract, print each result by name, and write a receipt with `task` set to null and every contract required.
+2. WHEN every contract passes THE SYSTEM SHALL exit with code 0 and print the receipt path, and IF any fails THEN THE SYSTEM SHALL exit with code 1 and still write the receipt.
+3. IF the spec is not frozen THEN THE SYSTEM SHALL exit with code 1 and say to freeze it first.
+4. WHEN `necro check` runs THE SYSTEM SHALL not change `tasks.md`.
+

@@ -90,3 +90,7 @@ Each task writes its test first, then the implementation, then runs `node --test
   - Test first, using payloads recorded from the Kiro IDE (`tool_name: "task_update"`, `tool_input: { tasksFilePath, taskId, status, error }`, where `taskId` is the task line text such as "1. Implement `slugify` in `src/slugify.js` (Req 1.1, 1.2)"): `completed` with a failing required contract exits 2 and names it; `completed` with passing contracts exits 0 and writes a receipt with that task; `in_progress`, `queued` and `task_list` are allowed silently; an unknown `taskId` requires every contract; a `tasksFilePath` outside the project is blocked (4.19, 4.20). Run each test against the current code and see it fail first.
   - Implement: update `src/hooks.js`. Run `npm test` and pass.
 
+- [ ] 17. **Hooks that work from the Dock, and check on demand** (Req 8.6, 8.7, 9.1, 9.2, 9.3, 9.4)
+  - Test first: `necro init` writes commands with the absolute `node` path (`process.execPath`) and the absolute `bin/necro.js` path, quoted, and they run from a directory containing a space (8.6); `init` prints the trusted-workspace note (8.7); `necro check` writes a receipt with `task: null` and every contract required, exits 0 or 1 by result, refuses an unfrozen spec, and leaves `tasks.md` unchanged (9.1-9.4). Run each test against the current code and see it fail first.
+  - Implement: `bin/necro.js`, `src/receipts.js` or a new `src/check.js`, README usage. Run `npm test` and pass.
+
