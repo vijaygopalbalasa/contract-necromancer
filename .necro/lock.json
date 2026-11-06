@@ -1,5 +1,359 @@
 {
   "specs": {
+    "necro-core": {
+      "contracts": [
+        {
+          "name": "block",
+          "names": [
+            "R3.1 a write tool call to a frozen file exits 2 with a reason on stderr",
+            "R3.2 a write tool call to any path under .necro/ exits 2",
+            "R3.4 a tool call that touches no frozen file exits 0 and prints nothing",
+            "R3.5 a path is resolved to its real path and compared case-insensitively before the check",
+            "R3.6 a tool that is not known to be read-only is blocked when its input names a protected path",
+            "R3.11 a non-read-only tool call with a too long or NUL-containing input string is blocked"
+          ],
+          "path": "contracts/necro-core/block.contract.test.js",
+          "sha256": "7882e9a0494cdaa9fbdc2c928a657ccbbbd13cfe3974d5d3fc7a2d722f871ac6"
+        },
+        {
+          "name": "canon",
+          "names": [
+            "R1.1 canonicalJson sorts object keys recursively and writes no whitespace",
+            "R1.2 sha256 returns the SHA-256 digest as 64 lowercase hex characters",
+            "R1.3 the same value hashed in different key orders gives the same hash"
+          ],
+          "path": "contracts/necro-core/canon.contract.test.js",
+          "sha256": "bcb844f8b5b2e280dfa02b7cf18ccb629925be55e58c90f51a09ecc7a3535bb6"
+        },
+        {
+          "name": "check",
+          "names": [
+            "R9.1 check on a frozen spec runs every frozen contract, prints each result by name, and writes a receipt with task null and every contract required",
+            "R9.2 check exits 0 and prints the receipt path when every contract passes, and exits 1 and still writes the receipt when any fails",
+            "R9.3 check on a spec that is not frozen exits 1 and says to freeze it first",
+            "R9.4 check does not change tasks.md"
+          ],
+          "path": "contracts/necro-core/check.contract.test.js",
+          "sha256": "6052f07ee6c8217ed0c58429385798c606bf24d384297b167a30c0d93f24f407"
+        },
+        {
+          "name": "gate",
+          "names": [
+            "R4.1 a str_replace on tasks.md is applied to the file on disk and gated when a task line changes from [ ] to [x]",
+            "R4.2 an fs_write to tasks.md is compared line by line with the file on disk and gated when a task line changes from [ ] to [x]",
+            "R4.3 marking a task done in a spec that is not frozen exits 2 and says the spec must be frozen first",
+            "R4.4 the gate runs the spec's frozen contracts itself, under the Node test runner, for every tick",
+            "R4.5 when a required contract fails the gate exits 2 and lists each failing required contract by name",
+            "R4.6 when all contracts pass the gate writes a receipt to .necro/receipts/<spec>/<receiptHash>.json and exits 0",
+            "R4.13 a write to a tasks.md that leaves more [x] task lines than the file on disk is gated, even when no line matches an earlier [ ] line",
+            "R4.19 task_update with status completed is gated like a tick written to tasks.md, with the same exit codes, messages and receipt",
+            "R4.20 a task_update to completed that names no task line requires every contract; a path outside the project is blocked"
+          ],
+          "path": "contracts/necro-core/gate.contract.test.js",
+          "sha256": "dc409717e3641f3a2eb45e7ce4884dc2fdd9371bac6576fbc7adfb5b1e40d4e2"
+        },
+        {
+          "name": "init",
+          "names": [
+            "R8.1 init writes .kiro/hooks/necromancer.json with PreToolUse, PostToolUse and Stop hooks that call necro hook pre, post and stop, each with a timeout of 300 seconds",
+            "R8.2 init writes .kiro/steering/necromancer.md telling the agent that frozen contracts decide \"done\" and must not be edited",
+            "R8.3 if the hook and steering files already exist init leaves them unchanged and says so",
+            "R8.4 the PreToolUse hook init writes matches every tool, not a fixed list of write tools",
+            "R8.5 the PostToolUse hook init writes matches every write and shell tool named in Requirement 3",
+            "R8.6 init writes hook commands with the absolute, quoted path of the Node.js binary that ran init and of bin/necro.js",
+            "R8.7 init says Kiro runs hooks only in a trusted workspace and that after trusting it Kiro must be quit and reopened"
+          ],
+          "path": "contracts/necro-core/init.contract.test.js",
+          "sha256": "91bf25bb40c73741edc8f5a6a7bda4ccf3e7b7a5d20fd2b49c8563778c3b4504"
+        },
+        {
+          "name": "lock",
+          "names": [
+            "R2.1 freeze records the SHA-256 of requirements.md and of every contract file in .necro/lock.json",
+            "R2.2 freeze stores a copy of each frozen file at .necro/frozen/<sha256>",
+            "R2.3 freeze refuses when contracts/<spec>/ has no contract files and says at least one is needed",
+            "R2.4 freezing again replaces that spec's entry and keeps other specs' entries unchanged",
+            "R2.5 freeze runs the contracts once and records the name of every contract in the lock",
+            "R2.6 freeze refuses a contract whose path resolves outside the project root",
+            "R2.7 freeze records, for each task in tasks.md, the task id and the criteria its line names",
+            "R2.8 freeze records each task's full line text after the checkbox"
+          ],
+          "path": "contracts/necro-core/lock.contract.test.js",
+          "sha256": "c26300c8404a2648cf986db55d880efb0c690fd73e6e4f39967de002099284ae"
+        },
+        {
+          "name": "receipts",
+          "names": [
+            "R5.1 a receipt records the spec, the git commit if available, and the hashes of the requirements, the contracts and the imported sources, with each result by name",
+            "R5.2 receiptHash is the SHA-256 of the canonical JSON of the receipt without receiptHash and createdAt",
+            "R5.3 receipts made from identical inputs have the same receiptHash",
+            "R5.4 in a git repository a receipt records in uncommitted the sorted pinned paths that differ from the recorded commit, or [] when none do",
+            "R5.5 a receipt records task (the ticked task id and its line) and required (the sorted required contract names), and still every result"
+          ],
+          "path": "contracts/necro-core/receipts.contract.test.js",
+          "sha256": "0651918806287e778fea7b2a5861b61b1c8ee5bae82671d23e6b31b085dab32c"
+        },
+        {
+          "name": "required",
+          "names": [
+            "R4.14 a tick requires the contracts whose names start with a criterion the lock records for that task id",
+            "R4.15 every contract is required when the ticked task cannot be tied to the criteria the lock recorded",
+            "R4.16 every contract is required when the ticked line, the id or the unticked tasks cannot be trusted",
+            "R4.17 a contract file that holds a required contract and fails as a whole fails the tick",
+            "R4.18 only an unticked line on exactly one line with the frozen text counts as a frozen task that is still unticked"
+          ],
+          "path": "contracts/necro-core/required.contract.test.js",
+          "sha256": "6499ef2a88a1b06b5e5a7dcefd0c444dce5913424705b2b0f228b5a55f77001a"
+        },
+        {
+          "name": "runner",
+          "names": [
+            "R4.7 a contract reported as skipped or todo counts as failing",
+            "R4.8 a frozen spec whose contract files contain zero contracts is refused, not passed",
+            "R4.9 a contract file whose hash differs from the lock when it is run makes every contract in that file fail",
+            "R4.10 a contract name recorded in the lock that is missing from a run counts as failing",
+            "R4.11 contract names are kept exactly as reported, and only the file's own path is a file load failure",
+            "R4.12 results come from the Node test runner's events, never from text the code under test prints, and names are matched per file"
+          ],
+          "path": "contracts/necro-core/runner.contract.test.js",
+          "sha256": "4b3732f149b9b80e1e52c11c5110539f2ff7147ed81cf2f7e489c521f249ab07"
+        },
+        {
+          "name": "shell",
+          "names": [
+            "R3.3 after a shell command, a frozen file whose SHA-256 changed is restored and named on stderr",
+            "R3.7 a shell command that ticks a task is checked, and undone with the failing names on stderr if a contract fails",
+            "R3.8 before each shell call the current tasks.md of every frozen spec is recorded, replacing any earlier record",
+            "R3.9 when the recorded state changed during the command, every [x] task line counts as newly ticked",
+            "R3.10 a write to tasks.md is recorded by PostToolUse from the file on disk, not before the write",
+            "R3.12 every Kiro shell tool gets the execute_bash treatment",
+            "R3.13 fs_append and delete_file on tasks.md are writes to tasks.md for the done gate"
+          ],
+          "path": "contracts/necro-core/shell.contract.test.js",
+          "sha256": "2886c19f05361063d6c6ca60eeec761aa25d5a085d96c420c93023e2eb3ef750"
+        },
+        {
+          "name": "summary",
+          "names": [
+            "R7.1 the Stop handler prints, for each frozen spec, the tasks marked done, the receipts, and the names of the contracts failing now"
+          ],
+          "path": "contracts/necro-core/summary.contract.test.js",
+          "sha256": "ab67919d1e6a878a8271130371cbb759ba10c7696f7a0e0f7326c50f4774b3c1"
+        },
+        {
+          "name": "verify",
+          "names": [
+            "R6.1 verify prints CONFIRMED and the receipt hash and exits 0 when every hashed file matches and the contracts give the same results",
+            "R6.2 verify prints MISMATCH with each differing path and exits 1 when a hashed file differs",
+            "R6.3 verify prints MISMATCH with each differing contract name and exits 1 when a contract result differs",
+            "R6.4 verify first recomputes the receiptHash and prints MISMATCH saying the receipt was altered when it differs",
+            "R6.5 verify prints MISMATCH and exits 1 for a receipt that pins no requirements file or no contracts",
+            "R6.6 when the spec is frozen in the local lock verify also checks the receipt's requirements and contract hashes against it",
+            "R6.7 when a lock exists verify requires the receipt to equal the lock exactly and runs the lock's contracts, so a receipt that leaves out a failing contract is a MISMATCH"
+          ],
+          "path": "contracts/necro-core/verify.contract.test.js",
+          "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
+        }
+      ],
+      "frozenAt": "2026-11-06T23:21:27.448Z",
+      "requirements": {
+        "path": ".kiro/specs/necro-core/requirements.md",
+        "sha256": "7bf280393febee072444ed3e3c4e8ce2049c12718003d7681038c12d88b29828"
+      },
+      "tasks": {
+        "1": {
+          "criteria": [
+            "1.1",
+            "1.2",
+            "1.3"
+          ],
+          "text": "1. **Project scaffold and canonical hashing** (Req 1.1, 1.2, 1.3)"
+        },
+        "2": {
+          "criteria": [
+            "2.1",
+            "2.2",
+            "2.3",
+            "2.4"
+          ],
+          "text": "2. **Lock file: freeze a spec** (Req 2.1, 2.2, 2.3, 2.4)"
+        },
+        "3": {
+          "criteria": [
+            "4.4",
+            "4.5",
+            "6.1",
+            "6.3"
+          ],
+          "text": "3. **Contracts runner** (supports Req 4.4, 4.5, 6.1, 6.3)"
+        },
+        "4": {
+          "criteria": [
+            "5.1",
+            "5.2",
+            "5.3"
+          ],
+          "text": "4. **Receipts** (Req 5.1, 5.2, 5.3)"
+        },
+        "5": {
+          "criteria": [
+            "6.1",
+            "6.2",
+            "6.3"
+          ],
+          "text": "5. **Verify** (Req 6.1, 6.2, 6.3)"
+        },
+        "6": {
+          "criteria": [
+            "3.1",
+            "3.2",
+            "3.4"
+          ],
+          "text": "6. **PreToolUse: block edits to frozen files** (Req 3.1, 3.2, 3.4)"
+        },
+        "7": {
+          "criteria": [
+            "4.1",
+            "4.2",
+            "4.3",
+            "4.4",
+            "4.5",
+            "4.6"
+          ],
+          "text": "7. **Gate on marking a task done** (Req 4.1, 4.2, 4.3, 4.4, 4.5, 4.6)"
+        },
+        "8": {
+          "criteria": [
+            "3.3"
+          ],
+          "text": "8. **PostToolUse: restore frozen files** (Req 3.3)"
+        },
+        "9": {
+          "criteria": [
+            "7.1"
+          ],
+          "text": "9. **Stop: session summary** (Req 7.1)"
+        },
+        "10": {
+          "criteria": [
+            "8.1",
+            "8.2",
+            "8.3"
+          ],
+          "text": "10. **CLI entry and init command** (Req 8.1, 8.2, 8.3)"
+        },
+        "11": {
+          "criteria": [
+            "5.4"
+          ],
+          "text": "11. **Receipts say what is not committed yet** (Req 5.4)"
+        },
+        "12": {
+          "criteria": [
+            "2.7",
+            "4.5",
+            "4.14",
+            "4.15",
+            "5.5"
+          ],
+          "text": "12. **Gate on the ticked task's own criteria** (Req 2.7, 4.5, 4.14, 4.15, 5.5)"
+        },
+        "13": {
+          "criteria": [
+            "2.8",
+            "4.16",
+            "4.17"
+          ],
+          "text": "13. **Bind ticks to the frozen task text** (Req 2.8, 4.16, 4.17)"
+        },
+        "14": {
+          "criteria": [
+            "3.6",
+            "3.12",
+            "3.13",
+            "8.5"
+          ],
+          "text": "14. **Kiro's real tool names, in the IDE too** (Req 3.6, 3.12, 3.13, 8.5)"
+        },
+        "15": {
+          "criteria": [
+            "4.18"
+          ],
+          "text": "15. **Decoy lines cannot keep a task open** (Req 4.18)"
+        },
+        "16": {
+          "criteria": [
+            "4.19",
+            "4.20"
+          ],
+          "text": "16. **Gate the Kiro IDE's task tool** (Req 4.19, 4.20)"
+        },
+        "17": {
+          "criteria": [
+            "8.6",
+            "8.7",
+            "9.1",
+            "9.2",
+            "9.3",
+            "9.4"
+          ],
+          "text": "17. **Hooks that work from the Dock, and check on demand** (Req 8.6, 8.7, 9.1, 9.2, 9.3, 9.4)"
+        },
+        "3b": {
+          "criteria": [
+            "4.7",
+            "4.8"
+          ],
+          "text": "3b. **No vacuous passes** (Req 4.7, 4.8)"
+        },
+        "3c": {
+          "criteria": [
+            "2.5",
+            "2.6",
+            "4.9",
+            "4.10"
+          ],
+          "text": "3c. **Pin contract names and check files before running** (Req 2.5, 2.6, 4.9, 4.10)"
+        },
+        "8b": {
+          "criteria": [
+            "4.11",
+            "6.4",
+            "6.5",
+            "6.6"
+          ],
+          "text": "8b. **Hardening from review** (Req 4.11, 6.4, 6.5, 6.6)"
+        },
+        "8c": {
+          "criteria": [
+            "3.5",
+            "3.6",
+            "3.7",
+            "4.1",
+            "4.2",
+            "4.12"
+          ],
+          "text": "8c. **Close the bypasses found in review** (Req 3.5, 3.6, 3.7, 4.1, 4.2, 4.12)"
+        },
+        "8d": {
+          "criteria": [
+            "4.13",
+            "6.7",
+            "8.4"
+          ],
+          "text": "8d. **Fail closed on ticks, strict verify, hooks on every tool** (Req 4.13, 6.7, 8.4)"
+        },
+        "8e": {
+          "criteria": [
+            "3.8",
+            "3.9",
+            "3.10",
+            "3.11"
+          ],
+          "text": "8e. **State the shell cannot forge, fail closed on odd input, honest limits** (Req 3.8, 3.9, 3.10, 3.11)"
+        }
+      }
+    },
     "receipt-viewer": {
       "contracts": [
         {
