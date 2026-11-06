@@ -1,0 +1,18 @@
+{"t":"2026-11-06T20:53:05.299Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/receipt-viewer/requirements.md"}
+{"t":"2026-11-06T20:53:05.802Z","tool":"list_directory","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro"}
+{"t":"2026-11-06T20:53:06.078Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/src/canon.js"}
+{"t":"2026-11-06T20:53:06.172Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/src/receipts.js"}
+{"t":"2026-11-06T20:53:08.463Z","tool":"list_directory","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/steering"}
+{"t":"2026-11-06T20:53:08.712Z","tool":"list_directory","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs"}
+{"t":"2026-11-06T20:53:09.260Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/src/verify.js"}
+{"t":"2026-11-06T20:53:09.287Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/package.json"}
+{"t":"2026-11-06T20:53:13.370Z","tool":"list_directory","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/necro-core"}
+{"t":"2026-11-06T20:53:13.468Z","tool":"execute_bash","what":"cd && ls && head && cat && git && ls && cat && head && ls && head"}
+{"t":"2026-11-06T20:53:16.743Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/necro-core/design.md"}
+{"t":"2026-11-06T20:53:16.744Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-06T20:53:16.766Z","tool":"execute_bash","what":"cd && grep && name\" && head && grep && fail\" && head && cat && head && git && head"}
+{"t":"2026-11-06T20:53:34.599Z","tool":"execute_bash","what":"cd && cat && ls && grep && head && sed"}
+{"t":"2026-11-06T20:54:54.155Z","tool":"execute_bash","what":"cd && git && head && ls && head && ls && head"}
+{"t":"2026-11-06T20:54:54.163Z","tool":"execute_bash","what":"cd && cat && return && const && return && const && for(const && console.log('btn', && EOF"}
+{"t":"2026-11-06T20:56:34.302Z","tool":"fs_write","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/receipt-viewer/design.md"}
+{"t":"2026-11-06T20:57:21.450Z","tool":"fs_write","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/receipt-viewer/tasks.md"}

@@ -17,6 +17,7 @@ Honest limit shown on the page: contracts re-run in Node with `necro verify`; th
 ### Acceptance criteria
 1. WHEN a receipt is shown THE SYSTEM SHALL list every contract by name with pass or fail, the spec name, the git commit and the receipt hash.
 2. WHEN a contract name starts with a requirement number like `R1.2` THE SYSTEM SHALL group contracts by requirement.
+3. WHEN a receipt has `task` and `required` THE SYSTEM SHALL show the task line and mark each contract as required or not yet required, and show a failing contract that was not required as not built yet rather than as a broken promise.
 
 ## Requirement 3: Check the receipt hash in the browser
 **User story:** As a reviewer, I want to know the receipt was not edited, so that I can trust what I see.

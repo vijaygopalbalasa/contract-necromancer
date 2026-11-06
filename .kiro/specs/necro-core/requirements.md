@@ -24,6 +24,7 @@ receipts anyone can re-run.
 4. WHEN a spec is frozen again THE SYSTEM SHALL replace that spec's entry and keep other specs' entries unchanged.
 5. WHEN a user runs `necro freeze <spec>` THE SYSTEM SHALL run the contracts once and record the name of every contract in the lock.
 6. IF a contract path resolves outside the project root THEN THE SYSTEM SHALL refuse to freeze it.
+7. WHEN a user runs `necro freeze <spec>` THE SYSTEM SHALL record in the lock, for each task in that spec's `tasks.md`, the task id (the text before the first `.` on the task line, for example `8b`) and the criteria it names in `(Req 1.2, 3.1)`.
 
 ## Requirement 3: Block edits to frozen files
 **User story:** As a developer, I want the agent unable to edit frozen files, so that it fixes code instead of the checks.
@@ -47,7 +48,7 @@ receipts anyone can re-run.
 2. WHEN an `fs_write` targets `tasks.md` THE SYSTEM SHALL compare each task line with the file on disk and treat it as marking a task done IF any task line changes from `[ ]` to `[x]`.
 3. WHEN a task is being marked done and the spec is not frozen THE SYSTEM SHALL exit with code 2 and say the spec must be frozen first.
 4. WHEN a task is being marked done THE SYSTEM SHALL run the spec's frozen contracts itself with `node --test`.
-5. IF any contract fails THEN THE SYSTEM SHALL exit with code 2 and list each failing contract by name.
+5. IF any required contract fails THEN THE SYSTEM SHALL exit with code 2 and list each failing required contract by name.
 6. WHEN all contracts pass THE SYSTEM SHALL write a receipt to `.necro/receipts/<spec>/<receiptHash>.json` and exit with code 0.
 7. IF a contract is reported as skipped or todo THEN THE SYSTEM SHALL count it as failing.
 8. IF a frozen spec's contract files contain zero contracts THEN THE SYSTEM SHALL exit with code 2 and say no contracts ran.
@@ -56,6 +57,8 @@ receipts anyone can re-run.
 11. WHEN test results are parsed THE SYSTEM SHALL keep every contract name exactly as reported, whatever characters it contains, and SHALL treat an entry as a file load failure only when its name equals that contract file's own path.
 12. WHEN contracts are run THE SYSTEM SHALL read results from the Node test runner's structured events (the `node:test` `run()` API), not from text the code under test can print, and SHALL match recorded names per contract file.
 13. WHEN any write targets a `tasks.md` THE SYSTEM SHALL treat it as marking a task done IF the resulting file has more `[x]` task lines than the file on disk (a missing file counts as zero), even when no single line can be matched to an earlier `[ ]` line.
+14. WHEN a task is being marked done THE SYSTEM SHALL run every frozen contract of the spec and treat as required the contracts whose names start with one of the criteria the lock records for that task id (`R1.2` followed by a space or the end of the name).
+15. IF the ticked task id is not in the lock, or its line in `tasks.md` now names different criteria than the lock records, or the lock records no criteria for it, or no contract matches its criteria, or it is the last unticked task of the spec THEN THE SYSTEM SHALL treat every contract as required.
 
 ## Requirement 5: Receipts
 **User story:** As a reviewer, I want a receipt that pins every input, so that I can re-run it and get the same answer.
@@ -64,6 +67,7 @@ receipts anyone can re-run.
 2. WHEN a receipt is written THE SYSTEM SHALL set `receiptHash` to the SHA-256 of the canonical JSON of the receipt without the `receiptHash` and `createdAt` fields.
 3. WHEN two receipts are made from identical inputs THE SYSTEM SHALL produce the same `receiptHash`.
 4. WHEN a receipt is written in a git repository THE SYSTEM SHALL record in `uncommitted` the sorted list of pinned paths whose content differs from that file at the recorded commit (or that the commit lacks), and an empty list when every pinned file matches the commit.
+5. WHEN a receipt is written THE SYSTEM SHALL record `task` (the ticked task id and its line) and `required` (the sorted names of the contracts that were required), and still record the result of every contract that ran.
 
 ## Requirement 6: Verify
 **User story:** As anyone with the repository, I want to re-run a receipt, so that I do not have to trust the agent or the author.
