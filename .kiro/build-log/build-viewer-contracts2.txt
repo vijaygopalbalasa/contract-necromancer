@@ -1,0 +1,117 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=12
+I'll start by reading the spec files and the existing contracts.
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+Now the existing contracts, to match their conventions.
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The spec is frozen and `src/` and `site/` are already built through task 14, so only the new files and the README change. I'm writing the first contract file, covering R7.1 to R7.4.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+All four fail for the intended reasons. Next is the second file, covering R8.1 to R8.4.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+I added `contracts/receipt-viewer/clean.contract.test.js` (R7.1 to R7.4) and `contracts/receipt-viewer/look.contract.test.js` (R8.1 to R8.4). Nothing under `site/` or `src/` changed, and I left the existing contract files alone. `contracts/receipt-viewer/README.md` has new rows for all eight criteria. `npm test` still passes (336 tests).
+
+Run against today's page, seven of the eight fail and R8.3 passes. R8.3 passes because the only animation (the glow) already sits inside a `no-preference` block. The criterion is conditional, so I didn't require a fog layer to exist. The test guards later edits, such as adding fog.
+
+I also built a throwaway implementation in a scratch copy (since deleted) to check the contracts. All eight went green there. Probes of an unguarded animation, an external font, low contrast and SVG animation each made the right contract fail.
+
+Everything in R7 and R8 has some Node check, so the README has no new "no contract" rows. Each criterion has a "what is not checked" row instead (layout, how the SVG looks, whether the browser applies the media query). Because the README is not a frozen contract file, editing it didn't touch the lock.
+
+R7.2 conflicts with the frozen R2.2 contract. R2.2, `design.md` and task 4 say `groupContracts` keeps receipt order inside a group. R7.2 wants criterion order. To avoid a clash, the R7.2 test checks the order the page shows, so the sorting has to happen after `groupContracts`. The README documents this, and `design.md` should be updated before task 15.
+
+Choices to confirm before freezing:
+- **R7.4 reading:** I read "the sample or the re-run command" as the sample flow. After pressing "Load the sample", the repository box and the command use `vijaygopalbalasa/contract-necromancer`. A pasted receipt with an empty box still shows `OWNER/NAME`, which the frozen R5.1 requires.
+- **R8.1 counts:** "Risen" shows the number of passing contracts, not the number of required ones that pass.
+- **R8.4 shape:** A gravestone means an arched top (`border-radius` with larger top corners, or a `clip-path`). Alive means the `--alive` colour with a shadow, filter or animation. A gravestone drawn some other way would fail the test.
+- **Fake DOM:** These tests run `site/app.js` against a fake DOM, built from `site/index.html`, that each file carries as its own copy. It locates elements by tag and button label, so renaming the paste, show or sample controls won't break it.
+
+Also, `tasks.md` tasks 15 and 16 don't name these contract files yet, and `necro freeze receipt-viewer` hasn't been run.
