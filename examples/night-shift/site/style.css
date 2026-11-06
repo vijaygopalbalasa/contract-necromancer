@@ -1,0 +1,148 @@
+/* Night Shift: dark theme, system fonts, no external assets. */
+:root {
+  --bg: #121018;
+  --fg: #f2eef7;
+  --muted: #b9b2c7;
+  --accent: #c9a0ff;
+  --night-bg: #241a33;
+  --night-fg: #ffd9a8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  padding: 1.5rem 1rem;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+}
+
+main {
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin: 0 0 0.5rem;
+}
+
+.host {
+  color: var(--muted);
+  margin: 0 0 1.5rem;
+}
+
+.host strong {
+  color: var(--fg);
+}
+
+a {
+  color: var(--accent);
+}
+
+p.message {
+  color: var(--fg);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--night-bg);
+  vertical-align: top;
+}
+
+th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.zone {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.offset,
+.day {
+  color: var(--muted);
+}
+
+tr.night td {
+  background: var(--night-bg);
+  color: var(--night-fg);
+}
+
+tr.night .offset,
+tr.night .day {
+  color: var(--night-fg);
+}
+
+.note {
+  color: var(--night-fg);
+  font-weight: 600;
+}
+
+.kinder {
+  margin-top: 1.5rem;
+}
+
+.empty {
+  color: var(--muted);
+}
+
+/* Rows stack into blocks on narrow screens so nothing scrolls sideways at 320px. */
+@media (max-width: 40rem) {
+  thead {
+    display: none;
+  }
+
+  table,
+  tbody,
+  tr,
+  td {
+    display: block;
+    width: 100%;
+  }
+
+  tr {
+    border-bottom: 2px solid var(--night-bg);
+    padding: 0.25rem 0;
+  }
+
+  td {
+    border-bottom: none;
+    padding: 0.15rem 0.5rem;
+  }
+}
+
+/* Motion is opt-in: only declared when the user has no reduced-motion preference. */
+@media (prefers-reduced-motion: no-preference) {
+  tr.night td {
+    transition: background 200ms ease;
+  }
+
+  .kinder a {
+    transition: color 200ms ease;
+  }
+}
+
+/* A second guard: force motion off when reduced motion is requested. */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none;
+    transition: none;
+  }
+}
