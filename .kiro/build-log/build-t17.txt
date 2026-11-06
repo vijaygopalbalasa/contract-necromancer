@@ -1,0 +1,117 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=8
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Now the tests, written before the code.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Now the README usage, then the tick attempt.
+[tool] Replace in File
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] Replace in File
+[tool] status: Failed: Replace in File
+[tool] status: Completed
+Task 17 is implemented, and `npm test` passes with 388 of 388 tests. The gate refused my one attempt to mark task 17 `[x]`, and I did not retry, so `tasks.md` still shows 17 as `[ ]`.
+
+**The tick attempt:** the `str_replace` on `.kiro/specs/necro-core/tasks.md` was blocked by the PreToolUse hook with "Spec 'necro-core' is not frozen. Run 'necro freeze <spec>' first." That is Req 4.3 working as written.
+
+**Tests first:** I wrote the new tests and ran them against the old code. These failed:
+- all six `necro check` tests that exercise the command (R9.1 to R9.3), because `check` was an unknown command;
+- the 8.6 absolute-path test and the 8.6 no-PATH test;
+- the 8.7 trusted-workspace test.
+
+The `tasks.md` unchanged test (R9.4), the matcher-and-timeout test and the second-`init` test passed from the start. They guard behavior that must stay the same.
+
+**Code changes:**
+- **New `src/check.js`:** `checkSpec` runs every frozen contract and prints `pass` or `fail` with each name. It writes a receipt with `task: null` and every contract required, even when a contract fails. It exits 0 when all pass and 1 otherwise, and it never writes `tasks.md`. A spec that is not frozen exits 1 with "Run 'necro freeze <spec>' first." The frozen check uses `Object.hasOwn`, so `necro check constructor` is correctly treated as not frozen. The same loose lookup in `isSpecFrozen` in `src/lock.js` is unchanged.
+- **`bin/necro.js`:**
+  - New `check <spec>` command.
+  - `init` now builds `.kiro/hooks/necromancer.json` from the template, replacing the leading `necro` with `"<process.execPath>" "<…/bin/necro.js>"`. On POSIX it escapes `\ " $` and backticks inside the quotes.
+  - `init` prints the trusted-workspace note: Kiro runs hooks only in a trusted workspace, so trust it, then quit and reopen Kiro. It prints this on every run, including when files already exist.
+- **`README.md`:** documents `necro check` and the absolute-path hooks.
+
+**Test changes:**
+- **`test/check.test.js`:** the new tests for `necro check`.
+- **`test/cli.test.js`:**
+  - The 8.6 and 8.7 tests copy the tool into a directory named `my tool $HOME`. They run the written commands through `/bin/sh` with `PATH=/nonexistent`, from a project directory containing spaces, and confirm the PreToolUse command still blocks a write to `.necro/`.
+  - I also had to change one existing assertion. `assertPostMatcher` required the written PostToolUse command to equal `necro hook post`. That contradicts Req 8.6, so it now only requires the command to end with ` hook post`.
+
+**Not done:**
+- **Windows:** the no-PATH test is skipped there, and I did not test Windows quoting.
+- **This repo's own hooks file:** `.kiro/hooks/necromancer.json` still uses `node bin/necro.js …`. I left it alone because you didn't ask for it.
+
+I did not touch any `requirements.md`, `contracts/`, `.necro/` or the receipt-viewer spec. To get task 17 ticked, freeze `necro-core` and re-run the tick.

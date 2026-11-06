@@ -7,10 +7,21 @@ marked done until the frozen contracts pass. Every task that passes gets a recei
 ```
 necro init              # write the Kiro hooks and steering file into a project
 necro freeze <spec>     # lock requirements.md and the contracts of a spec
+necro check <spec>      # run every frozen contract now and write a receipt, without ticking a task
 necro verify <receipt>  # re-run a receipt and print CONFIRMED or MISMATCH
 ```
 
 Requires Node.js 24 or newer. There are no runtime dependencies.
+
+`necro init` writes hook commands with the absolute path of the `node` that ran it and of `bin/necro.js`, so they work
+when Kiro is started from the Dock and has no shell `PATH`. After `init`, trust the workspace in Kiro and quit and
+reopen Kiro; Kiro runs hooks only in a trusted workspace. If you move the install or switch Node versions, delete
+`.kiro/hooks/necromancer.json` and run `necro init` again.
+
+`necro check <spec>` needs a frozen spec. It prints `pass` or `fail` for each contract, writes a receipt to
+`.necro/receipts/<spec>/` with `task` set to null and every contract required, and exits 0 when all pass or 1 when any
+fails (the receipt is written either way). It does not touch `tasks.md`. Use it to publish a receipt for the commit you
+just pushed.
 
 ## Limits
 

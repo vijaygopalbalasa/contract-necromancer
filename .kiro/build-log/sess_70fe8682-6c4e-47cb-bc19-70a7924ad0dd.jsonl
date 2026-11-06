@@ -1,0 +1,24 @@
+{"t":"2026-11-06T22:47:35.534Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/necro-core/requirements.md"}
+{"t":"2026-11-06T22:47:35.589Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/necro-core/design.md"}
+{"t":"2026-11-06T22:47:36.174Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-06T22:47:36.374Z","tool":"list_directory","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro"}
+{"t":"2026-11-06T22:47:38.735Z","tool":"list_directory","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/steering"}
+{"t":"2026-11-06T22:47:39.007Z","tool":"list_directory","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer"}
+{"t":"2026-11-06T22:47:39.514Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/bin/necro.js"}
+{"t":"2026-11-06T22:47:39.615Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/templates/necromancer.hooks.json"}
+{"t":"2026-11-06T22:47:42.373Z","tool":"execute_bash","what":"cd && cat && head && ls && cat && git && cat && cat && ls && cat"}
+{"t":"2026-11-06T22:48:00.546Z","tool":"execute_bash","what":"cd && grep && ^function\\ && ^import\\ && buildReceipt\\ && writeReceipt\\ && runContracts\" && head && grep && cat && git && head && npm && tail"}
+{"t":"2026-11-06T22:48:05.754Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/src/hooks.js"}
+{"t":"2026-11-06T22:48:06.259Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/src/contracts.js"}
+{"t":"2026-11-06T22:48:06.858Z","tool":"execute_bash","what":"cd && sed && grep && head && sed && cat && head"}
+{"t":"2026-11-06T22:48:21.015Z","tool":"execute_bash","what":"cd && sed && sed && grep && execPath\" && head"}
+{"t":"2026-11-06T22:48:35.674Z","tool":"execute_bash","what":"cd && cat && sed"}
+{"t":"2026-11-06T22:48:54.230Z","tool":"fs_write","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/test/check.test.js"}
+{"t":"2026-11-06T22:49:06.334Z","tool":"execute_bash","what":"cd && cat && const && const && for && } && return && } && } && const && try && assert.equal(res.status, && const && const && const && assert.equal(written.hooks.length, && for && assert.ok(sub, && con"}
+{"t":"2026-11-06T22:49:18.103Z","tool":"fs_write","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/src/check.js"}
+{"t":"2026-11-06T22:49:29.309Z","tool":"execute_bash","what":"cd && python3 && \\n\",\"import && \\nimport && \\n\") && post && stop\",\"Commands: && post && stop\") && process.exit(1) && } && if && if && process.exit(result.exitCode) && } && on && return && } && const &"}
+{"t":"2026-11-06T22:49:31.718Z","tool":"execute_bash","what":"cd && node && grep && ✖ && head"}
+{"t":"2026-11-06T22:49:51.886Z","tool":"execute_bash","what":"cd && python3 && \",\" && init && \",1) && grep && ℹ && pass && fail))\""}
+{"t":"2026-11-06T22:49:58.255Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/hooks/necromancer.json"}
+{"t":"2026-11-06T22:49:58.293Z","tool":"str_replace","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/README.md"}
+{"t":"2026-11-06T22:50:16.941Z","tool":"execute_bash","what":"cd && npm && grep && ℹ && pass && fail))\" && git"}
