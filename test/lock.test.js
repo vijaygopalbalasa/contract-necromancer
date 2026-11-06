@@ -231,9 +231,9 @@ test('R2.7 freeze records each task id with the criteria its line names', () => 
   );
   try {
     const lock = readLock(cwd);
-    assert.deepEqual(lock.specs.demo.tasks['1'], { criteria: ['1.1', '1.2', '1.3'] });
-    assert.deepEqual(lock.specs.demo.tasks['8b'], { criteria: ['4.11', '6.4'] });
-    assert.deepEqual(lock.specs.demo.tasks['3'], { criteria: ['4.4', '4.5', '6.1'] });
+    assert.deepEqual(lock.specs.demo.tasks['1'].criteria, ['1.1', '1.2', '1.3']);
+    assert.deepEqual(lock.specs.demo.tasks['8b'].criteria, ['4.11', '6.4']);
+    assert.deepEqual(lock.specs.demo.tasks['3'].criteria, ['4.4', '4.5', '6.1']);
     assert.deepEqual(Object.keys(lock.specs.demo.tasks).sort(), ['1', '3', '8b']);
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
@@ -246,9 +246,9 @@ test('R2.7 the task id is the text before the first dot, and criteria are sorted
   );
   try {
     const lock = readLock(cwd);
-    assert.deepEqual(lock.specs.demo.tasks['12'], { criteria: ['2.7', '4.5', '4.15'] });
-    assert.deepEqual(lock.specs.demo.tasks['3c'], { criteria: ['2.5'] });
-    assert.deepEqual(lock.specs.demo.tasks['4'], { criteria: ['5.1'] });
+    assert.deepEqual(lock.specs.demo.tasks['12'].criteria, ['2.7', '4.5', '4.15']);
+    assert.deepEqual(lock.specs.demo.tasks['3c'].criteria, ['2.5']);
+    assert.deepEqual(lock.specs.demo.tasks['4'].criteria, ['5.1']);
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }
@@ -258,8 +258,8 @@ test('R2.7 a task whose line names no criteria is recorded with an empty list; p
   const cwd = freezeWithTasks('- [ ] 1. Plain task\n- [ ] 2. Other task (see 3.4 in the design)\n');
   try {
     const lock = readLock(cwd);
-    assert.deepEqual(lock.specs.demo.tasks['1'], { criteria: [] });
-    assert.deepEqual(lock.specs.demo.tasks['2'], { criteria: [] });
+    assert.deepEqual(lock.specs.demo.tasks['1'].criteria, []);
+    assert.deepEqual(lock.specs.demo.tasks['2'].criteria, []);
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }
@@ -272,8 +272,8 @@ test('R2.7 a task line without a dot has no id and is not recorded; an id used t
   try {
     const lock = readLock(cwd);
     assert.deepEqual(Object.keys(lock.specs.demo.tasks).sort(), ['5', '6']);
-    assert.deepEqual(lock.specs.demo.tasks['5'], { criteria: [] }, 'an ambiguous id requires everything');
-    assert.deepEqual(lock.specs.demo.tasks['6'], { criteria: ['1.3'] });
+    assert.deepEqual(lock.specs.demo.tasks['5'].criteria, [], 'an ambiguous id requires everything');
+    assert.deepEqual(lock.specs.demo.tasks['6'].criteria, ['1.3']);
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }
@@ -294,6 +294,52 @@ test('R2.7 re-freezing replaces the task table of that spec', () => {
     writeTasksFile(cwd, 'demo', '- [ ] 2. Two (Req 1.2)\n');
     freezeSpec(cwd, 'demo');
     assert.deepEqual(Object.keys(readLock(cwd).specs.demo.tasks), ['2']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Task 13: freeze records each task's line text (Req 2.8)
+// ---------------------------------------------------------------------------
+
+test('R2.8 freeze records the text after the checkbox of each task line, ticked or not', () => {
+  const cwd = freezeWithTasks(
+    [
+      '- [x] 1. **Scaffold** (Req 1.1, 1.2)',
+      '  - [ ] 9. A sub-bullet checkbox is a task line too (Req 9.9)',
+      '* [ ] 8b. **Hardening**   (Req 4.11)  ',
+      '[ ] 4. Bare box (Req 5.1)',
+      '',
+    ].join('\n'),
+  );
+  try {
+    const { tasks } = readLock(cwd).specs.demo;
+    assert.equal(tasks['1'].text, '1. **Scaffold** (Req 1.1, 1.2)');
+    assert.equal(tasks['9'].text, '9. A sub-bullet checkbox is a task line too (Req 9.9)');
+    assert.equal(tasks['8b'].text, '8b. **Hardening**   (Req 4.11)', 'surrounding whitespace is trimmed, inner kept');
+    assert.equal(tasks['4'].text, '4. Bare box (Req 5.1)');
+    assert.deepEqual(tasks['1'].criteria, ['1.1', '1.2'], 'criteria are still recorded');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R2.8 the recorded text does not change when the task is ticked, so a tick can be compared with it', () => {
+  const unticked = freezeWithTasks('- [ ] 1. One (Req 1.1)\n');
+  const ticked = freezeWithTasks('- [x] 1. One (Req 1.1)\n');
+  try {
+    assert.equal(readLock(unticked).specs.demo.tasks['1'].text, readLock(ticked).specs.demo.tasks['1'].text);
+  } finally {
+    fs.rmSync(unticked, { recursive: true, force: true });
+    fs.rmSync(ticked, { recursive: true, force: true });
+  }
+});
+
+test('R2.8 a task with no criteria still has its text recorded', () => {
+  const cwd = freezeWithTasks('- [ ] 1. Plain task\n');
+  try {
+    assert.deepEqual(readLock(cwd).specs.demo.tasks['1'], { criteria: [], text: '1. Plain task' });
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }

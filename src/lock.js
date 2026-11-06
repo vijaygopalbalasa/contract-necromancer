@@ -73,8 +73,8 @@ export function taskIdOf(text) {
   return id === '' ? null : id;
 }
 
-// Every task in a tasks.md text: [{ id, text, criteria }] in file order. A line
-// without an id is skipped.
+// Every task in a tasks.md text: [{ id, text, criteria, checked }] in file order.
+// `text` is the line after the checkbox, trimmed. A line without an id is skipped.
 export function parseTasks(markdown) {
   const tasks = [];
   for (const line of markdown.split(/\r?\n/)) {
@@ -82,14 +82,16 @@ export function parseTasks(markdown) {
     if (!m) continue;
     const text = m[2].trim();
     const id = taskIdOf(text);
-    if (id !== null) tasks.push({ id, text, criteria: criteriaOf(text) });
+    if (id !== null) tasks.push({ id, text, criteria: criteriaOf(text), checked: m[1] !== ' ' });
   }
   return tasks;
 }
 
-// The task table recorded in the lock: { <id>: { criteria: [...] } }. An id that
-// is used by more than one task line is ambiguous, so it is recorded with no
-// criteria, which makes ticking it require every contract (Req 4.15).
+// The task table recorded in the lock: { <id>: { criteria: [...], text } }, where
+// `text` is the task line after the checkbox (Req 2.8). An id that is used by
+// more than one task line is ambiguous, so it is recorded with no criteria,
+// which makes ticking it require every contract (Req 4.15). Its text is the
+// first line's.
 function taskTable(cwd, spec) {
   let markdown = '';
   try {
@@ -100,33 +102,48 @@ function taskTable(cwd, spec) {
   const table = {};
   const seen = new Set();
   for (const t of parseTasks(markdown)) {
-    table[t.id] = { criteria: seen.has(t.id) ? [] : t.criteria };
+    if (seen.has(t.id)) {
+      table[t.id].criteria = [];
+      continue;
+    }
+    table[t.id] = { criteria: t.criteria, text: t.text };
     seen.add(t.id);
   }
   return table;
 }
 
 // Which contracts must pass before the given tasks may be ticked. `ticked` is the
-// list of ticked task texts (the text after the checkbox). `unticked` is how many
-// task lines stay unticked afterwards. `names` are the contract names of the run.
+// list of ticked task texts (the text after the checkbox). `after` is the text of
+// tasks.md once the tick has happened. `names` are the contract names of the run.
 //
-// The criteria come only from the lock (Req 4.14). The line in tasks.md is used
-// to find the task id and to notice that the line was edited; it never supplies
-// criteria. Returns a sorted list of names, or null when every contract is
-// required (Req 4.15): no identifiable ticked task, the last unticked task, an
-// id the lock lacks, an edited line, no criteria recorded, or no contract
-// matching them.
-export function requiredNames(lock, spec, ticked, unticked, names) {
-  if (ticked.length === 0 || unticked === 0) return null;
+// The criteria and the task text come only from the lock (Req 4.14, 4.16). The
+// line in tasks.md is used to find the task id and to notice that the line was
+// edited; it never supplies criteria. Returns a sorted list of names, or null
+// when every contract is required (Req 4.15, 4.16): no identifiable ticked task,
+// an id the lock lacks, a line whose text differs from the lock's, an id on more
+// than one line, no criteria recorded, no contract matching them, or no task the
+// lock records left unticked (lines added after freeze do not count).
+export function requiredNames(lock, spec, ticked, after, names) {
+  if (ticked.length === 0) return null;
   const table = (lock && lock.specs && lock.specs[spec] && lock.specs[spec].tasks) || {};
+  const lines = parseTasks(after);
+
+  // Req 4.16: the tasks the lock records that are still unticked after the tick.
+  // The count never comes from lines added later.
+  const stillOpen = lines.some((l) => !l.checked && Object.hasOwn(table, l.id));
+  if (!stillOpen) return null;
+
   const required = new Set();
   for (const text of ticked) {
     const id = taskIdOf(text);
     const recorded = id !== null && Object.hasOwn(table, id) ? table[id] : null;
-    const criteria = recorded && Array.isArray(recorded.criteria) ? recorded.criteria : [];
+    if (recorded === null) return null;
+    // Req 4.16: a line that is not the frozen text, or an id on more than one line.
+    if (typeof recorded.text !== 'string' || recorded.text !== text) return null;
+    if (lines.filter((l) => l.id === id).length > 1) return null;
+    // The text equals the frozen text, so the line names the criteria the lock records.
+    const criteria = Array.isArray(recorded.criteria) ? recorded.criteria : [];
     if (criteria.length === 0) return null;
-    // The lock stores criteria in the order criteriaOf returns them.
-    if (criteriaOf(text).join(',') !== criteria.join(',')) return null;
     const matching = names.filter((n) => criteria.some((c) => n === `R${c}` || n.startsWith(`R${c} `)));
     if (matching.length === 0) return null;
     for (const n of matching) required.add(n);

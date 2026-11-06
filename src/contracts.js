@@ -6,7 +6,7 @@ import { hashFile } from './canon.js';
 const RUNNER = fileURLToPath(new URL('./contract-runner.js', import.meta.url));
 
 // Filename stem of a contract file, e.g. "canon" from "canon.contract.test.js".
-function contractName(filePath) {
+export function contractName(filePath) {
   return path.basename(filePath).replace(/\.contract\.test\.js$/, '');
 }
 

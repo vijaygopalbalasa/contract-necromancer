@@ -1,0 +1,118 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=8
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Append to File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Append to File
+[tool] Run Command
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 13 is implemented and marked `[x]` in `.kiro/specs/necro-core/tasks.md`. `npm test` passes (192 tests, up from 172).
+
+I wrote the tests first and ran them against the old code. Fourteen failed, and all 14 passed after the code change:
+- **2.8 (2 tests):** freeze did not record each task's line text.
+- **4.16 (10 tests):** reworded ticks, duplicated ids, and added unticked lines were not forced to require every contract.
+- **4.17 (2 tests):** a contract file that fails as a whole was not blocking a tick when its required contract passed on its own.
+
+The new tests also cover shell ticks, `fs_write`, and a lock with no task text. Six other new tests already passed on the old code. They are regression checks, for example that an unchanged line still requires only its own criteria.
+
+**Code changes:**
+- **`src/lock.js`:**
+  - Freeze now records `{ criteria, text }` for each task, where `text` is the trimmed line after the checkbox.
+  - `requiredNames` now takes the post-tick `tasks.md` text instead of an unticked count. It requires every contract if:
+    - the ticked text differs from the lock's text (a lock with no `text` field counts as differing);
+    - the id appears on more than one line;
+    - no task the lock records is left unticked. Lines added after freeze don't count.
+- **`src/hooks.js`:** a failing result named after a contract file counts as failing when that file holds a required contract. I removed `untickedCount`, which is no longer used.
+- **`src/contracts.js`:** I exported `contractName` so `hooks.js` could reuse it.
+
+**Existing tests I changed:**
+- In `test/lock.test.js`, four 2.7 tests compared `tasks[id]` to `{ criteria }`, which fails once `text` is added. They now compare `.criteria` only.
+- `.kiro/specs/necro-core/requirements.md` already had uncommitted changes (your new criteria) when I started. I didn't touch it, `contracts/`, `.necro/`, or the receipt-viewer spec.
+
+**Existing locks:** a lock frozen before this change has no task text, so every tick in it requires every contract until you run `necro freeze` again.

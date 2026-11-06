@@ -1677,3 +1677,255 @@ test('R3.7 + R4.15 a shell tick of the last unticked task requires every contrac
     fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Task 13: bind ticks to the frozen task text (Req 2.8, 4.16, 4.17)
+// ---------------------------------------------------------------------------
+
+test('R4.16 a ticked line that reuses an easy task id and criteria with different text requires every contract', () => {
+  const cwd = setupMixed();
+  try {
+    // Id 1 and "(Req 1.1)" match the lock, but the words are not the frozen task.
+    expectAllRequired(cwd, 'str_replace', tickEdit(T1, '- [x] 1. Quietly pretend the hard work is done (Req 1.1)'));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.16 the same reworded tick through fs_write requires every contract', () => {
+  const cwd = setupMixed();
+  try {
+    expectAllRequired(cwd, 'fs_write', {
+      path: TASKS_REL,
+      text: TASKS_MIXED.replace(T1, '- [x] 1. Task one, reworded (Req 1.1)'),
+    });
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.16 a reworded tick by shell command is undone because every contract is required', () => {
+  const cwd = setupMixed();
+  try {
+    bashPre(cwd);
+    fs.writeFileSync(tasksPath(cwd), TASKS_MIXED.replace(T1, '- [x] 1. Task one, reworded (Req 1.1)'));
+    const res = handlePostToolUse(postPayload(cwd, 'sed -i ... tasks.md'));
+    assert.match(res.stderr, /Contracts failed: R1\.2 failing contract\./);
+    assert.equal(fs.readFileSync(tasksPath(cwd), 'utf8'), TASKS_MIXED);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.16 a lock that records no task text requires every contract', () => {
+  const cwd = setupMixed();
+  try {
+    const lockFile = path.join(cwd, '.necro', 'lock.json');
+    const lock = JSON.parse(fs.readFileSync(lockFile, 'utf8'));
+    for (const t of Object.values(lock.specs.demo.tasks)) delete t.text;
+    fs.writeFileSync(lockFile, JSON.stringify(lock));
+    expectAllRequired(cwd, 'str_replace', tickEdit(T1, tick(T1)));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.16 an unchanged line that is ticked still requires only its own criteria', () => {
+  const cwd = setupMixed();
+  try {
+    const res = handlePreToolUse(payload(cwd, 'str_replace', tickEdit(T3, tick(T3))));
+    assert.equal(res.exitCode, 0, res.stderr);
+    assert.deepEqual(readReceipts(cwd)[0].required, ['R1.3 other passing contract']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.16 a task id on more than one line of tasks.md requires every contract (copy already on disk)', () => {
+  const cwd = setupMixed(TASKS_MIXED, TASKS_MIXED + T1 + '\n');
+  try {
+    expectAllRequired(cwd, 'str_replace', tickEdit(T1, tick(T1)));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.16 a task id on more than one line requires every contract (a ticked copy is added by fs_write)', () => {
+  const cwd = setupMixed();
+  try {
+    expectAllRequired(cwd, 'fs_write', { path: TASKS_REL, text: TASKS_MIXED + tick(T1) + '\n' });
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.16 a duplicated id ticked by shell command is undone', () => {
+  const cwd = setupMixed();
+  try {
+    bashPre(cwd);
+    fs.writeFileSync(tasksPath(cwd), TASKS_MIXED + tick(T1) + '\n');
+    const res = handlePostToolUse(postPayload(cwd, 'echo >> tasks.md'));
+    assert.match(res.stderr, /Contracts failed: R1\.2 failing contract\./);
+    assert.equal(fs.readFileSync(tasksPath(cwd), 'utf8'), TASKS_MIXED);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+// The lock knows tasks 1 to 6. Tasks 2 to 6 are already ticked, so task 1 is the last frozen task.
+const DONE_BUT_ONE = [T1, tick(T2), tick(T3), tick(T4), tick(T5), tick(T6)];
+const LATE_LINE = '- [ ] 9. Late task added after freeze (Req 1.1)';
+
+test('R4.16 a tick that leaves only added (not frozen) task lines unticked requires every contract', () => {
+  const cwd = setupMixed([...DONE_BUT_ONE, ''].join('\n'), [...DONE_BUT_ONE, LATE_LINE, ''].join('\n'));
+  try {
+    expectAllRequired(cwd, 'str_replace', tickEdit(T1, tick(T1)));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.16 an fs_write that ticks the last frozen task and adds an unticked line requires every contract', () => {
+  const cwd = setupMixed([...DONE_BUT_ONE, ''].join('\n'));
+  try {
+    expectAllRequired(cwd, 'fs_write', {
+      path: TASKS_REL,
+      text: [tick(T1), tick(T2), tick(T3), tick(T4), tick(T5), tick(T6), LATE_LINE, ''].join('\n'),
+    });
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.16 a shell tick of the last frozen task next to an added unticked line is undone', () => {
+  const now = [...DONE_BUT_ONE, LATE_LINE, ''].join('\n');
+  const cwd = setupMixed([...DONE_BUT_ONE, ''].join('\n'), now);
+  try {
+    bashPre(cwd);
+    fs.writeFileSync(tasksPath(cwd), now.replace(T1, tick(T1)));
+    const res = handlePostToolUse(postPayload(cwd, 'sed -i ... tasks.md'));
+    assert.match(res.stderr, /Contracts failed: R1\.2 failing contract\./);
+    assert.equal(fs.readFileSync(tasksPath(cwd), 'utf8'), now);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.16 added unticked lines do not stop a tick while a frozen task is still unticked', () => {
+  const cwd = setupMixed(TASKS_MIXED, TASKS_MIXED + LATE_LINE + '\n');
+  try {
+    const res = handlePreToolUse(payload(cwd, 'str_replace', tickEdit(T1, tick(T1))));
+    assert.equal(res.exitCode, 0, res.stderr);
+    assert.deepEqual(readReceipts(cwd)[0].required, ['R1.1 passing contract']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.16 a frozen task whose line was removed counts as missing', () => {
+  // Tasks 2 to 6 are ticked; task 1 is the only frozen task left unticked, and a line of task 2 is gone.
+  const cwd = setupMixed([...DONE_BUT_ONE, ''].join('\n'), [T1, tick(T3), tick(T4), tick(T5), tick(T6), ''].join('\n'));
+  try {
+    expectAllRequired(cwd, 'str_replace', tickEdit(T1, tick(T1)));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+// -- R4.17: a contract file that fails as a whole -------------------------------
+
+// Every test in this file passes, but the file exits with a failure code, so the
+// runner reports the file itself as failed.
+const BAD_EXIT_CONTRACT = `import { test } from 'node:test';
+import assert from 'node:assert/strict';
+
+test('R1.1 passes on its own', () => { assert.ok(true); });
+test('R1.2 also passes on its own', () => { assert.ok(true); });
+process.exitCode = 1;
+`;
+
+const OK_CONTRACT = `import { test } from 'node:test';
+import assert from 'node:assert/strict';
+
+test('R2.1 passes in a healthy file', () => { assert.ok(true); });
+test('R2.2 passes too', () => { assert.ok(true); });
+`;
+
+const U1 = '- [ ] 1. First (Req 1.1)';
+const U2 = '- [ ] 2. Second (Req 2.1)';
+const U3 = '- [ ] 3. Third (Req 2.2)';
+
+function setupTwoFiles() {
+  const cwd = tmpCwd();
+  writeReq(cwd, 'demo', REQ);
+  writeContract(cwd, 'demo', 'a.contract.test.js', BAD_EXIT_CONTRACT);
+  writeContract(cwd, 'demo', 'b.contract.test.js', OK_CONTRACT);
+  writeTasks(cwd, 'demo', [U1, U2, U3, ''].join('\n'));
+  freezeSpec(cwd, 'demo');
+  return cwd;
+}
+
+test('R4.17 a required contract passes but its file fails as a whole: the tick is blocked', () => {
+  const cwd = setupTwoFiles();
+  try {
+    const res = handlePreToolUse(payload(cwd, 'str_replace', tickEdit(U1, tick(U1))));
+    assert.equal(res.exitCode, 2, 'R1.1 passed on its own, the file did not');
+    assert.match(res.stderr, /Contracts failed: .*\ba\b/);
+    assert.equal(readReceipts(cwd).length, 0);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.17 the same failure blocks a tick made by a shell command', () => {
+  const cwd = setupTwoFiles();
+  try {
+    bashPre(cwd);
+    fs.writeFileSync(tasksPath(cwd), [tick(U1), U2, U3, ''].join('\n'));
+    const res = handlePostToolUse(postPayload(cwd, 'sed -i ... tasks.md'));
+    assert.match(res.stderr, /Contracts failed: .*\ba\b/);
+    assert.equal(fs.readFileSync(tasksPath(cwd), 'utf8'), [U1, U2, U3, ''].join('\n'));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.17 a file that fails as a whole does not block a task whose required contracts are in a healthy file', () => {
+  const cwd = setupTwoFiles();
+  try {
+    const res = handlePreToolUse(payload(cwd, 'str_replace', tickEdit(U2, tick(U2))));
+    assert.equal(res.exitCode, 0, res.stderr);
+    assert.deepEqual(readReceipts(cwd)[0].required, ['R2.1 passes in a healthy file']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.17 a contract file that no longer loads blocks the tick of a task it holds a contract for', () => {
+  const cwd = tmpCwd();
+  try {
+    writeReq(cwd, 'demo', REQ);
+    fs.mkdirSync(path.join(cwd, 'src'), { recursive: true });
+    fs.writeFileSync(path.join(cwd, 'src', 'dep.js'), 'export const ok = true;\n');
+    writeContract(
+      cwd,
+      'demo',
+      'dep.contract.test.js',
+      `import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { ok } from '../../src/dep.js';
+
+test('R1.1 uses the dependency', () => { assert.equal(ok, true); });
+`,
+    );
+    writeContract(cwd, 'demo', 'b.contract.test.js', OK_CONTRACT);
+    writeTasks(cwd, 'demo', [U1, U2, U3, ''].join('\n'));
+    freezeSpec(cwd, 'demo');
+    fs.writeFileSync(path.join(cwd, 'src', 'dep.js'), 'throw new Error("broken at load");\n');
+    const res = handlePreToolUse(payload(cwd, 'str_replace', tickEdit(U1, tick(U1))));
+    assert.equal(res.exitCode, 2);
+    assert.match(res.stderr, /R1\.1 uses the dependency/);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});

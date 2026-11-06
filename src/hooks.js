@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { hashFile, sha256 } from './canon.js';
 import { readLock, isSpecFrozen, frozenFiles, TASK_LINE, taskIdOf, requiredNames } from './lock.js';
-import { runContracts } from './contracts.js';
+import { runContracts, contractName } from './contracts.js';
 import { buildReceipt, writeReceipt } from './receipts.js';
 
 const ALLOW = Object.freeze({ exitCode: 0, stdout: '', stderr: '' });
@@ -216,13 +216,6 @@ function newlyTickedTexts(before, after) {
   return out;
 }
 
-// Number of task lines that are not ticked in a text.
-function untickedCount(text) {
-  let n = 0;
-  for (const [key, count] of taskLines(text)) if (key.startsWith(' \0')) n += count;
-  return n;
-}
-
 // The text with every ticked task line unticked.
 function untick(text) {
   return text.replace(/^(\s*(?:(?:[-*+]|\d+[.)])\s*)?)\[[xX]\]/gm, '$1[ ]');
@@ -420,8 +413,19 @@ export function handlePreToolUse(payload) {
 function decideTicks(lock, spec, results, change) {
   const names = [...new Set(results.map((r) => r.name))].sort();
   const ticked = change.exact ? newlyTickedTexts(change.before, change.after) : [];
-  const required = requiredNames(lock, spec, ticked, untickedCount(change.after), names) || names;
-  const failing = [...new Set(results.filter((r) => r.result === 'fail' && required.includes(r.name)).map((r) => r.name))].sort();
+  const required = requiredNames(lock, spec, ticked, change.after, names) || names;
+  // Req 4.17: a contract file that holds a required contract and failed as a whole
+  // (it did not load, or exited badly) fails the tick, even when the required
+  // contract passed on its own. The runner reports such a file as a failing
+  // result named after the file.
+  const requiredPaths = new Set(results.filter((r) => required.includes(r.name)).map((r) => r.path));
+  const failing = [
+    ...new Set(
+      results
+        .filter((r) => r.result === 'fail' && (required.includes(r.name) || (requiredPaths.has(r.path) && r.name === contractName(r.path))))
+        .map((r) => r.name),
+    ),
+  ].sort();
   let task = null;
   if (ticked.length > 0) {
     const ids = ticked.map(taskIdOf);

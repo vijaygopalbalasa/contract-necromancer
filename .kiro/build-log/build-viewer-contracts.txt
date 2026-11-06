@@ -1,0 +1,126 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=7
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Code Intelligence
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Run Command
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] Run Command
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+I wrote 12 contracts for the receipt-viewer spec, one test per criterion, in six files under `contracts/receipt-viewer/`. All 12 fail right now because `site/` does not exist, which is expected. I did not create any `site/` files.
+
+To check the tests could be satisfied, I wrote a throwaway minimal viewer in a temp directory. All 12 passed against it. When I broke it on purpose (uncommitted handling, canonical JSON, the host check, contrast, text wrapping, the sample reference), the matching tests failed. I deleted the temp viewer afterwards.
+
+| File | Criteria |
+|---|---|
+| `canon.contract.test.js` | R3.1, R3.2 |
+| `receipt.contract.test.js` | R1.3, R2.1, R2.2 |
+| `repo.contract.test.js` | R1.2, R5.1 |
+| `files.contract.test.js` | R4.1, R4.2, R4.3 (fetch is a stub) |
+| `style.contract.test.js` | R6.1 |
+| `sample.contract.test.js` | R6.2 |
+
+- **Test names:** each name starts with `R<req>.<n> `, which is what `requiredNames` in `src/lock.js` matches on.
+- **Imports:** each test loads its viewer module with a dynamic `import()`. A missing module fails the test, but all 12 names still get recorded when you freeze.
+- **Pinning:** `src/receipts.js` doesn't follow dynamic imports. Each file therefore has a comment naming its viewer modules in `from '../../site/...'` form, so the receipt pins them. Don't remove those comments.
+
+**No contract (R1.1, R2.3):** both are page rendering, so there is nothing to check in Node. R2.3 also has no module in `design.md` and no task in `tasks.md` that lists it, so the gate never asks for it. You may want to add it to the design and tasks.
+
+**Partial contracts:** most of the others cover only the logic, not the page. For example, R5.1 checks the command text but not the copy button, and R6.1 checks the CSS but not real layout at 320 px. `README.md` lists what each one leaves unchecked.
+
+**Decisions for you:**
+- `tasks.md` plans several contract tests per criterion, including an `app.contract.test.js`. I did one per criterion and no app-level file, because the page's element structure isn't specified. App-level contracts would need a fake DOM written into the contract file. Say if you want that.
+- R6.2 needs both the sample receipt (task 12) and the page code that loads it (task 11). Do the work for both before ticking either task.
+- `design.md` doesn't fix the shape of `summarize`'s contract list or what `verifyCommand` returns. The tests accept a list of `{name, result}` in any property, and a command that is either a string or an object with a `command` string.
+- The R6.1 test needs these tokens in `:root`: `--text`, `--muted`, `--alive`, `--grave`, `--accent`, `--link` and `--border`.
