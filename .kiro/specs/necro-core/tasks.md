@@ -50,6 +50,10 @@ Each task writes its test first, then the implementation, then runs `node --test
   - Test first: a write to `Contracts/...` (other case) or through a symlink to a frozen file is blocked (3.5); an unknown tool name with a protected path is blocked (3.6); a shell command that ticks a task while contracts fail gets `tasks.md` restored with the failing names on stderr (3.7); a `str_replace` that unticks one task and ticks another is detected as marking done (4.1); results printed by code under test (a fake `ok 1 - name` line) cannot make a contract pass, and names are matched per file (4.12).
   - Implement: update `src/hooks.js` and `src/contracts.js` (switch to the `node:test` `run()` API). Run `npm test` and pass.
 
+- [ ] 8d. **Fail closed on ticks, strict verify, hooks on every tool** (Req 4.13, 6.7, 8.4)
+  - Test first: a write to `tasks.md` that adds an `[x]` line with no matching `[ ]` line before it (including a new file and a partial-line `str_replace`) runs the gate (4.13); `verify` reports `MISMATCH` for a receipt that omits one of the lock's contracts, adds one the lock lacks, changes a recorded name, or names a spec missing from the lock, and it runs the lock's contracts (6.7); `necro init` writes a PreToolUse matcher that matches every tool (8.4). Run each test against the current code and see it fail first.
+  - Implement: update `src/hooks.js`, `src/verify.js`, `templates/necromancer.hooks.json`. Run `npm test` and pass.
+
 - [x] 9. **Stop: session summary** (Req 7.1)
   - Test first: extend `test/hooks.test.js`. Assert `handleStop` prints each frozen spec's count of tasks marked done, count of receipts, and names of contracts failing now (7.1).
   - Implement: add `handleStop` to `src/hooks.js`. Run `node --test` and pass.

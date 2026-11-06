@@ -51,6 +51,7 @@ receipts anyone can re-run.
 10. IF a contract name recorded in the lock is missing from a run THEN THE SYSTEM SHALL count it as failing.
 11. WHEN test results are parsed THE SYSTEM SHALL keep every contract name exactly as reported, whatever characters it contains, and SHALL treat an entry as a file load failure only when its name equals that contract file's own path.
 12. WHEN contracts are run THE SYSTEM SHALL read results from the Node test runner's structured events (the `node:test` `run()` API), not from text the code under test can print, and SHALL match recorded names per contract file.
+13. WHEN any write targets a `tasks.md` THE SYSTEM SHALL treat it as marking a task done IF the resulting file has more `[x]` task lines than the file on disk (a missing file counts as zero), even when no single line can be matched to an earlier `[ ]` line.
 
 ## Requirement 5: Receipts
 **User story:** As a reviewer, I want a receipt that pins every input, so that I can re-run it and get the same answer.
@@ -68,6 +69,7 @@ receipts anyone can re-run.
 4. WHEN a receipt is verified THE SYSTEM SHALL first recompute its `receiptHash` and IF it differs THEN print `MISMATCH` saying the receipt was altered and exit with code 1.
 5. IF a receipt pins no requirements file or no contracts THEN THE SYSTEM SHALL print `MISMATCH` and exit with code 1.
 6. WHEN the spec is frozen in the local lock THE SYSTEM SHALL also check that the receipt's requirements and contract hashes match the lock and IF not THEN print `MISMATCH` with each differing path.
+7. WHEN a lock exists THE SYSTEM SHALL require the receipt's spec to be in it, require the receipt's contract files, hashes and names to equal the lock's exactly (none missing, none extra), and run the lock's contracts rather than the receipt's list, so a receipt that leaves out a failing contract is a `MISMATCH`.
 
 ## Requirement 7: Session summary
 **User story:** As a developer, I want a summary when the agent stops, so that a false "done" is visible.
@@ -80,3 +82,4 @@ receipts anyone can re-run.
 1. WHEN a user runs `necro init` THE SYSTEM SHALL write `.kiro/hooks/necromancer.json` with PreToolUse, PostToolUse and Stop hooks that call `necro hook pre`, `necro hook post` and `necro hook stop`, each with a timeout of 300 seconds.
 2. WHEN a user runs `necro init` THE SYSTEM SHALL write `.kiro/steering/necromancer.md` telling the agent that frozen contracts decide "done" and must not be edited.
 3. IF those files already exist THEN THE SYSTEM SHALL leave them unchanged and say so.
+4. WHEN `necro init` writes the hooks THE SYSTEM SHALL make the PreToolUse hook match every tool (not a fixed list of write tools), so the Req 3.6 check sees unknown write tools.
