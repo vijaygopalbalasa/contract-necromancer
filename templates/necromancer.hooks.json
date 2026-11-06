@@ -1,0 +1,34 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Contract Necromancer PreToolUse",
+      "trigger": "PreToolUse",
+      "matcher": "fs_write|str_replace|execute_bash",
+      "action": {
+        "type": "command",
+        "command": "necro hook pre"
+      },
+      "timeout": 300
+    },
+    {
+      "name": "Contract Necromancer PostToolUse",
+      "trigger": "PostToolUse",
+      "matcher": "execute_bash",
+      "action": {
+        "type": "command",
+        "command": "necro hook post"
+      },
+      "timeout": 300
+    },
+    {
+      "name": "Contract Necromancer Stop",
+      "trigger": "Stop",
+      "action": {
+        "type": "command",
+        "command": "necro hook stop"
+      },
+      "timeout": 300
+    }
+  ]
+}

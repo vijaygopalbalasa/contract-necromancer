@@ -1,5 +1,4 @@
 import { execFileSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 import { hashFile } from './canon.js';
 
@@ -12,13 +11,17 @@ function contractName(filePath) {
 // - describe/suite entries (type 'suite') are skipped; only tests are contracts.
 // - A TAP directive (# SKIP or # TODO) forces the result to "fail" (Req 4.7), so a
 //   skipped or todo contract can never let a spec pass vacuously.
-// - A "test" whose reported name is a file path is a synthetic "file loaded"
-//   entry (a file with zero real tests, or a file that failed to load), flagged
-//   isFile so the caller can turn a file with zero real contracts into one
-//   failing contract named after the file (Req 4.8).
-function parseTap(tap) {
+// - Req 4.11: contract names with special characters (slash, .js) are kept as
+//   reported. Only entries that are likely synthetic file error messages are
+//   treated specially. A synthetic entry would be the contract file's path
+//   (relative or absolute) or stem.
+// - Req 4.8: a file with zero real tests generates one failing entry.
+function parseTap(tap, contractFilePath) {
   const lines = tap.split(/\r?\n/);
   const results = [];
+  const fileName = path.basename(contractFilePath);
+  const fileStem = fileName.replace(/\.contract\.test\.js$/, '');
+
   for (let i = 0; i < lines.length; i++) {
     const m = lines[i].match(/^(\s*)(ok|not ok)\s+\d+\s+-\s+(.*)$/);
     if (!m) continue;
@@ -48,7 +51,13 @@ function parseTap(tap) {
       name = dm[1];
       result = 'fail';
     }
-    const isFile = name.includes('/') || name.includes('\\') || /\.[mc]?js$/i.test(name);
+    // Req 4.11: keep contract names exactly as reported, even with special chars.
+    // Only filter if the name IS the file itself (synthetic error entry from
+    // the test runner). The file runner outputs absolute paths for file errors.
+    const isFile = name === fileName || 
+                   name === fileStem || 
+                   name === contractFilePath ||
+                   name.endsWith(contractFilePath.split(path.sep).join('/'));
     results.push({ name, result, isFile });
   }
   return results;
@@ -62,7 +71,8 @@ function parseTap(tap) {
 // Req 4.9: each contract file is hashed immediately before running; if the hash
 // differs from the lock, every contract in that file is counted as failing.
 // Req 4.10: a contract name recorded in the lock that is missing from the run is
-// counted as failing.
+// counted as failing. Req 4.11: contract names with special characters are kept
+// and reported exactly as named. Req 4.12: results are matched per file.
 export function runContracts(cwd, spec, lock) {
   const entry = lock && lock.specs && lock.specs[spec];
   if (!entry || !entry.contracts) return [];
@@ -108,7 +118,7 @@ export function runContracts(cwd, spec, lock) {
       // node --test exits non-zero on any failure; stdout still holds the TAP.
       tap = (e && e.stdout) || '';
     }
-    const parsed = parseTap(tap);
+    const parsed = parseTap(tap, c.path);
     const real = parsed.filter((p) => !p.isFile);
     if (real.length === 0) {
       // No real contracts ran: a load failure or a file with zero tests. This

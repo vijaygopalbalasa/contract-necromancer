@@ -7,6 +7,7 @@ import { hashFile } from '../src/canon.js';
 import { runContracts } from '../src/contracts.js';
 import { buildReceipt, writeReceipt } from '../src/receipts.js';
 import { verify } from '../src/verify.js';
+import { readLock, freezeSpec } from '../src/lock.js';
 
 const REQ = '# Demo requirements\n';
 
@@ -163,6 +164,160 @@ test('R6.3 verify prints MISMATCH with the differing contract name and exits 1 w
     assert.equal(code, 1);
     assert.match(out, /MISMATCH/);
     assert.ok(out.includes('R6.1 data contract'), 'output includes the changed contract name');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.4 verify reports MISMATCH when receipt fields were edited so receiptHash no longer matches', () => {
+  const cwd = tmpCwd();
+  try {
+    setupWithSources(cwd);
+    const lock = buildLock(cwd, 'demo', 'contracts/demo/canon.contract.test.js');
+    const { file } = makeReceipt(cwd, 'demo', lock);
+
+    // Read, modify a field, and write the receipt back with a stale receiptHash.
+    const receipt = JSON.parse(fs.readFileSync(path.join(cwd, file), 'utf8'));
+    const staleHash = receipt.receiptHash;
+    // Tamper with a source file entry in the receipt.
+    receipt.sources[0].sha256 = 'corrupted0000000000000000000000000000000000000000000000000000000';
+    fs.writeFileSync(path.join(cwd, file), JSON.stringify(receipt, null, 2) + '\n');
+
+    const { code, out } = captureStdout(() => verify(cwd, file));
+    assert.equal(code, 1);
+    assert.match(out, /MISMATCH/);
+    assert.ok(out.includes('receipt'), 'message mentions the receipt was altered');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.5 verify rejects a receipt with no requirements', () => {
+  const cwd = tmpCwd();
+  try {
+    setupWithSources(cwd);
+    const lock = buildLock(cwd, 'demo', 'contracts/demo/canon.contract.test.js');
+    const { file } = makeReceipt(cwd, 'demo', lock);
+
+    // Remove the requirements field.
+    const receipt = JSON.parse(fs.readFileSync(path.join(cwd, file), 'utf8'));
+    delete receipt.requirements;
+    const { receiptHash } = receipt;
+    receipt.receiptHash = receiptHash; // keep old hash to test the mismatch path
+    fs.writeFileSync(path.join(cwd, file), JSON.stringify(receipt, null, 2) + '\n');
+
+    const { code, out } = captureStdout(() => verify(cwd, file));
+    assert.equal(code, 1);
+    assert.match(out, /MISMATCH/);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.5 verify rejects a receipt with no contracts', () => {
+  const cwd = tmpCwd();
+  try {
+    setupWithSources(cwd);
+    const lock = buildLock(cwd, 'demo', 'contracts/demo/canon.contract.test.js');
+    const { file } = makeReceipt(cwd, 'demo', lock);
+
+    // Remove the contracts array.
+    const receipt = JSON.parse(fs.readFileSync(path.join(cwd, file), 'utf8'));
+    receipt.contracts = [];
+    fs.writeFileSync(path.join(cwd, file), JSON.stringify(receipt, null, 2) + '\n');
+
+    const { code, out } = captureStdout(() => verify(cwd, file));
+    assert.equal(code, 1);
+    assert.match(out, /MISMATCH/);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.6 verify reports MISMATCH when requirements hash differs from the frozen lock', () => {
+  const cwd = tmpCwd();
+  try {
+    setupWithSources(cwd);
+    // Freeze the spec to write .necro/lock.json
+    freezeSpec(cwd, 'demo');
+    const lock = readLock(cwd);
+    assert.ok(lock.specs.demo, 'spec is frozen');
+    
+    const { receipt, file } = makeReceipt(cwd, 'demo', lock);
+
+    // Create a fresh cwd with the receipt but a frozen lock in which requirements
+    // has a different hash. (In practice this would be git merging the lock.)
+    const cwd2 = tmpCwd();
+    try {
+      write(cwd2, '.necro/lock.json', JSON.stringify({
+        specs: {
+          demo: {
+            frozenAt: '2026-11-06T00:00:00.000Z',
+            requirements: {
+              path: '.kiro/specs/demo/requirements.md',
+              sha256: 'deadbeef' + '0'.repeat(56),
+            },
+            contracts: lock.specs.demo.contracts,
+          },
+        },
+      }, null, 2));
+      write(cwd2, file, fs.readFileSync(path.join(cwd, file), 'utf8'));
+      // Also need the actual files for hashing.
+      write(cwd2, '.kiro/specs/demo/requirements.md', REQ);
+      write(cwd2, 'contracts/demo/canon.contract.test.js', CANON_CONTRACT);
+      write(cwd2, 'src/util.js', UTIL);
+      write(cwd2, 'src/more.js', MORE);
+
+      const { code, out } = captureStdout(() => verify(cwd2, file));
+      assert.equal(code, 1);
+      assert.match(out, /MISMATCH/);
+      assert.ok(out.includes('.kiro/specs/demo/requirements.md'), 'output shows the mismatched file');
+    } finally {
+      fs.rmSync(cwd2, { recursive: true, force: true });
+    }
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.6 verify reports MISMATCH when contract hash differs from the frozen lock', () => {
+  const cwd = tmpCwd();
+  try {
+    setupWithSources(cwd);
+    // Freeze the spec to write .necro/lock.json
+    freezeSpec(cwd, 'demo');
+    const lock = readLock(cwd);
+    const { receipt, file } = makeReceipt(cwd, 'demo', lock);
+
+    // Create a second cwd with a frozen lock in which the contract hash differs.
+    const cwd2 = tmpCwd();
+    try {
+      write(cwd2, '.necro/lock.json', JSON.stringify({
+        specs: {
+          demo: {
+            frozenAt: '2026-11-06T00:00:00.000Z',
+            requirements: lock.specs.demo.requirements,
+            contracts: [{
+              name: 'canon',
+              path: 'contracts/demo/canon.contract.test.js',
+              sha256: 'deadbeef' + '0'.repeat(56),
+            }],
+          },
+        },
+      }, null, 2));
+      write(cwd2, file, fs.readFileSync(path.join(cwd, file), 'utf8'));
+      write(cwd2, '.kiro/specs/demo/requirements.md', REQ);
+      write(cwd2, 'contracts/demo/canon.contract.test.js', CANON_CONTRACT);
+      write(cwd2, 'src/util.js', UTIL);
+      write(cwd2, 'src/more.js', MORE);
+
+      const { code, out } = captureStdout(() => verify(cwd2, file));
+      assert.equal(code, 1);
+      assert.match(out, /MISMATCH/);
+      assert.ok(out.includes('contracts/demo/canon.contract.test.js'), 'output shows the mismatched file');
+    } finally {
+      fs.rmSync(cwd2, { recursive: true, force: true });
+    }
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }

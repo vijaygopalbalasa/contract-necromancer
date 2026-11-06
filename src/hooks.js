@@ -28,8 +28,8 @@ export function countTaskMarks(text) {
 }
 
 // Detect whether a tool call on tasks.md is marking a task done (Req 4.1, 4.2).
-// - str_replace: more [x] in newStr than oldStr.
-// - fs_write: more [x] in the new text than the file currently on disk.
+// - str_replace: any task line changes from [ ] to [x].
+// - fs_write: any task line changes from [ ] to [x] compared to the file on disk.
 export function detectTaskDone(cwd, toolName, toolInput) {
   const p = toolInput && toolInput.path;
   if (typeof p !== 'string') return false;
@@ -37,9 +37,23 @@ export function detectTaskDone(cwd, toolName, toolInput) {
   if (!rel) return false;
   // Only an edit to .kiro/specs/<spec>/tasks.md can mark a task done.
   if (!/^\.kiro\/specs\/([^/]+)\/tasks\.md$/.test(rel)) return false;
+
   if (toolName === 'str_replace') {
-    return countTaskMarks(toolInput.newStr) > countTaskMarks(toolInput.oldStr);
+    // Check if any task line changed from [ ] to [x] in the str_replace.
+    // Split into lines and look for lines that have [ ] in oldStr but [x] in newStr.
+    const oldLines = new Set(toolInput.oldStr.split(/\n/));
+    const newLines = new Set(toolInput.newStr.split(/\n/));
+    
+    // Find lines that were unchecked in oldStr but checked in newStr
+    for (const line of newLines) {
+      const uncheckedVersion = line.replace(/\[x\]/i, '[ ]');
+      if (uncheckedVersion !== line && oldLines.has(uncheckedVersion)) {
+        return true; // Found a [ ] -> [x] transition
+      }
+    }
+    return false;
   }
+
   if (toolName === 'fs_write') {
     const abs = path.isAbsolute(p) ? p : path.join(cwd, p);
     let disk = '';
@@ -48,8 +62,20 @@ export function detectTaskDone(cwd, toolName, toolInput) {
     } catch {
       disk = ''; // file does not exist yet -> 0 marks on disk
     }
-    return countTaskMarks(toolInput.text) > countTaskMarks(disk);
+    
+    // Check if any task line changed from [ ] to [x] comparing disk to new text.
+    const diskLines = new Set(disk.split(/\n/));
+    const newLines = new Set(toolInput.text.split(/\n/));
+    
+    for (const line of newLines) {
+      const uncheckedVersion = line.replace(/\[x\]/i, '[ ]');
+      if (uncheckedVersion !== line && diskLines.has(uncheckedVersion)) {
+        return true; // Found a [ ] -> [x] transition
+      }
+    }
+    return false;
   }
+
   return false;
 }
 
@@ -64,8 +90,14 @@ export function handlePreToolUse(payload) {
   const toolInput = payload.tool_input || {};
   const p = toolInput.path;
 
-  // Only the write tools carry a file path to protect.
-  if (!cwd || typeof p !== 'string' || (toolName !== 'fs_write' && toolName !== 'str_replace')) {
+  // If there's a path to protect, handle it regardless of tool name.
+  // Req 3.6: only known read-only tools bypass the protection.
+  if (!cwd || typeof p !== 'string') {
+    return { exitCode: 0, stdout: '', stderr: '' };
+  }
+
+  const readOnlyTools = new Set(['read_file', 'list_directory', 'grep_search', 'file_search']);
+  if (readOnlyTools.has(toolName)) {
     return { exitCode: 0, stdout: '', stderr: '' };
   }
 
@@ -80,7 +112,7 @@ export function handlePreToolUse(payload) {
     };
   }
 
-  // Req 3.1: frozen files cannot be edited.
+  // Req 3.1: frozen files cannot be edited by any write tool.
   if (isFrozenPath(cwd, rel)) {
     return {
       exitCode: 2,
@@ -90,7 +122,8 @@ export function handlePreToolUse(payload) {
   }
 
   // Req 4: if this edit marks a task done, gate it on the frozen contracts.
-  if (detectTaskDone(cwd, toolName, toolInput)) {
+  // Only str_replace and fs_write can mark tasks done.
+  if ((toolName === 'str_replace' || toolName === 'fs_write') && detectTaskDone(cwd, toolName, toolInput)) {
     return runGate(cwd, rel);
   }
 
@@ -184,5 +217,63 @@ export function handlePostToolUse(payload) {
     stderr: restored
       .map((p) => `Restored frozen file ${p} after shell command.`)
       .join('\n'),
+  };
+}
+
+// Stop: print a session summary for each frozen spec (Req 7.1).
+export function handleStop(payload) {
+  const cwd = payload.cwd;
+  if (!cwd) {
+    return { exitCode: 0, stdout: '', stderr: '' };
+  }
+
+  const lock = readLock(cwd);
+  if (!lock.specs || Object.keys(lock.specs).length === 0) {
+    return { exitCode: 0, stdout: '', stderr: '' };
+  }
+
+  const lines = [];
+  for (const spec of Object.keys(lock.specs).sort()) {
+    // Count tasks done in .kiro/specs/<spec>/tasks.md
+    let tasksDone = 0;
+    try {
+      const tasksPath = path.join(cwd, '.kiro', 'specs', spec, 'tasks.md');
+      const tasksContent = fs.readFileSync(tasksPath, 'utf8');
+      const matches = tasksContent.match(/\[x\]/gi);
+      tasksDone = matches ? matches.length : 0;
+    } catch {
+      tasksDone = 0; // file missing
+    }
+
+    // Count receipts in .necro/receipts/<spec>/
+    let receiptCount = 0;
+    try {
+      const receiptsDir = path.join(cwd, '.necro', 'receipts', spec);
+      const files = fs.readdirSync(receiptsDir).filter((f) => f.endsWith('.json'));
+      receiptCount = files.length;
+    } catch {
+      receiptCount = 0; // directory missing
+    }
+
+    // Run contracts and collect failing names
+    const results = runContracts(cwd, spec, lock);
+    const failing = results
+      .filter((r) => r.result === 'fail')
+      .map((r) => r.name)
+      .sort();
+    const contractStatus =
+      failing.length === 0
+        ? 'passing'
+        : `failing: ${failing.join(', ')}`;
+
+    const line = `Spec ${spec}: ${tasksDone} tasks done, ${receiptCount} receipts, ${contractStatus}.`;
+    lines.push(line);
+  }
+
+  const output = lines.join('\n');
+  return {
+    exitCode: 0,
+    stdout: output,
+    stderr: '',
   };
 }

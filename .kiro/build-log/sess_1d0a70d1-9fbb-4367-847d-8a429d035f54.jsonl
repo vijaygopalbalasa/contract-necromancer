@@ -1,0 +1,102 @@
+{"t":"2026-11-06T20:20:00.797Z","tool":"read_file","what":".kiro/specs/necro-core/requirements.md"}
+{"t":"2026-11-06T20:20:02.652Z","tool":"read_file","what":".kiro/specs/necro-core/design.md"}
+{"t":"2026-11-06T20:20:04.766Z","tool":"read_file","what":".kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-06T20:20:06.519Z","tool":"list_directory","what":".kiro/steering"}
+{"t":"2026-11-06T20:20:11.790Z","tool":"read_file","what":".kiro/steering/structure.md"}
+{"t":"2026-11-06T20:20:11.791Z","tool":"read_file","what":".kiro/steering/tech.md"}
+{"t":"2026-11-06T20:20:11.792Z","tool":"read_file","what":".kiro/steering/product.md"}
+{"t":"2026-11-06T20:20:14.412Z","tool":"read_file","what":"test/verify.test.js"}
+{"t":"2026-11-06T20:20:14.413Z","tool":"read_file","what":"src/verify.js"}
+{"t":"2026-11-06T20:20:14.416Z","tool":"read_file","what":"src/hooks.js"}
+{"t":"2026-11-06T20:20:18.193Z","tool":"execute_bash","what":"cd && node && head"}
+{"t":"2026-11-06T20:20:21.073Z","tool":"update_session_information","what":""}
+{"t":"2026-11-06T20:20:22.783Z","tool":"read_file","what":"test/contracts.test.js"}
+{"t":"2026-11-06T20:20:24.442Z","tool":"read_file","what":"test/contracts.test.js"}
+{"t":"2026-11-06T20:20:26.211Z","tool":"read_file","what":"test/contracts.test.js"}
+{"t":"2026-11-06T20:20:29.613Z","tool":"fs_append","what":"test/contracts.test.js"}
+{"t":"2026-11-06T20:20:39.118Z","tool":"fs_append","what":"test/verify.test.js"}
+{"t":"2026-11-06T20:20:41.273Z","tool":"str_replace","what":"test/verify.test.js"}
+{"t":"2026-11-06T20:20:44.143Z","tool":"execute_bash","what":"cd && node && tail"}
+{"t":"2026-11-06T20:20:45.624Z","tool":"read_file","what":"src/contracts.js"}
+{"t":"2026-11-06T20:20:55.368Z","tool":"str_replace","what":"src/contracts.js"}
+{"t":"2026-11-06T20:21:07.395Z","tool":"str_replace","what":"src/contracts.js"}
+{"t":"2026-11-06T20:21:16.295Z","tool":"str_replace","what":"src/contracts.js"}
+{"t":"2026-11-06T20:21:28.894Z","tool":"str_replace","what":"src/contracts.js"}
+{"t":"2026-11-06T20:21:30.322Z","tool":"str_replace","what":"src/contracts.js"}
+{"t":"2026-11-06T20:21:31.765Z","tool":"read_file","what":"src/contracts.js"}
+{"t":"2026-11-06T20:21:34.302Z","tool":"execute_bash","what":"cd && node && tail"}
+{"t":"2026-11-06T20:21:42.835Z","tool":"str_replace","what":"src/contracts.js"}
+{"t":"2026-11-06T20:21:46.895Z","tool":"execute_bash","what":"cd && node && grep && passing\\ && empty\""}
+{"t":"2026-11-06T20:21:49.078Z","tool":"execute_bash","what":"cd && node && tail"}
+{"t":"2026-11-06T20:21:59.280Z","tool":"str_replace","what":"src/verify.js"}
+{"t":"2026-11-06T20:22:09.547Z","tool":"str_replace","what":"src/verify.js"}
+{"t":"2026-11-06T20:22:12.005Z","tool":"execute_bash","what":"cd && node && tail"}
+{"t":"2026-11-06T20:22:14.349Z","tool":"execute_bash","what":"cd && node && grep"}
+{"t":"2026-11-06T20:22:15.791Z","tool":"read_file","what":"test/verify.test.js"}
+{"t":"2026-11-06T20:22:18.669Z","tool":"execute_bash","what":"cd && node && tail"}
+{"t":"2026-11-06T20:22:21.870Z","tool":"execute_bash","what":"cat && const && // && delete && delete && const && console.log('Computed && // && tampered.sources[0].sha256 && tampered.receiptHash && // && delete && delete && const && console.log('New && console.l"}
+{"t":"2026-11-06T20:22:25.605Z","tool":"str_replace","what":"src/verify.js"}
+{"t":"2026-11-06T20:22:27.322Z","tool":"read_file","what":"test/verify.test.js"}
+{"t":"2026-11-06T20:22:29.439Z","tool":"read_file","what":"src/receipts.js"}
+{"t":"2026-11-06T20:22:30.813Z","tool":"read_file","what":"src/receipts.js"}
+{"t":"2026-11-06T20:22:32.697Z","tool":"read_file","what":"test/verify.test.js"}
+{"t":"2026-11-06T20:22:35.975Z","tool":"read_file","what":"src/lock.js"}
+{"t":"2026-11-06T20:22:40.604Z","tool":"str_replace","what":"test/verify.test.js"}
+{"t":"2026-11-06T20:22:42.545Z","tool":"read_file","what":"test/verify.test.js"}
+{"t":"2026-11-06T20:22:44.741Z","tool":"str_replace","what":"test/verify.test.js"}
+{"t":"2026-11-06T20:22:47.387Z","tool":"str_replace","what":"test/verify.test.js"}
+{"t":"2026-11-06T20:22:49.340Z","tool":"read_file","what":"test/verify.test.js"}
+{"t":"2026-11-06T20:22:54.111Z","tool":"str_replace","what":"test/verify.test.js"}
+{"t":"2026-11-06T20:22:56.733Z","tool":"execute_bash","what":"cd && node && tail"}
+{"t":"2026-11-06T20:22:58.273Z","tool":"read_file","what":"test/verify.test.js"}
+{"t":"2026-11-06T20:23:00.091Z","tool":"str_replace","what":"test/verify.test.js"}
+{"t":"2026-11-06T20:23:02.500Z","tool":"execute_bash","what":"cd && node && tail"}
+{"t":"2026-11-06T20:23:04.801Z","tool":"execute_bash","what":"cd && node && tail"}
+{"t":"2026-11-06T20:23:06.863Z","tool":"str_replace","what":".kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-06T20:23:10.411Z","tool":"read_file","what":"test/hooks.test.js"}
+{"t":"2026-11-06T20:23:12.123Z","tool":"execute_bash","what":"cd && tail"}
+{"t":"2026-11-06T20:23:21.050Z","tool":"fs_append","what":"test/hooks.test.js"}
+{"t":"2026-11-06T20:23:23.820Z","tool":"execute_bash","what":"cd && node && tail"}
+{"t":"2026-11-06T20:23:26.282Z","tool":"read_file","what":"src/hooks.js"}
+{"t":"2026-11-06T20:23:29.555Z","tool":"read_file","what":"src/hooks.js"}
+{"t":"2026-11-06T20:23:31.813Z","tool":"read_file","what":"src/hooks.js"}
+{"t":"2026-11-06T20:23:39.714Z","tool":"str_replace","what":"src/hooks.js"}
+{"t":"2026-11-06T20:23:43.135Z","tool":"execute_bash","what":"cd && node && grep && R4.1\" && head"}
+{"t":"2026-11-06T20:23:51.247Z","tool":"str_replace","what":"src/hooks.js"}
+{"t":"2026-11-06T20:23:55.835Z","tool":"execute_bash","what":"cd && node && tail"}
+{"t":"2026-11-06T20:23:58.850Z","tool":"execute_bash","what":"cd && node && tail"}
+{"t":"2026-11-06T20:24:01.199Z","tool":"str_replace","what":".kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-06T20:24:05.723Z","tool":"fs_append","what":"test/hooks.test.js"}
+{"t":"2026-11-06T20:24:15.347Z","tool":"str_replace","what":"src/hooks.js"}
+{"t":"2026-11-06T20:24:24.300Z","tool":"str_replace","what":"test/hooks.test.js"}
+{"t":"2026-11-06T20:24:26.697Z","tool":"str_replace","what":"test/hooks.test.js"}
+{"t":"2026-11-06T20:24:35.278Z","tool":"str_replace","what":"test/hooks.test.js"}
+{"t":"2026-11-06T20:24:38.179Z","tool":"execute_bash","what":"cd && node && tail"}
+{"t":"2026-11-06T20:24:39.572Z","tool":"read_file","what":"test/hooks.test.js"}
+{"t":"2026-11-06T20:24:41.680Z","tool":"execute_bash","what":"grep && head"}
+{"t":"2026-11-06T20:24:43.243Z","tool":"execute_bash","what":"grep && head"}
+{"t":"2026-11-06T20:24:46.031Z","tool":"str_replace","what":"test/hooks.test.js"}
+{"t":"2026-11-06T20:24:51.165Z","tool":"execute_bash","what":"cd && node && tail"}
+{"t":"2026-11-06T20:24:56.109Z","tool":"str_replace","what":"test/hooks.test.js"}
+{"t":"2026-11-06T20:25:00.277Z","tool":"execute_bash","what":"cd && node && tail"}
+{"t":"2026-11-06T20:25:03.811Z","tool":"execute_bash","what":"cd && node && tail"}
+{"t":"2026-11-06T20:25:05.689Z","tool":"str_replace","what":".kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-06T20:25:11.450Z","tool":"fs_write","what":"test/cli.test.js"}
+{"t":"2026-11-06T20:25:13.651Z","tool":"execute_bash","what":"ls"}
+{"t":"2026-11-06T20:25:15.998Z","tool":"fs_write","what":"templates/necromancer.hooks.json"}
+{"t":"2026-11-06T20:25:18.651Z","tool":"fs_write","what":"templates/necromancer.steering.md"}
+{"t":"2026-11-06T20:25:20.686Z","tool":"execute_bash","what":"cd && node && tail"}
+{"t":"2026-11-06T20:25:27.923Z","tool":"str_replace","what":"test/cli.test.js"}
+{"t":"2026-11-06T20:25:29.664Z","tool":"execute_bash","what":"cd && node"}
+{"t":"2026-11-06T20:25:31.410Z","tool":"execute_bash","what":"node && const && console.log(url.pathname) && const && console.log(p.dirname(p.dirname(url.pathname))) && \" &&  && echo"}
+{"t":"2026-11-06T20:25:39.824Z","tool":"str_replace","what":"test/cli.test.js"}
+{"t":"2026-11-06T20:25:43.226Z","tool":"execute_bash","what":"cd && node && tail"}
+{"t":"2026-11-06T20:25:50.331Z","tool":"str_replace","what":"test/cli.test.js"}
+{"t":"2026-11-06T20:25:54.235Z","tool":"execute_bash","what":"cd && node"}
+{"t":"2026-11-06T20:26:02.108Z","tool":"fs_write","what":"bin/necro.js"}
+{"t":"2026-11-06T20:26:04.114Z","tool":"execute_bash","what":"chmod"}
+{"t":"2026-11-06T20:26:05.722Z","tool":"read_file","what":"package.json"}
+{"t":"2026-11-06T20:26:09.207Z","tool":"execute_bash","what":"cd && node && tail"}
+{"t":"2026-11-06T20:26:11.537Z","tool":"str_replace","what":".kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-06T20:26:15.120Z","tool":"read_file","what":".kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-06T20:26:19.042Z","tool":"execute_bash","what":"cd && node && tail"}

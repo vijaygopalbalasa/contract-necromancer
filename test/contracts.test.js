@@ -287,3 +287,29 @@ test('R4.10 a contract name recorded in the lock but missing from a run is repor
     fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
+
+test('R4.11 a contract name with special characters (slash, .js) is kept and reported', () => {
+  const cwd = tmpCwd();
+  try {
+    writeReq(cwd, 'demo', '# Demo\n');
+    // A contract named with a slash and .js extension.
+    const special = `import { test } from 'node:test';
+import assert from 'node:assert/strict';
+
+test('handles a/b.js paths', () => {
+  assert.ok(true);
+});
+`;
+    writeContract(cwd, 'demo', 'special.contract.test.js', special);
+    const lock = buildLock(cwd, 'demo', [
+      contractEntry(cwd, 'contracts/demo/special.contract.test.js'),
+    ]);
+    const results = runContracts(cwd, 'demo', lock);
+
+    assert.equal(results.length, 1);
+    assert.equal(results[0].name, 'handles a/b.js paths', 'name kept exactly as reported');
+    assert.equal(results[0].result, 'pass');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
