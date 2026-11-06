@@ -1,0 +1,137 @@
+{
+  "spec": "ledger",
+  "gitCommit": "58543875fd382e46fdb8a4d4b6db03ff7f61c3cc",
+  "requirements": {
+    "path": ".kiro/specs/ledger/requirements.md",
+    "sha256": "b8b43ee8d65fc87a4b360f6c94bbc8c4ee20d279829a3b6da3f5c85ff1b299b7"
+  },
+  "contracts": [
+    {
+      "name": "R1.1 records payer, whole-cent amount and what for each line",
+      "path": "contracts/ledger/requirement-1-read.contract.test.js",
+      "sha256": "fa40b9161bfc89df294310d3e3f262c862f7fad346a08f7cf4bc8b289f8c123a",
+      "result": "pass"
+    },
+    {
+      "name": "R1.2 shares a split line among the listed names and other lines among everyone",
+      "path": "contracts/ledger/requirement-1-read.contract.test.js",
+      "sha256": "fa40b9161bfc89df294310d3e3f262c862f7fad346a08f7cf4bc8b289f8c123a",
+      "result": "pass"
+    },
+    {
+      "name": "R1.3 treats names that differ in case or spaces as one person with the first spelling",
+      "path": "contracts/ledger/requirement-1-read.contract.test.js",
+      "sha256": "fa40b9161bfc89df294310d3e3f262c862f7fad346a08f7cf4bc8b289f8c123a",
+      "result": "pass"
+    },
+    {
+      "name": "R1.4 stops with the line number and one plain sentence for a bad line",
+      "path": "contracts/ledger/requirement-1-read.contract.test.js",
+      "sha256": "fa40b9161bfc89df294310d3e3f262c862f7fad346a08f7cf4bc8b289f8c123a",
+      "result": "pass"
+    },
+    {
+      "name": "R1.5 skips empty lines and lines that start with #",
+      "path": "contracts/ledger/requirement-1-read.contract.test.js",
+      "sha256": "fa40b9161bfc89df294310d3e3f262c862f7fad346a08f7cf4bc8b289f8c123a",
+      "result": "pass"
+    },
+    {
+      "name": "R2.1 gives each sharer the floor and the extra cents to the first names alphabetically",
+      "path": "contracts/ledger/requirement-2-split.contract.test.js",
+      "sha256": "e2a8c57ec22359e045060107e1f0b8f3603fb1680e3c7100adf1374ec32b7a21",
+      "result": "pass"
+    },
+    {
+      "name": "R2.2 makes balances paid minus shares and sums them to exactly zero",
+      "path": "contracts/ledger/requirement-2-split.contract.test.js",
+      "sha256": "e2a8c57ec22359e045060107e1f0b8f3603fb1680e3c7100adf1374ec32b7a21",
+      "result": "pass"
+    },
+    {
+      "name": "R3.1 produces positive whole-cent payments that bring every balance to zero",
+      "path": "contracts/ledger/requirement-3-settle.contract.test.js",
+      "sha256": "adced29c85d531d0c81a2cb18bec7b817ca15fc03635853a9450e69291882b1c",
+      "result": "pass"
+    },
+    {
+      "name": "R3.2 pays from the biggest debtor to the biggest creditor, ties by name, same every run",
+      "path": "contracts/ledger/requirement-3-settle.contract.test.js",
+      "sha256": "adced29c85d531d0c81a2cb18bec7b817ca15fc03635853a9450e69291882b1c",
+      "result": "pass"
+    },
+    {
+      "name": "R3.3 prints All square. and no payments when every balance is zero",
+      "path": "contracts/ledger/requirement-3-settle.contract.test.js",
+      "sha256": "adced29c85d531d0c81a2cb18bec7b817ca15fc03635853a9450e69291882b1c",
+      "result": "pass"
+    },
+    {
+      "name": "R4.1 prints the balances table then one pays line per payment with two decimals",
+      "path": "contracts/ledger/requirement-4-cli.contract.test.js",
+      "sha256": "bc4534920291653be3afd12e1dba823e52cf3be583edd8472f9d1068dc17d06d",
+      "result": "pass"
+    },
+    {
+      "name": "R4.2 prints balances and payments as JSON with amounts in integer cents",
+      "path": "contracts/ledger/requirement-4-cli.contract.test.js",
+      "sha256": "bc4534920291653be3afd12e1dba823e52cf3be583edd8472f9d1068dc17d06d",
+      "result": "pass"
+    },
+    {
+      "name": "R4.3 exits 1 with one plain sentence when the file is missing or unreadable",
+      "path": "contracts/ledger/requirement-4-cli.contract.test.js",
+      "sha256": "bc4534920291653be3afd12e1dba823e52cf3be583edd8472f9d1068dc17d06d",
+      "result": "pass"
+    }
+  ],
+  "sources": [
+    {
+      "path": "src/balances.js",
+      "sha256": "97bacbfaf55cd21196639c6eadc1b0ed4fb61efedb76c1457a683b9c6ec39e7d"
+    },
+    {
+      "path": "src/errors.js",
+      "sha256": "435a1208a1d29c90c35d5d581b339c1b4ba0ab50b94eaf975bbf653e0a7b234a"
+    },
+    {
+      "path": "src/money.js",
+      "sha256": "37e201e59c0301246b34fc6295b552e788a96be591fead899efb4d94b32481eb"
+    },
+    {
+      "path": "src/parse.js",
+      "sha256": "d6d097c13497474127ed7541dfcfb5096cba732236cb46f96f281ea0f58c9073"
+    },
+    {
+      "path": "src/report.js",
+      "sha256": "7f3f0a967cd05a5ec0a1508fe977af3acbab2221fa5fb0b1507aa2a792e47423"
+    },
+    {
+      "path": "src/settle.js",
+      "sha256": "e929b48010f8d55622da397df772856224b4028865659b3981583aed8e6ad68d"
+    },
+    {
+      "path": "src/split.js",
+      "sha256": "d5ff72ff1f2c30436240936c149528ba052fa5aae7026358a744f2d801f8f5f8"
+    }
+  ],
+  "task": {
+    "id": "3",
+    "line": "3. Split lists and person identity (Req 1.2, 1.3)"
+  },
+  "required": [
+    "R1.2 shares a split line among the listed names and other lines among everyone",
+    "R1.3 treats names that differ in case or spaces as one person with the first spelling"
+  ],
+  "uncommitted": [
+    "src/balances.js",
+    "src/errors.js",
+    "src/money.js",
+    "src/parse.js",
+    "src/report.js",
+    "src/settle.js",
+    "src/split.js"
+  ],
+  "receiptHash": "9ba0dc95c1911126ecec96b840598cb70875bdbc63a05e0118cc349541374906",
+  "createdAt": "2026-11-06T23:35:43.192Z"
+}

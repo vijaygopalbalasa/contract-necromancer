@@ -1,0 +1,222 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=7
+I'll start by reading the spec files and steering files to understand what needs to be built.
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+Now let me read the steering files and the contract test files to understand the exact expectations.
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+I have a full understanding now. The frozen contracts define exact behavior. Let me verify the frozen state and understand the important detail about the extra-cent distribution.
+
+Note on R2.1: `splitExpense(1000, ['cy','ann','bob'])` → `{ann:334, bob:333, cy:333}`. Sorted keys: ann, bob, cy. extra = 1000%3 = 1, so first 1 sorted key (ann) gets +1. ✓ But the return is a Map; `Object.fromEntries` reorders by insertion. The expected object has keys ann, bob, cy — but object comparison in deepEqual ignores key order. Good.
+
+Also R2.1 balances test: `splitExpense(1000, [zed,ann,bob])` sorted = ann, bob, zed. extra=1. ann gets 334, bob 333, zed 333. Expected: Zed share 333, ann 334, Bob 333. ✓
+
+Let me confirm the freeze state before starting.
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+Everything is clear. The contracts are frozen; I'll write code to satisfy them without touching contracts. Let me start Task 1.
+
+## Task 1: Amount parsing and formatting
+
+Writing the test first, then the code.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+The `npm test` script runs `test/*.test.js` plus the contracts aren't in that glob. But contracts import from src that doesn't fully exist yet — they'll fail until all modules exist. Let me run just my test file for Task 1 to verify, then run the full suite at the end.
+[tool] Run money tests for task 1
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 1 tests pass. Let me check how the necro freeze validation gates task completion. The rule says marking done is gated on frozen contracts passing. Let me verify with the necro tool.
+[tool] Locate the necro CLI
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Locate the necro CLI
+[tool] File Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+The necro CLI lives at `../../bin/necro.js`. Hooks will enforce the freeze. I'll continue — the hooks guard edits and gate task completion automatically. Now mark Task 1 done.
+[tool] Replace in File
+[tool] status: Failed: Replace in File
+The necro gate blocks marking Task 1 done because contracts R1.1 and R1.4 require `parse.js` to exist (they're in the same frozen contract file). Task 1's criteria 1.1 and 1.4 map to contract tests that also need the parser. I need to build further before the gate passes.
+
+The gate checks all contract tests covering a task's criteria. Task 1 criteria 1.1/1.4 are tested by R1.1 and R1.4 which need parse.js. So I'll proceed with tasks 2 and 3 (the parser) which complete those contracts, then come back. Let me build the parser now.
+
+## Task 2 & 3: Parser (writing tests then code)
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+There's an ordering subtlety: in R1.3, line `Bob paid 3 for gum split ANN, bob` — the payer `Bob` was already registered from line 3? No, Bob first appears here as payer. But I register split names before the payer, which would put ANN/bob into people before Bob-as-payer. Let me check the expected people order.
+
+Expected people: `ann, bob, cy`. Line 1: Ann (payer) → ann. Line 2: ann already. Line 3: `Bob paid ... split ANN, bob`. ann already seen; bob is new. If I register split names first, bob gets added via the split list before the payer registration — same result `bob`. Order still ann, bob, cy. ✓
+
+But the design says "the payer comes first, then the split names left to right." For line 3 the payer is Bob and split includes bob — registering payer first vs split first gives same key order here. However, consider a line where payer is new AND split names are new: payer should come first. Let me fix to register payer before split names.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+One concern: the `fail` helper uses `throw`, but after `if (!match) fail(...)` the destructure of `match` would run if TS didn't know. Since `fail` throws, execution stops. Good. But the `split` regex `^(.*)\s+split\s+(.+)$` is greedy on `.*`, so it captures the LAST ` split `. Good — matches design intent.
+
+Now run parse tests plus the frozen contracts 1 and 2 (which depend on parse + balances + split — those don't exist yet, so only check parse test and R1 contract parts that need only parse). Let me run parse test now.
+[tool] Run parse tests
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Parse tests pass. The R1 contract and R1.2/R1.3 need balances and split too. Since the contracts span modules, I'll build split and balances next so the whole chain works, then mark tasks in order. Let me build split (Task 4) and balances (Task 5).
+
+## Task 4: split.js
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+## Task 5: balances.js
+
+`computeBalances` expands `sharerKeys: null` to all people keys. Rows follow people order. balance = paid - share.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+## Task 6: settle.js
+
+Greedy: largest creditor, most-negative debtor, ties by name case-insensitive (smaller name first). Payment amount = min(creditor balance, -debtor balance).
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+## Task 7: report.js
+
+`renderText`: table with columns Name/Paid/Share/Balance, left-align names, right-align amounts. Then payment lines `<from> pays <to> <amount>`, or `All square.` if no payments. `renderJson`: `{balances, payments}` integer cents.
+
+The contract's `assertReport` tokenizes by whitespace and checks exact token arrays, so padding is fine. It requires the header row `Name Paid Share Balance` and data rows. Let me build it.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+## Task 8: bin/ledger.js
+
+Parse args: exactly one file path + optional `--json`. Missing arg → usage to stderr, exit 1. Read file; failure → `Cannot read <file>.` exit 1. Run pipeline, print, LedgerError → stderr exit 1.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+Now run the full suite including my tests and all frozen contracts.
+[tool] Run all unit tests and frozen contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+All 40 tests pass, including all frozen contracts. Now `npm test` (which globs `test/*.test.js`) — let me confirm that passes too, and then mark tasks done in order.
+[tool] Run npm test
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+`npm test` passes (27 unit tests). All code is complete and all frozen contracts pass. Now I'll mark all 8 tasks done. The necro gate validates each against its frozen contracts; since everything passes, the edits should go through.
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+Task 1 gate passed. Now the rest.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+All 8 tasks are marked done and each passed the necromancer gate. Final confirmation run:
+[tool] Final full test and contract run
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+All 8 tasks of the ledger spec are complete, built in order with tests first.
+
+What was built in `src/`:
+- `errors.js` — `LedgerError`, the one user-facing error type.
+- `money.js` — `parseAmount` (string-only, integer cents) and `formatCents`.
+- `parse.js` — `parseLedger`: parses lines, handles comments/blanks, split lists, and the first-spelling person registry.
+- `split.js` — `splitExpense`: floor shares plus extra cents to the first keys in code-unit order.
+- `balances.js` — `computeBalances`: expands no-split expenses to everyone, credits payers in full, balances sum to zero.
+- `settle.js` — `settle`: deterministic greedy biggest-debtor→biggest-creditor, ties by case-insensitive name.
+- `report.js` — `renderText` (aligned table + pays lines / `All square.`) and `renderJson`.
+- `bin/ledger.js` — argument parsing, file read, pipeline, printing, exit codes only.
+
+Each `src/` module has a matching `test/*.test.js`, plus `test/cli.test.js` driving the binary via `spawnSync`.
+
+Verification:
+- `npm test` passes (27 unit tests).
+- All 40 tests pass when the 5 frozen contract files are included — every frozen contract (R1.1–R1.5, R2.1–R2.2, R3.1–R3.3, R4.1–R4.3) is green.
+- Every `[x]` in `tasks.md` cleared the Contract Necromancer gate; Task 1 was initially blocked until the parser existed (its criteria 1.1/1.4 are validated by contracts that import `parse.js`), which is why I completed the parser before marking it done.
+
+Everything uses Node built-ins only, ES modules, and integer cents throughout — no floating point in any amount path.
