@@ -1,0 +1,7 @@
+{"t":"2026-11-06T23:21:38.479Z","tool":"read_file","what":".kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-06T23:22:08.965Z","tool":"str_replace","what":".kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-06T23:22:11.903Z","tool":"execute_bash","what":"cd && node"}
+{"t":"2026-11-06T23:22:13.537Z","tool":"read_file","what":"src/hooks.js"}
+{"t":"2026-11-06T23:22:44.167Z","tool":"execute_bash","what":"cd && echo && node"}
+{"t":"2026-11-06T23:22:46.615Z","tool":"read_file","what":".kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-06T23:22:48.454Z","tool":"grep_search","what":""}
