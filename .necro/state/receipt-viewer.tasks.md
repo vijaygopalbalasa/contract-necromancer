@@ -79,9 +79,9 @@ Do not change anything under `src/`. The viewer reads from it in tests only.
   - Implement: add a short "Receipt viewer" section to `README.md`: the Pages address placeholder, `?receipt=<raw url>`, the honest limit, how to run the page locally (`python3 -m http.server -d site`, because modules do not load from `file://`), and the Git LFS limit.
   - Manual checklist, run once by a person and reported in the final message (not claimed by tests): open the page at 320 px wide and confirm no horizontal scrolling with the sample loaded; confirm the long receipt hash, paths and command wrap; confirm keyboard-only use of paste, file pick, check files and copy; confirm the copy button works on https; confirm the sample hash shows MATCH and, with a real public repository, the file check shows matches; run `necro verify` on the sample and confirm the hash printed equals the one on the page.
 
-- [ ] 15. **Read cleanly** (Req 7.1, 7.2, 7.3, 7.4)
+- [x] 15. **Read cleanly** (Req 7.1, 7.2, 7.3, 7.4)
   - Test first: Markdown markers are stripped from the task line; ordering by criterion number; the two labels; the repository name in the sample and command, and the README address. Then implement in `site/lib/` and `site/app.js`.
 
-- [ ] 16. **Kiroween look** (Req 8.1, 8.2, 8.3, 8.4)
+- [x] 16. **Kiroween look** (Req 8.1, 8.2, 8.3, 8.4)
   - Test first: the banner text for both cases; the inline SVG mark and no external URLs in `index.html` or `style.css`; every animation is under a `prefers-reduced-motion: no-preference` rule or switched off under `reduce`; gravestone and alive row styles; AA contrast of the palette. Then implement in `site/`.
 

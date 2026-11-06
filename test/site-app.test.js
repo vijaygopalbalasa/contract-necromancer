@@ -197,7 +197,7 @@ test('names without a requirement number render in one flat group', async () => 
   assert.deepEqual(headings(p), ['Contracts (3 of 3 pass)']);
 });
 
-test('a receipt with task and required shows the task line and marks each contract required or not yet required', async () => {
+test('a receipt with task and required shows the task line and marks each contract required for this task or not', async () => {
   const p = page();
   const r = fixture();
   r.task = { id: '1', line: '1. Do the first thing (Req 1.1)' };
@@ -206,9 +206,9 @@ test('a receipt with task and required shows the task line and marks each contra
   await paste(p, JSON.stringify(r));
   assert.equal(p.text('task'), '1. Do the first thing (Req 1.1)');
   const list = rows(p);
-  assert.match(list[0].textContent, /\brequired\b/);
-  assert.doesNotMatch(list[0].textContent, /not yet required/);
-  assert.match(list[1].textContent, /not yet required/);
+  assert.match(list[0].textContent, /\brequired for this task\b/);
+  assert.doesNotMatch(list[0].textContent, /not required/);
+  assert.match(list[1].textContent, /not required for this task/);
   // a failing contract that was not required is not built yet, not a broken promise
   assert.match(list[2].textContent, /not built yet/i);
   assert.ok(list[2].classList.contains('notyet'));
@@ -581,8 +581,15 @@ test('pressing Load the sample fetches ./sample-receipt.json from the same origi
   assert.equal(p.text('error'), '');
 });
 
-test('SAMPLE_REPO is owner/name text, a placeholder until the repository has a public home', () => {
-  assert.match(SAMPLE_REPO, /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/);
+test('SAMPLE_REPO is this repository on GitHub (7.4)', () => {
+  assert.equal(SAMPLE_REPO, 'vijaygopalbalasa/contract-necromancer');
+});
+
+test('the sample re-run command clones this repository, not the placeholder (7.4)', async () => {
+  const p = page({ fetchMap: { './sample-receipt.json': new Response(fixtureText) } });
+  await p.el('sample').dispatch('click');
+  assert.ok(p.text('command').includes('git clone https://github.com/vijaygopalbalasa/contract-necromancer.git'));
+  assert.doesNotMatch(p.text('command'), /OWNER\/NAME/);
 });
 
 test('the sample button hides while a receipt is shown and comes back when the receipt is cleared', async () => {
@@ -622,4 +629,124 @@ test('pressing Load the sample sets the repository box to SAMPLE_REPO even after
   p.el('repo').value = 'mine/typed';
   await p.el('sample').dispatch('click');
   assert.equal(p.el('repo').value, SAMPLE_REPO);
+});
+
+// ---- Task 15: read cleanly (7.1, 7.2, 7.3) ----
+
+test('the task line is shown without **, __ or backticks (7.1)', async () => {
+  const p = page();
+  const r = fixture();
+  r.task = { id: '3', line: '3. **Receipt parsing** and __validation__ with `parseReceipt` (Req 1.3)' };
+  r.required = ['R1.1 util works'];
+  await paste(p, JSON.stringify(r));
+  assert.equal(p.text('task'), '3. Receipt parsing and validation with parseReceipt (Req 1.3)');
+});
+
+test('rows inside each requirement are ordered by criterion number, whatever the receipt order (7.2)', async () => {
+  const p = page();
+  const r = fixture();
+  const base = r.contracts[0];
+  r.contracts = ['R10.1 ten', 'R1.10 one ten', 'R2.1 two', 'R1.2 one two', 'plain', 'R1.1 one one'].map((name) => ({ ...base, name }));
+  await paste(p, JSON.stringify(r));
+  assert.deepEqual(headings(p), [
+    'Requirement 1 (3 of 3 pass)',
+    'Requirement 2 (1 of 1 pass)',
+    'Requirement 10 (1 of 1 pass)',
+    'Other (1 of 1 pass)',
+  ]);
+  const names = rows(p).map((row) => findAll(row, (e) => e.classList.contains('name'))[0].textContent);
+  assert.deepEqual(names, ['R1.1 one one', 'R1.2 one two', 'R1.10 one ten', 'R2.1 two', 'R10.1 ten', 'plain']);
+});
+
+test('a contract that was not required reads "not required for this task" when it passes and "not built yet" when it fails (7.3)', async () => {
+  const p = page();
+  const r = fixture();
+  r.task = { id: '1', line: '1. Do it (Req 1.1)' };
+  r.required = ['R1.1 util works'];
+  r.contracts[2].result = 'fail';
+  await paste(p, JSON.stringify(r));
+  const [required, passNotRequired, failNotRequired] = rows(p).map((row) => row.textContent);
+  assert.match(required, /required for this task/);
+  assert.doesNotMatch(required, /not required|not built yet/i);
+  assert.match(passNotRequired, /not required for this task/);
+  assert.doesNotMatch(passNotRequired, /not built yet/i);
+  assert.match(failNotRequired, /not built yet/i);
+  assert.doesNotMatch(failNotRequired, /not required for this task/);
+});
+
+// ---- Task 16: Kiroween look (8.1, 8.4) ----
+
+const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
+
+test('the verdict banner is hidden until a receipt is shown and hidden again after bad input', async () => {
+  const p = page();
+  await p.ready;
+  assert.equal(p.el('verdict').hidden, true);
+  await paste(p, fixtureText);
+  assert.equal(p.el('verdict').hidden, false);
+  await paste(p, 'not json');
+  assert.equal(p.el('verdict').hidden, true);
+  assert.equal(p.text('verdict'), '');
+});
+
+test('the verdict banner says Risen with the count of living contracts when every required contract passes (8.1)', async () => {
+  const p = page();
+  const r = fixture();
+  r.task = { id: '1', line: '1. Do it (Req 1.1)' };
+  r.required = ['R1.1 util works'];
+  r.contracts[2].result = 'fail'; // not required: the task still rises
+  await paste(p, JSON.stringify(r));
+  const text = p.text('verdict');
+  assert.match(text, /^Risen\b/);
+  assert.match(text, /\b2 contracts alive\b/);
+  assert.doesNotMatch(text, /Still buried/);
+  assert.deepEqual(text.match(/\d+/g), ['2'], 'the banner gives one number');
+  assert.ok(p.el('verdict').classList.contains('risen'));
+});
+
+test('the verdict banner says Still buried with the count of failing required contracts otherwise (8.1)', async () => {
+  const p = page();
+  const r = fixture();
+  delete r.task;
+  delete r.required;
+  r.contracts[0].result = 'fail';
+  await paste(p, JSON.stringify(r));
+  const text = p.text('verdict');
+  assert.match(text, /^Still buried\b/);
+  assert.match(text, /\b1 required contract fails\b/);
+  assert.doesNotMatch(text, /\bRisen\b/);
+  assert.deepEqual(text.match(/\d+/g), ['1']);
+  assert.ok(p.el('verdict').classList.contains('buried'));
+});
+
+test('the verdict banner names no contract, so it never stands in for a row', async () => {
+  const p = page();
+  const r = fixture();
+  r.contracts[0].result = 'fail';
+  await paste(p, JSON.stringify(r));
+  for (const c of r.contracts) assert.ok(!p.text('verdict').includes(c.name));
+});
+
+test('the verdict banner comes before the receipt facts in index.html (8.1)', () => {
+  const html = fs.readFileSync(new URL('../site/index.html', import.meta.url), 'utf8');
+  const at = (id) => html.indexOf(`id="${id}"`);
+  assert.ok(at('verdict') > 0);
+  for (const later of ['receipt', 'spec', 'receipt-hash', 'groups']) assert.ok(at('verdict') < at(later), later);
+  assert.match(html, /<section[^>]*id="verdict"[^>]*hidden/);
+  assert.match(html, /id="verdict"[^>]*aria-live="polite"/);
+});
+
+test('contract rows carry their state in words and hold no glyph or image elements (8.4)', async () => {
+  const p = page();
+  const r = fixture();
+  delete r.task;
+  delete r.required;
+  r.contracts[1].result = 'fail';
+  await paste(p, JSON.stringify(r));
+  await settle();
+  for (const row of rows(p)) {
+    assert.match(row.textContent, /\b(PASS|FAIL)\b/);
+    assert.doesNotMatch(row.textContent, /[^\x00-\x7f]/, 'no symbol a screen reader would read out');
+    assert.ok(findAll(row, () => true).every((e) => !['IMG', 'SVG', 'CANVAS'].includes(e.tagName)));
+  }
 });

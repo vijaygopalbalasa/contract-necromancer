@@ -263,3 +263,93 @@ test('pinnedFiles keeps two rows for one path with two hashes, and copes with no
   assert.deepEqual(files.filter((f) => f.path === 'c/a.js').map((f) => f.sha256), [H('2'), H('3')]);
   assert.equal(files.length, 3);
 });
+
+// ---- Task 15: read cleanly (7.1, 7.2) ----
+
+test('plainTaskLine takes out **, __ and backticks and keeps every word in order', async () => {
+  const { plainTaskLine } = await import('../site/lib/receipt.js');
+  assert.equal(
+    plainTaskLine('3. **Receipt parsing** and __validation__ with `parseReceipt` (Req 1.3)'),
+    '3. Receipt parsing and validation with parseReceipt (Req 1.3)',
+  );
+  assert.equal(plainTaskLine('11. **App: sample receipt button** (Req 6.2)'), '11. App: sample receipt button (Req 6.2)');
+  assert.equal(plainTaskLine('``double`` and ****bold****'), 'double and bold');
+  assert.equal(plainTaskLine('plain line'), 'plain line');
+});
+
+test('plainTaskLine leaves single * and _ alone, so names like snake_case and 2 * 3 survive', async () => {
+  const { plainTaskLine } = await import('../site/lib/receipt.js');
+  assert.equal(plainTaskLine('rename snake_case and keep 2 * 3'), 'rename snake_case and keep 2 * 3');
+});
+
+test('sortByCriterion orders by requirement, then criterion, as numbers', async () => {
+  const { sortByCriterion } = await import('../site/lib/receipt.js');
+  const names = ['R10.2 j', 'R2.10 f', 'R1.10 c', 'R2.2 e', 'R1.2 b', 'R10.1 i', 'R2.1 d', 'R1.1 a'];
+  const sorted = sortByCriterion(names.map((n) => contract(n)));
+  assert.deepEqual(
+    sorted.map((c) => c.name),
+    ['R1.1 a', 'R1.2 b', 'R1.10 c', 'R2.1 d', 'R2.2 e', 'R2.10 f', 'R10.1 i', 'R10.2 j'],
+  );
+});
+
+test('sortByCriterion keeps receipt order for equal criteria and puts names without a number last, in receipt order', async () => {
+  const { sortByCriterion } = await import('../site/lib/receipt.js');
+  const input = [contract('zeta'), contract('R1.2 second', 'pass', 'b'), contract('alpha'), contract('R1.2 first'), contract('R1.1 one')];
+  const before = input.map((c) => c.name);
+  const sorted = sortByCriterion(input);
+  assert.deepEqual(sorted.map((c) => c.name), ['R1.1 one', 'R1.2 second', 'R1.2 first', 'zeta', 'alpha']);
+  assert.deepEqual(input.map((c) => c.name), before, 'the input is not changed');
+});
+
+test('grouping sorted contracts orders the rows inside each group by criterion number', async () => {
+  const { sortByCriterion, groupContracts } = await import('../site/lib/receipt.js');
+  const groups = groupContracts(sortByCriterion(['R1.10 c', 'R2.1 d', 'R1.2 b', 'other', 'R1.1 a'].map((n) => contract(n))));
+  assert.deepEqual(
+    groups.map((g) => [g.title, g.contracts.map((c) => c.name)]),
+    [
+      ['Requirement 1', ['R1.1 a', 'R1.2 b', 'R1.10 c']],
+      ['Requirement 2', ['R2.1 d']],
+      ['Other', ['other']],
+    ],
+  );
+});
+
+// ---- Task 16: the verdict (8.1) ----
+
+test('verdict is risen with the count of every passing contract when every required contract passes', async () => {
+  const { verdict, summarize } = await import('../site/lib/receipt.js');
+  const r = fixture();
+  r.task = { id: '1', line: 'x' };
+  r.required = ['R1.1 util works'];
+  r.contracts[2].result = 'fail'; // not required, so it does not bury the task
+  assert.deepEqual(verdict(summarize(r).contracts), { risen: true, living: 2, buried: 0 });
+});
+
+test('verdict is buried with the count of failing required contracts when one fails', async () => {
+  const { verdict, summarize } = await import('../site/lib/receipt.js');
+  const r = fixture();
+  r.task = { id: '1', line: 'x' };
+  r.required = ['R1.1 util works', 'R1.2 util again'];
+  r.contracts[0].result = 'fail';
+  r.contracts[2].result = 'fail';
+  assert.deepEqual(verdict(summarize(r).contracts), { risen: false, living: 1, buried: 1 });
+});
+
+test('verdict counts every contract as required when the receipt does not say', async () => {
+  const { verdict, summarize } = await import('../site/lib/receipt.js');
+  const r = fixture();
+  delete r.task;
+  delete r.required;
+  r.contracts[1].result = 'fail';
+  r.contracts[2].result = 'fail';
+  assert.deepEqual(verdict(summarize(r).contracts), { risen: false, living: 1, buried: 2 });
+});
+
+test('verdict is risen when the task required nothing', async () => {
+  const { verdict, summarize } = await import('../site/lib/receipt.js');
+  const r = fixture();
+  r.task = { id: '1', line: 'x' };
+  r.required = [];
+  r.contracts[0].result = 'fail';
+  assert.deepEqual(verdict(summarize(r).contracts), { risen: true, living: 2, buried: 0 });
+});

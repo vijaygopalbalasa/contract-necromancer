@@ -149,3 +149,36 @@ export function pinnedFiles(receipt) {
   for (const s of receipt.sources || []) add('source', s.path, s.sha256);
   return out;
 }
+
+// The task line as plain text: the Markdown emphasis markers `**`, `__` and backticks are taken out and the words stay.
+// Single `*` and `_` stay, because they are often part of a name (snake_case) or of maths.
+export function plainTaskLine(line) {
+  return String(line).replace(/\*\*|__|`/g, '');
+}
+
+const CRITERION_NUMBER = /^R(\d+)\.(\d+)/;
+
+// Contracts in criterion order: by requirement number, then criterion number, compared as numbers (R1.2 before
+// R1.10, R2 before R10). Equal criteria keep receipt order, and names without a number come last in receipt order.
+// Returns a new array; the input is not changed. groupContracts keeps the order it is given, so grouping the result
+// of this function gives rows in criterion order inside each requirement.
+export function sortByCriterion(contracts) {
+  const key = (c) => {
+    const m = CRITERION_NUMBER.exec(c.name);
+    return m ? [0, Number(m[1]), Number(m[2])] : [1, 0, 0];
+  };
+  return contracts
+    .map((c, i) => ({ c, i, k: key(c) }))
+    .sort((a, b) => a.k[0] - b.k[0] || a.k[1] - b.k[1] || a.k[2] - b.k[2] || a.i - b.i)
+    .map((x) => x.c);
+}
+
+// The verdict banner for summarized contracts. The task has risen when every required contract passes; `living` is
+// the count of every passing contract. Otherwise it is still buried; `buried` is the count of failing required
+// contracts. A contract counts as required unless the receipt says it was not (required === false), so a receipt
+// without `task` and `required` counts every contract.
+export function verdict(contracts) {
+  const living = contracts.filter((c) => c.result === 'pass').length;
+  const buried = contracts.filter((c) => c.result === 'fail' && c.required !== false).length;
+  return { risen: buried === 0, living, buried };
+}

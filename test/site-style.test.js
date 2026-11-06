@@ -146,7 +146,6 @@ test('style.css animates the glow only when the user has not asked for reduced m
 test('style.css styles a passing contract alive and a failing one as a gravestone, in separate classes', () => {
   assert.match(bare, /\.contract\.pass[^{]*\{[^}]*var\(--alive\)/);
   assert.match(bare, /\.contract\.fail[^{]*\{[^}]*var\(--grave\)/);
-  assert.match(bare, /\.contract\.fail[^{]*\{[^}]*border-left\s*:\s*[^;]*(\dpx|\drem)/, 'heavier left border for a failing contract');
   assert.match(bare, /\.contract\.notyet/, 'a failing contract that was not required has its own style');
 });
 
@@ -159,4 +158,142 @@ test('style.css has a visible focus ring and a style for the hash verdicts and f
 
 test('style.css has no external resources', () => {
   assert.doesNotMatch(bare, /@import|url\(\s*['"]?https?:/i);
+});
+
+// ---- Task 16: Kiroween look (8.2, 8.3, 8.4) ----
+
+// Every rule as { selector, body, media }, braces counted. @keyframes come back with selector '@keyframes <name>'.
+function cssRules(text) {
+  const out = [];
+  (function read(src, media) {
+    let i = 0;
+    while (i < src.length) {
+      const open = src.indexOf('{', i);
+      if (open < 0) return;
+      const head = src.slice(i, open).trim();
+      let depth = 1;
+      let j = open + 1;
+      while (j < src.length && depth > 0) {
+        if (src[j] === '{') depth += 1;
+        if (src[j] === '}') depth -= 1;
+        j += 1;
+      }
+      const inner = src.slice(open + 1, j - 1);
+      if (head.startsWith('@media')) read(inner, head.slice(6).trim());
+      else out.push({ selector: head, body: inner, media });
+      i = j;
+    }
+  })(bare, null);
+  return out;
+}
+const rulesFor = (selector) => cssRules(bare).filter((r) => r.selector.split(',').map((s) => s.trim()).includes(selector));
+const decl = (body, prop) => (new RegExp(`(?:^|;)\\s*${prop}\\s*:\\s*([^;]+)`).exec(body) || [])[1]?.trim();
+
+test('index.html draws an inline SVG mark, a gravestone with a checkmark, hidden from screen readers next to the title', () => {
+  const svg = /<svg\b[^>]*class="mark"[^>]*>([\s\S]*?)<\/svg>/.exec(html);
+  assert.ok(svg, 'an inline <svg class="mark">');
+  assert.match(svg[0], /aria-hidden="true"/);
+  assert.match(svg[1], /class="mark-stone"/, 'the gravestone shape');
+  assert.match(svg[1], /class="mark-check"/, 'the checkmark shape');
+  assert.doesNotMatch(svg[0], /<(animate|animateTransform|animateMotion|set|image|use)\b/);
+  assert.match(html, /<h1\b/);
+});
+
+test('index.html and style.css load nothing external: no images, fonts, imports or remote URLs', () => {
+  assert.doesNotMatch(html, /<(img|picture|object|embed|iframe)\b/i);
+  for (const m of html.matchAll(/<(\w+)\b[^>]*\s(?:src|href)="([^"]*)"/g)) {
+    if (m[1] === 'a') continue;
+    assert.ok(['style.css', 'main.js'].includes(m[2]), `<${m[1]}> loads ${m[2]}`);
+  }
+  assert.doesNotMatch(bare, /@import|@font-face|url\(/i);
+});
+
+test('style.css uses system font stacks only', () => {
+  for (const name of ['--font-body', '--font-display', '--font-mono']) {
+    const value = tokens().get(name);
+    assert.ok(value, name);
+    assert.match(value, /\b(sans-serif|serif|monospace)$/, `${name} ends in a generic family`);
+  }
+  assert.match(tokens().get('--font-body'), /^system-ui\b/);
+  assert.match(tokens().get('--font-mono'), /^ui-monospace\b/);
+});
+
+test('every @keyframes and every animation sits inside prefers-reduced-motion: no-preference', () => {
+  const noPreference = /\(prefers-reduced-motion:\s*no-preference\)/;
+  const all = cssRules(bare);
+  assert.ok(all.some((r) => r.selector.startsWith('@keyframes')), 'there is motion to switch off');
+  for (const r of all) {
+    if (r.media !== null && noPreference.test(r.media)) continue;
+    assert.ok(!r.selector.startsWith('@keyframes'), `${r.selector} outside no-preference`);
+    const a = decl(r.body, 'animation') || decl(r.body, 'animation-name');
+    assert.ok(!a || /^none\b/.test(a), `${r.selector} animates outside no-preference`);
+    const t = decl(r.body, 'transition');
+    assert.ok(!t || /^none\b/.test(t), `${r.selector} has a transition outside no-preference`);
+  }
+});
+
+test('prefers-reduced-motion: reduce switches every animation and transition off, pseudo-elements included', () => {
+  const reduce = cssRules(bare).filter((r) => r.media !== null && /\(prefers-reduced-motion:\s*reduce\)/.test(r.media));
+  const off = reduce.find((r) => ['*', '*::before', '*::after'].every((s) => r.selector.split(',').map((x) => x.trim()).includes(s)));
+  assert.ok(off, 'a reduce rule for *, *::before, *::after');
+  assert.match(decl(off.body, 'animation'), /^none\s*!important$/);
+  assert.match(decl(off.body, 'transition'), /^none\s*!important$/);
+});
+
+test('a slow fog layer drifts behind the page, decorative and out of the way', () => {
+  assert.match(html, /<div class="fog" aria-hidden="true"><\/div>/);
+  const fog = rulesFor('.fog');
+  assert.ok(fog.some((r) => decl(r.body, 'pointer-events') === 'none'));
+  assert.ok(fog.some((r) => decl(r.body, 'position') === 'fixed'));
+  const drift = cssRules(bare).filter((r) => /^\.fog::(before|after)$/.test(r.selector) && /no-preference/.test(r.media || ''));
+  assert.ok(drift.length > 0, 'the fog drifts only when motion is welcome');
+  for (const r of drift) {
+    const seconds = Number((/(\d+(?:\.\d+)?)s\b/.exec(decl(r.body, 'animation')) || [])[1]);
+    assert.ok(seconds >= 40, `${r.selector} drifts slowly (${seconds}s)`);
+  }
+  // Fog is light on light text only if it stays faint: no alpha above 0.12 in the fog layers.
+  for (const r of cssRules(bare).filter((x) => /^\.fog/.test(x.selector))) {
+    for (const m of r.body.matchAll(/rgba\([^)]*,\s*([\d.]+)\)/g)) assert.ok(Number(m[1]) <= 0.12, `${r.selector} alpha ${m[1]}`);
+  }
+});
+
+test('a failing row is an arched gravestone and a passing row glows alive, drawn with CSS and no generated text', () => {
+  const fail = rulesFor('.contract.fail').map((r) => r.body).join(';');
+  const radius = decl(fail, 'border-radius');
+  assert.ok(radius, '.contract.fail sets a border-radius');
+  const [top1, top2, bottom1, bottom2] = radius.split('/')[0].trim().split(/\s+/).map((v) => parseFloat(v));
+  assert.ok(Math.min(top1, top2) > Math.max(bottom1, bottom2), `arched top: ${radius}`);
+  assert.match(radius, /%/, 'the arch follows the row width');
+
+  const pass = rulesFor('.contract.pass').map((r) => r.body).join(';');
+  assert.match(decl(pass, 'box-shadow') || '', /var\(--alive\)/, 'a passing row glows in --alive');
+  assert.doesNotMatch(decl(pass, 'border-radius') || '0', /%/, 'a passing row is not a gravestone');
+
+  for (const r of cssRules(bare).filter((x) => /\.contract/.test(x.selector))) {
+    const content = decl(r.body, 'content');
+    if (content) assert.match(content, /^""$/, `${r.selector} content must be empty`);
+  }
+});
+
+test('passing rows rise into place and failing rows stay still', () => {
+  const motion = cssRules(bare).filter((r) => /no-preference/.test(r.media || ''));
+  assert.ok(motion.some((r) => r.selector === '.contract.pass' && /\brise\b/.test(decl(r.body, 'animation') || '')));
+  assert.ok(!motion.some((r) => /\.contract\.fail\b/.test(r.selector) && decl(r.body, 'animation')));
+  assert.ok(motion.some((r) => r.selector === '@keyframes rise'));
+});
+
+test('the verdict banner has a style for Risen and for Still buried', () => {
+  assert.ok(rulesFor('.verdict').length > 0);
+  assert.match(rulesFor('.verdict.risen').map((r) => r.body).join(';'), /var\(--alive\)/);
+  assert.match(rulesFor('.verdict.buried').map((r) => r.body).join(';'), /var\(--grave\)/);
+});
+
+test('every text token keeps AA on the gravestone color too', () => {
+  const t = tokens();
+  const stone = t.get('--stone');
+  assert.match(stone, /^#[0-9a-f]{6}$/i);
+  for (const name of ['--text', '--muted', '--alive', '--grave', '--accent', '--link']) {
+    assert.ok(contrast(t.get(name), stone) >= 4.5, `${name} on --stone ${contrast(t.get(name), stone).toFixed(2)}`);
+  }
+  assert.ok(contrast(t.get('--border'), stone) >= 3, '--border on --stone');
 });

@@ -51,3 +51,12 @@ test('the folder the workflow publishes exists and holds the page', () => {
 test('the workflow serializes deployments', () => {
   assert.match(body, /^concurrency:\s*\n\s*group:\s*['"]?pages['"]?/m);
 });
+
+// ---- Task 15: the README gives the published address (7.4) ----
+
+test('README.md gives the page address and the repository, with no OWNER/REPO placeholder left', () => {
+  const readme = fs.readFileSync(new URL('../README.md', import.meta.url), 'utf8');
+  assert.ok(readme.includes('https://vijaygopalbalasa.github.io/contract-necromancer/'));
+  assert.ok(readme.includes('https://raw.githubusercontent.com/vijaygopalbalasa/contract-necromancer/'));
+  assert.doesNotMatch(readme, /OWNER\.github\.io|\/OWNER\/REPO\//);
+});

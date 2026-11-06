@@ -27,10 +27,10 @@ trust a receipt.
 `site/` is a static page that opens a receipt, lists each contract with PASS or FAIL, recomputes the receipt hash in the
 browser, and shows the command to re-run the receipt. It has no server, no build step and no dependencies.
 
-- Address once published: `https://OWNER.github.io/REPO/` (replace with your own; `.github/workflows/pages.yml` deploys
-  `site/`). The repository owner sets Settings > Pages > Source to "GitHub Actions" once.
+- Address: `https://vijaygopalbalasa.github.io/contract-necromancer/`. `.github/workflows/pages.yml` deploys `site/`;
+  the repository owner sets Settings > Pages > Source to "GitHub Actions" once.
 - Open a receipt directly with `?receipt=<raw url>`, where the URL is the Raw link of a receipt on
-  raw.githubusercontent.com, for example `https://OWNER.github.io/REPO/?receipt=https://raw.githubusercontent.com/OWNER/REPO/main/.necro/receipts/SPEC/HASH.json`.
+  raw.githubusercontent.com, for example `https://vijaygopalbalasa.github.io/contract-necromancer/?receipt=https://raw.githubusercontent.com/vijaygopalbalasa/contract-necromancer/main/.necro/receipts/SPEC/HASH.json`.
   Other hosts are refused. You can also paste the JSON or pick the file.
 - Honest limit: contracts re-run in Node with `necro verify`. The browser checks hashes, not test runs. MATCH means the
   receipt was not edited. It does not mean the contracts pass today.

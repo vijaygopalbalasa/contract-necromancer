@@ -1,8 +1,12 @@
-/* Receipt viewer. Dark theme. Every color is a token on :root; contrast is checked by test/site-style.test.js. */
+/* Receipt viewer: a resurrection theme with restraint. Every color is a token on :root, and contrast is checked by
+   test/site-style.test.js and the frozen look and style contracts. Fonts are system stacks; nothing is loaded.
+   Motion lives only inside prefers-reduced-motion: no-preference, and a reduce block switches it all off. */
 
 :root {
   --bg: #0e0b14;
   --surface: #1a1426;
+  --stone: #221b2e;
+  --line: #2f2642;
   --text: #ece8f5;
   --muted: #b9b0cf;
   --alive: #7dffb3;
@@ -10,6 +14,9 @@
   --accent: #ffa94d;
   --link: #8ecbff;
   --border: #6f6588;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
   color-scheme: dark;
 }
 
@@ -25,17 +32,62 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 1rem/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font: 1rem/1.6 var(--font-body);
   overflow-wrap: anywhere;
+  -webkit-font-smoothing: antialiased;
 }
 
+::selection {
+  background: #3b2f55;
+  color: var(--text);
+}
+
+/* ---- Fog: two faint layers low on the screen and a warm moon glow at the top. Decorative, behind everything. ---- */
+
+.fog {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: radial-gradient(48rem 26rem at 88% -12%, rgba(255, 169, 77, 0.06), transparent 70%);
+}
+
+.fog::before,
+.fog::after {
+  content: "";
+  position: absolute;
+  left: -50%;
+  right: -50%;
+}
+
+.fog::before {
+  bottom: -12vh;
+  height: 50vh;
+  background:
+    radial-gradient(closest-side at 22% 62%, rgba(185, 176, 207, 0.1), transparent),
+    radial-gradient(closest-side at 64% 48%, rgba(185, 176, 207, 0.07), transparent);
+}
+
+.fog::after {
+  bottom: -20vh;
+  height: 40vh;
+  background:
+    radial-gradient(closest-side at 40% 55%, rgba(185, 176, 207, 0.08), transparent),
+    radial-gradient(closest-side at 84% 60%, rgba(185, 176, 207, 0.06), transparent);
+}
+
+/* ---- Layout ---- */
+
 main {
+  position: relative;
+  z-index: 1;
   width: 100%;
-  max-width: 52rem;
+  max-width: 50rem;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 1.5rem 1rem 3rem;
   display: grid;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 main > * {
@@ -45,21 +97,33 @@ main > * {
 h1,
 h2,
 h3 {
-  color: var(--accent);
   line-height: 1.2;
   margin: 0 0 0.5rem;
 }
 
 h1 {
-  font-size: 1.75rem;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 1.5rem + 2.5vw, 2.75rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
 }
 
 h2 {
-  font-size: 1.25rem;
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--text);
 }
 
 h3 {
-  font-size: 1.05rem;
+  margin: 0 0 0.625rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 p {
@@ -72,44 +136,145 @@ a {
 
 code,
 pre {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.9em;
 }
 
 pre {
   max-width: 100%;
   margin: 0 0 0.75rem;
-  padding: 0.75rem;
+  padding: 0.875rem 1rem;
   background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-}
-
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 1rem;
-  min-width: 0;
+  line-height: 1.55;
 }
 
 [hidden] {
   display: none !important;
 }
 
-.muted {
-  color: var(--muted);
-}
-
+.muted,
 .limit {
   color: var(--muted);
 }
 
+/* ---- Header: the mark, the name and the honest limit ---- */
+
+.intro {
+  padding: 0.5rem 0 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 0 1rem;
+}
+
+.mark {
+  flex: none;
+  width: 3.5rem;
+  height: 3.5rem;
+  overflow: visible;
+}
+
+.mark-ground {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.mark-stone {
+  fill: var(--stone);
+  stroke: var(--muted);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.mark-check {
+  fill: none;
+  stroke: var(--alive);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 3px rgba(125, 255, 179, 0.5));
+}
+
+.eyebrow {
+  margin: 0 0 0.125rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.lede {
+  max-width: 36rem;
+  font-size: 1.0625rem;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem 1.5rem;
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--muted);
+}
+
+.legend-alive {
+  color: var(--alive);
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.legend-grave {
+  color: var(--grave);
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.swatch {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.875rem;
+  margin-right: 0.125rem;
+  vertical-align: -0.0625rem;
+}
+
+.swatch-alive {
+  height: 0.75rem;
+  border-radius: 50%;
+  background: var(--alive);
+  box-shadow: 0 0 8px rgba(125, 255, 179, 0.6);
+}
+
+.swatch-grave {
+  background: var(--stone);
+  border: 1px solid var(--grave);
+  border-bottom-width: 2px;
+  border-radius: 50% 50% 1px 1px / 45% 45% 1px 1px;
+}
+
+/* ---- Cards and form controls ---- */
+
+.card {
+  min-width: 0;
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 24px 48px -32px rgba(0, 0, 0, 0.9);
+}
+
 label {
   display: block;
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.375rem;
   font-weight: 600;
 }
 
@@ -125,28 +290,45 @@ input[type="text"] {
   display: block;
   width: 100%;
   max-width: 100%;
-  margin: 0 0 0.75rem;
-  padding: 0.5rem;
+  margin: 0 0 0.875rem;
+  padding: 0.625rem 0.75rem;
   background: var(--bg);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   font: inherit;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+}
+
+textarea {
+  resize: vertical;
 }
 
 input[type="file"] {
   max-width: 100%;
   color: var(--text);
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+input[type="file"]::file-selector-button {
+  margin-right: 0.75rem;
+  padding: 0.375rem 0.875rem;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font: inherit;
+  cursor: pointer;
 }
 
 .row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 0.75rem;
-  margin: 0 0 0.75rem;
+  gap: 0.5rem 0.875rem;
+  margin: 0 0 0.875rem;
 }
 
 .row > * {
@@ -154,14 +336,27 @@ input[type="file"] {
 }
 
 button {
-  padding: 0.5rem 1rem;
+  padding: 0.5625rem 1.125rem;
   background: var(--accent);
   color: #14101c;
   border: 0;
-  border-radius: 6px;
+  border-radius: 999px;
   font: inherit;
   font-weight: 700;
   cursor: pointer;
+}
+
+button:hover {
+  background: #ffbb6e;
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  cursor: progress;
+  background: #c98a45;
 }
 
 :focus-visible {
@@ -170,8 +365,8 @@ button {
 }
 
 .error {
-  color: var(--grave);
   margin: 0;
+  color: var(--grave);
 }
 
 .error:empty,
@@ -185,15 +380,115 @@ button {
   color: var(--accent);
 }
 
+/* ---- The verdict leads: Risen or Still buried, one number, one sentence. ---- */
+
+.verdict {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 1.25rem;
+  padding: 1.5rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.verdict > * {
+  min-width: 0;
+}
+
+.verdict-mark {
+  position: relative;
+  grid-row: 1 / span 3;
+  width: 3.25rem;
+  height: 4rem;
+  background: var(--stone);
+  border: 2px solid var(--border);
+  border-bottom-width: 4px;
+  border-radius: 50% 50% 4px 4px / 38% 38% 4px 4px;
+}
+
+.verdict-mark::after {
+  content: "";
+  position: absolute;
+}
+
+.verdict-word {
+  margin: 0;
+  font-size: clamp(2rem, 1.6rem + 2vw, 2.75rem);
+  line-height: 1.05;
+}
+
+.verdict-count {
+  margin: 0.375rem 0 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.verdict-note {
+  margin: 0.125rem 0 0;
+  color: var(--muted);
+}
+
+.verdict.risen {
+  box-shadow: inset 0 3px 0 var(--alive), 0 24px 48px -36px var(--alive);
+}
+
+.verdict.risen .verdict-word {
+  color: var(--alive);
+}
+
+.verdict.risen .verdict-mark {
+  border-color: var(--alive);
+  box-shadow: 0 0 16px -4px var(--alive);
+}
+
+/* A checkmark on the risen stone, as in the page mark: two borders of a rotated box. */
+.verdict.risen .verdict-mark::after {
+  left: 36%;
+  top: 24%;
+  width: 28%;
+  height: 44%;
+  border: solid var(--alive);
+  border-width: 0 3px 3px 0;
+  transform: rotate(45deg);
+}
+
+.verdict.buried {
+  box-shadow: inset 0 3px 0 var(--grave);
+}
+
+.verdict.buried .verdict-word {
+  color: var(--grave);
+}
+
+.verdict.buried .verdict-mark {
+  border-color: var(--grave);
+}
+
+/* Two engraved lines on the buried stone. */
+.verdict.buried .verdict-mark::after {
+  left: 28%;
+  right: 28%;
+  top: 40%;
+  height: 2px;
+  background: var(--grave);
+  box-shadow: 0 0.5rem 0 var(--grave);
+}
+
+/* ---- The receipt ---- */
+
 .facts {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
-  gap: 0.25rem 0.75rem;
-  margin: 0 0 0.75rem;
+  gap: 0.375rem 1rem;
+  margin: 0 0 1rem;
 }
 
 .facts dt {
   color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.75;
 }
 
 .facts dd {
@@ -202,25 +497,19 @@ button {
   overflow-wrap: anywhere;
 }
 
+#commit,
+#receipt-hash {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.75;
+}
+
 .summary {
   font-weight: 600;
 }
 
-.legend .pass {
-  color: var(--alive);
-  font-weight: 700;
-}
-
-.legend .fail {
-  color: var(--grave);
-  font-weight: 700;
-}
-
-/* One list per requirement. A contract is alive (pass) or a gravestone (fail). The word and the glyph carry the
-   state, so color is never the only signal. */
-
 .group {
-  margin: 0 0 1rem;
+  margin: 1.25rem 0 0;
 }
 
 .contracts,
@@ -229,23 +518,27 @@ button {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 0.5rem;
+  gap: 0.625rem;
 }
 
-.contract,
-.file {
+/* A contract row is plain words: a state, a name and an optional note. Its shape is drawn here: a passing contract is
+   alive, with a green edge and a soft glow; a failing one is a gravestone, with an arched top standing on the ground.
+   The state word, not the color or the shape, carries the meaning. */
+
+.contract {
   min-width: 0;
-  padding: 0.5rem 0.75rem;
+  padding: 0.625rem 0.875rem;
   background: var(--bg);
-  border: 1px solid var(--border);
-  border-left-width: 4px;
-  border-radius: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
 }
 
-.contract .state,
-.file .state {
-  font-weight: 700;
+.contract .state {
   margin-right: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
 }
 
 .contract .name {
@@ -254,43 +547,59 @@ button {
 
 .contract .note {
   display: block;
+  margin-top: 0.125rem;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
 }
 
 .contract.pass {
-  border-left-color: var(--alive);
+  border-left: 3px solid var(--alive);
+  box-shadow: -6px 0 18px -12px var(--alive);
 }
 
 .contract.pass .state {
   color: var(--alive);
+  text-shadow: 0 0 8px rgba(125, 255, 179, 0.45);
 }
 
 .contract.fail {
-  border-left: 8px solid var(--grave);
+  padding: 1.5rem 1rem 0.75rem;
+  background: var(--stone);
+  border: 1px solid var(--border);
+  border-bottom: 4px solid #3d3350;
+  border-radius: 50% 50% 6px 6px / 28px 28px 6px 6px;
+  box-shadow: inset 0 0 0 4px var(--stone), inset 0 0 0 5px #3d3350;
 }
 
 .contract.fail .state {
+  display: block;
+  margin: 0 0 0.375rem;
+  text-align: center;
+  letter-spacing: 0.3em;
   color: var(--grave);
 }
 
-/* A failing contract that this task did not require is work not done yet, not a broken promise. */
+/* A failing contract that this task did not require is an unmarked plot: work not done yet, not a broken promise. */
 .contract.notyet {
-  border-left: 8px dashed var(--muted);
+  background: transparent;
+  border: 1px dashed var(--border);
 }
 
 .contract.notyet .state {
   color: var(--muted);
 }
 
+/* ---- Hash check, command and file check ---- */
+
 .badge {
   display: inline-block;
   margin: 0 0 0.5rem;
-  padding: 0.25rem 0.75rem;
+  padding: 0.25rem 0.875rem;
   border: 2px solid var(--border);
-  border-radius: 6px;
-  font-weight: 800;
-  letter-spacing: 0.05em;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.08em;
 }
 
 .badge:empty {
@@ -311,15 +620,34 @@ button {
   color: var(--muted);
 }
 
+.file {
+  min-width: 0;
+  padding: 0.625rem 0.875rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--border);
+  border-radius: 8px;
+}
+
+.file .state {
+  margin-right: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
 .file .path {
   display: block;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
   overflow-wrap: anywhere;
 }
 
 .file .detail {
   display: block;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
 }
 
 .status-match {
@@ -331,7 +659,7 @@ button {
 }
 
 .status-different {
-  border-left: 8px solid var(--grave);
+  border-left: 6px solid var(--grave);
 }
 
 .status-different .state {
@@ -356,21 +684,109 @@ button {
 
 @media (min-width: 40rem) {
   main {
-    padding: 2rem 1rem;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  .card,
+  .verdict {
+    padding: 1.5rem 1.75rem;
   }
 }
 
+/* ---- Motion, only for people who have not asked for less of it ---- */
+
 @media (prefers-reduced-motion: no-preference) {
-  @keyframes glow {
+  @keyframes drift {
     from {
-      text-shadow: 0 0 2px var(--alive);
+      transform: translate3d(-8%, 0, 0);
     }
     to {
-      text-shadow: 0 0 10px var(--alive);
+      transform: translate3d(8%, 0, 0);
     }
   }
 
-  .contract.pass .state {
-    animation: glow 2.4s ease-in-out infinite alternate;
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes breathe {
+    from {
+      box-shadow: 0 0 10px -6px var(--alive);
+    }
+    to {
+      box-shadow: 0 0 22px -2px var(--alive);
+    }
+  }
+
+  @keyframes draw {
+    from {
+      stroke-dashoffset: 30;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  .fog::before {
+    animation: drift 90s ease-in-out infinite alternate;
+  }
+
+  .fog::after {
+    animation: drift 140s ease-in-out infinite alternate-reverse;
+  }
+
+  .mark-check {
+    stroke-dasharray: 30;
+    animation: draw 1.2s ease-out 0.4s both;
+  }
+
+  .verdict {
+    animation: rise 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .verdict.risen .verdict-mark {
+    animation: breathe 3.6s ease-in-out infinite alternate;
+  }
+
+  /* Passing contracts rise into place, a little after one another. Failing ones stay where they lie. */
+  .contract.pass {
+    animation: rise 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .contracts > .contract:nth-child(2) {
+    animation-delay: 60ms;
+  }
+
+  .contracts > .contract:nth-child(3) {
+    animation-delay: 120ms;
+  }
+
+  .contracts > .contract:nth-child(4) {
+    animation-delay: 180ms;
+  }
+
+  .contracts > .contract:nth-child(n + 5) {
+    animation-delay: 240ms;
+  }
+
+  button {
+    transition: background-color 150ms ease, transform 150ms ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
   }
 }

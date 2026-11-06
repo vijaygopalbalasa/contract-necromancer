@@ -8,19 +8,30 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="fog" aria-hidden="true"></div>
   <main>
     <header class="intro">
-      <h1><span class="glyph" aria-hidden="true">🪦</span> Receipt viewer</h1>
-      <p>
-        A Contract Necromancer receipt says which frozen contracts passed when a task was marked done.
+      <div class="brand">
+        <svg class="mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+          <path class="mark-ground" d="M4 57 H60"></path>
+          <path class="mark-stone" d="M15 57 V29 A17 17 0 0 1 49 29 V57 Z"></path>
+          <path class="mark-check" d="M23 38 L30 45 L42 30"></path>
+        </svg>
+        <div>
+          <p class="eyebrow">Contract Necromancer</p>
+          <h1>Receipt viewer</h1>
+        </div>
+      </div>
+      <p class="lede">
+        A receipt says which frozen contracts passed when a task was marked done.
         Open one here to read it and check it yourself.
       </p>
       <p class="limit" id="limit">
         Contracts re-run in Node with <code>necro verify</code>. The browser checks hashes, not test runs.
       </p>
       <p class="legend" id="legend">
-        <span class="pass"><span class="glyph" aria-hidden="true">✦</span> PASS</span> means the contract is alive.
-        <span class="fail"><span class="glyph" aria-hidden="true">🪦</span> FAIL</span> means it is a gravestone.
+        <span class="legend-item"><span class="swatch swatch-alive" aria-hidden="true"></span> <strong class="legend-alive">PASS</strong> the contract is alive.</span>
+        <span class="legend-item"><span class="swatch swatch-grave" aria-hidden="true"></span> <strong class="legend-grave">FAIL</strong> it lies under a gravestone.</span>
       </p>
     </header>
 
@@ -39,6 +50,8 @@
       </div>
       <p class="error" id="error" role="alert"></p>
     </section>
+
+    <section class="verdict" id="verdict" aria-live="polite" hidden></section>
 
     <section class="card" id="receipt" aria-labelledby="receipt-title" hidden>
       <h2 id="receipt-title">Receipt</h2>

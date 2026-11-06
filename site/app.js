@@ -3,7 +3,7 @@
 // passed in so tests can drive the page with a small fake DOM.
 
 import { computeReceiptHash } from './lib/canon.js';
-import { parseReceipt, summarize, groupContracts, MAX_RECEIPT_BYTES } from './lib/receipt.js';
+import { parseReceipt, summarize, groupContracts, sortByCriterion, plainTaskLine, verdict, MAX_RECEIPT_BYTES } from './lib/receipt.js';
 import { parseReceiptUrl, parseRepo, isCommitId, verifyCommand } from './lib/repo.js';
 import { checkFiles } from './lib/files.js';
 
@@ -11,9 +11,8 @@ const LOAD_FAILED = 'Could not load that receipt. Check the link and try again.'
 const FILE_TOO_BIG = 'This receipt is larger than 1 MB. Open a receipt file written by necro.';
 const FILE_UNREADABLE = 'Could not read that file. Choose a receipt file written by necro.';
 const NO_CRYPTO = 'Cannot check: this page needs https or localhost.';
-// The public home of this repository, which the sample receipt's files can be checked against. A placeholder until
-// the repository has one: set it to owner/name then.
-export const SAMPLE_REPO = 'OWNER/NAME';
+// The public home of this repository, which the sample receipt's files are checked against.
+export const SAMPLE_REPO = 'vijaygopalbalasa/contract-necromancer';
 const SAMPLE_URL = './sample-receipt.json';
 const SAMPLE_FAILED = 'Could not load the sample. Reload the page and try again.';
 const COPY_FAILED = 'Select the command and copy it.';
@@ -43,7 +42,7 @@ export function start({ document, location, fetch, navigator }) {
   for (const id of [
     'paste', 'show', 'file', 'error', 'receipt', 'spec', 'commit', 'receipt-hash', 'created', 'task', 'summary', 'groups',
     'hash-check', 'hash-badge', 'hash-detail', 'repo', 'run', 'command', 'copy', 'copy-note', 'command-note', 'file-check',
-    'check', 'repo-error', 'file-notice', 'file-summary', 'files', 'sample', 'sample-row',
+    'check', 'repo-error', 'file-notice', 'file-summary', 'files', 'sample', 'sample-row', 'verdict',
   ]) {
     els[id] = $(id);
   }
@@ -62,13 +61,14 @@ export function start({ document, location, fetch, navigator }) {
   function clearReceipt() {
     shown += 1;
     current = null;
-    for (const id of ['receipt', 'hash-check', 'run', 'file-check']) els[id].hidden = true;
+    for (const id of ['verdict', 'receipt', 'hash-check', 'run', 'file-check']) els[id].hidden = true;
     for (const id of [
-      'spec', 'commit', 'receipt-hash', 'created', 'task', 'summary', 'groups', 'hash-badge', 'hash-detail', 'command',
+      'verdict', 'spec', 'commit', 'receipt-hash', 'created', 'task', 'summary', 'groups', 'hash-badge', 'hash-detail', 'command',
       'copy-note', 'command-note', 'repo-error', 'file-notice', 'file-summary', 'files',
     ]) {
       els[id].textContent = '';
     }
+    els.verdict.className = 'verdict';
     els['hash-badge'].className = 'badge';
     els.check.disabled = false;
     els['sample-row'].hidden = false;
@@ -84,26 +84,23 @@ export function start({ document, location, fetch, navigator }) {
     const notYet = c.result === 'fail' && c.required === false;
     const state = notYet ? 'notyet' : c.result;
     const word = notYet ? 'NOT BUILT YET' : c.result === 'pass' ? 'PASS' : 'FAIL';
-    const glyph = c.result === 'pass' ? '✦' : notYet ? '…' : '🪦';
+    // The shape of the row (alive or gravestone) is drawn by style.css. The row itself is plain words, with plain
+    // spaces between the spans, so it reads the same to a screen reader.
     const li = make('li', `contract ${state}`);
-    const g = make('span', 'glyph', glyph);
-    g.setAttribute('aria-hidden', 'true');
-    // Plain spaces between the spans keep the row readable as text, for screen readers too.
-    li.appendChild(g);
-    li.append(' ');
     li.appendChild(make('span', 'state', word));
     li.append(' ');
     li.appendChild(make('span', 'name', c.name));
-    if (c.required !== null) {
+    // A not-built-yet row already says so in its state word, so only required and passing rows get a note.
+    if (c.required !== null && !notYet) {
       li.append(' ');
-      li.appendChild(make('span', 'note', c.required ? 'required' : 'not yet required'));
+      li.appendChild(make('span', 'note', c.required ? 'required for this task' : 'not required for this task'));
     }
     return li;
   }
 
   function renderGroups(contracts) {
     els.groups.textContent = '';
-    for (const g of groupContracts(contracts)) {
+    for (const g of groupContracts(sortByCriterion(contracts))) {
       const section = make('div', 'group');
       section.appendChild(make('h3', '', `${g.title} (${g.passed} of ${g.total} pass)`));
       const list = make('ul', 'contracts');
@@ -111,6 +108,28 @@ export function start({ document, location, fetch, navigator }) {
       section.appendChild(list);
       els.groups.appendChild(section);
     }
+  }
+
+  // The verdict leads the receipt. It gives one number and names no contract, so the rows below stay the record.
+  function renderVerdict(contracts) {
+    const v = verdict(contracts);
+    const banner = els.verdict;
+    banner.className = `verdict ${v.risen ? 'risen' : 'buried'}`;
+    banner.textContent = '';
+    const mark = make('span', 'verdict-mark');
+    mark.setAttribute('aria-hidden', 'true');
+    const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+    const count = v.risen
+      ? `${plural(v.living, 'contract', 'contracts')} alive.`
+      : `${plural(v.buried, 'required contract fails', 'required contracts fail')}.`;
+    const note = v.risen ? 'Every required contract passes.' : 'The task is not done until every required contract passes.';
+    banner.appendChild(mark);
+    banner.appendChild(make('h2', 'verdict-word', v.risen ? 'Risen' : 'Still buried'));
+    banner.append(' ');
+    banner.appendChild(make('p', 'verdict-count', count));
+    banner.append(' ');
+    banner.appendChild(make('p', 'verdict-note', note));
+    banner.hidden = false;
   }
 
   async function checkHash(receipt, id) {
@@ -217,8 +236,9 @@ export function start({ document, location, fetch, navigator }) {
     els.commit.textContent = s.gitCommit === null ? 'none' : s.gitCommit;
     els['receipt-hash'].textContent = s.receiptHash;
     els.created.textContent = s.createdAt === null ? 'not recorded' : s.createdAt;
-    els.task.textContent = s.task === null ? 'none recorded' : s.task;
+    els.task.textContent = s.task === null ? 'none recorded' : plainTaskLine(s.task);
     els.summary.textContent = `${s.passed} of ${s.total} contracts pass`;
+    renderVerdict(s.contracts);
     renderGroups(s.contracts);
     els.receipt.hidden = false;
     els['hash-check'].hidden = false;
