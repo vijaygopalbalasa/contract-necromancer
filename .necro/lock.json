@@ -37,6 +37,14 @@
           "sha256": "6052f07ee6c8217ed0c58429385798c606bf24d384297b167a30c0d93f24f407"
         },
         {
+          "name": "criteria-format",
+          "names": [
+            "R2.9 freeze reads criteria from the task line and from the indented sub-lines under it, in both formats"
+          ],
+          "path": "contracts/necro-core/criteria-format.contract.test.js",
+          "sha256": "742c76bf54490f58db03c2f11dbf96f1bcc08e471cdbed98a66a8879d1ea0101"
+        },
+        {
           "name": "gate",
           "names": [
             "R4.1 a str_replace on tasks.md is applied to the file on disk and gated when a task line changes from [ ] to [x]",
@@ -155,7 +163,7 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-06T23:36:29.322Z",
+      "frozenAt": "2026-11-06T23:41:53.331Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
         "sha256": "d5bac98622adb838f34bdf9cb4741acccd1a571733c5f6ec73e80ee4e55d7195"

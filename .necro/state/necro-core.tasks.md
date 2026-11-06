@@ -94,3 +94,7 @@ Each task writes its test first, then the implementation, then runs `node --test
   - Test first: `necro init` writes commands with the absolute `node` path (`process.execPath`) and the absolute `bin/necro.js` path, quoted, and they run from a directory containing a space (8.6); `init` prints the trusted-workspace note (8.7); `necro check` writes a receipt with `task: null` and every contract required, exits 0 or 1 by result, refuses an unfrozen spec, and leaves `tasks.md` unchanged (9.1-9.4). Run each test against the current code and see it fail first.
   - Implement: `bin/necro.js`, `src/receipts.js` or a new `src/check.js`, README usage. Run `npm test` and pass.
 
+- [ ] 18. **Read criteria the way Kiro writes them** (Req 2.9)
+  - Test first: criteria on the task line, on an indented sub-line as `(Req 1.4, 2.1)`, and as Kiro's `_Requirements: 1.4, 2.1_` are all recorded for that task, and criteria under a later task are not; the gate then requires the matching contracts (2.9). Run the tests against the current code and see them fail first.
+  - Implement: `src/lock.js`. Then add `contracts/necro-core/criteria-format.contract.test.js` with one contract named `R2.9 ...` for this criterion (a new file; do not change the frozen contract files). Run `npm test` and pass.
+
