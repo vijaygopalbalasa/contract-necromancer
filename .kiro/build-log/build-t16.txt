@@ -1,0 +1,128 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=8
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run Command
+[tool] Append to File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Append to File
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+necro-core isn't frozen, so editing tasks.md is allowed. Running the full suite first.
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Failed: Replace in File
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 16 is implemented and the full suite passes (376 tests), but I could not tick it in `tasks.md`. The project's own gate blocked the edit with: "Spec 'necro-core' is not frozen. Run 'necro freeze <spec>' first."
+
+`necro-core` has no entry in `.necro/lock.json` (only `receipt-viewer` is frozen), and there is no `contracts/necro-core/` directory. To freeze it I would have to add contracts and write to `.necro/`, and you told me not to touch either. I did not tick the box by shell or any other route, because that would bypass the gate this tool exists to enforce. Tasks 1–15 are already `[x]`, so the line for 16 still reads `- [ ] 16.`
+
+**What changed**
+- **`src/hooks.js`:**
+  - `handlePreToolUse` now handles `task_update`. When `status` is `completed` (any letter case), it finds the `tasks.md` line whose text equals `taskId` and runs the same gate as a tick written to the file. Exit codes, messages and the receipt are the same, and the hook doesn't edit `tasks.md`.
+  - `in_progress`, `queued` and `task_list` are allowed silently.
+  - A `taskId` that matches no line requires every contract, and the receipt's `task` is `null`.
+  - A `tasksFilePath` that is outside the project, not `.kiro/specs/<spec>/tasks.md`, missing, or not a string is blocked with a short message. This includes symlinks that point outside the project.
+  - An unfrozen spec gets the usual "freeze it first" message.
+- **`test/hooks.test.js`:** 10 new tests covering each bullet in the task, plus the unfrozen-spec, last-unticked-task, relative-path and symlink cases. I wrote them first and ran them against the old code. Nine failed. The "other statuses are allowed silently" test already passed, because the old code allowed every `task_update`. It is a regression guard.
+- **`design.md`:** I added a short clarification section for `task_update`. You didn't ask for this, so revert it if you'd rather not have it.
+
+I found no recorded Kiro IDE payloads in the repo, so the test payloads follow the shape you described. `tasksFilePath` is accepted as absolute or project-relative. I also treated `task_list` as a status value, as in your task text.
+
+Decision for you: to get the box ticked through the gate, `necro-core` needs `contracts/necro-core/*.contract.test.js` and a `necro freeze necro-core`. Say if you want me to write those contracts, or if you'd rather tick the line yourself.

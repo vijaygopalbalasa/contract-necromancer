@@ -312,6 +312,52 @@ function taskEdit(cwd, toolName, toolInput) {
   return null;
 }
 
+// Describe a `task_update` call from the Kiro IDE that sets a task to `completed`
+// (Req 4.19, 4.20). The input is { tasksFilePath, taskId, status, error }; `taskId`
+// is the task line text after the checkbox. Returns null for any other status, or
+// { error } when the spec cannot be found (tasksFilePath outside the project, or
+// not a spec's tasks.md), or { spec, change } where `change` is the same shape the
+// gate takes for a tick written to tasks.md.
+//
+// The file is not changed. `after` is tasks.md on disk with the named line ticked,
+// and `ticked` lists the task being completed. A taskId that matches no task line
+// ticks nothing, which makes the gate require every contract.
+function taskUpdateEdit(cwd, toolInput) {
+  const input = toolInput && typeof toolInput === 'object' ? toolInput : {};
+  if (typeof input.status !== 'string' || input.status.trim().toLowerCase() !== 'completed') return null;
+
+  const p = input.tasksFilePath;
+  const hit = typeof p === 'string' && p !== '' ? projectResolver(cwd)(p) : null;
+  const m = hit ? TASKS_PATH.exec(hit.rel) : null;
+  if (!m) {
+    return {
+      error:
+        'Cannot find the spec for this task. tasksFilePath must be .kiro/specs/<spec>/tasks.md inside the project.',
+    };
+  }
+
+  let disk = '';
+  try {
+    disk = fs.readFileSync(path.resolve(cwd, p), 'utf8');
+  } catch {
+    disk = ''; // the file does not exist
+  }
+
+  const wanted = typeof input.taskId === 'string' ? input.taskId.trim() : '';
+  const lines = disk.split(/(\r?\n)/); // keeps the line breaks at the odd indexes
+  const found = [];
+  for (let i = 0; i < lines.length; i += 2) {
+    const line = TASK_LINE.exec(lines[i]);
+    if (line && wanted !== '' && line[2].trim() === wanted) found.push(i);
+  }
+  for (const i of found) lines[i] = lines[i].replace(/\[[ xX]\]/, '[x]');
+
+  return {
+    spec: canonicalSpec(cwd, m[1]),
+    change: { before: disk, after: lines.join(''), exact: true, ticked: found.length > 0 ? [wanted] : [] },
+  };
+}
+
 // Detect whether a tool call on tasks.md is marking a task done (Req 4.1, 4.2).
 export function detectTaskDone(cwd, toolName, toolInput) {
   const edit = taskEdit(cwd, toolName, toolInput);
@@ -416,6 +462,15 @@ export function handlePreToolUse(payload) {
     return ALLOW;
   }
 
+  // Req 4.19, 4.20: the Kiro IDE's task tool marks a task done without writing the
+  // file through a tool the hook can read, so `completed` is gated like a tick.
+  if (toolName === 'task_update') {
+    const update = taskUpdateEdit(cwd, toolInput);
+    if (update === null) return ALLOW; // in_progress, queued, task_list: not a completion
+    if (update.error) return { exitCode: 2, stdout: '', stderr: update.error };
+    return runGate(cwd, update.spec, update.change);
+  }
+
   // Req 4: if this edit marks a task done, gate it on the frozen contracts.
   if (TASK_WRITE_TOOLS.has(toolName)) {
     const edit = taskEdit(cwd, toolName, toolInput);
@@ -432,8 +487,8 @@ export function handlePreToolUse(payload) {
   return ALLOW;
 }
 
-// Decide a tick (Req 4.5, 4.14, 4.15, 5.5). `change` is { before, after, exact }:
-// tasks.md before and after the change. Every frozen contract of the spec has been
+// Decide a tick (Req 4.5, 4.14, 4.15, 5.5). `change` is { before, after, exact, ticked? }:
+// tasks.md before and after the change, and optionally the ticked task texts. Every frozen contract of the spec has been
 // run (`results`). The tasks being ticked are the task lines ticked in `after`
 // and not in `before`; which contracts they require comes from the lock, see
 // requiredNames. A change whose lines cannot be read exactly requires everything.
@@ -442,7 +497,8 @@ export function handlePreToolUse(payload) {
 // { id, line } (null when no task line can be named).
 function decideTicks(lock, spec, results, change) {
   const names = [...new Set(results.map((r) => r.name))].sort();
-  const ticked = change.exact ? newlyTickedTexts(change.before, change.after) : [];
+  // `change.ticked` names the tasks directly when the tool does (task_update, Req 4.19).
+  const ticked = change.ticked ?? (change.exact ? newlyTickedTexts(change.before, change.after) : []);
   const required = requiredNames(lock, spec, ticked, change.after, names) || names;
   // Req 4.17: a contract file that holds a required contract and failed as a whole
   // (it did not load, or exited badly) fails the tick, even when the required

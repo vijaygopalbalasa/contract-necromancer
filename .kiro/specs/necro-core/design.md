@@ -419,3 +419,13 @@ the number of `[x]` marks in `oldStr` and `newStr`.
 `verify` treats a lock file that exists as binding: the receipt's spec must be in it, its contract files, hashes and
 names must equal the lock's (compared per file, none missing, none extra), and the lock's contracts are the ones run.
 Results are compared by file and name.
+
+## Clarification (the Kiro IDE's task tool, Req 4.19 and 4.20)
+The IDE marks spec tasks done with `task_update`, whose input is `{ tasksFilePath, taskId, status, error }`. `taskId` is
+the task line text after the checkbox. PreToolUse gates the call only when `status` is `completed` (any letter case);
+`in_progress`, `queued` and `task_list` are allowed silently. The hook does not edit `tasks.md`. It reads the file on
+disk, finds the lines whose text equals `taskId`, and runs the same gate as for a tick written to the file, with that
+text as the ticked task and the disk file with the line ticked as the state after. A `taskId` that matches no line
+ticks nothing, so every contract is required and the receipt's `task` is `null`. A `tasksFilePath` that resolves
+outside the project, or that is not `.kiro/specs/<spec>/tasks.md`, names no spec, so the call is blocked with a short
+message.

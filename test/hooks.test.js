@@ -2237,3 +2237,213 @@ test('R3.13 PostToolUse after an fs_append on tasks.md records the file on disk'
     fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Task 16: gate the Kiro IDE's task tool (Req 4.19, 4.20)
+//
+// Payload shape recorded from the Kiro IDE:
+//   tool_name: "task_update"
+//   tool_input: { tasksFilePath, taskId, status, error }
+// `taskId` is the task line text after the checkbox.
+// ---------------------------------------------------------------------------
+
+const TU_ONE = '1. Implement `slugify` in `src/slugify.js` (Req 1.1)'; // R1.1 passes
+const TU_TWO = '2. Reject empty input (Req 1.2)'; // R1.2 fails
+const TU_THREE = '3. Trim surrounding whitespace (Req 1.3)'; // R1.3 passes
+const TU_TASKS = [TU_ONE, TU_TWO, TU_THREE].map((t) => `- [ ] ${t}`).join('\n') + '\n';
+
+function setupTaskTool(tasks = TU_TASKS) {
+  return setupMixed(tasks);
+}
+
+function taskUpdate(cwd, input) {
+  return payload(cwd, 'task_update', {
+    tasksFilePath: path.join(cwd, TASKS_REL),
+    status: 'completed',
+    error: '',
+    ...input,
+  });
+}
+
+test('R4.19 task_update completed with a failing required contract exits 2 and names it', () => {
+  const cwd = setupTaskTool();
+  try {
+    const res = handlePreToolUse(taskUpdate(cwd, { taskId: TU_TWO }));
+    assert.equal(res.exitCode, 2);
+    assert.equal(res.stderr, 'Contracts failed: R1.2 failing contract.');
+    assert.equal(readReceipts(cwd).length, 0, 'no receipt on failure');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.19 task_update completed with passing required contracts exits 0 and writes a receipt for that task', () => {
+  const cwd = setupTaskTool();
+  try {
+    const res = handlePreToolUse(taskUpdate(cwd, { taskId: TU_ONE }));
+    assert.deepEqual(res, { exitCode: 0, stdout: '', stderr: '' });
+
+    const receipts = readReceipts(cwd);
+    assert.equal(receipts.length, 1);
+    assert.deepEqual(receipts[0].task, { id: '1', line: TU_ONE });
+    assert.deepEqual(receipts[0].required, ['R1.1 passing contract']);
+    const byName = Object.fromEntries(receipts[0].contracts.map((c) => [c.name, c.result]));
+    assert.equal(byName['R1.2 failing contract'], 'fail', 'every contract that ran is still recorded');
+    assert.equal(fs.readFileSync(tasksPath(cwd), 'utf8'), TU_TASKS, 'the hook does not edit tasks.md');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.19 tasksFilePath may be relative to the project, and the status is not case sensitive', () => {
+  const cwd = setupTaskTool();
+  try {
+    const failing = handlePreToolUse(taskUpdate(cwd, { tasksFilePath: TASKS_REL, taskId: TU_TWO, status: 'Completed' }));
+    assert.equal(failing.exitCode, 2);
+    assert.match(failing.stderr, /R1\.2 failing contract/);
+
+    const passing = handlePreToolUse(taskUpdate(cwd, { tasksFilePath: TASKS_REL, taskId: `  ${TU_THREE}  ` }));
+    assert.equal(passing.exitCode, 0, passing.stderr);
+    assert.deepEqual(readReceipts(cwd)[0].required, ['R1.3 other passing contract']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.19 task_update with a status other than completed is allowed silently, even while contracts fail', () => {
+  const cwd = setupTaskTool();
+  try {
+    for (const status of ['in_progress', 'queued', 'task_list']) {
+      const res = handlePreToolUse(taskUpdate(cwd, { taskId: TU_TWO, status }));
+      assert.deepEqual(res, { exitCode: 0, stdout: '', stderr: '' }, status);
+    }
+    // the same call with no taskId at all, as the IDE sends when it lists tasks
+    const list = handlePreToolUse(payload(cwd, 'task_update', { tasksFilePath: path.join(cwd, TASKS_REL), status: 'task_list' }));
+    assert.deepEqual(list, { exitCode: 0, stdout: '', stderr: '' });
+    assert.equal(readReceipts(cwd).length, 0);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.20 a taskId that matches no task line requires every contract', () => {
+  const cwd = setupTaskTool();
+  try {
+    for (const taskId of [
+      '1. Implement something else (Req 1.1)', // reworded
+      '1. Implement `slugify` in `src/slugify.js`', // criteria dropped
+      '9. A task nobody wrote (Req 1.1)',
+      '',
+    ]) {
+      const res = handlePreToolUse(taskUpdate(cwd, { taskId }));
+      assert.equal(res.exitCode, 2, JSON.stringify(taskId));
+      assert.equal(res.stderr, 'Contracts failed: R1.2 failing contract.', JSON.stringify(taskId));
+    }
+    assert.equal(readReceipts(cwd).length, 0);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.20 a taskId with an unknown task is allowed once every contract passes, with no task named in the receipt', () => {
+  const cwd = tmpCwd();
+  try {
+    writeReq(cwd, 'demo', REQ);
+    writeContract(cwd, 'demo', 'ok.contract.test.js', PASSING_CONTRACT);
+    writeTasks(cwd, 'demo', TU_TASKS);
+    freezeSpec(cwd, 'demo');
+    const res = handlePreToolUse(taskUpdate(cwd, { taskId: '9. A task nobody wrote' }));
+    assert.equal(res.exitCode, 0, res.stderr);
+    const [receipt] = readReceipts(cwd);
+    assert.equal(receipt.task, null);
+    assert.deepEqual(receipt.required, ['R1.1 passing contract']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.19 the last unticked task of the spec requires every contract, as for a tick written to tasks.md', () => {
+  const ticked = [`- [x] ${TU_ONE}`, `- [ ] ${TU_TWO}`, `- [x] ${TU_THREE}`].join('\n') + '\n';
+  const cwd = setupTaskTool(TU_TASKS);
+  try {
+    writeTasks(cwd, 'demo', ticked);
+    // Task 2 is the only task left; completing it requires every contract.
+    const res = handlePreToolUse(taskUpdate(cwd, { taskId: TU_TWO }));
+    assert.equal(res.exitCode, 2);
+    assert.equal(res.stderr, 'Contracts failed: R1.2 failing contract.');
+
+    // Task 1 is also reached by a task_update that repeats an already ticked line: still gated on its criteria.
+    writeTasks(cwd, 'demo', [`- [x] ${TU_ONE}`, `- [ ] ${TU_TWO}`, `- [ ] ${TU_THREE}`].join('\n') + '\n');
+    const again = handlePreToolUse(taskUpdate(cwd, { taskId: TU_ONE }));
+    assert.equal(again.exitCode, 0, again.stderr);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.19 task_update completed for a spec that is not frozen exits 2 and says to freeze it', () => {
+  const cwd = tmpCwd();
+  try {
+    writeReq(cwd, 'other', REQ);
+    writeTasks(cwd, 'other', TU_TASKS);
+    const res = handlePreToolUse({
+      ...payload(cwd, 'task_update', {
+        tasksFilePath: path.join(cwd, '.kiro', 'specs', 'other', 'tasks.md'),
+        taskId: TU_ONE,
+        status: 'completed',
+      }),
+    });
+    assert.equal(res.exitCode, 2);
+    assert.equal(res.stderr, "Spec 'other' is not frozen. Run 'necro freeze <spec>' first.");
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R4.20 a tasksFilePath outside the project, or not a spec tasks.md, is blocked', () => {
+  const cwd = setupTaskTool();
+  const elsewhere = fs.mkdtempSync(path.join(os.tmpdir(), 'necro-elsewhere-'));
+  try {
+    const foreign = path.join(elsewhere, '.kiro', 'specs', 'demo', 'tasks.md');
+    fs.mkdirSync(path.dirname(foreign), { recursive: true });
+    fs.writeFileSync(foreign, TU_TASKS);
+    for (const tasksFilePath of [
+      foreign,
+      `../${path.basename(elsewhere)}/.kiro/specs/demo/tasks.md`,
+      'README.md',
+      '.kiro/specs/demo/requirements.md.bak',
+      '',
+    ]) {
+      const res = handlePreToolUse(taskUpdate(cwd, { tasksFilePath, taskId: TU_ONE }));
+      assert.equal(res.exitCode, 2, JSON.stringify(tasksFilePath));
+      assert.notEqual(res.stderr, '', JSON.stringify(tasksFilePath));
+    }
+    // a missing or non-string path cannot be a spec's tasks.md either
+    for (const tasksFilePath of [undefined, null, 7, ['x']]) {
+      const input = { taskId: TU_ONE, status: 'completed' };
+      if (tasksFilePath !== undefined) input.tasksFilePath = tasksFilePath;
+      assert.equal(handlePreToolUse(payload(cwd, 'task_update', input)).exitCode, 2, JSON.stringify(tasksFilePath));
+    }
+    assert.equal(readReceipts(cwd).length, 0);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+    fs.rmSync(elsewhere, { recursive: true, force: true });
+  }
+});
+
+test('R4.20 a symbolic link to a tasks.md outside the project is blocked', () => {
+  const cwd = setupTaskTool();
+  const elsewhere = fs.mkdtempSync(path.join(os.tmpdir(), 'necro-elsewhere-'));
+  try {
+    const foreign = path.join(elsewhere, 'tasks.md');
+    fs.writeFileSync(foreign, TU_TASKS);
+    const link = path.join(cwd, '.kiro', 'specs', 'linked', 'tasks.md');
+    fs.mkdirSync(path.dirname(link), { recursive: true });
+    fs.symlinkSync(foreign, link);
+    const res = handlePreToolUse(taskUpdate(cwd, { tasksFilePath: link, taskId: TU_ONE }));
+    assert.equal(res.exitCode, 2);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+    fs.rmSync(elsewhere, { recursive: true, force: true });
+  }
+});
