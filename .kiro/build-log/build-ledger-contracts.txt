@@ -1,0 +1,71 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=7
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+All 13 tests register and fail. To check my expected numbers against the design, I'll build a throwaway reference implementation in `/tmp`, outside the workspace.
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+I wrote the contracts in `contracts/ledger/`, one file per requirement. There are 13 tests, one per acceptance criterion, named `R1.1` through `R4.3`.
+
+- **Requirement 1:** `requirement-1-read.contract.test.js`
+- **Requirement 2:** `requirement-2-split.contract.test.js`
+- **Requirement 3:** `requirement-3-settle.contract.test.js`
+- **Requirement 4:** `requirement-4-cli.contract.test.js`
+
+Each test imports its modules with a dynamic `import('../../src/x.js')` inside the test body, preceded by a `// from '../../src/x.js'` comment. The CLI checks spawn `bin/ledger.js` on temp files: R1.4, R3.3, R4.1, R4.2 and R4.3.
+
+Against the empty `src/`, all 13 tests register and fail, as expected. I also ran the contracts against a throwaway reference implementation of `design.md` in `/tmp`, and all 13 passed. I deleted it afterwards. The numbers are therefore consistent with the design, and I did not create `src/` or `bin/`.
+
+- **R2.1:** 10.00 split three ways gives 334, 333, 333 cents. 1 cent over seven people goes to the first name, and 10.00 over six gives four shares of 167 and two of 166. Another case checks case-insensitive ordering (`ann` before `Bob`).
+- **R3.2:** Balances of Ann +700, Bob +300, Cy −600 and Dee −400 must give Cy→Ann 600, Dee→Bob 300, Dee→Ann 100. Creditor and debtor ties are checked, including a case where code-unit order and case-insensitive order differ. Results are checked to be the same with the input reversed.
+- **R4.1:** The table check matches whitespace-separated tokens. Padding and any rule lines under the header are not pinned.
+
+The contracts also pin these `design.md` details that the requirements leave open:
+- The exact error sentences and the `Cannot read <file>.` message.
+- The data shapes: `{payerKey, cents, what, sharerKeys}` for expenses, `{key, name}` for people, and `{name, paid, share, balance}` for balance rows.
+- Parsing of `what`: `split bill split Ann,Bob` yields the `what` `split bill`.
