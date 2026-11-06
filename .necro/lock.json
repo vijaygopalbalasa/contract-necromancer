@@ -155,10 +155,10 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-06T23:21:27.448Z",
+      "frozenAt": "2026-11-06T23:36:29.322Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
-        "sha256": "7bf280393febee072444ed3e3c4e8ce2049c12718003d7681038c12d88b29828"
+        "sha256": "d5bac98622adb838f34bdf9cb4741acccd1a571733c5f6ec73e80ee4e55d7195"
       },
       "tasks": {
         "1": {
@@ -298,6 +298,12 @@
             "9.4"
           ],
           "text": "17. **Hooks that work from the Dock, and check on demand** (Req 8.6, 8.7, 9.1, 9.2, 9.3, 9.4)"
+        },
+        "18": {
+          "criteria": [
+            "2.9"
+          ],
+          "text": "18. **Read criteria the way Kiro writes them** (Req 2.9)"
         },
         "3b": {
           "criteria": [

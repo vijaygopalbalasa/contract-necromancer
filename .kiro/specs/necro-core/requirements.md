@@ -26,6 +26,7 @@ receipts anyone can re-run.
 6. IF a contract path resolves outside the project root THEN THE SYSTEM SHALL refuse to freeze it.
 7. WHEN a user runs `necro freeze <spec>` THE SYSTEM SHALL record in the lock, for each task in that spec's `tasks.md`, the task id (the text before the first `.` on the task line, for example `8b`) and the criteria it names in `(Req 1.2, 3.1)`.
 8. WHEN a user runs `necro freeze <spec>` THE SYSTEM SHALL also record each task's full line text after the checkbox.
+9. WHEN a task's criteria are written on its own line or on the indented lines under it (before the next task line), as `(Req 1.2, 3.1)` or in Kiro's own format `_Requirements: 1.2, 3.1_`, THE SYSTEM SHALL record all of them for that task.
 
 ## Requirement 3: Block edits to frozen files
 **User story:** As a developer, I want the agent unable to edit frozen files, so that it fixes code instead of the checks.
