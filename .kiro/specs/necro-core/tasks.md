@@ -54,7 +54,7 @@ Each task writes its test first, then the implementation, then runs `node --test
   - Test first: a write to `tasks.md` that adds an `[x]` line with no matching `[ ]` line before it (including a new file and a partial-line `str_replace`) runs the gate (4.13); `verify` reports `MISMATCH` for a receipt that omits one of the lock's contracts, adds one the lock lacks, changes a recorded name, or names a spec missing from the lock, and it runs the lock's contracts (6.7); `necro init` writes a PreToolUse matcher that matches every tool (8.4). Run each test against the current code and see it fail first.
   - Implement: update `src/hooks.js`, `src/verify.js`, `templates/necromancer.hooks.json`. Run `npm test` and pass.
 
-- [ ] 8e. **State the shell cannot forge, fail closed on odd input, honest limits** (Req 3.8, 3.9, 3.10, 3.11)
+- [x] 8e. **State the shell cannot forge, fail closed on odd input, honest limits** (Req 3.8, 3.9, 3.10, 3.11)
   - Test first: a shell command that edits `.necro/state/<spec>.tasks.md` and ticks a task while contracts fail still gets `tasks.md` restored (3.8, 3.9); state is recorded after an `fs_write`/`str_replace` lands, from disk (3.10); a write tool whose input holds a string over the length limit or with a NUL is blocked (3.11). Run each test against the current code and see it fail first.
   - Implement: update `src/hooks.js`; in `README.md` add a short "Limits" section: a shell command or contract code can change any file, so the hooks are guard rails and the guarantee is `necro verify`, which re-runs the frozen contracts. Run `npm test` and pass.
 

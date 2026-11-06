@@ -13,7 +13,7 @@
     {
       "name": "Contract Necromancer PostToolUse",
       "trigger": "PostToolUse",
-      "matcher": "execute_bash",
+      "matcher": "execute_bash|fs_write|str_replace",
       "action": {
         "type": "command",
         "command": "necro hook post"

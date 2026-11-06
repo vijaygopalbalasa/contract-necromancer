@@ -377,6 +377,19 @@ After `execute_bash`, a task that became `[x]` since the recorded state triggers
 `tasks.md` is written back from the recorded state. With no recorded state the baseline is the current file with every
 task unticked.
 
+## Clarification (state the shell cannot forge, Req 3.8 to 3.11)
+Before every `execute_bash` call, PreToolUse records each frozen spec's current `tasks.md` in
+`.necro/state/<spec>.tasks.md`, replacing any earlier record, and writes the record's SHA-256 next to it. After the
+call, PostToolUse trusts the record only if its hash still matches. A record that is missing or changed makes the
+baseline the current file with every task unticked, so every `[x]` line is checked as newly ticked. PreToolUse no
+longer records anything for `fs_write` or `str_replace`. PostToolUse runs after those tools too (the hook template
+matches `execute_bash|fs_write|str_replace`) and records `tasks.md` of a frozen spec as it is on disk once the write
+has landed. A command that rewrites both the record and its hash is not detected; the README states this limit.
+
+A non-read-only tool call is blocked when a string in its input is longer than 4096 characters or contains a NUL
+character. The content fields of `fs_write` and `str_replace` and the `command` of `execute_bash` are not paths and
+are exempt, so large files and long shell commands still go through.
+
 ## Clarification (protected paths, Req 3.5 and 3.6)
 A tool path is resolved the way the operating system would (links followed, including links in the middle of the path
 and links to files that do not exist yet; the nearest existing parent for a new file) and compared with `.necro/` and

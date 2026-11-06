@@ -110,6 +110,28 @@ test('Req 8.4: the template PreToolUse hook matches every tool, not a fixed list
   assert.equal(hook.timeout, 300);
 });
 
+// Req 3.10: PostToolUse records tasks.md after a write lands, so it must run
+// after fs_write and str_replace as well as after execute_bash, and only then.
+function assertPostMatcher(config, label) {
+  const post = config.hooks.filter((h) => h.trigger === 'PostToolUse');
+  assert.equal(post.length, 1, `${label}: exactly one PostToolUse hook`);
+  for (const tool of ['execute_bash', 'fs_write', 'str_replace']) {
+    assert.ok(matcherMatches(post[0].matcher, tool), `${label}: PostToolUse hook must match ${tool}`);
+  }
+  for (const tool of ['read_file', 'grep', 'glob', 'list_directory']) {
+    assert.ok(!matcherMatches(post[0].matcher, tool), `${label}: PostToolUse hook must not match ${tool}`);
+  }
+  assert.equal(post[0].action.command, 'necro hook post');
+  assert.equal(post[0].timeout, 300);
+}
+
+test('Req 3.10: the template PostToolUse hook runs after execute_bash, fs_write and str_replace', () => {
+  const template = JSON.parse(
+    fs.readFileSync(path.join(__dirname, '../templates/necromancer.hooks.json'), 'utf8'),
+  );
+  assertPostMatcher(template, 'template');
+});
+
 test('Req 8.4: necro init writes a PreToolUse hook that matches every tool', () => {
   const cwd = tmpCwd();
   try {
@@ -121,9 +143,8 @@ test('Req 8.4: necro init writes a PreToolUse hook that matches every tool', () 
     for (const tool of TOOL_NAMES) {
       assert.ok(matcherMatches(hook.matcher, tool), `written PreToolUse hook must match ${tool}`);
     }
-    // PostToolUse keeps its narrow matcher: it only needs to see shell commands.
-    const post = written.hooks.find((h) => h.trigger === 'PostToolUse');
-    assert.ok(matcherMatches(post.matcher, 'execute_bash'));
+    // PostToolUse sees shell commands and the two write tools (Req 3.10).
+    assertPostMatcher(written, 'written');
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }

@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { hashFile } from './canon.js';
+import { hashFile, sha256 } from './canon.js';
 import { readLock, isSpecFrozen, frozenFiles } from './lock.js';
 import { runContracts } from './contracts.js';
 import { buildReceipt, writeReceipt } from './receipts.js';
@@ -14,6 +14,10 @@ const READ_ONLY_TOOLS = new Set(['read_file', 'list_directory', 'grep', 'glob'])
 // For the two write tools whose shape is known, these fields hold file content,
 // not paths. For every other tool all fields are checked.
 const CONTENT_FIELDS = new Set(['text', 'oldStr', 'newStr']);
+
+// Req 3.11: a string longer than this, or one holding a NUL character, cannot be
+// checked as a path.
+const MAX_PATH_STRING = 4096;
 
 // Normalize a path to forward slashes.
 function toRel(p) {
@@ -92,7 +96,7 @@ function projectResolver(cwd) {
 // Every string found anywhere in a tool's input that could name a path.
 function* pathCandidates(value, skipFields) {
   if (typeof value === 'string') {
-    if (value.length > 0 && value.length <= 4096 && !value.includes('\0')) yield value;
+    if (value.length > 0 && value.length <= MAX_PATH_STRING && !value.includes('\0')) yield value;
   } else if (Array.isArray(value)) {
     for (const v of value) yield* pathCandidates(v);
   } else if (value && typeof value === 'object') {
@@ -136,6 +140,24 @@ function findProtected(cwd, toolName, toolInput) {
     if (frozen.has(hit.key)) return { kind: 'frozen', path: frozen.get(hit.key) };
   }
   return null;
+}
+
+// Req 3.11: true when a string in the tool input is too long to check or holds a
+// NUL character. File content (text, oldStr, newStr of the two write tools) and a
+// shell command are not paths, so they may be long.
+function hasUncheckableString(toolName, toolInput) {
+  const skip = new Set();
+  if (toolName === 'fs_write' || toolName === 'str_replace') for (const f of CONTENT_FIELDS) skip.add(f);
+  if (toolName === 'execute_bash') skip.add('command');
+  const bad = (value, top) => {
+    if (typeof value === 'string') return value.length > MAX_PATH_STRING || value.includes('\0');
+    if (Array.isArray(value)) return value.some((v) => bad(v, false));
+    if (value && typeof value === 'object') {
+      return Object.entries(value).some(([k, v]) => !(top && skip.has(k)) && bad(v, false));
+    }
+    return false;
+  };
+  return bad(toolInput, true);
 }
 
 // ---------------------------------------------------------------------------
@@ -281,10 +303,26 @@ function readText(file) {
   }
 }
 
+// The SHA-256 of the record is kept next to it, so PostToolUse can tell that a
+// command changed the record while it ran (Req 3.9).
+function stateHashFile(cwd, spec) {
+  return `${stateFile(cwd, spec)}.sha256`;
+}
+
 function recordState(cwd, spec, text) {
   const file = stateFile(cwd, spec);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, text);
+  fs.writeFileSync(stateHashFile(cwd, spec), sha256(text));
+}
+
+// The recorded tasks.md state, or null when there is none or it no longer matches
+// the hash written with it (a command edited or deleted it).
+function readTrustedState(cwd, spec) {
+  const text = readText(stateFile(cwd, spec));
+  if (text === null) return null;
+  const hash = readText(stateHashFile(cwd, spec));
+  return hash !== null && hash.trim() === sha256(text) ? text : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -320,12 +358,20 @@ export function handlePreToolUse(payload) {
     };
   }
 
-  // Req 3.7: before a shell command runs, make sure each frozen spec has a
-  // recorded tasks.md state to compare with afterwards.
+  // Req 3.11: a tool input that cannot be checked is not let through.
+  if (hasUncheckableString(toolName, toolInput)) {
+    return {
+      exitCode: 2,
+      stdout: '',
+      stderr: 'Cannot check this tool call because an input string is too long or holds a NUL character. Shorten the input and try again.',
+    };
+  }
+
+  // Req 3.8: before a shell command runs, record each frozen spec's current
+  // tasks.md as the state to compare with afterwards, replacing any earlier record.
   if (toolName === 'execute_bash') {
     const lock = readLock(cwd);
     for (const spec of Object.keys(lock.specs || {})) {
-      if (readText(stateFile(cwd, spec)) !== null) continue;
       const current = readText(tasksFile(cwd, spec));
       if (current !== null) recordState(cwd, spec, current);
     }
@@ -340,8 +386,7 @@ export function handlePreToolUse(payload) {
         const gate = runGate(cwd, edit.spec);
         if (gate.exitCode !== 0) return gate;
       }
-      // The edit is allowed: record the resulting tasks.md for the shell check.
-      if (edit.exact && isSpecFrozen(cwd, edit.spec)) recordState(cwd, edit.spec, edit.after);
+      // Req 3.10: the state is recorded by PostToolUse, once the write has landed.
     }
   }
 
@@ -385,21 +430,23 @@ function runGate(cwd, spec) {
 // PostToolUse
 // ---------------------------------------------------------------------------
 
-// Req 3.7: after a shell command, compare each frozen spec's tasks.md with the
+// Req 3.7, 3.9: after a shell command, compare each frozen spec's tasks.md with the
 // state the gate recorded. When a task changed from [ ] to [x], run the spec's
 // contracts. If any fail, put tasks.md back to the recorded state. Returns the
 // lines to print on stderr.
 //
-// With no recorded state (the gate never saw this spec) the baseline is the
-// current file with every task unticked, so a tick nobody gated is checked
-// rather than trusted.
+// With no trusted recorded state (the gate never saw this spec, or a command
+// changed the record while it ran) the baseline is the current file with every
+// task unticked, so a tick nobody gated is checked rather than trusted.
 function checkShellTicks(cwd, lock) {
   const messages = [];
   for (const spec of Object.keys(lock.specs || {})) {
     const file = tasksFile(cwd, spec);
     const current = readText(file);
     if (current === null) continue;
-    const recorded = readText(stateFile(cwd, spec));
+    // Req 3.9: when the record is missing or changed during the command, it is not
+    // trusted and every ticked task line counts as newly ticked.
+    const recorded = readTrustedState(cwd, spec);
     const baseline = recorded !== null ? recorded : untick(current);
 
     if (!newlyTicked(baseline, current)) {
@@ -424,12 +471,34 @@ function checkShellTicks(cwd, lock) {
   return messages;
 }
 
+// Req 3.10: after a write to a frozen spec's tasks.md has been applied, record the
+// file as it is on disk, not as the hook predicted it before the write.
+function recordWrittenTasks(cwd, toolInput) {
+  const p = toolInput && toolInput.path;
+  if (typeof p !== 'string' || p === '' || p.includes('\0')) return;
+  const hit = projectResolver(cwd)(p);
+  if (!hit) return;
+  const m = TASKS_PATH.exec(hit.rel);
+  if (!m) return;
+  const spec = canonicalSpec(cwd, m[1]);
+  if (!isSpecFrozen(cwd, spec)) return;
+  const current = readText(tasksFile(cwd, spec));
+  if (current !== null) recordState(cwd, spec, current);
+}
+
 // PostToolUse: after execute_bash, restore any frozen file whose SHA-256 changed
 // back from its content-addressed copy in .necro/frozen/<hash> (Req 3.3), and
 // undo a task tick that the contracts do not support (Req 3.7).
+//
+// After fs_write or str_replace, record the tasks.md of a frozen spec from the file
+// on disk (Req 3.10).
 export function handlePostToolUse(payload) {
   const cwd = payload.cwd;
   const toolName = payload.tool_name;
+  if (cwd && (toolName === 'fs_write' || toolName === 'str_replace')) {
+    recordWrittenTasks(cwd, payload.tool_input);
+    return { exitCode: 0, stdout: '', stderr: '' };
+  }
   if (!cwd || toolName !== 'execute_bash') {
     return { exitCode: 0, stdout: '', stderr: '' };
   }

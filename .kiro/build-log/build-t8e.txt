@@ -1,0 +1,106 @@
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=75
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=74
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=85
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=41
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=1275
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=2648
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Hooks tests fail as intended. Now the template tests (3.10 needs the PostToolUse matcher to cover writes).
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=352
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=813
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=448
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+All 132 pass. Now the README "Limits" section, a design.md note matching the new behavior, and the task tick.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=477
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=27
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 8e is done and marked `[x]` in `tasks.md`. `npm test` passes all 132 tests. I did not touch `requirements.md`, `contracts/` or `.necro/`.
+
+I wrote the tests first and ran them against the old code. Nine hooks tests and two CLI tests failed, then passed after the changes.
+
+- **3.8:** `PreToolUse` for `execute_bash` now overwrites the recorded `tasks.md` state for every frozen spec. It used to keep an existing record.
+- **3.9:** A SHA-256 of the record is stored next to it in `.necro/state/<spec>.tasks.md.sha256`. After a shell command, `PostToolUse` ignores the record if it is missing or its hash no longer matches. In that case every `[x]` line is checked as newly ticked. If the contracts fail, `tasks.md` is restored to its unticked form.
+- **3.10:** `PreToolUse` no longer records state for `fs_write` or `str_replace`. `PostToolUse` now handles those two tools and records `tasks.md` from disk for frozen specs. `templates/necromancer.hooks.json` now uses the matcher `execute_bash|fs_write|str_replace`. `test/cli.test.js` asserts this for both the template and what `necro init` writes. It also asserts the matcher does not match `read_file`, `grep`, `glob` or `list_directory`.
+- **3.11:** A non-read-only tool call is blocked when any input string is over 4096 characters or contains a NUL character.
+- **Existing test changed:** I changed the existing `R3.7 … recorded` test in `test/hooks.test.js`. It asserted that `PreToolUse` records state, which 3.10 reverses, so it now has `PostToolUse` record the state.
+- **README:** `README.md` didn't exist, so I created it with a short overview and the "Limits" section you described.
+- **Design note:** I added a short clarification to `design.md` describing the new behavior.
+
+- **Exempt fields:** For 3.11, the `text`, `oldStr` and `newStr` fields of `fs_write` and `str_replace` are exempt. So is the `command` field of `execute_bash`. Otherwise every large file write or long shell heredoc would be blocked. Say so if you want `command` checked too.
+- **Forgeable record:** A shell command that rewrites both the state record and its hash file still gets through. The README's "Limits" section says this, and says `necro verify` is the real guarantee.
+- **Unticks earlier tasks:** When a record is untrusted, the restore unticks every task in `tasks.md`, including ones that were legitimately done earlier. That follows from 3.9 as written.[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=179
+
