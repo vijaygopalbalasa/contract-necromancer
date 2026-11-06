@@ -35,12 +35,14 @@ receipts anyone can re-run.
 3. WHEN the PostToolUse handler runs after `execute_bash` and a frozen file's SHA-256 no longer matches the lock THE SYSTEM SHALL restore the file from `.necro/frozen/` and write to stderr which file was restored.
 4. WHEN the tool call touches no frozen file THE SYSTEM SHALL exit with code 0 and print nothing.
 5. WHEN a tool call names a path THE SYSTEM SHALL resolve it to its real path (following symbolic links, using the nearest existing parent for a new file) and compare it with frozen paths and `.necro/` case-insensitively.
-6. IF a tool call names a protected path and the tool is not a known read-only tool (`read_file`, `list_directory`, `grep`, `glob`) THEN THE SYSTEM SHALL block it, so an unknown write tool cannot bypass the check.
+6. IF a tool call names a protected path and the tool is not a known read-only tool (Kiro's documented read tools `read_file`, `list_directory`, `file_search`, `grep_search`, and the CLI 2.x names `grep` and `glob`) THEN THE SYSTEM SHALL block it, so an unknown write tool cannot bypass the check.
 7. WHEN the PostToolUse handler runs after `execute_bash` and a task in a frozen spec's `tasks.md` changed from `[ ]` to `[x]` since the last state the gate recorded THEN THE SYSTEM SHALL run that spec's contracts and IF any fail THEN restore `tasks.md` from the recorded state and write the failing contract names to stderr.
 8. WHEN the PreToolUse handler runs for `execute_bash` THE SYSTEM SHALL record each frozen spec's current `tasks.md` as the state to compare with afterwards, replacing any earlier record.
 9. WHEN the PostToolUse handler runs after `execute_bash` and the recorded state file changed during the command THEN THE SYSTEM SHALL treat every `[x]` task line as newly ticked.
 10. WHEN a write to `tasks.md` has been applied THE SYSTEM SHALL record the state from the file on disk in the PostToolUse handler, not before the write.
 11. IF a tool input string is too long to check or contains a NUL character and the tool is not read-only THEN THE SYSTEM SHALL block the call.
+12. WHEN this specification says `execute_bash` THE SYSTEM SHALL apply the same rule to every Kiro shell tool (`execute_bash`, `execute_pwsh`, `control_bash_process`, `control_pwsh_process`).
+13. WHEN `fs_append` or `delete_file` targets `tasks.md` THE SYSTEM SHALL treat it like any other write to `tasks.md` for the done gate.
 
 ## Requirement 4: Gate on marking a task done
 **User story:** As a developer, I want "done" refused until contracts pass, so that a ticked task means the requirements hold.
@@ -95,3 +97,4 @@ receipts anyone can re-run.
 2. WHEN a user runs `necro init` THE SYSTEM SHALL write `.kiro/steering/necromancer.md` telling the agent that frozen contracts decide "done" and must not be edited.
 3. IF those files already exist THEN THE SYSTEM SHALL leave them unchanged and say so.
 4. WHEN `necro init` writes the hooks THE SYSTEM SHALL make the PreToolUse hook match every tool (not a fixed list of write tools), so the Req 3.6 check sees unknown write tools.
+5. WHEN `necro init` writes the hooks THE SYSTEM SHALL make the PostToolUse hook match every write and shell tool named in Requirement 3.
