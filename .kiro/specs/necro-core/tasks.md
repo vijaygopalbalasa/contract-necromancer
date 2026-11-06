@@ -74,3 +74,7 @@ Each task writes its test first, then the implementation, then runs `node --test
   - Test first: freeze records each task id with its criteria (2.7); ticking a task whose required contracts pass is allowed while another task's contracts fail, and the receipt records `task`, `required` and every result (4.14, 5.5); a failing required contract blocks and is listed (4.5); an edited task line, an unknown task id, a task with no criteria or no matching contract, and the last unticked task all require every contract (4.15); a shell command that ticks several tasks requires the union for those ids (3.7). Run each test against the current code and see it fail first.
   - Implement: update `src/lock.js`, `src/hooks.js`, `src/receipts.js`. `verify` stays as it is (it re-runs every contract against the lock). Run `npm test` and pass.
 
+- [ ] 13. **Bind ticks to the frozen task text** (Req 2.8, 4.16, 4.17)
+  - Test first: freeze records each task's line text (2.8); ticking a line that reuses an easy task's id and criteria with different text, a duplicated id, and a tick that leaves only added (not frozen) task lines unticked all require every contract (4.16); a contract file that fails to load while holding a required contract blocks the tick (4.17). Run each test against the current code and see it fail first.
+  - Implement: update `src/lock.js` and `src/hooks.js`. Run `npm test` and pass.
+

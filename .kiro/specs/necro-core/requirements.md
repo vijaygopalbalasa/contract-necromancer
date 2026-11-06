@@ -25,6 +25,7 @@ receipts anyone can re-run.
 5. WHEN a user runs `necro freeze <spec>` THE SYSTEM SHALL run the contracts once and record the name of every contract in the lock.
 6. IF a contract path resolves outside the project root THEN THE SYSTEM SHALL refuse to freeze it.
 7. WHEN a user runs `necro freeze <spec>` THE SYSTEM SHALL record in the lock, for each task in that spec's `tasks.md`, the task id (the text before the first `.` on the task line, for example `8b`) and the criteria it names in `(Req 1.2, 3.1)`.
+8. WHEN a user runs `necro freeze <spec>` THE SYSTEM SHALL also record each task's full line text after the checkbox.
 
 ## Requirement 3: Block edits to frozen files
 **User story:** As a developer, I want the agent unable to edit frozen files, so that it fixes code instead of the checks.
@@ -59,6 +60,8 @@ receipts anyone can re-run.
 13. WHEN any write targets a `tasks.md` THE SYSTEM SHALL treat it as marking a task done IF the resulting file has more `[x]` task lines than the file on disk (a missing file counts as zero), even when no single line can be matched to an earlier `[ ]` line.
 14. WHEN a task is being marked done THE SYSTEM SHALL run every frozen contract of the spec and treat as required the contracts whose names start with one of the criteria the lock records for that task id (`R1.2` followed by a space or the end of the name).
 15. IF the ticked task id is not in the lock, or its line in `tasks.md` now names different criteria than the lock records, or the lock records no criteria for it, or no contract matches its criteria, or it is the last unticked task of the spec THEN THE SYSTEM SHALL treat every contract as required.
+16. IF the ticked line's text after the checkbox differs from the text the lock records for its id, or its id appears on more than one line of `tasks.md`, or after the tick every task the lock records is ticked or missing THEN THE SYSTEM SHALL treat every contract as required (the count of unticked tasks comes from the lock's tasks, never from lines added later).
+17. IF a contract file that holds a required contract fails to load or run as a whole THEN THE SYSTEM SHALL treat that failure as a failing required contract.
 
 ## Requirement 5: Receipts
 **User story:** As a reviewer, I want a receipt that pins every input, so that I can re-run it and get the same answer.
