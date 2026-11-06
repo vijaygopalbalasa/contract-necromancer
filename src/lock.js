@@ -47,21 +47,42 @@ export function writeLock(cwd, lock) {
 // group 2 the text after the box.
 export const TASK_LINE = /^\s*(?:(?:[-*+]|\d+[.)])\s*)?\[([ xX])\]\s?(.*)$/;
 
-// Criteria named on a task line: every "N.N" inside a parenthesis that contains
-// the word "Req", as in "(Req 1.2, 3.1)" or "(supports Req 4.4)". Sorted by
-// number and unique, so two lines naming the same set compare equal.
-export function criteriaOf(text) {
-  const found = new Set();
-  for (const group of text.matchAll(/\(([^()]*)\)/g)) {
-    if (!/\bReq\b/.test(group[1])) continue;
-    for (const m of group[1].matchAll(/\d+\.\d+/g)) found.add(m[0]);
-  }
+// The two ways a task names criteria (Req 2.7, 2.9): "N.N" inside a parenthesis
+// that contains the word "Req", as in "(Req 1.2, 3.1)" or "(supports Req 4.4)",
+// and Kiro's own "_Requirements: 1.2, 3.1_".
+const REQ_PAREN = /\(([^()]*\bReq\b[^()]*)\)/g;
+const REQ_KIRO = /_Requirements?:([^_]*)_/gi;
+
+function sortCriteria(found) {
   const num = (c) => c.split('.').map(Number);
   return [...found].sort((a, b) => {
     const [a1, a2] = num(a);
     const [b1, b2] = num(b);
     return a1 - b1 || a2 - b2;
   });
+}
+
+// Criteria named anywhere in one line of text, in either format. Sorted by
+// number and unique, so two lines naming the same set compare equal.
+export function criteriaOf(text) {
+  const found = new Set();
+  for (const re of [REQ_PAREN, REQ_KIRO]) {
+    for (const group of text.matchAll(re)) {
+      for (const m of group[1].matchAll(/\d+\.\d+/g)) found.add(m[0]);
+    }
+  }
+  return sortCriteria(found);
+}
+
+// Criteria named by a sub-line of a task (Req 2.9). A sub-line counts only when it
+// is nothing but the reference, after its list marker: "(Req 1.4, 2.1)" or
+// "_Requirements: 1.4, 2.1_". A sentence that happens to mention a criterion in
+// passing is prose and names none.
+function referenceOnly(line) {
+  const body = line.replace(/^\s*(?:[-*+]|\d+[.)])?\s*/, '');
+  const rest = body.replace(REQ_PAREN, '').replace(REQ_KIRO, '');
+  if (rest === body || !/^[\s.,;]*$/.test(rest)) return [];
+  return criteriaOf(body);
 }
 
 // The task id of a task line's text (the text after the checkbox): everything
@@ -75,15 +96,29 @@ export function taskIdOf(text) {
 
 // Every task in a tasks.md text: [{ id, text, criteria, checked }] in file order.
 // `text` is the line after the checkbox, trimmed. A line without an id is skipped.
+// `criteria` are those named on the task line and on the indented sub-lines under
+// it, up to the next task line or the first unindented line (Req 2.9). Sub-lines
+// add criteria only; they are never part of `text`.
 export function parseTasks(markdown) {
   const tasks = [];
+  let current = null;
   for (const line of markdown.split(/\r?\n/)) {
     const m = TASK_LINE.exec(line);
-    if (!m) continue;
-    const text = m[2].trim();
-    const id = taskIdOf(text);
-    if (id !== null) tasks.push({ id, text, criteria: criteriaOf(text), checked: m[1] !== ' ' });
+    if (m) {
+      const text = m[2].trim();
+      const id = taskIdOf(text);
+      current = null;
+      if (id !== null) {
+        current = { id, text, criteria: new Set(criteriaOf(text)), checked: m[1] !== ' ' };
+        tasks.push(current);
+      }
+    } else if (current && line.trim() !== '' && !/^\s/.test(line)) {
+      current = null;
+    } else if (current) {
+      for (const c of referenceOnly(line)) current.criteria.add(c);
+    }
   }
+  for (const t of tasks) t.criteria = sortCriteria(t.criteria);
   return tasks;
 }
 

@@ -1,0 +1,113 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=8
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Append to File
+[tool] Run Command
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Append to File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] Run Command
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Write File
+[tool] Run Command
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Now the full runs.
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 18's code is in, and I did not tick it. `npm test` passes (398 tests) and `node --test contracts/necro-core/*.test.js` passes (69 tests).
+
+- **Tests first:** I added 7 tests to `test/lock.test.js` and 3 to `test/hooks.test.js`. Against the old `src/lock.js`, 8 of the 10 failed. The other 2 passed already because the old code fails closed (the tick was refused anyway, or the ambiguous id recorded no criteria).
+- **`src/lock.js`:**
+  - `criteriaOf` now reads `_Requirements: 1.4, 2.1_` (also `_Requirement:_`) as well as `(Req ...)`.
+  - `parseTasks` now collects criteria from the indented lines under each task. It stops at the next task line or the first unindented non-blank line, and blank lines don't end it.
+  - Sub-lines add criteria only. The recorded task `text` is still the task line alone.
+- **New contract:** `contracts/necro-core/criteria-format.contract.test.js` has one test, `R2.9 ...`. It freezes a throwaway project with every format and reads the lock's task table. It then ticks tasks through the gate and checks that only the matching contracts are required. Against the old `lock.js` it fails.
+
+**A sub-line counts only if it is just the reference.** The frozen `R2.7` contract has this sub-line: `Test first: a sub-bullet that names (Req 9.9) is not a task line.` It expects task 1 to record only `1.1, 1.2, 1.3`. Criterion 2.9 read literally would have recorded `9.9` and failed that frozen contract.
+
+So a sub-line is read only when, after its list marker, it is nothing but `(Req ...)` or `_Requirements: ...__`. A sentence that mentions a criterion in passing is ignored, and Kiro's own format fits this rule. If you want any `(Req ...)` anywhere on a sub-line to count, `R2.7` would have to change first, and that is your call.
+
+Both `src/lock.js` and the new contract file are unfrozen changes. Receipts that pin `src/lock.js` will report a hash mismatch on `necro verify` until they are regenerated. The `.necro/state/*` files were already modified before I started, and I left them alone.

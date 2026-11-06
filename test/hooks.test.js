@@ -2447,3 +2447,69 @@ test('R4.20 a symbolic link to a tasks.md outside the project is blocked', () =>
     fs.rmSync(elsewhere, { recursive: true, force: true });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Task 18: the gate uses criteria written the way Kiro writes them (Req 2.9)
+// ---------------------------------------------------------------------------
+
+// Criteria on sub-lines, in both formats. Task 5 and 6 are decoys that stay unticked.
+const KIRO_TASKS = [
+  '- [ ] 1. Task one',
+  '  - Do the work.',
+  '  - _Requirements: 1.1_',
+  '- [ ] 2. Task two',
+  '  - (Req 1.2)',
+  '- [ ] 3. Task three',
+  '  - _Requirements: 1.3_',
+  '- [ ] 4. Task four',
+  '  - _Requirements: 1.1, 1.2_',
+  '',
+].join('\n');
+
+test('R2.9 + R4.14 a task whose criteria are on a Kiro _Requirements:_ sub-line is gated on those contracts alone', () => {
+  const cwd = setupMixed(KIRO_TASKS);
+  try {
+    const res = handlePreToolUse(
+      payload(cwd, 'fs_write', { path: TASKS_REL, text: KIRO_TASKS.replace('- [ ] 1. Task one', '- [x] 1. Task one') }),
+    );
+    assert.equal(res.exitCode, 0, res.stderr);
+    const [r] = readReceipts(cwd);
+    assert.deepEqual(r.task, { id: '1', line: '1. Task one' });
+    assert.deepEqual(r.required, ['R1.1 passing contract']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R2.9 + R4.5 a task whose criteria are on a (Req ...) sub-line is blocked by its failing contract', () => {
+  const cwd = setupMixed(KIRO_TASKS);
+  try {
+    const res = handlePreToolUse(
+      payload(cwd, 'fs_write', { path: TASKS_REL, text: KIRO_TASKS.replace('- [ ] 2. Task two', '- [x] 2. Task two') }),
+    );
+    assert.equal(res.exitCode, 2);
+    assert.equal(res.stderr, 'Contracts failed: R1.2 failing contract.');
+    assert.equal(readReceipts(cwd).length, 0);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R2.9 + R4.14 criteria on several sub-line formats are united, and a later task is not mixed in', () => {
+  const cwd = setupMixed(KIRO_TASKS);
+  try {
+    const res = handlePreToolUse(
+      payload(cwd, 'fs_write', { path: TASKS_REL, text: KIRO_TASKS.replace('- [ ] 4. Task four', '- [x] 4. Task four') }),
+    );
+    assert.equal(res.exitCode, 2);
+    assert.equal(res.stderr, 'Contracts failed: R1.2 failing contract.');
+
+    const ok = handlePreToolUse(
+      payload(cwd, 'fs_write', { path: TASKS_REL, text: KIRO_TASKS.replace('- [ ] 3. Task three', '- [x] 3. Task three') }),
+    );
+    assert.equal(ok.exitCode, 0, ok.stderr);
+    assert.deepEqual(readReceipts(cwd)[0].required, ['R1.3 other passing contract']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});

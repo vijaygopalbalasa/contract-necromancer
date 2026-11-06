@@ -344,3 +344,122 @@ test('R2.8 a task with no criteria still has its text recorded', () => {
     fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Task 18: read criteria the way Kiro writes them (Req 2.9)
+// ---------------------------------------------------------------------------
+
+test('R2.9 criteria written as (Req ...) on an indented sub-line are recorded for the task above', () => {
+  const cwd = freezeWithTasks(
+    ['- [ ] 1. First task', '  - (Req 1.4, 2.1)', '- [ ] 2. Second task', '    * (supports Req 3.3)', ''].join('\n'),
+  );
+  try {
+    const { tasks } = readLock(cwd).specs.demo;
+    assert.deepEqual(tasks['1'].criteria, ['1.4', '2.1']);
+    assert.deepEqual(tasks['2'].criteria, ['3.3']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test("R2.9 Kiro's _Requirements: 1.4, 2.1_ on a sub-line or on the task line is recorded", () => {
+  const cwd = freezeWithTasks(
+    [
+      '- [ ] 1. First task',
+      '  - Write the module.',
+      '  - _Requirements: 1.4, 2.1_',
+      '- [ ] 2. Second task _Requirements: 3.3_',
+      '- [ ] 3. Third task',
+      '  - _Requirement: 4.1_',
+      '',
+    ].join('\n'),
+  );
+  try {
+    const { tasks } = readLock(cwd).specs.demo;
+    assert.deepEqual(tasks['1'].criteria, ['1.4', '2.1']);
+    assert.deepEqual(tasks['2'].criteria, ['3.3']);
+    assert.deepEqual(tasks['3'].criteria, ['4.1']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R2.9 criteria from the task line and from its sub-lines are united, sorted and unique', () => {
+  const cwd = freezeWithTasks(
+    [
+      '- [ ] 1. First task (Req 4.15, 1.4)',
+      '  - (Req 2.1, 1.4)',
+      '',
+      '  - _Requirements: 12.2, 2.1_',
+      '',
+    ].join('\n'),
+  );
+  try {
+    assert.deepEqual(readLock(cwd).specs.demo.tasks['1'].criteria, ['1.4', '2.1', '4.15', '12.2']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R2.9 criteria under a later task, under a heading, or under a line without an id are not attributed to the task above', () => {
+  const cwd = freezeWithTasks(
+    [
+      '- [ ] 1. First task (Req 1.1)',
+      '  - _Requirements: 1.2_',
+      '- [ ] 2. Second task',
+      '  - _Requirements: 3.3_',
+      '- [ ] A task without an id',
+      '  - _Requirements: 8.8_',
+      '- [ ] 4. Fourth task',
+      '',
+      '## Notes',
+      '  - _Requirements: 9.9_',
+      '(Req 7.7)',
+      '',
+    ].join('\n'),
+  );
+  try {
+    const { tasks } = readLock(cwd).specs.demo;
+    assert.deepEqual(tasks['1'].criteria, ['1.1', '1.2']);
+    assert.deepEqual(tasks['2'].criteria, ['3.3']);
+    assert.deepEqual(tasks['4'].criteria, [], 'nothing after a heading or an unindented line is read');
+    assert.deepEqual(Object.keys(tasks).sort(), ['1', '2', '4']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R2.9 a sub-line that is prose is not read, only a line that is just the reference', () => {
+  const cwd = freezeWithTasks(
+    [
+      '- [ ] 1. First task',
+      '  - Test first: a sub-bullet that names (Req 9.9) in a sentence.',
+      '  - See _Requirements: 8.8_ for the background.',
+      '  - (Req 1.4)',
+      '',
+    ].join('\n'),
+  );
+  try {
+    assert.deepEqual(readLock(cwd).specs.demo.tasks['1'].criteria, ['1.4']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R2.9 sub-lines add criteria but not text: the recorded text is still the task line alone', () => {
+  const cwd = freezeWithTasks('- [ ] 1. First task\n  - _Requirements: 1.4, 2.1_\n');
+  try {
+    assert.deepEqual(readLock(cwd).specs.demo.tasks['1'], { criteria: ['1.4', '2.1'], text: '1. First task' });
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R2.9 a task id used twice still records no criteria, whichever lines named them', () => {
+  const cwd = freezeWithTasks('- [ ] 5. First five\n  - _Requirements: 1.1_\n- [ ] 5. Second five (Req 1.2)\n');
+  try {
+    assert.deepEqual(readLock(cwd).specs.demo.tasks['5'].criteria, []);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
