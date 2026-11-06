@@ -64,6 +64,8 @@ receipts anyone can re-run.
 15. IF the ticked task id is not in the lock, or its line in `tasks.md` now names different criteria than the lock records, or the lock records no criteria for it, or no contract matches its criteria, or it is the last unticked task of the spec THEN THE SYSTEM SHALL treat every contract as required.
 16. IF the ticked line's text after the checkbox differs from the text the lock records for its id, or its id appears on more than one line of `tasks.md`, or after the tick every task the lock records is ticked or missing THEN THE SYSTEM SHALL treat every contract as required (the count of unticked tasks comes from the lock's tasks, never from lines added later).
 18. WHEN the gate decides whether a frozen task is still unticked THE SYSTEM SHALL count only an unticked line whose id appears on exactly one line and whose text equals the text the lock records for that id.
+19. WHEN the PreToolUse handler receives `task_update` (the Kiro IDE's spec task tool) with `status` `completed` THE SYSTEM SHALL treat it as marking done the task in the spec whose `tasks.md` is `tasksFilePath` and whose line text after the checkbox equals `taskId`, and apply the same gate, exit codes, messages and receipt as for a tick written to `tasks.md`.
+20. IF a `task_update` to `completed` names a `taskId` that matches no task line, or a `tasksFilePath` outside the project THEN THE SYSTEM SHALL treat every contract of that spec as required (or block when the spec cannot be found).
 17. IF a contract file that holds a required contract fails to load or run as a whole THEN THE SYSTEM SHALL treat that failure as a failing required contract.
 
 ## Requirement 5: Receipts

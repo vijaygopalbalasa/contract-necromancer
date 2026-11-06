@@ -86,3 +86,7 @@ Each task writes its test first, then the implementation, then runs `node --test
   - Test first: when the last real frozen task is ticked, an added unticked line that reuses a frozen id with different text, or a second unticked copy of a frozen line, does not stop every contract from being required (4.18). Run the test against the current code and see it fail first.
   - Implement: update `src/lock.js`. Run `npm test` and pass.
 
+- [ ] 16. **Gate the Kiro IDE's task tool** (Req 4.19, 4.20)
+  - Test first, using payloads recorded from the Kiro IDE (`tool_name: "task_update"`, `tool_input: { tasksFilePath, taskId, status, error }`, where `taskId` is the task line text such as "1. Implement `slugify` in `src/slugify.js` (Req 1.1, 1.2)"): `completed` with a failing required contract exits 2 and names it; `completed` with passing contracts exits 0 and writes a receipt with that task; `in_progress`, `queued` and `task_list` are allowed silently; an unknown `taskId` requires every contract; a `tasksFilePath` outside the project is blocked (4.19, 4.20). Run each test against the current code and see it fail first.
+  - Implement: update `src/hooks.js`. Run `npm test` and pass.
+
