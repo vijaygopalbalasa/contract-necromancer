@@ -297,3 +297,52 @@ test('every text token keeps AA on the gravestone color too', () => {
   }
   assert.ok(contrast(t.get('--border'), stone) >= 3, '--border on --stone');
 });
+
+// ---- Task 17: first visit (9.3, 9.4) ----
+
+test('9.4 the root element paints the whole background once, fixed to the window, so a tall page has no seam', () => {
+  const root = rulesFor('html').map((r) => r.body).join(';');
+  assert.match(decl(root, 'background-color') || '', /^var\(--bg\)$/, 'html has the page color');
+  assert.match(decl(root, 'background-image') || '', /radial-gradient/, 'html paints the moon glow');
+  assert.equal(decl(root, 'background-attachment'), 'fixed');
+  assert.equal(decl(root, 'background-repeat'), 'no-repeat');
+  assert.match(decl(root, 'min-height') || '', /^100%$/, 'html is at least as tall as the window');
+
+  // The body paints nothing of its own, so no second background can end partway down the page.
+  const body = rulesFor('body').map((r) => r.body).join(';');
+  assert.doesNotMatch(decl(body, 'background') || 'none', /var\(--bg\)|#/);
+  assert.doesNotMatch(decl(body, 'background-color') || 'transparent', /var\(--bg\)|#/);
+});
+
+test('9.4 the fog layers fill the fixed layer and fade out before every edge, so no blob is cut off into a band', () => {
+  const fog = rulesFor('.fog').map((r) => r.body).join(';');
+  assert.equal(decl(fog, 'position'), 'fixed');
+  assert.equal(decl(fog, 'inset'), '0');
+  assert.equal(decl(fog, 'background'), undefined, 'the glow moved to the root element');
+  for (const sel of ['.fog::before', '.fog::after']) {
+    const body = cssRules(bare)
+      .filter((r) => r.selector.split(',').map((s) => s.trim()).includes(sel) && r.media === null)
+      .map((r) => r.body)
+      .join(';');
+    assert.equal(decl(body, 'top'), '0', `${sel} starts at the top`);
+    assert.equal(decl(body, 'bottom'), '0', `${sel} ends at the bottom`);
+    assert.equal(decl(body, 'height'), undefined, `${sel} has no height that could leave a gap`);
+    const gradients = body.match(/radial-gradient\([^)]*\)/g) || [];
+    assert.ok(gradients.length > 0, `${sel} paints fog`);
+    for (const g of gradients) assert.match(g, /closest-side/, `${sel}: ${g} fades to nothing inside the layer`);
+  }
+});
+
+test('9.3 smooth scrolling is only on under no-preference, and the banner leaves room above it', () => {
+  const all = cssRules(bare);
+  for (const r of all) {
+    const v = decl(r.body, 'scroll-behavior');
+    if (v === undefined || /^auto\b/.test(v)) continue;
+    assert.match(r.media || '', /\(prefers-reduced-motion:\s*no-preference\)/, `${r.selector} sets scroll-behavior: ${v} outside no-preference`);
+  }
+  assert.ok(
+    all.some((r) => /no-preference/.test(r.media || '') && r.selector.split(',').map((s) => s.trim()).includes('html') && decl(r.body, 'scroll-behavior') === 'smooth'),
+    'html scrolls smoothly when motion is welcome',
+  );
+  assert.ok(rulesFor('.verdict').some((r) => decl(r.body, 'scroll-margin-top')), 'scroll-margin-top on the banner');
+});

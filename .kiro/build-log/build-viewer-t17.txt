@@ -1,0 +1,304 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=8
+I'll start by reading the spec files and the lock.
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run Command
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Chrome works. Let me look at a few scroll positions of the current page.
+[tool] Read File
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Append to File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Append to File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 17 is built, but I did not tick it and did not run `necro freeze`. `npm test` passes (463 tests). The four new contracts, R9.1 to R9.4, are in `contracts/receipt-viewer/first-visit.contract.test.js` and pass.
+
+## What I changed
+
+- **Buried sample:** I copied `examples/pumpkin-ledger` to `/tmp`, applied the README's two `perl` edits to `src/split.js`, and ran `necro check ledger` there. It exited 1 with 9 of 18 contracts failing. I copied the receipt it wrote, byte for byte, to `site/sample-buried.json`. `site/sample-receipt.json` is untouched and is the risen sample.
+- **Tests first:** `test/site-samples.test.js` is new, and I extended `test/site-app.test.js` and `test/site-style.test.js`. They failed before the code existed.
+- **Pure logic:** `site/lib/samples.js` holds the two samples, the choice of what to show on load, and the scroll options.
+- **Page:** the page now shows the risen sample on a first visit and says it is a sample. It has "Load the risen sample" and "Load the buried sample" buttons that stay visible. The banner scrolls into view after paste, file pick, a sample click and a `?receipt=` load. A slow load can no longer overwrite a receipt the visitor pasted meanwhile.
+- **CSS:** `html` now paints the whole background, fixed to the window. The body paints none, and the fog layers fill the window and fade out before every edge. Smooth scrolling is set only under `prefers-reduced-motion: no-preference`.
+- **Existing tests I changed:** I changed one old test (the sample button used to hide while a receipt was shown). In the `page()` helper I added a `firstVisit` option; by default it simulates a restored paste box, so the older tests don't trigger the auto-load.
+
+## What I checked
+
+- **Contracts can fail:** I ran the new contract against `HEAD`'s `site/` and all four failed, each for the intended reason. Making the scroll always smooth made R9.3 fail.
+- **Other contracts:** the other receipt-viewer contracts (24 in all) and the necro-core contracts (75) pass. The frozen R6.2 and R7.4 contracts fix some choices:
+  - `app.js` must still contain `sample-receipt.json`.
+  - The first button matching `/sample/i` must be the risen one.
+  - The first button matching `/show/i` must stay "Show receipt".
+
+## What I checked by hand
+
+I used headless Chrome at 390×700 over a local `http.server`, driven by a throwaway script in `/tmp` that is not in the repo.
+
+- **First load:** the risen sample appears with hash MATCH.
+- **Buried switch:** one click shows "Still buried", 9 required contracts failing, 9 gravestone rows, and hash MATCH. The banner ends 15 px from the top of the window.
+- **Reduced motion:** under `reduce` the scroll was already at its final position 120 ms after the click. Under `no-preference` it was still partway.
+- **Background seam:** I never saw a seam, before or after the change, in headless Chrome at several scroll positions. The CSS fix is based on the likely cause: fog blobs cut off at the window edge. A real iOS or Android browser with a collapsing address bar is still untested.
+
+## How I read each criterion
+
+- **R9.1:** the sample shows by itself only when `?receipt=` is absent and the paste box is empty (a browser may restore text there). A bad `?receipt=` shows its message and no sample.
+- **R9.2:** the buried sample is "from this repository" because it comes from the example in `examples/pumpkin-ledger`. It has no git commit and is not stored in the repository, so the re-run command can't find it. Its note says so.
+- **R9.3:** I read "load" as a `?receipt=` load or a sample click. The sample that appears by itself on first load does not scroll, so the intro stays in view. Under `reduce` the scroll is instant, and if the browser's preference can't be read there is no animation.
+- **R9.4:** the contract can only check the CSS text. It asserts:
+  - The root element carries a fixed, non-repeating background and is at least window height.
+  - The body adds no second background.
+  - No layer hangs past the window edge.
+
+## Things you should know
+
+- On a 390×700 phone the first-visit banner starts about 976 px down, below the fold. R9.1 only asks that the sample be shown, so I did not change the layout. Moving the banner above the "Open a receipt" card would fix it.
+- Receipts that pinned the old `site/` files will no longer match those files. That is true of any change to `site/`.
+- Before I started, the working tree already had edits to `src/verify.js`, `test/verify.test.js`, `.necro/state/*` and `contracts/necro-core/verify-anywhere.contract.test.js`. I left them alone. At one point I ran `git stash` and `git stash pop` to compare against the old code. Everything came back and the stash list is empty, but I should not have stashed in a tree with other people's edits.
+- To tick task 17 you need to review `first-visit.contract.test.js` and run `necro freeze receipt-viewer`.

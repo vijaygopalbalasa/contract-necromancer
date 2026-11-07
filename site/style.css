@@ -24,13 +24,18 @@
   box-sizing: border-box;
 }
 
+/* The root element paints the whole background once: the page color and the warm moon glow, fixed to the window. The
+   body paints nothing, so no second background can end partway down a tall page and leave a band or a seam. */
 html {
-  background: var(--bg);
+  min-height: 100%;
+  background-color: var(--bg);
+  background-image: radial-gradient(48rem 26rem at 88% -12%, rgba(255, 169, 77, 0.06), transparent 70%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 body {
   margin: 0;
-  background: var(--bg);
   color: var(--text);
   font: 1rem/1.6 var(--font-body);
   overflow-wrap: anywhere;
@@ -42,7 +47,9 @@ body {
   color: var(--text);
 }
 
-/* ---- Fog: two faint layers low on the screen and a warm moon glow at the top. Decorative, behind everything. ---- */
+/* ---- Fog: two faint layers low on the screen. Decorative, behind everything. Each layer fills the fixed window-sized
+   box and every blob fades to nothing before it reaches an edge of that box, so no blob is ever cut off into a band,
+   even when a phone's address bar changes the window height. ---- */
 
 .fog {
   position: fixed;
@@ -50,31 +57,28 @@ body {
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
-  background: radial-gradient(48rem 26rem at 88% -12%, rgba(255, 169, 77, 0.06), transparent 70%);
 }
 
 .fog::before,
 .fog::after {
   content: "";
   position: absolute;
+  top: 0;
+  bottom: 0;
   left: -50%;
   right: -50%;
 }
 
 .fog::before {
-  bottom: -12vh;
-  height: 50vh;
   background:
-    radial-gradient(closest-side at 22% 62%, rgba(185, 176, 207, 0.1), transparent),
-    radial-gradient(closest-side at 64% 48%, rgba(185, 176, 207, 0.07), transparent);
+    radial-gradient(closest-side at 22% 78%, rgba(185, 176, 207, 0.1), transparent),
+    radial-gradient(closest-side at 64% 70%, rgba(185, 176, 207, 0.07), transparent);
 }
 
 .fog::after {
-  bottom: -20vh;
-  height: 40vh;
   background:
-    radial-gradient(closest-side at 40% 55%, rgba(185, 176, 207, 0.08), transparent),
-    radial-gradient(closest-side at 84% 60%, rgba(185, 176, 207, 0.06), transparent);
+    radial-gradient(closest-side at 40% 84%, rgba(185, 176, 207, 0.08), transparent),
+    radial-gradient(closest-side at 84% 76%, rgba(185, 176, 207, 0.06), transparent);
 }
 
 /* ---- Layout ---- */
@@ -383,6 +387,7 @@ button:disabled {
 /* ---- The verdict leads: Risen or Still buried, one number, one sentence. ---- */
 
 .verdict {
+  scroll-margin-top: 1rem;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
@@ -696,6 +701,11 @@ button:disabled {
 /* ---- Motion, only for people who have not asked for less of it ---- */
 
 @media (prefers-reduced-motion: no-preference) {
+  /* The banner scrolls into view smoothly only when motion is welcome. */
+  html {
+    scroll-behavior: smooth;
+  }
+
   @keyframes drift {
     from {
       transform: translate3d(-8%, 0, 0);

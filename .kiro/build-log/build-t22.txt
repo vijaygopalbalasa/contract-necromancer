@@ -1,0 +1,120 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=8
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+Requirement 6.9 didn't match my regex; let me read the requirements file directly.
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Run Command
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Append to File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Four fail as expected; the "outside any project" test passes on the current code, which is right since that behavior must not change. Now the implementation.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+The contract fails on the old code and passes on the new. The stash was restored. Now the full suite, plus a check that the existing contracts still pass.
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 22 is implemented and `npm test` passes: 436 of 436. The 75 existing and new necro-core contracts also pass when run directly with `node --test`.
+
+**How I read 6.9:** the project root is found from the receipt's location, not from where you run the command. `necro verify` starts at the receipt file's folder and walks upward to the nearest folder holding `.necro/lock.json`. That folder is the root for everything else: re-hashing pinned files, reading the lock and running the contracts. If no folder above the receipt has a lock, the current folder is used, as before. A relative receipt path is still resolved against the current folder.
+
+The criterion's "from a folder that does not contain the receipt's project" could mean only applying the lookup when the current folder isn't already the project. I applied it always. When you run from the project root, the nearest lock is that root, so nothing changes there.
+
+Run on the real `pumpkin-ledger` receipt, the current code gives `CONFIRMED` from the example folder and from `/tmp`. Before the change, the root and `/tmp` runs gave `MISMATCH`.
+
+**What changed**
+- `src/verify.js`: a new `projectRoot()` helper, and `verify()` now uses the found root. Nothing else in the file changed.
+- `test/verify.test.js`: five new `R6.9` tests. They are written first, and four failed against the old code. They cover:
+  - the same output and exit code from the repository root, the example folder and an unrelated folder, for both a confirming and a mismatching receipt;
+  - a receipt kept deeper inside an example, where the nearest lock wins;
+  - a receipt outside any project with a lock, which is checked in the current folder;
+  - the real `pumpkin-ledger` receipt.
+- `contracts/necro-core/verify-anywhere.contract.test.js` (new): one contract, `R6.9 …`. It builds a temporary repository with an example project, then compares `necro verify` output and exit code from the three folders. Run against the old `src/verify.js`, it fails.
+
+**What I left alone**
+- No frozen files edited, `necro freeze` not run, task 22 not ticked.
+- `.necro/state/*` shows as modified in git. I didn't touch those files; the hooks update them.
+- The new contract is a draft until a person freezes `necro-core` again. `.necro/lock.json` records its contract list, so `R6.9` can't be required by the gate until then.

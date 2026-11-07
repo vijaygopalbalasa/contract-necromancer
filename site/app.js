@@ -6,6 +6,7 @@ import { computeReceiptHash } from './lib/canon.js';
 import { parseReceipt, summarize, groupContracts, sortByCriterion, plainTaskLine, verdict, MAX_RECEIPT_BYTES } from './lib/receipt.js';
 import { parseReceiptUrl, parseRepo, isCommitId, verifyCommand } from './lib/repo.js';
 import { checkFiles } from './lib/files.js';
+import { SAMPLES, chooseInitialView, scrollOptions } from './lib/samples.js';
 
 const LOAD_FAILED = 'Could not load that receipt. Check the link and try again.';
 const FILE_TOO_BIG = 'This receipt is larger than 1 MB. Open a receipt file written by necro.';
@@ -13,7 +14,8 @@ const FILE_UNREADABLE = 'Could not read that file. Choose a receipt file written
 const NO_CRYPTO = 'Cannot check: this page needs https or localhost.';
 // The public home of this repository, which the sample receipt's files are checked against.
 export const SAMPLE_REPO = 'vijaygopalbalasa/contract-necromancer';
-const SAMPLE_URL = './sample-receipt.json';
+// Where each sample is fetched from, on the same origin as the page.
+const SAMPLE_URLS = { risen: './sample-receipt.json', buried: './sample-buried.json' };
 const SAMPLE_FAILED = 'Could not load the sample. Reload the page and try again.';
 const COPY_FAILED = 'Select the command and copy it.';
 const UNCOMMITTED_NOTICE = 'Some files are not in the commit yet. Commit the work and re-run the gate for a fully public check.';
@@ -36,13 +38,13 @@ function requestOptions() {
   return options;
 }
 
-export function start({ document, location, fetch, navigator }) {
+export function start({ document, location, fetch, navigator, matchMedia }) {
   const $ = (id) => document.getElementById(id);
   const els = {};
   for (const id of [
     'paste', 'show', 'file', 'error', 'receipt', 'spec', 'commit', 'receipt-hash', 'created', 'task', 'summary', 'groups',
     'hash-check', 'hash-badge', 'hash-detail', 'repo', 'run', 'command', 'copy', 'copy-note', 'command-note', 'file-check',
-    'check', 'repo-error', 'file-notice', 'file-summary', 'files', 'sample', 'sample-row', 'verdict',
+    'check', 'repo-error', 'file-notice', 'file-summary', 'files', 'sample', 'sample-buried', 'sample-note', 'verdict',
   ]) {
     els[id] = $(id);
   }
@@ -50,6 +52,9 @@ export function start({ document, location, fetch, navigator }) {
   // Each receipt that is shown gets a number, so the answer to a slow check for an older receipt is ignored.
   let shown = 0;
   let current = null; // the receipt on screen, or null
+  // Each request to open something gets a number too. A slow load that is no longer the latest request is dropped, so
+  // a sample that arrives late never replaces a receipt the visitor pasted meanwhile.
+  let latest = 0;
 
   function make(tag, className, text) {
     const e = document.createElement(tag);
@@ -63,15 +68,14 @@ export function start({ document, location, fetch, navigator }) {
     current = null;
     for (const id of ['verdict', 'receipt', 'hash-check', 'run', 'file-check']) els[id].hidden = true;
     for (const id of [
-      'verdict', 'spec', 'commit', 'receipt-hash', 'created', 'task', 'summary', 'groups', 'hash-badge', 'hash-detail', 'command',
-      'copy-note', 'command-note', 'repo-error', 'file-notice', 'file-summary', 'files',
+      'verdict', 'sample-note', 'spec', 'commit', 'receipt-hash', 'created', 'task', 'summary', 'groups', 'hash-badge', 'hash-detail',
+      'command', 'copy-note', 'command-note', 'repo-error', 'file-notice', 'file-summary', 'files',
     ]) {
       els[id].textContent = '';
     }
     els.verdict.className = 'verdict';
     els['hash-badge'].className = 'badge';
     els.check.disabled = false;
-    els['sample-row'].hidden = false;
   }
 
   function showError(message) {
@@ -219,8 +223,26 @@ export function start({ document, location, fetch, navigator }) {
     }
   }
 
-  // The one place a receipt is shown. Returns a promise that resolves when the hash check is done.
-  function showReceipt(text) {
+  // True when the visitor has asked the browser for less motion, and when we cannot tell.
+  function reducedMotion() {
+    try {
+      return typeof matchMedia !== 'function' || matchMedia('(prefers-reduced-motion: reduce)').matches;
+    } catch {
+      return true;
+    }
+  }
+
+  // The verdict is the first thing a reviewer needs, and the open form above it can push it below the fold.
+  // scrollOptions turns the animation off under prefers-reduced-motion: reduce.
+  function bringBannerIntoView() {
+    if (typeof els.verdict.scrollIntoView !== 'function') return;
+    els.verdict.scrollIntoView(scrollOptions({ reducedMotion: reducedMotion() }));
+  }
+
+  // The one place a receipt is shown. `sample` is the entry of SAMPLES being shown, if any. `scroll` is true after
+  // something the visitor did, so the banner is brought into view. Returns a promise that resolves when the hash check
+  // is done.
+  function showReceipt(text, { sample = null, scroll = false } = {}) {
     const parsed = parseReceipt(text);
     if (!parsed.ok) {
       showError(parsed.message);
@@ -244,40 +266,53 @@ export function start({ document, location, fetch, navigator }) {
     els['hash-check'].hidden = false;
     els.run.hidden = false;
     els['file-check'].hidden = false;
-    els['sample-row'].hidden = true;
     updateCommand();
+    if (sample) els['sample-note'].textContent = sample.note;
+    if (scroll) bringBannerIntoView();
     return checkHash(receipt, id);
   }
 
+  async function fetchText(url) {
+    const response = await fetch(url, requestOptions());
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.text();
+  }
+
   async function loadFromUrl(url) {
+    const request = ++latest;
     let text;
     try {
-      const response = await fetch(url, requestOptions());
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      text = await response.text();
+      text = await fetchText(url);
     } catch {
-      showError(LOAD_FAILED);
+      if (request === latest) showError(LOAD_FAILED);
       return;
     }
-    await showReceipt(text);
+    if (request !== latest) return;
+    await showReceipt(text, { scroll: true });
   }
 
-  async function loadSample() {
+  // `byVisitor` is false for the sample a first visit shows by itself: that one does not scroll the page away from
+  // the intro.
+  async function loadSample(sample, byVisitor) {
+    const request = ++latest;
     let text;
     try {
-      const response = await fetch(SAMPLE_URL, requestOptions());
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      text = await response.text();
+      text = await fetchText(SAMPLE_URLS[sample.id]);
     } catch {
-      showError(SAMPLE_FAILED);
+      if (request === latest) showError(SAMPLE_FAILED);
       return;
     }
+    if (request !== latest) return;
     els.repo.value = SAMPLE_REPO;
-    await showReceipt(text);
+    await showReceipt(text, { sample, scroll: byVisitor });
   }
 
-  els.show.addEventListener('click', () => showReceipt(els.paste.value));
-  els.sample.addEventListener('click', loadSample);
+  els.show.addEventListener('click', () => {
+    latest += 1;
+    return showReceipt(els.paste.value, { scroll: true });
+  });
+  els.sample.addEventListener('click', () => loadSample(SAMPLES[0], true));
+  els['sample-buried'].addEventListener('click', () => loadSample(SAMPLES[1], true));
   els.repo.addEventListener('input', updateCommand);
   els.check.addEventListener('click', runFileCheck);
   els.copy.addEventListener('click', copyCommand);
@@ -285,6 +320,7 @@ export function start({ document, location, fetch, navigator }) {
   els.file.addEventListener('change', async () => {
     const file = els.file.files && els.file.files[0];
     if (!file) return;
+    const request = ++latest;
     if (file.size > MAX_RECEIPT_BYTES) {
       showError(FILE_TOO_BIG);
       return;
@@ -293,19 +329,20 @@ export function start({ document, location, fetch, navigator }) {
     try {
       text = await file.text();
     } catch {
-      showError(FILE_UNREADABLE);
+      if (request === latest) showError(FILE_UNREADABLE);
       return;
     }
-    await showReceipt(text);
+    if (request !== latest) return;
+    await showReceipt(text, { scroll: true });
   });
 
-  // Opening the page with ?receipt=<raw url>.
-  const requested = parseReceiptUrl(location.search);
-  if (requested === null) return Promise.resolve();
-  if (!requested.ok) {
-    showError(requested.message);
-    return Promise.resolve();
+  // Opening the page: the receipt the link names, else (on a first visit) the risen sample.
+  const view = chooseInitialView({ requested: parseReceiptUrl(location.search), pasted: els.paste.value });
+  if (view.action === 'error') showError(view.message);
+  if (view.action === 'sample') return loadSample(SAMPLES.find((x) => x.id === view.sample), false);
+  if (view.action === 'url') {
+    els.repo.value = view.repo;
+    return loadFromUrl(view.url);
   }
-  els.repo.value = requested.repo;
-  return loadFromUrl(requested.url);
+  return Promise.resolve();
 }

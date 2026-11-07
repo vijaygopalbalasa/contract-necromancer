@@ -4,10 +4,22 @@ import { canonicalJson, sha256, hashFile } from './canon.js';
 import { runContracts } from './contracts.js';
 import { readLock } from './lock.js';
 
-// Read a receipt JSON file, resolving a relative path against cwd.
-function readReceipt(cwd, receiptFile) {
-  const abs = path.isAbsolute(receiptFile) ? receiptFile : path.join(cwd, receiptFile);
-  return JSON.parse(fs.readFileSync(abs, 'utf8'));
+// The receipt file's absolute path; a relative path is resolved against cwd.
+function receiptPath(cwd, receiptFile) {
+  return path.resolve(cwd, receiptFile);
+}
+
+// Req 6.9: the project root is the nearest folder above the receipt file that
+// holds .necro/lock.json, so the result is the same from any working directory.
+// When no folder above the receipt has a lock, the current folder is the root.
+function projectRoot(cwd, receiptAbs) {
+  let dir = path.dirname(receiptAbs);
+  for (;;) {
+    if (fs.existsSync(path.join(dir, '.necro', 'lock.json'))) return dir;
+    const parent = path.dirname(dir);
+    if (parent === dir) return cwd;
+    dir = parent;
+  }
 }
 
 // Recompute the hash of a pinned file. Returns null if the file is missing.
@@ -55,8 +67,12 @@ function diffNames(expected, got) {
 // the results by name. Prints CONFIRMED <receiptHash>. and returns 0 when
 // everything matches; prints MISMATCH with the changed paths or contract names
 // and returns 1 otherwise.
-export function verify(cwd, receiptFile) {
-  const receipt = readReceipt(cwd, receiptFile);
+export function verify(workingDir, receiptFile) {
+  const receiptAbs = receiptPath(workingDir, receiptFile);
+  const receipt = JSON.parse(fs.readFileSync(receiptAbs, 'utf8'));
+  // Req 6.9: everything below is relative to the receipt's project, not to where
+  // the command was started.
+  const cwd = projectRoot(workingDir, receiptAbs);
 
   // Req 6.5: a receipt must have requirements and contracts.
   if (!receipt.requirements || !receipt.contracts || receipt.contracts.length === 0) {

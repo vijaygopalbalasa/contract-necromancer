@@ -683,3 +683,125 @@ test('R6.8 an altered receipt is still caught first, even for a re-frozen spec',
     fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Req 6.9: the project root is found from the receipt, so verify gives the same
+// result from any working directory
+// ---------------------------------------------------------------------------
+
+// A repository root that has its own lock (spec 'outer'), with an example project
+// under examples/demo that has a lock of its own (spec 'demo') and a genuine
+// receipt, the layout of this repository and its examples. Returns the folders and
+// the receipt's absolute path.
+function repoWithExample() {
+  const root = tmpCwd();
+  write(root, '.kiro/specs/outer/requirements.md', '# Outer\n');
+  write(root, 'contracts/outer/o.contract.test.js', OTHER_FILE);
+  freezeSpec(root, 'outer');
+  const example = path.join(root, 'examples', 'demo');
+  const { file } = frozenWithReceipt(example);
+  return { root, example, receipt: path.join(example, file) };
+}
+
+// verify() from `cwd`, naming the receipt by a path relative to `cwd`.
+function verifyFrom(cwd, receiptAbs) {
+  return captureStdout(() => verify(cwd, path.relative(cwd, receiptAbs)));
+}
+
+test('R6.9 verifying an example\'s receipt from the repository root, the example folder and an unrelated folder gives the same output and exit code', () => {
+  const { root, example, receipt } = repoWithExample();
+  const elsewhere = tmpCwd();
+  try {
+    const here = verifyFrom(example, receipt);
+    assert.equal(here.code, 0, here.out);
+    assert.match(here.out, /CONFIRMED/);
+
+    for (const [label, cwd] of [['repository root', root], ['unrelated folder', elsewhere]]) {
+      const got = verifyFrom(cwd, receipt);
+      assert.equal(got.code, here.code, `${label}: ${got.out}`);
+      assert.equal(got.out, here.out, label);
+    }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+    fs.rmSync(elsewhere, { recursive: true, force: true });
+  }
+});
+
+test('R6.9 a mismatch reads the same from every folder too', () => {
+  const { root, example, receipt } = repoWithExample();
+  const elsewhere = tmpCwd();
+  try {
+    fs.appendFileSync(path.join(example, 'contracts/demo/a.contract.test.js'), '// changed\n');
+    const here = verifyFrom(example, receipt);
+    assert.equal(here.code, 1, here.out);
+    assert.match(here.out, /MISMATCH/);
+    assert.ok(here.out.includes('contracts/demo/a.contract.test.js'), here.out);
+
+    for (const [label, cwd] of [['repository root', root], ['unrelated folder', elsewhere]]) {
+      const got = verifyFrom(cwd, receipt);
+      assert.equal(got.code, here.code, `${label}: ${got.out}`);
+      assert.equal(got.out, here.out, label);
+    }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+    fs.rmSync(elsewhere, { recursive: true, force: true });
+  }
+});
+
+test('R6.9 the nearest folder above the receipt that holds .necro/lock.json is the project root', () => {
+  const { root, example, receipt } = repoWithExample();
+  try {
+    // A receipt kept in a deeper folder of the example is still the example's.
+    const deeper = path.join(example, 'saved', 'receipts', 'copy.json');
+    write(example, 'saved/receipts/copy.json', fs.readFileSync(receipt, 'utf8'));
+    const got = verifyFrom(root, deeper);
+    assert.equal(got.code, 0, got.out);
+    assert.match(got.out, /CONFIRMED/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('R6.9 a receipt outside any project with a lock is verified in the current folder, as before', () => {
+  const { example, receipt } = repoWithExample();
+  const orphans = tmpCwd();
+  const bare = tmpCwd();
+  try {
+    const orphan = path.join(orphans, 'receipt.json');
+    fs.copyFileSync(receipt, orphan);
+
+    // Run in the project itself: its lock and files are used.
+    const inProject = verifyFrom(example, orphan);
+    assert.equal(inProject.code, 0, inProject.out);
+    assert.match(inProject.out, /CONFIRMED/);
+
+    // Run in a folder whose lock lacks the spec: the lock of that folder decides.
+    write(bare, '.necro/lock.json', JSON.stringify({ specs: {} }));
+    const noSpec = verifyFrom(bare, orphan);
+    assert.equal(noSpec.code, 1, noSpec.out);
+    assert.match(noSpec.out, /MISMATCH/);
+    assert.ok(noSpec.out.includes("'demo'"), noSpec.out);
+  } finally {
+    fs.rmSync(example, { recursive: true, force: true });
+    fs.rmSync(orphans, { recursive: true, force: true });
+    fs.rmSync(bare, { recursive: true, force: true });
+  }
+});
+
+test('R6.9 the real pumpkin-ledger receipt is CONFIRMED from the repository root and from an unrelated folder', () => {
+  const repo = path.resolve(import.meta.dirname, '..');
+  const dir = path.join(repo, 'examples', 'pumpkin-ledger', '.necro', 'receipts', 'ledger');
+  const receipt = path.join(dir, '2c6a247bf4ddaa3cdbedf06e5abf719cf6da88bdf12a86df1097c26264811f71.json');
+  const elsewhere = tmpCwd();
+  try {
+    const inExample = verifyFrom(path.join(repo, 'examples', 'pumpkin-ledger'), receipt);
+    assert.equal(inExample.code, 0, inExample.out);
+    for (const cwd of [repo, elsewhere]) {
+      const got = verifyFrom(cwd, receipt);
+      assert.equal(got.code, 0, `${cwd}: ${got.out}`);
+      assert.equal(got.out, inExample.out, cwd);
+    }
+  } finally {
+    fs.rmSync(elsewhere, { recursive: true, force: true });
+  }
+});

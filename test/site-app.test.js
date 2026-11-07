@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { createDom, findAll } from './fixtures/fake-dom.js';
 import { start } from '../site/app.js';
 import { MAX_RECEIPT_BYTES } from '../site/lib/receipt.js';
+import { SAMPLES } from '../site/lib/samples.js';
 import { computeReceiptHash } from '../site/lib/canon.js';
 
 const fixtureText = fs.readFileSync(new URL('./fixtures/receipt-valid.json', import.meta.url), 'utf8');
@@ -13,9 +14,14 @@ const fixture = () => JSON.parse(fixtureText);
 const RAW = 'https://raw.githubusercontent.com/o/n/main/r.json';
 
 // A page with injected fetch, location and clipboard. `fetchMap` maps URL to a Response (or a function returning one).
-function page({ search = '', fetchMap = {}, clipboard } = {}) {
+// Since task 17 a first visit loads the sample by itself. Most tests here are about something else, so by default the
+// page starts like a visit where the browser restored a pasted form (the textarea has text) and loads nothing.
+// Pass `firstVisit: true` for a visit with nothing pasted. `scrolls` records every scrollIntoView on the banner with
+// what the page looked like at that moment.
+function page({ search = '', fetchMap = {}, clipboard, firstVisit = false, pasted, matchMedia, scrollable = true } = {}) {
   const dom = createDom();
   const calls = [];
+  const scrolls = [];
   const fetch = async (url, options) => {
     calls.push({ url: String(url), options });
     const hit = fetchMap[String(url)];
@@ -25,8 +31,20 @@ function page({ search = '', fetchMap = {}, clipboard } = {}) {
   };
   const navigator = { clipboard };
   const location = { search, href: `https://example.test/${search}` };
-  const ready = start({ document: dom.document, location, fetch, navigator });
-  return { ...dom, calls, ready, text: (id) => dom.el(id).textContent };
+  if (scrollable) {
+    const banner = dom.el('verdict');
+    banner.scrollIntoView = (options) =>
+      scrolls.push({
+        options,
+        hidden: banner.hidden,
+        banner: banner.textContent,
+        rows: findAll(dom.el('groups'), (e) => e.classList.contains('contract')).length,
+      });
+  }
+  if (pasted !== undefined) dom.el('paste').value = pasted;
+  else if (!firstVisit) dom.el('paste').value = '{}';
+  const ready = start({ document: dom.document, location, fetch, navigator, matchMedia });
+  return { ...dom, calls, scrolls, ready, text: (id) => dom.el(id).textContent };
 }
 
 async function paste(p, text) {
@@ -559,12 +577,13 @@ test('file check text from a hostile path is written as text', async () => {
 
 import { SAMPLE_REPO } from '../site/app.js';
 
-test('with no receipt the page offers a Load the sample button', async () => {
+test('with no receipt the page offers a risen and a buried sample button', async () => {
   const p = page();
   await p.ready;
   assert.equal(p.el('sample-row').hidden, false);
   const html = fs.readFileSync(new URL('../site/index.html', import.meta.url), 'utf8');
-  assert.match(html, /<button[^>]*id="sample"[^>]*>Load the sample<\/button>/);
+  assert.match(html, /<button[^>]*id="sample"[^>]*>Load the risen sample<\/button>/);
+  assert.match(html, /<button[^>]*id="sample-buried"[^>]*>Load the buried sample<\/button>/);
 });
 
 test('pressing Load the sample fetches ./sample-receipt.json from the same origin, renders it and sets the repository box', async () => {
@@ -592,10 +611,10 @@ test('the sample re-run command clones this repository, not the placeholder (7.4
   assert.doesNotMatch(p.text('command'), /OWNER\/NAME/);
 });
 
-test('the sample button hides while a receipt is shown and comes back when the receipt is cleared', async () => {
+test('the sample buttons stay visible while a receipt is shown, so switching needs one click (9.2)', async () => {
   const p = page();
   await paste(p, fixtureText);
-  assert.equal(p.el('sample-row').hidden, true);
+  assert.equal(p.el('sample-row').hidden, false);
   await paste(p, 'broken');
   assert.equal(p.el('sample-row').hidden, false);
 });
@@ -749,4 +768,182 @@ test('contract rows carry their state in words and hold no glyph or image elemen
     assert.doesNotMatch(row.textContent, /[^\x00-\x7f]/, 'no symbol a screen reader would read out');
     assert.ok(findAll(row, () => true).every((e) => !['IMG', 'SVG', 'CANVAS'].includes(e.tagName)));
   }
+});
+
+// ---- Task 17: first visit shows a receipt, risen and buried (9.1 to 9.4) ----
+
+const risenText = fs.readFileSync(new URL('../site/sample-receipt.json', import.meta.url), 'utf8');
+const buriedText = fs.readFileSync(new URL('../site/sample-buried.json', import.meta.url), 'utf8');
+const sampleFetches = { './sample-receipt.json': () => new Response(risenText), './sample-buried.json': () => new Response(buriedText) };
+const firstVisit = (extra = {}) => page({ firstVisit: true, fetchMap: sampleFetches, ...extra });
+const urls = (p) => p.calls.map((c) => c.url);
+
+test('9.1 a first visit shows the risen sample at once, without a click, and says it is a sample', async () => {
+  const p = firstVisit();
+  await p.ready;
+  assert.deepEqual(urls(p), ['./sample-receipt.json']);
+  assert.equal(p.text('spec'), JSON.parse(risenText).spec);
+  assert.equal(p.el('receipt').hidden, false);
+  assert.match(p.text('verdict'), /^Risen\b/);
+  assert.equal(p.text('sample-note'), SAMPLES[0].note);
+  assert.match(p.text('sample-note'), /\bsample\b/i);
+  assert.equal(p.el('repo').value, SAMPLE_REPO);
+  assert.equal(p.text('error'), '');
+});
+
+test('9.1 the sample is not loaded when the URL names a receipt', async () => {
+  const p = firstVisit({ search: `?receipt=${RAW}`, fetchMap: { ...sampleFetches, [RAW]: () => new Response(fixtureText) } });
+  await p.ready;
+  assert.deepEqual(urls(p), [RAW]);
+  assert.equal(p.text('sample-note'), '');
+  assert.equal(p.text('spec'), fixture().spec);
+});
+
+test('9.1 a bad ?receipt= shows its message and no sample', async () => {
+  const p = firstVisit({ search: '?receipt=http://evil.example/r.json' });
+  await p.ready;
+  assert.deepEqual(urls(p), []);
+  assert.match(p.text('error'), /raw\.githubusercontent\.com/);
+  assert.equal(p.el('receipt').hidden, true);
+});
+
+test('9.1 the sample is not loaded over text the visitor already pasted', async () => {
+  const p = firstVisit({ pasted: fixtureText });
+  await p.ready;
+  assert.deepEqual(urls(p), []);
+  assert.equal(p.el('receipt').hidden, true);
+  assert.equal(p.el('paste').value, fixtureText);
+});
+
+test('9.1 if the sample cannot be loaded the page says so in one sentence and still takes a pasted receipt', async () => {
+  const p = firstVisit({ fetchMap: {} });
+  await p.ready;
+  assert.equal(p.text('error'), 'Could not load the sample. Reload the page and try again.');
+  assert.equal(p.el('receipt').hidden, true);
+  await paste(p, fixtureText);
+  assert.equal(p.text('error'), '');
+  assert.equal(p.text('spec'), fixture().spec);
+});
+
+test('9.1 a slow sample never replaces a receipt the visitor pasted meanwhile', async () => {
+  let release;
+  const slow = new Promise((resolve) => (release = resolve));
+  const p = firstVisit({ fetchMap: { './sample-receipt.json': () => slow } });
+  const mine = fixture();
+  mine.spec = 'pasted-spec';
+  await paste(p, JSON.stringify(mine));
+  release(new Response(risenText));
+  await p.ready;
+  await settle();
+  assert.equal(p.text('spec'), 'pasted-spec');
+  assert.equal(p.text('sample-note'), '');
+});
+
+test('9.1 the sample note goes away when the visitor shows their own receipt', async () => {
+  const p = firstVisit();
+  await p.ready;
+  await paste(p, fixtureText);
+  assert.equal(p.text('sample-note'), '');
+  await p.el('sample').dispatch('click');
+  assert.equal(p.text('sample-note'), SAMPLES[0].note);
+});
+
+test('9.2 one click switches between the risen and the buried sample, and both stay on offer', async () => {
+  const p = firstVisit();
+  await p.ready;
+  await p.el('sample-buried').dispatch('click');
+  assert.equal(urls(p).at(-1), './sample-buried.json');
+  assert.equal(p.text('spec'), 'ledger');
+  assert.match(p.text('verdict'), /^Still buried\b/);
+  assert.match(p.text('verdict'), /\b9 required contracts fail\b/);
+  assert.equal(p.text('summary'), '9 of 18 contracts pass');
+  assert.equal(p.text('sample-note'), SAMPLES[1].note);
+  assert.equal(p.el('sample-row').hidden, false);
+  assert.equal(p.el('repo').value, SAMPLE_REPO);
+  assert.equal(p.text('error'), '');
+
+  await p.el('sample').dispatch('click');
+  assert.equal(urls(p).at(-1), './sample-receipt.json');
+  assert.match(p.text('verdict'), /^Risen\b/);
+  assert.equal(p.text('sample-note'), SAMPLES[0].note);
+  assert.equal(p.el('sample-row').hidden, false);
+});
+
+test('9.2 the buried sample shows its failing contracts as gravestones and its hash as MATCH', async () => {
+  const p = firstVisit();
+  await p.ready;
+  await p.el('sample-buried').dispatch('click');
+  const fails = rows(p).filter((r) => r.classList.contains('fail'));
+  assert.equal(fails.length, 9);
+  for (const row of fails) assert.match(row.textContent, /\bFAIL\b/);
+  assert.equal(p.text('hash-badge'), 'MATCH');
+  assert.match(p.text('command-note'), /names no commit/);
+});
+
+test('9.3 the banner is brought into view after paste, file pick, sample switch and a ?receipt= load', async () => {
+  const p = page();
+  await paste(p, fixtureText);
+  assert.equal(p.scrolls.length, 1);
+  const [s] = p.scrolls;
+  assert.equal(s.hidden, false, 'the banner is shown before it is scrolled to');
+  assert.match(s.banner, /^Risen\b/, 'the banner has its text before it is scrolled to');
+  assert.equal(s.rows, 3, 'the list is rendered before the scroll');
+
+  const text = JSON.stringify({ ...fixture(), spec: 'file-spec' });
+  p.el('file').files = [{ size: text.length, text: async () => text }];
+  await p.el('file').dispatch('change');
+  assert.equal(p.scrolls.length, 2);
+
+  const q = firstVisit();
+  await q.ready;
+  await q.el('sample-buried').dispatch('click');
+  assert.equal(q.scrolls.length, 1);
+  assert.match(q.scrolls[0].banner, /^Still buried\b/);
+  await q.el('sample').dispatch('click');
+  assert.equal(q.scrolls.length, 2);
+
+  const r = page({ search: `?receipt=${RAW}`, fetchMap: { [RAW]: () => new Response(fixtureText) } });
+  await r.ready;
+  assert.equal(r.scrolls.length, 1);
+});
+
+test('9.3 the sample that appears by itself on a first visit does not scroll the page away from the intro', async () => {
+  const p = firstVisit();
+  await p.ready;
+  assert.equal(p.scrolls.length, 0);
+});
+
+test('9.3 input that is not a receipt does not scroll', async () => {
+  const p = page();
+  await paste(p, 'not json');
+  assert.equal(p.scrolls.length, 0);
+});
+
+test('9.3 the scroll animates only when the visitor has not asked for reduced motion', async () => {
+  const asked = [];
+  const media = (matches) => (query) => (asked.push(query), { matches });
+
+  const calm = page({ matchMedia: media(false) });
+  await paste(calm, fixtureText);
+  assert.equal(calm.scrolls[0].options.behavior, 'smooth');
+  assert.equal(calm.scrolls[0].options.block, 'start');
+  assert.deepEqual([...new Set(asked)], ['(prefers-reduced-motion: reduce)']);
+
+  const reduced = page({ matchMedia: media(true) });
+  await paste(reduced, fixtureText);
+  assert.equal(reduced.scrolls[0].options.behavior, 'auto');
+
+  const unknown = page();
+  await paste(unknown, fixtureText);
+  assert.equal(unknown.scrolls[0].options.behavior, 'auto', 'no matchMedia: no animation');
+
+  const broken = page({ matchMedia: () => { throw new Error('boom'); } });
+  await paste(broken, fixtureText);
+  assert.equal(broken.scrolls[0].options.behavior, 'auto');
+});
+
+test('9.3 a page whose banner cannot scroll still shows the receipt', async () => {
+  const p = page({ scrollable: false });
+  await paste(p, fixtureText);
+  assert.equal(p.text('spec'), fixture().spec);
 });
