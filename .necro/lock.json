@@ -90,6 +90,16 @@
           "sha256": "c26300c8404a2648cf986db55d880efb0c690fd73e6e4f39967de002099284ae"
         },
         {
+          "name": "person-freeze",
+          "names": [
+            "R3.14 PreToolUse exits 2 for a shell command that runs necro freeze and says freezing is a person's step, and allows necro check, necro verify and a command that only mentions the word",
+            "R6.8 a receipt written before its spec was frozen again prints SUPERSEDED with the spec and the changed paths and exits 1, not MISMATCH, but a receipt whose files no longer match the lock is still a MISMATCH",
+            "R8.8 init writes a steering file saying a person freezes specs, the agent never runs necro freeze, and frozen specs are listed in .necro/lock.json"
+          ],
+          "path": "contracts/necro-core/person-freeze.contract.test.js",
+          "sha256": "197233cfe4434ea9d11f9055e51e6117e4ae54afc51806bbad08049b9efbe88f"
+        },
+        {
           "name": "receipts",
           "names": [
             "R5.1 a receipt records the spec, the git commit if available, and the hashes of the requirements, the contracts and the imported sources, with each result by name",
@@ -163,7 +173,7 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-07T18:57:49.448Z",
+      "frozenAt": "2026-11-07T19:06:02.297Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
         "sha256": "7670dcfd39a0a60715636d103ea4d490340be70e6b5b70c47e910367730755b1"

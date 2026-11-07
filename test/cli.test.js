@@ -310,3 +310,43 @@ test('Req 8.3: a second init leaves the files unchanged and says so', () => {
     fs.rmSync(project, { recursive: true, force: true });
   }
 });
+
+// Req 8.8: the steering text says a person freezes specs.
+function sentencesOf(text) {
+  return text
+    .split(/\n{2,}|(?<=[.!?])\s+/)
+    .map((s) => s.replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+}
+
+test('Req 8.8: init writes a steering file that says a person freezes specs and the agent never runs necro freeze', () => {
+  const project = tmpCwd();
+  try {
+    const bin = path.join(__dirname, '../bin/necro.js');
+    const res = spawnSync(process.execPath, [bin, 'init'], { cwd: project, encoding: 'utf8' });
+    assert.equal(res.status, 0, res.stderr);
+    const steering = fs.readFileSync(path.join(project, '.kiro/steering/necromancer.md'), 'utf8');
+
+    assert.match(steering, /\bperson (freezes|has frozen)\b|\bfrozen by a person\b/i, 'a person freezes specs');
+    assert.match(steering, /\bnever (run|runs)\b[^.\n]*`necro freeze`/i, 'the agent never runs `necro freeze`');
+    assert.ok(steering.includes('.necro/lock.json'), 'frozen specs are listed in .necro/lock.json');
+    assert.match(steering, /frozen contracts decide "done"/i, 'the older guidance stays');
+    assert.match(steering, /do not edit/i);
+
+    // Nowhere does the text tell the agent to run `necro freeze`: every sentence that
+    // names the command forbids it.
+    for (const sentence of sentencesOf(steering).filter((s) => /necro freeze/.test(s))) {
+      assert.match(sentence, /\b(never|not|must not|cannot|blocks?)\b/i, `must not tell the agent to freeze: ${sentence}`);
+    }
+    assert.ok(!/by running `necro freeze/i.test(steering));
+    assert.ok(!/run `necro freeze <spec>` to/i.test(steering));
+  } finally {
+    fs.rmSync(project, { recursive: true, force: true });
+  }
+});
+
+test('Req 8.8: the steering template and this project\'s own steering file say the same', () => {
+  const template = fs.readFileSync(path.join(__dirname, '../templates/necromancer.steering.md'), 'utf8');
+  const own = fs.readFileSync(path.join(__dirname, '../.kiro/steering/necromancer.md'), 'utf8');
+  assert.equal(own, template);
+});

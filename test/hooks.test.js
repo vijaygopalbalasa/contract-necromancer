@@ -2513,3 +2513,132 @@ test('R2.9 + R4.14 criteria on several sub-line formats are united, and a later 
     fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Req 3.14: freezing is a person's step
+// ---------------------------------------------------------------------------
+
+const SHELL_TOOL_NAMES = ['execute_bash', 'execute_pwsh', 'control_bash_process', 'control_pwsh_process'];
+
+const FREEZE_COMMANDS = [
+  'necro freeze x',
+  'node bin/necro.js freeze x',
+  'node ./bin/necro.js freeze x',
+  'node "/abs/path with space/bin/necro.js" freeze x',
+  "node '/abs/path with space/bin/necro.js' freeze x",
+  '"/usr/local/bin/node" "/abs/path with space/bin/necro.js" freeze x',
+  'npm test && necro freeze x',
+  'npm test; necro freeze x',
+  'npm test|necro freeze x',
+  'echo ok&&necro freeze x',
+  'false || necro freeze x',
+  'echo a & necro freeze x',
+  'bash -c "necro freeze x"',
+  "sh -c 'necro freeze x'",
+  'bash -lc "npm test && necro freeze x"',
+  'sudo bash -c "node /p/bin/necro.js freeze x"',
+  'eval "necro freeze x"',
+  '(necro freeze x)',
+  '{ necro freeze x; }',
+  'echo $(necro freeze x)',
+  'echo `necro freeze x`',
+  'echo "$(necro freeze x)"',
+  'echo start\nnecro freeze x\necho end',
+  'FOO=1 necro freeze x',
+  'npx necro freeze x',
+  'necro   freeze   x',
+  'necro "freeze" x',
+  "necro 'fr'eeze x",
+  'necro freeze',
+  '/opt/necro/bin/necro freeze x',
+  'necro.js freeze x',
+  'cd /tmp && node "$HOME/p/bin/necro.js" freeze x',
+];
+
+const NOT_FREEZE_COMMANDS = [
+  'necro check x',
+  'necro verify r.json',
+  'necro init',
+  'node bin/necro.js check x',
+  'node "/abs/path with space/bin/necro.js" verify r.json',
+  'echo freeze',
+  'grep freeze README.md',
+  'grep -rn "necro freeze" README.md',
+  'echo necro; echo freeze',
+  'necro check freeze',
+  'cat notes | grep freeze',
+  'git commit -m "explain necro freeze"',
+  'grep -c "necro freeze" README.md',
+  'echo "necro freeze x"',
+  'bash -c "echo freeze"',
+  'npm test',
+  'ls',
+  'freeze x',
+  'necro-freeze x',
+  'mynecro freeze x',
+];
+
+test('R3.14 PreToolUse blocks a shell command that runs necro freeze, in every spelling', () => {
+  const cwd = tmpCwd();
+  try {
+    for (const command of FREEZE_COMMANDS) {
+      const res = handlePreToolUse(payload(cwd, 'execute_bash', { command }));
+      assert.equal(res.exitCode, 2, `should block: ${JSON.stringify(command)}`);
+      assert.match(res.stderr, /person/i, `names freezing as a person's step: ${res.stderr}`);
+      assert.match(res.stderr, /freez/i, res.stderr);
+      assert.match(res.stderr, /lock/, 'says why: freezing rewrites the lock');
+    }
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.14 PreToolUse allows commands that only mention freeze or run other necro commands', () => {
+  const cwd = tmpCwd();
+  try {
+    for (const command of NOT_FREEZE_COMMANDS) {
+      const res = handlePreToolUse(payload(cwd, 'execute_bash', { command }));
+      assert.equal(res.exitCode, 0, `should allow: ${JSON.stringify(command)}: ${res.stderr}`);
+      assert.equal(res.stderr, '');
+    }
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.14 every Kiro shell tool is checked, and the command is read from the tool input', () => {
+  const cwd = tmpCwd();
+  try {
+    for (const tool of SHELL_TOOL_NAMES) {
+      const blocked = handlePreToolUse(payload(cwd, tool, { command: 'necro freeze x' }));
+      assert.equal(blocked.exitCode, 2, `${tool} blocked`);
+      assert.match(blocked.stderr, /person/i);
+      const allowed = handlePreToolUse(payload(cwd, tool, { command: 'necro check x' }));
+      assert.equal(allowed.exitCode, 0, `${tool} allowed: ${allowed.stderr}`);
+    }
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.14 the block does not depend on the project having a lock, and records no tasks.md state', () => {
+  const cwd = tmpCwd();
+  try {
+    const res = handlePreToolUse(payload(cwd, 'execute_bash', { command: 'necro freeze x' }));
+    assert.equal(res.exitCode, 2);
+    assert.ok(!fs.existsSync(path.join(cwd, '.necro')), 'a blocked call changes nothing');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.14 a write tool whose text mentions necro freeze is not a shell command', () => {
+  const cwd = tmpCwd();
+  try {
+    const res = handlePreToolUse(payload(cwd, 'fs_write', { path: 'notes.md', text: 'A person runs necro freeze x.\n' }));
+    assert.equal(res.exitCode, 0, res.stderr);
+    assert.equal(res.stderr, '');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});

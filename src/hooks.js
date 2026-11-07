@@ -179,6 +179,121 @@ function hasUncheckableString(toolName, toolInput) {
 }
 
 // ---------------------------------------------------------------------------
+// Freezing is a person's step (Req 3.14)
+// ---------------------------------------------------------------------------
+
+// Characters that end a word in a shell command line when they are not quoted:
+// command separators, pipes, redirections, grouping and backticks.
+const SHELL_OPERATORS = new Set([';', '&', '|', '(', ')', '<', '>', '`', '\n', '\r']);
+
+// Split a shell command line into words, the way a POSIX shell would: quotes and
+// backslashes are removed, and an unquoted operator ends the word and becomes a
+// word of its own (as '\n', so adjacent words are always two words that follow
+// each other in the same command). On Windows a backslash is a path separator, so
+// it stays in the word.
+// Returns [{ text, nested }]. `nested` is true for a word that holds a command
+// substitution (`$(...)` or backticks) inside double quotes, which the shell runs.
+function shellWords(command) {
+  const words = [];
+  let text = '';
+  let started = false;
+  let nested = false;
+  const flush = () => {
+    if (started) words.push({ text, nested });
+    text = '';
+    started = false;
+    nested = false;
+  };
+  const windows = process.platform === 'win32';
+  for (let i = 0; i < command.length; i++) {
+    const c = command[i];
+    if (c === "'") {
+      started = true;
+      const end = command.indexOf("'", i + 1);
+      const stop = end === -1 ? command.length : end;
+      text += command.slice(i + 1, stop);
+      i = stop;
+    } else if (c === '"') {
+      started = true;
+      let j = i + 1;
+      let inner = '';
+      while (j < command.length && command[j] !== '"') {
+        if (command[j] === '\\' && j + 1 < command.length && !windows) j++;
+        inner += command[j];
+        j++;
+      }
+      if (inner.includes('$(') || inner.includes('`')) nested = true;
+      text += inner;
+      i = j;
+    } else if (c === '\\' && !windows && i + 1 < command.length) {
+      if (command[i + 1] === '\n') {
+        i++; // a line continuation
+      } else {
+        started = true;
+        text += command[++i];
+      }
+    } else if (SHELL_OPERATORS.has(c)) {
+      flush();
+      words.push({ text: '\n', nested: false });
+    } else if (c === ' ' || c === '\t') {
+      flush();
+    } else {
+      started = true;
+      text += c;
+    }
+  }
+  flush();
+  return words;
+}
+
+// A word that names this tool: `necro`, `necro.js` (also the Windows shims), alone or
+// at the end of a path such as `bin/necro.js`.
+function isNecroWord(text) {
+  const base = text.split(/[\\/]/).pop();
+  return /^necro(\.js|\.cmd|\.exe|\.ps1)?$/i.test(base);
+}
+
+// A shell program: the word before an option such as `-c` that takes a command line.
+const SHELL_PROGRAM = /^(sh|bash|zsh|dash|ksh|csh|tcsh|fish|pwsh|powershell|cmd)(\.exe)?$/i;
+
+// A shell option that takes a command line as its next word: `-c`, `-lc`, `-ec`,
+// PowerShell's `-Command`, and cmd's `/c`.
+function takesCommandLine(text) {
+  return /^-[a-zA-Z]*c$/.test(text) || /^[-/](c|command)$/i.test(text);
+}
+
+// Req 3.14: true when a shell command line runs `necro freeze`: the word `freeze`
+// directly after a word that names this tool, anywhere in the command (after `&&`,
+// `;`, `|`, in a subshell or command substitution), and inside the command line
+// given to `bash -c`, `sh -c` or `eval`. Other uses of the word freeze, and other
+// necro commands, do not count.
+export function runsFreeze(command, depth = 0) {
+  if (typeof command !== 'string' || depth > 8) return false;
+  const words = shellWords(command);
+  let shellSeen = false; // a shell program earlier in the same command
+  for (let i = 0; i < words.length; i++) {
+    const { text, nested } = words[i];
+    if (text === '\n') {
+      shellSeen = false;
+      continue;
+    }
+    if (SHELL_PROGRAM.test(text.split(/[\\/]/).pop())) shellSeen = true;
+    if (isNecroWord(text) && words[i + 1] && words[i + 1].text === 'freeze') return true;
+    const prev = i > 0 ? words[i - 1].text : '';
+    const runsAsCommand = nested || prev === 'eval' || (shellSeen && takesCommandLine(prev));
+    if (runsAsCommand && /[\s;]/.test(text) && runsFreeze(text, depth + 1)) return true;
+  }
+  return false;
+}
+
+// The strings of a tool input, at any depth.
+function* inputStrings(value) {
+  if (typeof value === 'string') yield value;
+  else if (Array.isArray(value)) for (const v of value) yield* inputStrings(v);
+  else if (value && typeof value === 'object') for (const v of Object.values(value)) yield* inputStrings(v);
+}
+
+// ---------------------------------------------------------------------------
 // Detecting a task being marked done (Req 4.1, 4.2)
 // ---------------------------------------------------------------------------
 
@@ -423,6 +538,17 @@ export function handlePreToolUse(payload) {
   const toolName = payload.tool_name;
   const toolInput = payload.tool_input;
   if (!cwd || READ_ONLY_TOOLS.has(toolName)) return ALLOW;
+
+  // Req 3.14: freezing is a person's step, because it rewrites the lock that
+  // `necro verify` trusts. A shell command that runs `necro freeze` is blocked.
+  if (SHELL_TOOLS.has(toolName) && [...inputStrings(toolInput)].some((s) => runsFreeze(s))) {
+    return {
+      exitCode: 2,
+      stdout: '',
+      stderr:
+        "Freezing a spec is a person's step, so 'necro freeze' cannot run from the agent. It rewrites the lock that 'necro verify' trusts. Ask the person to review the contracts and freeze the spec themselves.",
+    };
+  }
 
   // Req 3.1, 3.2, 3.5, 3.6: a tool that is not known to be read-only is blocked
   // when any input field names .necro/ or a frozen file.

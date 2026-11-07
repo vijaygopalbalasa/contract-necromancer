@@ -19,6 +19,30 @@ function currentHash(cwd, relPath) {
   }
 }
 
+// Req 6.8: when the spec was frozen again after the receipt was written, return the
+// sorted paths (requirements and contract files) whose hash in the receipt differs
+// from the lock's. Returns [] when no such path exists, or when a requirements or
+// contract file on disk does not match the lock, because then the files are not
+// those of the newer freeze and the ordinary MISMATCH rules apply.
+function supersededPaths(cwd, receipt, frozenSpec) {
+  const lockFiles = [];
+  if (frozenSpec.requirements) lockFiles.push(frozenSpec.requirements);
+  lockFiles.push(...(frozenSpec.contracts || []));
+  const inLock = new Map(lockFiles.map((f) => [f.path, f.sha256]));
+
+  const changed = new Set();
+  const receiptFiles = [receipt.requirements, ...receipt.contracts];
+  for (const f of receiptFiles) {
+    if (inLock.has(f.path) && inLock.get(f.path) !== f.sha256) changed.add(f.path);
+  }
+  if (changed.size === 0) return [];
+
+  for (const f of lockFiles) {
+    if (currentHash(cwd, f.path) !== f.sha256) return [];
+  }
+  return [...changed].sort();
+}
+
 // Names that appear a different number of times in two lists.
 function diffNames(expected, got) {
   const count = new Map();
@@ -72,6 +96,16 @@ export function verify(cwd, receiptFile) {
   }
   const namesChanged = [];
   if (frozenSpec) {
+    // Req 6.8: the paths whose hash in the receipt differs from the lock's. Only
+    // a path in both counts, so a receipt that leaves a file out or adds one is
+    // still judged by the exact-match rules below (Req 6.7).
+    const superseded = supersededPaths(cwd, receipt, frozenSpec);
+    if (superseded.length > 0) {
+      console.log(
+        `SUPERSEDED. Spec '${receipt.spec}' was frozen again after this receipt was written. Changed since then: ${superseded.join(', ')}. This receipt describes an earlier freeze, not today's code. Run 'necro check ${receipt.spec}' for a current receipt.`,
+      );
+      return 1;
+    }
     // Requirements hash against the lock.
     if (!frozenSpec.requirements || receipt.requirements.sha256 !== frozenSpec.requirements.sha256) {
       changedFiles.push(receipt.requirements.path);

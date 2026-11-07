@@ -530,3 +530,156 @@ test('R6.7 an honest receipt is a MISMATCH when a lock contract fails now', () =
     fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Req 6.8: a receipt of an earlier freeze is SUPERSEDED, not a MISMATCH
+// ---------------------------------------------------------------------------
+
+const REQ_PATH = '.kiro/specs/demo/requirements.md';
+const A_PATH = 'contracts/demo/a.contract.test.js';
+const B_PATH = 'contracts/demo/b.contract.test.js';
+
+// A frozen spec with a genuine receipt, then the spec is edited and frozen again.
+function refrozen(cwd, edit) {
+  const { file, receipt } = frozenWithReceipt(cwd);
+  edit(cwd);
+  freezeSpec(cwd, 'demo');
+  return { file, receipt };
+}
+
+test('R6.8 a receipt written before the spec was frozen again prints SUPERSEDED with the spec and the changed paths', () => {
+  const cwd = tmpCwd();
+  try {
+    const { file } = refrozen(cwd, () => {
+      fs.appendFileSync(path.join(cwd, REQ_PATH), 'A new line.\n');
+      fs.appendFileSync(path.join(cwd, B_PATH), '// changed\n');
+    });
+    const { code, out } = captureStdout(() => verify(cwd, file));
+    assert.equal(code, 1, out);
+    assert.match(out, /SUPERSEDED/);
+    assert.doesNotMatch(out, /MISMATCH|CONFIRMED/);
+    assert.ok(out.includes('demo'), `names the spec: ${out}`);
+    assert.ok(out.includes(REQ_PATH), `names the changed requirements: ${out}`);
+    assert.ok(out.includes(B_PATH), `names the changed contract file: ${out}`);
+    assert.ok(!out.includes(A_PATH), `does not name the unchanged contract file: ${out}`);
+    assert.match(out, /earlier freeze/);
+    assert.match(out, /not today's code/);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.8 a change to the requirements alone, and to one contract file alone, is each SUPERSEDED', () => {
+  for (const [label, edit, named, unnamed] of [
+    ['requirements', (cwd) => fs.appendFileSync(path.join(cwd, REQ_PATH), 'More.\n'), REQ_PATH, B_PATH],
+    ['contract', (cwd) => fs.appendFileSync(path.join(cwd, A_PATH), '// changed\n'), A_PATH, REQ_PATH],
+  ]) {
+    const cwd = tmpCwd();
+    try {
+      const { file } = refrozen(cwd, edit);
+      const { code, out } = captureStdout(() => verify(cwd, file));
+      assert.equal(code, 1, `${label}: ${out}`);
+      assert.match(out, /SUPERSEDED/, label);
+      assert.ok(out.includes(named), `${label}: ${out}`);
+      assert.ok(!out.includes(unnamed), `${label}: ${out}`);
+    } finally {
+      fs.rmSync(cwd, { recursive: true, force: true });
+    }
+  }
+});
+
+test('R6.8 a receipt of the current freeze is still CONFIRMED after a second freeze of unchanged files', () => {
+  const cwd = tmpCwd();
+  try {
+    const { file } = refrozen(cwd, () => {});
+    const { code, out } = captureStdout(() => verify(cwd, file));
+    assert.equal(code, 0, out);
+    assert.match(out, /CONFIRMED/);
+    assert.doesNotMatch(out, /SUPERSEDED/);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.8 a lock edited so the files on disk no longer match it is a MISMATCH, not SUPERSEDED', () => {
+  const cwd = tmpCwd();
+  try {
+    const { file } = frozenWithReceipt(cwd);
+    const lockFile = path.join(cwd, '.necro', 'lock.json');
+    const lock = JSON.parse(fs.readFileSync(lockFile, 'utf8'));
+    lock.specs.demo.requirements.sha256 = 'd'.repeat(64);
+    fs.writeFileSync(lockFile, JSON.stringify(lock, null, 2));
+    const { code, out } = captureStdout(() => verify(cwd, file));
+    assert.equal(code, 1, out);
+    assert.match(out, /MISMATCH/);
+    assert.doesNotMatch(out, /SUPERSEDED/);
+    assert.ok(out.includes(REQ_PATH), out);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.8 one lock hash edited while the other files match the lock is still a MISMATCH', () => {
+  const cwd = tmpCwd();
+  try {
+    const { file } = refrozen(cwd, (dir) => fs.appendFileSync(path.join(dir, A_PATH), '// changed\n'));
+    // The lock now holds a hash for b that the file on disk does not have.
+    const lockFile = path.join(cwd, '.necro', 'lock.json');
+    const lock = JSON.parse(fs.readFileSync(lockFile, 'utf8'));
+    lock.specs.demo.contracts.find((c) => c.path === B_PATH).sha256 = 'e'.repeat(64);
+    fs.writeFileSync(lockFile, JSON.stringify(lock, null, 2));
+    const { code, out } = captureStdout(() => verify(cwd, file));
+    assert.equal(code, 1, out);
+    assert.match(out, /MISMATCH/);
+    assert.doesNotMatch(out, /SUPERSEDED/);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.8 after the spec was frozen again, a file edited on disk since is a MISMATCH', () => {
+  const cwd = tmpCwd();
+  try {
+    const { file } = refrozen(cwd, (dir) => fs.appendFileSync(path.join(dir, REQ_PATH), 'New.\n'));
+    fs.appendFileSync(path.join(cwd, A_PATH), '// edited after the second freeze\n');
+    const { code, out } = captureStdout(() => verify(cwd, file));
+    assert.equal(code, 1, out);
+    assert.match(out, /MISMATCH/);
+    assert.doesNotMatch(out, /SUPERSEDED/);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.8 a forged receipt that only drops a file stays a MISMATCH (R6.7), not SUPERSEDED', () => {
+  const cwd = tmpCwd();
+  try {
+    const { file } = frozenWithReceipt(cwd);
+    const { code, out } = verifyForged(cwd, file, (r) => {
+      r.contracts = r.contracts.filter((c) => c.path !== B_PATH);
+    });
+    assert.equal(code, 1, out);
+    assert.match(out, /MISMATCH/);
+    assert.doesNotMatch(out, /SUPERSEDED/);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.8 an altered receipt is still caught first, even for a re-frozen spec', () => {
+  const cwd = tmpCwd();
+  try {
+    const { file } = refrozen(cwd, (dir) => fs.appendFileSync(path.join(dir, REQ_PATH), 'New.\n'));
+    const receipt = JSON.parse(fs.readFileSync(path.join(cwd, file), 'utf8'));
+    receipt.spec = 'demo';
+    receipt.contracts[0].result = receipt.contracts[0].result === 'pass' ? 'fail' : 'pass';
+    const edited = path.join(cwd, 'edited.json');
+    fs.writeFileSync(edited, JSON.stringify(receipt));
+    const { code, out } = captureStdout(() => verify(cwd, edited));
+    assert.equal(code, 1, out);
+    assert.match(out, /altered/);
+    assert.doesNotMatch(out, /SUPERSEDED/);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});

@@ -1,0 +1,152 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=8
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Append to File
+[tool] Append to File
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+[tool] Append to File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+Now verify.js.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Failed: Invalid input for str_replace — oldStr: expected string, received undefined; newStr: expected string, received undefined
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] Run Command
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 19's code, tests and new contract file are in place, and `npm test` passes (413 tests, 0 failures). I did not tick task 19, did not run `necro freeze`, and did not touch any frozen file.
+
+**Test-first check:** I wrote the unit tests first and ran them against the old code. The R3.14, R6.8 and R8.8 tests failed as expected. The new contracts also fail against the previous `src/hooks.js`, `src/verify.js` and steering template. With the new code, all 72 contracts in `contracts/necro-core/` pass, including the three new ones.
+
+**What changed**
+- **`src/hooks.js` (R3.14):** The PreToolUse hook now exits 2 for a shell tool call that runs `necro freeze`. It splits the command the way a shell would and looks for `freeze` directly after a word named `necro`, `necro.js` or a path ending in either. This covers all the spellings you listed. It also catches `;`, `|`, `&`, subshells, `$(...)`, backticks and `bash -c`/`sh -c`/`eval`. The message says freezing is a person's step and rewrites the lock that `verify` trusts. `necro check x`, `necro verify r.json`, `echo freeze` and `grep freeze README.md` are allowed.
+- **`src/verify.js` (R6.8):** A receipt prints `SUPERSEDED` and exits 1 when its requirements or contract hashes differ from the lock and the files on disk match the lock. The message names the spec and the changed paths. It says the receipt describes an earlier freeze, not today's code. If the lock is edited so the disk no longer matches it, the receipt still prints `MISMATCH`.
+- **Steering text (R8.8):** `templates/necromancer.steering.md` now says a person freezes specs, the agent never runs `necro freeze`, and frozen specs are listed in `.necro/lock.json`. It no longer tells the agent to run the command. I copied it to `.kiro/steering/necromancer.md`; the two files are identical.
+- **Tests:** I added tests to `test/hooks.test.js`, `test/verify.test.js` and `test/cli.test.js`.
+- **New contract file:** `contracts/necro-core/person-freeze.contract.test.js` has one test each named `R3.14 …`, `R6.8 …` and `R8.8 …`. It carries its own helpers and the `from '…'` pin comments, like the other contract files.
+
+**How I read the criteria**
+- **R6.8, which paths count as "changed":** `SUPERSEDED` needs at least one path that is in both the receipt and the lock with a different hash. A receipt that only drops or adds a contract file, or only renames a contract, stays `MISMATCH`. The frozen R6.7 contract requires that. The message lists only the paths whose hash changed. A file added or removed by the new freeze is not listed.
+- **R6.8, which files must match the lock:** "files on disk match the lock" means the requirements file and every contract file in the lock entry. Pinned source files are not part of that test.
+- **R3.14, quoted text:** The text inside `bash -c`/`sh -c`/`eval` and inside `$(...)` is checked. Other quoted text is not, so `git commit -m "explain necro freeze"` and `echo "necro freeze x"` are allowed. The `-c` rule applies only when a shell program such as `bash` or `sh` appears earlier in the same command. That is why `grep -c "necro freeze" README.md` is allowed.
+- **R3.14, which tool fields are checked:** All string fields of the four shell tools are checked, not only `command`.
+- **R3.14, limits:** A freeze hidden in another interpreter, such as `python -c "os.system('necro freeze x')"`, is not detected.
+
+The contracts are ready for you to review and freeze.
