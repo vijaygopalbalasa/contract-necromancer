@@ -151,7 +151,7 @@ Their hook files use `node ../../bin/necro.js`, so they work where `node` is on 
 Kiro wrote the code of this repository task by task. A person reviewed the contracts and froze them.
 
 - Specs in `.kiro/specs/`:
-  - `necro-core`: the tool. 10 requirements, 30 tasks, 81 contracts in 19 files, 13 receipts.
+  - `necro-core`: the tool. 10 requirements, 30 tasks, 81 contracts in 19 files, 14 receipts.
   - `receipt-viewer`: the static page in `site/`. 9 requirements, 18 tasks, 25 contracts in 10 files, 19 receipts.
 - Steering in `.kiro/steering/`: `product.md`, `structure.md`, `tech.md`, and `necromancer.md`, which tells Kiro not to edit frozen files.
 - A custom agent in `.kiro/agents/necromancer.json` (task 21): the gate's hooks plus Kiro permission rules.
