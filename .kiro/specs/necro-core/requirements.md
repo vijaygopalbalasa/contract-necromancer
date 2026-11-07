@@ -92,6 +92,7 @@ receipts anyone can re-run.
 7. WHEN a lock exists THE SYSTEM SHALL require the receipt's spec to be in it, require the receipt's contract files, hashes and names to equal the lock's exactly (none missing, none extra), and run the lock's contracts rather than the receipt's list, so a receipt that leaves out a failing contract is a `MISMATCH`.
 8. IF the receipt's requirements or contract hashes differ from the lock's for its spec AND the requirements and contract files on disk match the lock (the spec was frozen again after the receipt was written) THEN THE SYSTEM SHALL print `SUPERSEDED` with the spec name and each path whose hash changed, say that the receipt describes an earlier freeze and not today's code, and exit with code 1, instead of printing `MISMATCH`. When the files on disk do not match the lock, the rules above still print `MISMATCH`.
 9. WHEN `necro verify <receiptFile>` runs from a folder that does not contain the receipt's project THE SYSTEM SHALL take as the project root the nearest folder above the receipt file that contains `.necro/lock.json`, so the result is the same from any working directory, and IF no such folder exists THEN use the current folder as before.
+10. WHEN `necro verify` uses a project root other than the current folder THE SYSTEM SHALL first print `Project: <absolute path>` so the user sees whose contracts run.
 
 ## Requirement 7: Session summary
 **User story:** As a developer, I want a summary when the agent stops, so that a false "done" is visible.
@@ -118,4 +119,13 @@ receipts anyone can re-run.
 2. WHEN every contract passes THE SYSTEM SHALL exit with code 0 and print the receipt path, and IF any fails THEN THE SYSTEM SHALL exit with code 1 and still write the receipt.
 3. IF the spec is not frozen THEN THE SYSTEM SHALL exit with code 1 and say to freeze it first.
 4. WHEN `necro check` runs THE SYSTEM SHALL not change `tasks.md`.
+
+## Requirement 10: MCP server and Kiro power
+**User story:** As a developer using Kiro, I want the agent to ask which contracts block a task and to re-run receipts through MCP, and to install the whole workflow as a Kiro power, so that the gate is one install away and the agent sees the contracts before it tries to tick.
+### Acceptance criteria
+1. WHEN a user runs `necro mcp` THE SYSTEM SHALL serve the Model Context Protocol over stdio (JSON-RPC 2.0, newline-delimited: `initialize`, `notifications/initialized`, `tools/list`, `tools/call`, `ping`) with no dependencies beyond Node.js.
+2. WHEN `tools/list` is called THE SYSTEM SHALL offer exactly three tools: `necro_status` (for each frozen spec, each task with ticked or not, the contracts it requires, and each contract's current pass or fail), `necro_check` (run `necro check <spec>` and return the results and the receipt path) and `necro_verify` (verify a receipt path and return CONFIRMED, MISMATCH or SUPERSEDED with the message).
+3. THE SYSTEM SHALL offer no tool that freezes a spec, edits a frozen file or ticks a task, and IF a tool call names any other tool or a spec that is not frozen THEN THE SYSTEM SHALL return a tool error with one plain sentence, not crash.
+4. WHEN a tool takes a spec name or a receipt path THE SYSTEM SHALL refuse a name or path outside the project root.
+5. WHEN the repository is installed as a Kiro power THE SYSTEM SHALL provide a `power/` folder with `plugin.json` (the Agent Plugins 1.0.0 fields `$schema`, `name`, `version`, `description`, `author`, `keywords`), `mcp.json` that starts `necro mcp`, and `skills/contract-necromancer/SKILL.md` that teaches the workflow (EARS criteria, contracts drafted for a person to review, the person freezes, check status before ticking, verify receipts).
 
