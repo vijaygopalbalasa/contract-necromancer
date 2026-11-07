@@ -2642,3 +2642,222 @@ test('R3.14 a write tool whose text mentions necro freeze is not a shell command
     fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Task 20: an agent's shell cannot move the lock (Req 3.15)
+// ---------------------------------------------------------------------------
+
+const LOCK_REL = '.necro/lock.json';
+const DEMO_CONTRACT_REL = 'contracts/demo/hello.contract.test.js';
+
+function postFor(cwd, toolName, toolInput) {
+  return { ...payload(cwd, toolName, toolInput), hook_event_name: 'PostToolUse' };
+}
+
+// What a command that re-freezes the spec does after the agent edited a contract:
+// the contract changes, and the lock and frozen copies are rewritten to match.
+function moveTheLock(cwd) {
+  fs.appendFileSync(path.join(cwd, DEMO_CONTRACT_REL), '\n// edited by the agent\n');
+  freezeSpec(cwd, 'demo');
+}
+
+const LOCK_MOVING_COMMANDS = [
+  'F=freeze; necro $F demo',
+  `node -e "require('child_process').execSync('necro ' + ['free','ze'].join('') + ' demo')"`,
+  `echo '{}' > .necro/lock.json`,
+];
+
+test('R3.15 a shell command that rewrites the lock and edits a frozen contract is undone: lock byte for byte, contract by 3.3', () => {
+  for (const command of LOCK_MOVING_COMMANDS) {
+    const cwd = tmpCwd();
+    try {
+      setupFrozen(cwd, 'demo');
+      const lockBefore = fs.readFileSync(path.join(cwd, LOCK_REL));
+      const contractBefore = fs.readFileSync(path.join(cwd, DEMO_CONTRACT_REL));
+
+      const pre = handlePreToolUse(payload(cwd, 'execute_bash', { command }));
+      assert.equal(pre.exitCode, 0, `the command is not recognised as freeze: ${pre.stderr}`);
+      moveTheLock(cwd);
+      assert.notDeepEqual(fs.readFileSync(path.join(cwd, LOCK_REL)), lockBefore, 'the lock moved');
+
+      const post = handlePostToolUse(postFor(cwd, 'execute_bash', { command }));
+      assert.equal(post.exitCode, 0);
+      assert.deepEqual(fs.readFileSync(path.join(cwd, LOCK_REL)), lockBefore, `lock restored for ${command}`);
+      assert.deepEqual(fs.readFileSync(path.join(cwd, DEMO_CONTRACT_REL)), contractBefore, 'contract restored');
+      assert.ok(post.stderr.includes(LOCK_REL), `stderr names the lock: ${post.stderr}`);
+      assert.match(post.stderr, /person/i, post.stderr);
+      assert.match(post.stderr, /freez/i, post.stderr);
+      assert.ok(post.stderr.includes(DEMO_CONTRACT_REL), `stderr also names the restored contract: ${post.stderr}`);
+    } finally {
+      fs.rmSync(cwd, { recursive: true, force: true });
+    }
+  }
+});
+
+test('R3.15 the lock is restored before the frozen files are checked, so the contract matches the lock the person froze', () => {
+  const cwd = tmpCwd();
+  try {
+    setupFrozen(cwd, 'demo');
+    const contractBefore = fs.readFileSync(path.join(cwd, DEMO_CONTRACT_REL));
+    handlePreToolUse(payload(cwd, 'execute_bash', { command: 'true' }));
+    moveTheLock(cwd);
+    // Against the moved lock the edited contract is "frozen"; only a restored lock makes 3.3 put it back.
+    handlePostToolUse(postFor(cwd, 'execute_bash', { command: 'true' }));
+    assert.deepEqual(fs.readFileSync(path.join(cwd, DEMO_CONTRACT_REL)), contractBefore);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.15 a lock changed or deleted by a command is restored byte for byte, whatever its bytes were', () => {
+  const cwd = tmpCwd();
+  try {
+    setupFrozen(cwd, 'demo');
+    const odd = Buffer.concat([fs.readFileSync(path.join(cwd, LOCK_REL)), Buffer.from('\r\n\n  ')]);
+    fs.writeFileSync(path.join(cwd, LOCK_REL), odd); // a lock that is not in canonical form
+    for (const change of [
+      () => fs.writeFileSync(path.join(cwd, LOCK_REL), '{"specs":{}}'),
+      () => fs.rmSync(path.join(cwd, LOCK_REL)),
+      () => fs.writeFileSync(path.join(cwd, LOCK_REL), odd.subarray(0, odd.length - 1)),
+    ]) {
+      handlePreToolUse(payload(cwd, 'execute_bash', { command: 'x' }));
+      change();
+      const post = handlePostToolUse(postFor(cwd, 'execute_bash', { command: 'x' }));
+      assert.deepEqual(fs.readFileSync(path.join(cwd, LOCK_REL)), odd);
+      assert.ok(post.stderr.includes(LOCK_REL), post.stderr);
+    }
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.15 a lock replaced by a directory or a symbolic link with the same bytes is restored as a plain file', () => {
+  const cwd = tmpCwd();
+  try {
+    setupFrozen(cwd, 'demo');
+    const lockAbs = path.join(cwd, LOCK_REL);
+    const bytes = fs.readFileSync(lockAbs);
+    handlePreToolUse(payload(cwd, 'execute_bash', { command: 'x' }));
+    fs.writeFileSync(path.join(cwd, 'elsewhere.json'), bytes);
+    fs.rmSync(lockAbs);
+    fs.symlinkSync(path.join(cwd, 'elsewhere.json'), lockAbs);
+    const post = handlePostToolUse(postFor(cwd, 'execute_bash', { command: 'x' }));
+    assert.ok(!fs.lstatSync(lockAbs).isSymbolicLink());
+    assert.deepEqual(fs.readFileSync(lockAbs), bytes);
+    assert.ok(post.stderr.includes(LOCK_REL), post.stderr);
+
+    handlePreToolUse(payload(cwd, 'execute_bash', { command: 'x' }));
+    fs.rmSync(lockAbs);
+    fs.mkdirSync(lockAbs);
+    handlePostToolUse(postFor(cwd, 'execute_bash', { command: 'x' }));
+    assert.ok(fs.lstatSync(lockAbs).isFile());
+    assert.deepEqual(fs.readFileSync(lockAbs), bytes);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.15 a shell command that does not touch the lock leaves it alone and prints nothing about it', () => {
+  const cwd = tmpCwd();
+  try {
+    setupFrozen(cwd, 'demo');
+    const lockAbs = path.join(cwd, LOCK_REL);
+    const bytes = fs.readFileSync(lockAbs);
+    const mtime = fs.statSync(lockAbs).mtimeMs;
+    handlePreToolUse(payload(cwd, 'execute_bash', { command: 'ls' }));
+    fs.writeFileSync(path.join(cwd, 'other.txt'), 'x');
+    const post = handlePostToolUse(postFor(cwd, 'execute_bash', { command: 'ls' }));
+    assert.equal(post.exitCode, 0);
+    assert.equal(post.stderr, '');
+    assert.equal(post.stdout, '');
+    assert.deepEqual(fs.readFileSync(lockAbs), bytes);
+    assert.equal(fs.statSync(lockAbs).mtimeMs, mtime, 'the lock was not rewritten');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.15 a lock that a person freezes between shell calls is the new record, not undone', () => {
+  const cwd = tmpCwd();
+  try {
+    setupFrozen(cwd, 'demo');
+    handlePreToolUse(payload(cwd, 'execute_bash', { command: 'ls' }));
+    handlePostToolUse(postFor(cwd, 'execute_bash', { command: 'ls' }));
+    writeContract(cwd, 'demo', 'second.contract.test.js', PASSING_CONTRACT);
+    freezeSpec(cwd, 'demo'); // the person re-freezes
+    const frozenAgain = fs.readFileSync(path.join(cwd, LOCK_REL));
+    handlePreToolUse(payload(cwd, 'execute_bash', { command: 'ls' }));
+    const post = handlePostToolUse(postFor(cwd, 'execute_bash', { command: 'ls' }));
+    assert.equal(post.stderr, '');
+    assert.deepEqual(fs.readFileSync(path.join(cwd, LOCK_REL)), frozenAgain);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.15 a lock that did not exist before the command and was created by it is removed again', () => {
+  const cwd = tmpCwd();
+  try {
+    writeReq(cwd, 'demo', REQ);
+    writeContract(cwd, 'demo', 'hello.contract.test.js', CONTRACT);
+    assert.ok(!fs.existsSync(path.join(cwd, LOCK_REL)));
+    handlePreToolUse(payload(cwd, 'execute_bash', { command: 'F=freeze; necro $F demo' }));
+    freezeSpec(cwd, 'demo');
+    assert.ok(fs.existsSync(path.join(cwd, LOCK_REL)));
+    const post = handlePostToolUse(postFor(cwd, 'execute_bash', { command: 'F=freeze; necro $F demo' }));
+    assert.ok(!fs.existsSync(path.join(cwd, LOCK_REL)), 'the lock is gone again');
+    assert.ok(post.stderr.includes(LOCK_REL), post.stderr);
+    assert.match(post.stderr, /person/i);
+    assert.equal(post.exitCode, 0);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.15 with no lock before and none after, nothing is printed', () => {
+  const cwd = tmpCwd();
+  try {
+    handlePreToolUse(payload(cwd, 'execute_bash', { command: 'ls' }));
+    const post = handlePostToolUse(postFor(cwd, 'execute_bash', { command: 'ls' }));
+    assert.equal(post.exitCode, 0);
+    assert.equal(post.stderr, '');
+    assert.ok(!fs.existsSync(path.join(cwd, LOCK_REL)));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R3.15 the pre handler records the lock under .necro/state/, and every Kiro shell tool is covered', () => {
+  for (const tool of SHELL_TOOL_NAMES) {
+    const cwd = tmpCwd();
+    try {
+      setupFrozen(cwd, 'demo');
+      const bytes = fs.readFileSync(path.join(cwd, LOCK_REL));
+      handlePreToolUse(payload(cwd, tool, { command: 'x' }));
+      const stateDir = path.join(cwd, '.necro', 'state');
+      const recorded = fs.readdirSync(stateDir).filter((f) => fs.existsSync(path.join(stateDir, f)) && fs.readFileSync(path.join(stateDir, f)).equals(bytes));
+      assert.ok(recorded.length > 0, `${tool}: a copy of the lock is under .necro/state/`);
+      fs.writeFileSync(path.join(cwd, LOCK_REL), '{}');
+      const post = handlePostToolUse(postFor(cwd, tool, { command: 'x' }));
+      assert.deepEqual(fs.readFileSync(path.join(cwd, LOCK_REL)), bytes, tool);
+      assert.ok(post.stderr.includes(LOCK_REL), `${tool}: ${post.stderr}`);
+    } finally {
+      fs.rmSync(cwd, { recursive: true, force: true });
+    }
+  }
+});
+
+test('R3.15 a tool that is not a shell tool neither records nor restores the lock', () => {
+  const cwd = tmpCwd();
+  try {
+    setupFrozen(cwd, 'demo');
+    handlePreToolUse(payload(cwd, 'fs_write', { path: 'a.txt', text: 'x' }));
+    assert.ok(!fs.existsSync(path.join(cwd, '.necro', 'state', 'lock.json')), 'no lock record from a write tool');
+    fs.writeFileSync(path.join(cwd, LOCK_REL), '{}');
+    const post = handlePostToolUse(postFor(cwd, 'fs_write', { path: 'a.txt', text: 'x' }));
+    assert.equal(post.stderr, '');
+    assert.equal(fs.readFileSync(path.join(cwd, LOCK_REL), 'utf8'), '{}');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});

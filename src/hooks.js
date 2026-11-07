@@ -525,6 +525,78 @@ function readTrustedState(cwd, spec) {
 }
 
 // ---------------------------------------------------------------------------
+// Recorded lock (Req 3.15)
+//
+// Freezing rewrites the lock that `verify` trusts, so it is a person's step. A
+// shell command can rewrite the lock in ways no one can recognise in advance (a
+// variable, `node -e`, a direct write), so PreToolUse records the lock and
+// PostToolUse puts it back, whatever the command was.
+// ---------------------------------------------------------------------------
+
+const LOCK_REL = '.necro/lock.json';
+
+function lockRecordFile(cwd) {
+  return path.join(cwd, '.necro', 'state', 'lock.json');
+}
+
+// A marker that says the lock did not exist when it was recorded.
+function lockAbsentFile(cwd) {
+  return path.join(cwd, '.necro', 'state', 'lock.absent');
+}
+
+// The bytes of the lock, or null when there is no lock file (a directory or a
+// broken link counts as no file).
+function readLockBytes(cwd) {
+  try {
+    return fs.readFileSync(path.join(cwd, LOCK_REL));
+  } catch {
+    return null;
+  }
+}
+
+function recordLock(cwd) {
+  const bytes = readLockBytes(cwd);
+  const record = lockRecordFile(cwd);
+  const absent = lockAbsentFile(cwd);
+  fs.mkdirSync(path.dirname(record), { recursive: true });
+  fs.rmSync(record, { force: true });
+  fs.rmSync(absent, { force: true });
+  if (bytes === null) fs.writeFileSync(absent, '');
+  else fs.writeFileSync(record, bytes);
+}
+
+// Put the lock back to the recorded bytes, or remove it when it was recorded as
+// absent. Returns true when the lock had to be changed. With no record (the pre
+// handler never ran) nothing is touched.
+function restoreLock(cwd) {
+  const lockAbs = path.join(cwd, LOCK_REL);
+  let wanted;
+  try {
+    wanted = fs.readFileSync(lockRecordFile(cwd));
+  } catch {
+    if (!fs.existsSync(lockAbsentFile(cwd))) return false;
+    wanted = null;
+  }
+  let stat = null;
+  try {
+    stat = fs.lstatSync(lockAbs);
+  } catch {
+    stat = null; // no lock
+  }
+  if (wanted === null && stat === null) return false;
+  const current = stat !== null && stat.isFile() ? readLockBytes(cwd) : null;
+  if (wanted !== null && current !== null && current.equals(wanted)) return false;
+  // A directory or a symbolic link where the lock belongs is removed first, so
+  // the lock comes back as a plain file.
+  fs.rmSync(lockAbs, { recursive: true, force: true });
+  if (wanted !== null) {
+    fs.mkdirSync(path.dirname(lockAbs), { recursive: true });
+    fs.writeFileSync(lockAbs, wanted);
+  }
+  return true;
+}
+
+// ---------------------------------------------------------------------------
 // PreToolUse
 // ---------------------------------------------------------------------------
 
@@ -580,6 +652,8 @@ export function handlePreToolUse(payload) {
   // Req 3.8: before a shell command runs, record each frozen spec's current
   // tasks.md as the state to compare with afterwards, replacing any earlier record.
   if (SHELL_TOOLS.has(toolName)) {
+    // Req 3.15: record the lock too, so PostToolUse can put it back.
+    recordLock(cwd);
     const lock = readLock(cwd);
     for (const spec of Object.keys(lock.specs || {})) {
       const current = readText(tasksFile(cwd, spec));
@@ -739,7 +813,7 @@ function recordWrittenTasks(cwd, toolName, toolInput) {
   if (current !== null) recordState(cwd, spec, current);
 }
 
-// PostToolUse: after a shell tool (Req 3.12), restore any frozen file whose SHA-256 changed
+// PostToolUse: after a shell tool (Req 3.12), restore the lock (Req 3.15), then restore any frozen file whose SHA-256 changed
 // back from its content-addressed copy in .necro/frozen/<hash> (Req 3.3), and
 // undo a task tick that the contracts do not support (Req 3.7).
 //
@@ -756,10 +830,18 @@ export function handlePostToolUse(payload) {
     return { exitCode: 0, stdout: '', stderr: '' };
   }
 
-  const lock = readLock(cwd);
-  if (!lock.specs) return { exitCode: 0, stdout: '', stderr: '' };
-
+  // Req 3.15: first of all, put back the lock the person froze, so the checks
+  // below run against it and not against a lock the command wrote.
   const messages = [];
+  if (restoreLock(cwd)) {
+    messages.push(
+      `Restored ${LOCK_REL} after shell command. Freezing a spec is a person's step, so the lock was put back to what it was before the command.`,
+    );
+  }
+
+  const lock = readLock(cwd);
+  if (!lock.specs) return { exitCode: 0, stdout: '', stderr: messages.join('\n') };
+
   for (const spec of Object.keys(lock.specs)) {
     for (const f of frozenFiles(cwd, spec)) {
       const abs = path.join(cwd, f.path);

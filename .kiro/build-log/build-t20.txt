@@ -1,0 +1,109 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=8
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Run Command
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Rename my helper.
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+Now the contract file, with its own helpers and a single test.
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 20 is implemented and `npm test` passes (423 tests, 0 failures). I did not tick task 20, did not run `necro freeze`, and edited no frozen file. I did not diff the hash lists against `.necro/lock.json`, but `git status` shows no frozen file or the lock as modified.
+
+**What changed**
+- **`src/hooks.js`:**
+  - The pre handler for any shell tool now saves the exact bytes of `.necro/lock.json` to `.necro/state/lock.json`. If there is no lock, it writes a `.necro/state/lock.absent` marker instead.
+  - The post handler restores the lock before any other check, so the frozen-file restore of 3.3 runs against the lock the person froze.
+  - Restoring the lock means rewriting it byte for byte if it changed, putting it back if it was deleted, and removing it if the command created it.
+  - If the lock was swapped for a directory or a symbolic link, it is removed and written back as a plain file.
+  - When the lock is restored, stderr reads: "Restored .necro/lock.json after shell command. Freezing a spec is a person's step…". Otherwise nothing is printed about the lock.
+- **`test/hooks.test.js`:** 9 new R3.15 tests, written first. The 6 that exercise restoring failed against the old code and the 3 negative cases passed, as expected. They cover:
+  - `F=freeze; necro $F`, `node -e` and a direct write, each combined with a contract edit;
+  - restore order;
+  - odd lock bytes, deletion, and a directory or symlink in place of the lock;
+  - no-touch silence;
+  - a person re-freezing between shell calls;
+  - a command that creates a lock;
+  - all four shell tools;
+  - non-shell tools.
+- **`contracts/necro-core/lock-restore.contract.test.js`:** one contract, `R3.15 …`, with its own helpers and the `from '…'` pin comments. It fails against the old `src/hooks.js` and passes now.
+
+**How I read the criterion**
+- **Absent lock:** I treated a directory or unreadable file at the lock path as "absent".
+- **Record weakness:** The record is a plain file under `.necro/state/`, like the 3.8 tasks record. A command that rewrites both the lock and its record would defeat it, the same as for the tasks record. 3.15 doesn't require more.
+- **No consuming the record:** The post handler leaves the record in place, so each pre replaces it. A person re-freezing between shell calls is not undone, and a test covers that.
+- **Contract edit in the test:** The "edits a frozen contract" step is simulated by appending to the contract and calling freeze. The commands themselves are never run.
+
+**Side effects**
+- The live hook, now active in this repo, created `.necro/state/lock.json` as I worked. It is untracked.
+- `contracts/necro-core/README.md` still says "68 in total", which is now stale. I left it because you didn't ask me to edit it.
