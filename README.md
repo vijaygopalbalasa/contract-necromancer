@@ -1,6 +1,11 @@
 # Contract Necromancer
 
-A coding agent can mark a task done when the work is not done. Kiro specs already have EARS acceptance criteria, but nothing checks them at the moment a task is ticked. Contract Necromancer gives each criterion an executable contract, a person freezes the contracts, Kiro hooks refuse the tick until the frozen contracts pass, and every passing task gets a receipt that anyone can re-run.
+In 1986 Bertrand Meyer's Eiffel language made every routine state its contract: preconditions, postconditions and
+invariants that the program checked itself. Design by Contract answered "who decides the work is correct?" before
+anyone wrote the code. It stayed a niche idea, and everyday code kept tests instead. This project raises it
+for coding agents, where the question matters again.
+
+A coding agent can mark a task done when the work is not done. Kiro specs already have EARS acceptance criteria, but nothing checks them at the moment a task is ticked. Contract Necromancer gives each criterion an executable contract (the postcondition), a person freezes the contracts, Kiro hooks refuse the tick until the frozen contracts pass, and every passing task gets a receipt that anyone can re-run.
 
 ## Try it in a minute
 
@@ -31,6 +36,20 @@ Kiro built this app under the gate. Each task it ticked left a receipt in `.necr
 node ../../bin/necro.js verify .necro/receipts/ledger/e6371c6c38186f7db271dc2b9e943bc0d9b216b34d4ccef0a2ebeb1797165481.json
 CONFIRMED e6371c6c38186f7db271dc2b9e943bc0d9b216b34d4ccef0a2ebeb1797165481.
 ```
+
+See the gate refuse a tick, with no Kiro install. Still in `examples/pumpkin-ledger`, plant the bug from the demo video
+(each share rounded, so cents are lost), reopen task 4, and send the gate the same `task_update` call the Kiro IDE sends
+when you press "Start task" and it finishes:
+
+```
+perl -pi -e 's/Math\.floor\(cents \/ n\)/Math.round(cents \/ n)/; s/const extra = cents % n;/const extra = 0;/' src/split.js
+perl -pi -e 's/^- \[x\] 4\./- [ ] 4./' .kiro/specs/ledger/tasks.md
+echo '{"hook_event_name":"preToolUse","tool_name":"task_update","tool_input":{"tasksFilePath":".kiro/specs/ledger/tasks.md","taskId":"4","status":"completed"}}' | node ../../bin/necro.js hook pre; echo "exit $?"
+```
+
+The gate prints `Contracts failed: R2.1 ..., R2.2 ..., R3.1 ..., R4.1 ..., R4.2 ...` and exits 2, which is how a Kiro
+hook refuses a tool call. Undo the bug with `git checkout src/split.js` and run the `echo` line again: exit 0, and a new
+receipt appears in `.necro/receipts/ledger/`. Run `git checkout .` and remove the new receipt to clean up.
 
 Then run the unit tests of the tool itself from the repository root:
 
@@ -85,13 +104,13 @@ Both apps have their own spec, frozen contracts, receipts and unit tests. A pers
 
 **Pumpkin Ledger** (`examples/pumpkin-ledger`) is a command line tool. It splits shared party costs to the exact cent and settles them in few payments.
 
-- 8 tasks, 8 receipts, 13 contracts in 4 files, 27 unit tests.
+- 8 tasks, 13 contracts in 4 files, 27 unit tests, 9 receipts (one per ticked task, plus one from `necro check`).
 - Run: `cd examples/pumpkin-ledger`, then `node bin/ledger.js party.txt`, or add `--json`.
 - A real moment: Kiro tried to tick task 1 first. The gate refused, because the contracts for its criteria 1.1 and 1.4 need the line parser, which is a later task. Kiro built the rest of the code, and then every tick passed (`.kiro/build-log/build-ledger.txt`).
 
 **Night Shift** (`examples/night-shift`) is a web page. It plans a Halloween watch party across time zones and flags guests who would be up in the dead of night (00:00 up to 06:00 local), with daylight-saving gaps and overlaps handled.
 
-- 8 tasks, 8 receipts, 12 contracts in 4 files, 42 unit tests.
+- 8 tasks, 12 contracts in 4 files, 42 unit tests, 9 receipts (one per ticked task, plus one from `necro check`).
 - Run: serve the folder, for example `python3 -m http.server -d examples/night-shift`, and open `http://localhost:8000/site/?date=2026-10-31&time=20:00&zone=America/New_York&guests=Europe/London,Asia/Kolkata`. The page reads its input from the link.
 - A real moment: Kiro tried to tick task 1 early and the gate refused, because task 1 covers criteria 1.4 and 2.1, and contracts for those need code from later tasks (`.kiro/build-log/build-nightshift.txt`).
 - Receipts for tasks 1 to 5 print `MISMATCH` today. They were written before the page existed, and they record the page contracts R4.1 to R4.3 as failing. Those contracts pass now. The receipts for tasks 6 to 8 print `CONFIRMED`.
@@ -125,8 +144,9 @@ rails: they stop the agent's ordinary edits and undo a task tick that the contra
 a determined process that runs with your permissions.
 
 The guarantee is `necro verify`. It re-runs the frozen contracts from the lock and compares hashes and results with the
-receipt, so a false "done" shows up as `MISMATCH` no matter what happened during the session. Run it in CI or before you
-trust a receipt.
+receipt, so a false "done" shows up as `MISMATCH`. `verify` trusts the lock file on disk, and `necro freeze` rewrites it,
+so freezing is a person's job: commit `.necro/lock.json` with the contracts, and before you trust a receipt, check that
+`git diff` shows no change to the lock or the contracts. Run `necro verify` in CI.
 
 ## Receipt viewer
 

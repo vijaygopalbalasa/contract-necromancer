@@ -22,6 +22,13 @@ word for word. Kiro said them before it had read any contract file. The resumed 
 tool result, which is probably why it got this wrong. The video shows take 4's block and take 5's fix, and leaves
 out that paragraph.
 
+The take 5 receipt is committed as `.kiro/build-log/film/737d4aa6...json`. It was written in the throwaway clone used for
+filming, against the code Kiro wrote in take 5, so `necro verify` prints CONFIRMED only in that state; in this repository
+it is a record of what the video shows.
+
+The video's music was synthesized from code for this video (chords, bass and a pluck generated note by note, no samples),
+so it carries no third-party rights.
+
 Other clips in the video are real command output: `necro freeze ledger`; `necro verify` of the take 5 receipt
 (CONFIRMED), then again after changing one line of `src/split.js` (MISMATCH); `necro check ledger` with the planted
 bug (5 of 13 contracts fail); and a `task_update` call in the Kiro IDE's own format (`tasksFilePath`, `taskId`,
