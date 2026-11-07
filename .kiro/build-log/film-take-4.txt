@@ -1,0 +1,20 @@
+   4.84  [tool] Grep Search
+   4.84  [tool] status: InProgress
+   4.86  [tool] status: Completed
+   7.27  [tool] Replace in File
+   7.81  [tool] status: Failed: Replace in File
+  13.39  I didn't change `tasks.md`. A pre-tool hook blocked the edit because the contract checks failed:
+  13.39  
+  13.39  - R2.1: split gives each sharer the floor, with the extra cents going to the first names alphabetically.
+  13.39  - R2.2: balances are paid minus shares and sum to exactly zero.
+  13.39  - R3.1: payments are positive whole cents and bring every balance to zero.
+  13.39  - R4.1: the CLI prints the balances table, then one `pays` line per payment with two decimals.
+  13.39  - R4.2: the CLI prints balances and payments as JSON with amounts in integer cents.
+  13.39  
+  13.40  The hook is gating task completion on those contracts, so I won't work around it with a shell edit. That would bypass a check you set up.
+  13.40  
+  13.40  You have two options:
+  13.40  - **Fix the code first.** Task 4 is `src/split.js` (`splitExpense`) plus `test/split.test.js`. I can implement it now, and I'd run the contract tests to confirm they pass.
+  13.40  - **Bypass the hook.** If you want the box ticked despite the failures, disable or adjust the hook yourself. Tell me and I'll make the edit.
+  13.40  
+  13.85  Which do you want?

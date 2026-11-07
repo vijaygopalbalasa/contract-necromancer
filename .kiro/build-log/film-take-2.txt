@@ -1,0 +1,34 @@
+   5.04  [tool] File Search
+   5.04  [tool] status: InProgress
+   5.06  [tool] status: Completed
+   7.27  [tool] Read File
+   7.27  [tool] status: InProgress
+   7.27  [tool] status: Completed
+  11.12  [tool] Run Command
+  11.19  [tool] status: InProgress
+  11.19  [tool] status: InProgress
+  11.51  [tool] status: Completed
+  13.99  [tool] Run Command
+  14.02  [tool] status: InProgress
+  14.02  [tool] status: InProgress
+  14.30  [tool] status: Completed
+  20.58  [tool] Run Command
+  20.60  [tool] status: InProgress
+  20.60  [tool] status: InProgress
+  20.64  [tool] status: Completed
+  26.39  I didn't mark task 4 complete, because it isn't finished. The tests are in place but the code doesn't pass them yet: `npm test` shows 7 failing tests.
+  26.39  
+  26.40  - **The split tests (3 failures):** `src/split.js` uses `Math.round(cents / n)` and gives everyone the same share. It never hands out the leftover cents. So 100 cents over 3 people gives 33/33/33 = 99, not 34/33/33, and 1 cent over 7 people gives 0 to everyone.
+  26.40  - **The balance and command-line tests (4 failures):** these fail because they depend on `splitExpense`. They should pass once the split is fixed.
+  26.40  
+  26.40  The fix is small:
+  26.40  
+  26.40  ```js
+  26.40  const base = Math.floor(cents / sorted.length);
+  26.40  const extra = cents - base * sorted.length;
+  26.41  sorted.forEach((key, i) => shares.set(key, base + (i < extra ? 1 : 0)));
+  26.41  ```
+  26.41  
+  26.41  Separately, `git status` shows uncommitted changes to `.necro/state/ledger.tasks.md` and its `.sha256` file. I didn't touch those, but you may want to check them.
+  26.41  
+  26.86  Want me to apply the fix, run the full suite, and then mark task 4 complete?

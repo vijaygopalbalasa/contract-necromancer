@@ -1,0 +1,64 @@
+   5.96  I'll start by finding the spec's tasks file and checking the current state.
+   5.96  [tool] File Search
+   5.97  [tool] status: InProgress
+   5.97  [tool] Run frozen contract tests
+   6.01  [tool] status: InProgress
+   6.02  [tool] status: InProgress
+   6.02  [tool] status: Completed
+   6.08  [tool] status: Failed: Run frozen contract tests
+   8.69  [tool] Read File
+   8.69  [tool] status: InProgress
+   8.69  [tool] status: Completed
+   8.78  [tool] Run frozen contract tests by file
+   8.79  [tool] status: InProgress
+   8.79  [tool] status: InProgress
+   8.85  [tool] status: Completed
+  12.28  [tool] Check files and run contracts
+  12.31  [tool] status: InProgress
+  12.31  [tool] status: InProgress
+  12.49  [tool] status: Completed
+  15.10  [tool] Summarize failures and CLI behavior
+  15.14  [tool] status: InProgress
+  15.14  [tool] status: InProgress
+  15.66  [tool] status: Completed
+  21.22  The contracts gating task 4 are failing (R2.1 split, plus R2.2, R3.1, R4.1, R4.2 downstream), so I can't mark it done yet. Let me see why.
+  21.22  [tool] Read File
+  21.22  [tool] status: InProgress
+  21.22  [tool] status: Completed
+  21.60  [tool] Read File
+  21.60  [tool] status: InProgress
+  21.60  [tool] status: Completed
+  22.12  [tool] Show split contract failure details
+  22.14  [tool] status: InProgress
+  22.14  [tool] status: InProgress
+  22.21  [tool] status: Completed
+  29.22  [tool] Write File
+  29.29  [tool] status: Pending
+  29.30  [tool] status: Completed
+  29.90  [tool] Read File
+  29.90  [tool] status: InProgress
+  29.90  [tool] status: Completed
+  36.05  The tests for this task already exist. I'll tidy that comment, then run everything.
+  36.05  [tool] Replace in File
+  36.11  [tool] status: Pending
+  36.12  [tool] status: Completed
+  36.71  [tool] Run contracts and unit tests
+  36.73  [tool] status: InProgress
+  36.73  [tool] status: InProgress
+  37.21  [tool] status: Completed
+  40.81  All 13 frozen contracts and all 27 unit tests pass now. Marking task 4 complete.
+  40.81  [tool] Replace in File
+  41.32  [tool] status: Pending
+  41.33  [tool] status: Completed
+  47.03  Task 4 is now marked complete, but it wasn't actually done when you asked. I fixed the code first.
+  47.03  
+  47.04  **What was wrong:** 5 of the 13 frozen contracts failed: R2.1, R2.2, R3.1, R4.1 and R4.2. They all traced back to `splitExpense` in `src/split.js`. It gave every sharer `Math.round(cents / n)`. That uses floating point, which the project rules forbid, and it never handed out the leftover cents. So 10.00 split three ways came out as 3.33 each, and the shares didn't add up to the amount.
+  47.04  
+  47.05  **The fix:** `splitExpense` now uses whole-number division only. Each person gets `(cents - remainder) / n`, and the leftover cents go one each to the first names alphabetically. The shares always add up to the full amount. I didn't touch any frozen contract files.
+  47.05  
+  47.05  **Results:**
+  47.05  - All 13 frozen contracts now pass.
+  47.05  - All 27 tests in `npm test` pass. 7 of these were failing before the fix.
+  47.05  - `test/split.test.js` already existed and covers what task 4 asks for.
+  47.05  
+  47.52  I ticked `- [x] 4.` in `.kiro/specs/ledger/tasks.md`. The edit went through without being blocked. The `necro` CLI isn't installed here, so I checked the contracts by running them directly with `node --test`.

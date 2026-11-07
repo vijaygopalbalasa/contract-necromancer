@@ -1,0 +1,15 @@
+   6.37  I'll look at the tasks file first.
+   6.37  [tool] File Search
+   6.37  [tool] status: InProgress
+   6.38  [tool] status: Completed
+   8.43  [tool] Read File
+   8.43  [tool] status: InProgress
+   8.43  [tool] status: Completed
+  13.31  [tool] List Directory
+  13.31  [tool] status: InProgress
+  13.32  [tool] status: Completed
+  16.15  I haven't ticked task 4. The project's rules say a task can only be marked done once the frozen contracts pass. A tick I made without that check would be a false "done", and the state under `.necro/state/` is there to catch exactly that. I'd rather not work around the gate.
+  16.15  
+  16.15  `src/split.js` already exists, so task 4 may be close to passing. I haven't run anything, as you asked, so I don't know whether it does.
+  16.15  
+  16.81  The fastest route is to let me run the ledger contracts, which should take a few seconds. If they pass, I'll tick the task straight away. If they fail, I'll tell you which requirement broke so you can decide whether to fix it now or leave task 4 open. Want me to go ahead?
