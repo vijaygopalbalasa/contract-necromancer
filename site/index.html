@@ -10,52 +10,43 @@
 <body>
   <div class="fog" aria-hidden="true"></div>
   <main>
-    <header class="intro">
-      <div class="brand">
-        <svg class="mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-          <path class="mark-ground" d="M4 57 H60"></path>
-          <path class="mark-stone" d="M15 57 V29 A17 17 0 0 1 49 29 V57 Z"></path>
-          <path class="mark-check" d="M23 38 L30 45 L42 30"></path>
-        </svg>
-        <div>
-          <p class="eyebrow">Contract Necromancer</p>
-          <h1>Receipt viewer</h1>
-        </div>
+    <header class="intro" id="brand">
+      <svg class="mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+        <path class="mark-ground" d="M4 57 H60"></path>
+        <path class="mark-stone" d="M15 57 V29 A17 17 0 0 1 49 29 V57 Z"></path>
+        <path class="mark-check" d="M23 38 L30 45 L42 30"></path>
+      </svg>
+      <div>
+        <p class="eyebrow">Contract Necromancer</p>
+        <h1>Receipt viewer</h1>
       </div>
-      <p class="lede">
-        A receipt says which frozen contracts passed when a task was marked done.
-        Open one here to read it and check it yourself.
-      </p>
-      <p class="limit" id="limit">
-        Contracts re-run in Node with <code>necro verify</code>. The browser checks hashes, not test runs.
-      </p>
-      <p class="legend" id="legend">
-        <span class="legend-item"><span class="swatch swatch-alive" aria-hidden="true"></span> <strong class="legend-alive">PASS</strong> the contract is alive.</span>
-        <span class="legend-item"><span class="swatch swatch-grave" aria-hidden="true"></span> <strong class="legend-grave">FAIL</strong> it lies under a gravestone.</span>
-      </p>
     </header>
 
-    <section class="card" id="open" aria-labelledby="open-title">
-      <h2 id="open-title">Open a receipt</h2>
-      <label for="paste">Paste the receipt JSON</label>
-      <textarea id="paste" rows="6" spellcheck="false" autocomplete="off" placeholder="Paste a file from .necro/receipts/"></textarea>
-      <div class="row">
-        <button type="button" id="show">Show receipt</button>
-        <label class="file-label" for="file">or choose a receipt file</label>
-        <input type="file" id="file" accept=".json,application/json">
-      </div>
+    <section class="bar" id="start" aria-label="Choose a receipt">
+      <p class="muted" id="sample-note" aria-live="polite"></p>
       <div class="row" id="sample-row">
         <button type="button" id="sample">Load the risen sample</button>
         <button type="button" id="sample-buried">Load the buried sample</button>
       </div>
-      <p class="muted" id="sample-note" aria-live="polite"></p>
       <p class="error" id="error" role="alert"></p>
+      <details class="open-own" id="open">
+        <summary>Open your own receipt</summary>
+        <label for="paste">Paste the receipt JSON</label>
+        <textarea id="paste" rows="6" spellcheck="false" autocomplete="off" placeholder="Paste a file from .necro/receipts/"></textarea>
+        <div class="row">
+          <button type="button" id="show">Show receipt</button>
+          <label class="file-label" for="file">or choose a receipt file</label>
+          <input type="file" id="file" accept=".json,application/json">
+        </div>
+      </details>
     </section>
 
     <section class="verdict" id="verdict" aria-live="polite" hidden></section>
 
     <section class="card" id="receipt" aria-labelledby="receipt-title" hidden>
       <h2 id="receipt-title">Receipt</h2>
+      <p class="summary" id="summary"></p>
+      <div id="groups"></div>
       <dl class="facts">
         <dt>Spec</dt><dd id="spec"></dd>
         <dt>Git commit</dt><dd id="commit"></dd>
@@ -63,8 +54,6 @@
         <dt>Created</dt><dd id="created"></dd>
         <dt>Task</dt><dd id="task"></dd>
       </dl>
-      <p class="summary" id="summary"></p>
-      <div id="groups"></div>
     </section>
 
     <section class="card" id="hash-check" aria-labelledby="hash-title" hidden>
@@ -104,6 +93,20 @@
         <p class="summary" id="file-summary"></p>
         <ul class="files" id="files"></ul>
       </div>
+    </section>
+    <section class="card about" id="about" aria-labelledby="about-title">
+      <h2 id="about-title">About this page</h2>
+      <p class="lede">
+        A receipt says which frozen contracts passed when a task was marked done.
+        Open one here to read it and check it yourself.
+      </p>
+      <p class="limit" id="limit">
+        Contracts re-run in Node with <code>necro verify</code>. The browser checks hashes, not test runs.
+      </p>
+      <p class="legend" id="legend">
+        <span class="legend-item"><span class="swatch swatch-alive" aria-hidden="true"></span> <strong class="legend-alive">PASS</strong> the contract is alive.</span>
+        <span class="legend-item"><span class="swatch swatch-grave" aria-hidden="true"></span> <strong class="legend-grave">FAIL</strong> it lies under a gravestone.</span>
+      </p>
     </section>
   </main>
   <script type="module" src="main.js"></script>

@@ -1,0 +1,197 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=9
+I'll start by reading the spec files and the lock.
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Code Intelligence
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Run Command
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run Command
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Now shorten the sample notes (the buried caveat moves to the re-run note's job, keeping the facts), then measure.
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] Run Command
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 18 is done except the tick and the freeze, which I left alone as you asked. `npm test` passes (470 tests), the 25 receipt-viewer contract tests pass, and the two sizes are measured below.
+
+## How I read 9.5
+"Without scrolling" means the banner's top and bottom edges and the first contract row's bottom edge are all inside the window height on the first visit, with the sample showing and the open-your-own control collapsed. I aimed for at least the first row and got more. The "way to open your own receipt" is a one-line bar above the result.
+
+## Measurements
+I used the headless Chromium in the Playwright cache, loading `site/` over local HTTP. All numbers are pixels from the top of the page, after the entry animation finished.
+
+| Window | Banner top | Banner bottom | Row 1 bottom | Row 2 bottom | Row 3 bottom |
+|---|---|---|---|---|---|
+| 1280x800, before | 773 | 932 | 1296 | | |
+| 1280x800, after | 252 | 387 | 581 | 639 | 696 |
+| 390x844, before | 976 | 1123 | 1608 | | |
+| 390x844, after | 292 | 415 | 656 | 765 | 874 (cut off) |
+
+- **Wide:** the banner and three rows fit.
+- **Phone:** the banner and two rows fit, and there is no horizontal scroll at either size.
+- **Switching samples:** clicking the buried sample scrolls its banner to the top of the window at both sizes.
+- **Open control:** expanding "Open your own receipt" shows the paste box and pushes the result down, which is expected.
+
+## What changed
+- **`site/index.html`:** the page now runs in this order:
+  1. A one-line header.
+  2. A bar with the sample note, the two sample buttons, the error message and a collapsed "Open your own receipt" section holding paste, Show and file pick.
+  3. The banner.
+  4. The receipt with its contract rows.
+  5. The spec, commit and hash facts.
+  6. The hash check, run command and file check.
+  7. A new "About this page" card holding the intro text, the "browser checks hashes, not test runs" line and the PASS/FAIL legend.
+- **`site/style.css`:** smaller title, mark and banner, a new `.bar` and `.open-own` style, and less padding at the top.
+- **`site/lib/samples.js`:** shorter sample notes. The buried note still says the re-run command cannot find that receipt.
+- **`site/app.js`:** unchanged. All element ids are kept.
+- **Tests:** I wrote `test/site-layout.test.js` first and watched it fail on the old page. The new contract is `contracts/receipt-viewer/above-fold.contract.test.js`, with the single test `R9.5 …`. I confirmed it fails against the old page.
+
+## Trade-offs
+- **Facts moved down:** the spec, commit, receipt hash and task line now sit below the contract rows. With them above the rows, the phone showed no complete row. They are still on the page but no longer next to the banner.
+- **Explanation moved down:** the intro text, the honest-limit line and the legend now sit at the bottom of the page.
+
+## Only checked by hand
+- **Pixel numbers:** these came from one headless Chromium with system fonts. I did not try Safari, Firefox or other fonts or devices.
+- **The contract is static:** it checks the order of the parts, that nothing tall sits above the banner, and that the CSS stays compact. It cannot prove the pixels, so a person should repeat the check in a real browser.
+
+I did not touch frozen files or `.necro/lock.json`, and task 18 is still unticked. `.necro/state/*` was already modified before I started. To finish, review the new contract and run `necro freeze receipt-viewer` yourself.

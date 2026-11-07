@@ -431,6 +431,14 @@
     "receipt-viewer": {
       "contracts": [
         {
+          "name": "above-fold",
+          "names": [
+            "R9.5 the first visit shows the verdict banner and the first contract rows without scrolling, with the sample switch and the way to open your own receipt still on the page"
+          ],
+          "path": "contracts/receipt-viewer/above-fold.contract.test.js",
+          "sha256": "96025201d56239cc347a186e1ba8b59313a4cdb78529b124aca0bac230425ee8"
+        },
+        {
           "name": "canon",
           "names": [
             "R3.1 the receipt hash is recomputed with Web Crypto from canonical JSON",
@@ -518,7 +526,7 @@
           "sha256": "47e17273eef50b96c039f01d4ab62d0c907bffe8f911b03d90a5dc1d4c19a08f"
         }
       ],
-      "frozenAt": "2026-11-07T19:56:36.327Z",
+      "frozenAt": "2026-11-07T20:04:45.585Z",
       "requirements": {
         "path": ".kiro/specs/receipt-viewer/requirements.md",
         "sha256": "afe59aeb0b931a4c920759aa0ed623917417b042f1eac317584dfb32a32351e5"

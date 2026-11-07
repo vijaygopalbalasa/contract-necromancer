@@ -518,10 +518,10 @@
           "sha256": "47e17273eef50b96c039f01d4ab62d0c907bffe8f911b03d90a5dc1d4c19a08f"
         }
       ],
-      "frozenAt": "2026-11-07T19:53:01.226Z",
+      "frozenAt": "2026-11-07T19:56:36.327Z",
       "requirements": {
         "path": ".kiro/specs/receipt-viewer/requirements.md",
-        "sha256": "374716aad76cb4f498a83777049017bd4ea0c8302abcfd8f01f72301428ba9f9"
+        "sha256": "afe59aeb0b931a4c920759aa0ed623917417b042f1eac317584dfb32a32351e5"
       },
       "tasks": {
         "1": {
@@ -642,6 +642,12 @@
             "9.4"
           ],
           "text": "17. First visit shows a receipt, risen and buried (Req 9.1, 9.2, 9.3, 9.4)"
+        },
+        "18": {
+          "criteria": [
+            "9.5"
+          ],
+          "text": "18. The result above the fold (Req 9.5)"
         }
       }
     }

@@ -6,14 +6,14 @@ export const SAMPLES = [
   {
     id: 'risen',
     label: 'Load the risen sample',
-    note: 'This is a sample receipt: a real one written by the gate in this repository, with every contract alive.',
+    note: 'Sample receipt: a real one from this repository, every contract alive.',
   },
   {
     id: 'buried',
     label: 'Load the buried sample',
     note:
-      'This is a sample receipt: a real one written by necro check on a copy of examples/pumpkin-ledger with a rounding bug planted. ' +
-      'It is not stored in this repository, so the re-run command below cannot find it.',
+      'Sample receipt: a real necro check run on examples/pumpkin-ledger with a rounding bug planted. ' +
+      'It is not stored in this repository, so the re-run command cannot find it.',
   },
 ];
 
