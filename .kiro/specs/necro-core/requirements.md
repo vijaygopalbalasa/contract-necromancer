@@ -44,6 +44,7 @@ receipts anyone can re-run.
 11. IF a tool input string is too long to check or contains a NUL character and the tool is not read-only THEN THE SYSTEM SHALL block the call.
 12. WHEN this specification says `execute_bash` THE SYSTEM SHALL apply the same rule to every Kiro shell tool (`execute_bash`, `execute_pwsh`, `control_bash_process`, `control_pwsh_process`).
 13. WHEN `fs_append` or `delete_file` targets `tasks.md` THE SYSTEM SHALL treat it like any other write to `tasks.md` for the done gate.
+14. WHEN the PreToolUse handler receives a shell tool call whose command runs this tool's `freeze` command (the word `freeze` as the first argument after `necro`, `necro.js` or a path ending in `bin/necro.js`, anywhere in the command, including after `&&`, `;`, `|` or inside `bash -c`/`sh -c`) THE SYSTEM SHALL exit with code 2 and write to stderr that freezing is a person's step, because freezing rewrites the lock that `verify` trusts.
 
 ## Requirement 4: Gate on marking a task done
 **User story:** As a developer, I want "done" refused until contracts pass, so that a ticked task means the requirements hold.
@@ -88,6 +89,7 @@ receipts anyone can re-run.
 5. IF a receipt pins no requirements file or no contracts THEN THE SYSTEM SHALL print `MISMATCH` and exit with code 1.
 6. WHEN the spec is frozen in the local lock THE SYSTEM SHALL also check that the receipt's requirements and contract hashes match the lock and IF not THEN print `MISMATCH` with each differing path.
 7. WHEN a lock exists THE SYSTEM SHALL require the receipt's spec to be in it, require the receipt's contract files, hashes and names to equal the lock's exactly (none missing, none extra), and run the lock's contracts rather than the receipt's list, so a receipt that leaves out a failing contract is a `MISMATCH`.
+8. IF the receipt's requirements or contract hashes differ from the lock's for its spec AND the requirements and contract files on disk match the lock (the spec was frozen again after the receipt was written) THEN THE SYSTEM SHALL print `SUPERSEDED` with the spec name and each path whose hash changed, say that the receipt describes an earlier freeze and not today's code, and exit with code 1, instead of printing `MISMATCH`. When the files on disk do not match the lock, the rules above still print `MISMATCH`.
 
 ## Requirement 7: Session summary
 **User story:** As a developer, I want a summary when the agent stops, so that a false "done" is visible.
@@ -104,6 +106,7 @@ receipts anyone can re-run.
 5. WHEN `necro init` writes the hooks THE SYSTEM SHALL make the PostToolUse hook match every write and shell tool named in Requirement 3.
 6. WHEN `necro init` writes the hook commands THE SYSTEM SHALL use the absolute path of the Node.js binary running `init` and the absolute path of `bin/necro.js`, each quoted so paths with spaces work, because the Kiro IDE started from the Dock does not have the shell's PATH.
 7. WHEN `necro init` finishes THE SYSTEM SHALL say that Kiro runs hooks only in a trusted workspace and that after trusting it Kiro must be quit and reopened.
+8. WHEN `necro init` writes the steering file THE SYSTEM SHALL tell the agent that a person freezes specs, that the agent must never run `necro freeze`, and that the frozen specs are listed in `.necro/lock.json`.
 
 ## Requirement 9: Check on demand
 **User story:** As a developer, I want a receipt without ticking a task, so that I can publish one for the commit I just pushed.

@@ -163,10 +163,10 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-06T23:41:53.331Z",
+      "frozenAt": "2026-11-07T18:57:49.448Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
-        "sha256": "d5bac98622adb838f34bdf9cb4741acccd1a571733c5f6ec73e80ee4e55d7195"
+        "sha256": "7670dcfd39a0a60715636d103ea4d490340be70e6b5b70c47e910367730755b1"
       },
       "tasks": {
         "1": {
@@ -312,6 +312,14 @@
             "2.9"
           ],
           "text": "18. **Read criteria the way Kiro writes them** (Req 2.9)"
+        },
+        "19": {
+          "criteria": [
+            "3.14",
+            "6.8",
+            "8.8"
+          ],
+          "text": "19. **Freezing is a person's step, and a re-frozen spec's old receipts say so** (Req 3.14, 6.8, 8.8)"
         },
         "3b": {
           "criteria": [
