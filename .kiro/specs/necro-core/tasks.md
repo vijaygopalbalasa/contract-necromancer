@@ -111,7 +111,7 @@ Each task writes its test first, then the implementation, then runs `node --test
   - Test first: `necro init` writes `.kiro/agents/necromancer.json` with the steering file as a `file://` resource, the three hooks with the same commands and timeouts as `.kiro/hooks/necromancer.json`, and deny rules for shell commands that run `necro freeze` (every spelling 3.14 covers that a glob can express) and for writes under `.necro/`; a second `init` leaves an existing agent file unchanged and says so (8.9). Run each test against the current code and see it fail first.
   - Implement: a template in `templates/`, `src/init.js` (or where init lives). Run `kiro-cli agent validate --path <file>` on the written file if the CLI is installed and report the result. Write this repository's own `.kiro/agents/necromancer.json` with `necro init`'s output adapted to `node bin/necro.js`. Then add `contracts/necro-core/custom-agent.contract.test.js` with one contract named `R8.9 ...` (a new file). Run `npm test` and pass. Do not run `necro freeze`; do not tick task 21 yet.
 
-- [ ] 22. **Verify from any folder** (Req 6.9)
+- [x] 22. **Verify from any folder** (Req 6.9)
   - Test first: verifying an example's receipt from the repository root, from the example folder, and from an unrelated folder gives the same output and exit code; a receipt outside any project with a lock behaves as before (6.9). Run each test against the current code and see it fail first.
   - Implement in the verify code. Then add `contracts/necro-core/verify-anywhere.contract.test.js` with one contract named `R6.9 ...` (a new file). Run `npm test` and pass. Do not run `necro freeze`; do not tick task 22 yet.
 

@@ -175,6 +175,14 @@
           "sha256": "ab67919d1e6a878a8271130371cbb759ba10c7696f7a0e0f7326c50f4774b3c1"
         },
         {
+          "name": "verify-anywhere",
+          "names": [
+            "R6.9 necro verify on an example's receipt gives the same output and exit code from the repository root, the example folder and an unrelated folder, and a receipt outside any project is checked in the current folder"
+          ],
+          "path": "contracts/necro-core/verify-anywhere.contract.test.js",
+          "sha256": "4c7449977c5afd063c7f26fdaea0cb6157c28938f882f810872f0a0c653cbe2d"
+        },
+        {
           "name": "verify",
           "names": [
             "R6.1 verify prints CONFIRMED and the receipt hash and exits 0 when every hashed file matches and the contracts give the same results",
@@ -189,7 +197,7 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-07T19:36:32.894Z",
+      "frozenAt": "2026-11-07T19:52:59.885Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
         "sha256": "12baf5d57c0184d0d1c4ea8ca2101775c3cd6a463656c47812cd841a09e05a9c"
@@ -453,6 +461,17 @@
           "sha256": "41114194aba14d19cfa52f107c5574af3e9721b66a2d6e4996da05bd45533344"
         },
         {
+          "name": "first-visit",
+          "names": [
+            "R9.1 a page with no ?receipt= and nothing pasted shows the bundled sample at once, without a click, and says it is a sample",
+            "R9.2 the page offers a risen and a buried sample from this repository, and one click switches between them",
+            "R9.3 a receipt shown after a user action brings the verdict banner into view, with no scrolling animation under reduced motion",
+            "R9.4 the root element paints the whole background fixed to the window, so a tall page has no band or seam at any scroll position"
+          ],
+          "path": "contracts/receipt-viewer/first-visit.contract.test.js",
+          "sha256": "28c9b27ddb47bd4480aed046ee0129ee2f5f9523a0012467abd31c9e2c61980f"
+        },
+        {
           "name": "look",
           "names": [
             "R8.1 a verdict banner comes first: \"Risen\" with the count of living contracts, or \"Still buried\" with the count of failing required contracts",
@@ -499,7 +518,7 @@
           "sha256": "47e17273eef50b96c039f01d4ab62d0c907bffe8f911b03d90a5dc1d4c19a08f"
         }
       ],
-      "frozenAt": "2026-11-07T19:36:33.712Z",
+      "frozenAt": "2026-11-07T19:53:01.226Z",
       "requirements": {
         "path": ".kiro/specs/receipt-viewer/requirements.md",
         "sha256": "374716aad76cb4f498a83777049017bd4ea0c8302abcfd8f01f72301428ba9f9"

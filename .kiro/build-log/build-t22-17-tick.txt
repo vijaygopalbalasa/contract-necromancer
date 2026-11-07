@@ -1,0 +1,62 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=8
+[tool] Run the test suite
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+All 463 tests pass. Next I'll tick task 22.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Check tick state and newest receipts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Verify the new necro-core receipt
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 22 stands and its receipt is CONFIRMED. Now task 17 in receipt-viewer.
+[tool] Replace in File
+[tool] Check tick state and newest receipts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+The tick on task 17 did not stick: line 88 still shows `[ ]` and there's no new receipt-viewer receipt. I'll look for the reason.
+[tool] Inspect CLI and run receipt-viewer contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run receipt-viewer contract files directly
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Recheck task 17 state and gate files
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The earlier read was just early. The tick has now been processed, so I'll verify the new receipt.
+[tool] Verify both new receipts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Both ticks stand, and both new receipts verify as CONFIRMED with exit 0.
+
+- **`npm test`:** 463 tests ran, 463 passed, none failed. That includes the R6.9 contracts for verifying from any folder.
+- **Task 22 (necro-core):**
+  - I ticked it, and the gate accepted it.
+  - It wrote receipt `.necro/receipts/necro-core/b5a52e50f6cdf4bb8517e41b5198f5e77a72f4fae1cef3454994aee1aecbaba8.json`.
+  - `necro verify` on that receipt printed `CONFIRMED b5a52e50…aba8`.
+- **Task 17 (receipt-viewer):**
+  - I ticked it, and the gate accepted it.
+  - It wrote receipt `.necro/receipts/receipt-viewer/c7a302802c6e9cb098daaed59b4f13b22fa6bcf28c6e702edb823e120d9b53c8.json`.
+  - `necro verify` on that receipt printed `CONFIRMED c7a30280…53c8`.
+  - Right after my edit, `tasks.md` still showed `[ ]` and there was no receipt. I ran the receipt-viewer contracts directly, and all 24 passed, including R9.1 to R9.4. When I looked again a few seconds later, the tick and receipt were there. The first read was early, and the gate did not refuse the tick.
+
+I did not run `necro freeze` or touch any frozen files.
+
+The gate also updated `.necro/state/lock.json` and the `*.tasks.md` copies and `.sha256` files in `.necro/state/`. Those changes, the two new receipts and the build-log file are uncommitted.

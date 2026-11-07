@@ -85,7 +85,7 @@ Do not change anything under `src/`. The viewer reads from it in tests only.
 - [x] 16. **Kiroween look** (Req 8.1, 8.2, 8.3, 8.4)
   - Test first: the banner text for both cases; the inline SVG mark and no external URLs in `index.html` or `style.css`; every animation is under a `prefers-reduced-motion: no-preference` rule or switched off under `reduce`; gravestone and alive row styles; AA contrast of the palette. Then implement in `site/`.
 
-- [ ] 17. First visit shows a receipt, risen and buried (Req 9.1, 9.2, 9.3, 9.4)
+- [x] 17. First visit shows a receipt, risen and buried (Req 9.1, 9.2, 9.3, 9.4)
   - Make the buried sample first: in a scratch copy of `examples/pumpkin-ledger`, plant the rounding bug from the README ("See the gate refuse a tick"), run `necro check ledger` there, and copy the receipt it writes (exit 1, failing contracts) to `site/sample-buried.json`. Keep the current `site/sample-receipt.json` as the risen sample.
   - Write tests first for the pure parts (choosing what to show on load, the two samples, the order of banner and list) and see them fail. Then update `site/` so the page shows the risen sample on load with a one-click switch to the buried one, brings the banner into view after each user action, and fixes the background seam (for example a fixed background on the root element). Keep Requirements 1 to 8.
   - Add `contracts/receipt-viewer/first-visit.contract.test.js` with contracts named `R9.1 ...` to `R9.4 ...` (a new file; do not change frozen contract files). Run `npm test` and pass. Report what you could only check by hand.
