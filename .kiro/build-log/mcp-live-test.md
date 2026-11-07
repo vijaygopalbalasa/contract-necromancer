@@ -1,6 +1,6 @@
 # Live test of the necro MCP server in Kiro CLI (Nov 8 2026)
 Throwaway copy of examples/pumpkin-ledger with .kiro/settings/mcp.json starting `node <repo>/bin/necro.js mcp`, task 4 unticked.
-Command: kiro-cli chat --v3 --no-interactive --trust-all-tools --trust-workspace --model claude-haiku-5.5 "Using the necro MCP server's necro_status tool, tell me which contracts task 4 of the ledger spec needs and whether each passes right now. Do not change any file."
+Command: kiro-cli chat --v3 --no-interactive --trust-all-tools --trust-workspace "Using the necro MCP server's necro_status tool, tell me which contracts task 4 of the ledger spec needs and whether each passes right now. Do not change any file."
 
 [tool] status: Completed
 [tool] @necro/necro_status

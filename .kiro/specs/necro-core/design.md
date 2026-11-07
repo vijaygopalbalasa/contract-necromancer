@@ -97,8 +97,8 @@ field is a convenience timestamp; it is never a hash input.
 }
 ```
 
-- `specs[<spec>].requirements` — the frozen requirements file path and hash.
-- `specs[<spec>].contracts` — array of frozen contract files. `name` is the filename stem (strip
+- `specs[<spec>].requirements`: the frozen requirements file path and hash.
+- `specs[<spec>].contracts`: array of frozen contract files. `name` is the filename stem (strip
   `.contract.test.js`).
 - Re-freezing a spec replaces `specs[<spec>]` and leaves other specs' entries unchanged (Req 2.4).
 
@@ -138,16 +138,16 @@ Pretty-printed JSON. Written when all contracts pass during the gate.
 }
 ```
 
-- `gitCommit` — output of `git rev-parse HEAD` from `cwd`, or `null` if not in a git repo.
-- `uncommitted` — present only when `gitCommit` is set (Req 5.4). The sorted, unique list of pinned paths
+- `gitCommit`: output of `git rev-parse HEAD` from `cwd`, or `null` if not in a git repo.
+- `uncommitted`: present only when `gitCommit` is set (Req 5.4). The sorted, unique list of pinned paths
   (requirements, contracts, sources) whose SHA-256 differs from that file at `gitCommit` (`git show <commit>:./<path>`),
   or that the commit lacks. `[]` when every pinned file matches the commit. It is part of `receiptHash`.
-- `sources` — every project source file transitively imported by the contract files, excluding the contract files
+- `sources`: every project source file transitively imported by the contract files, excluding the contract files
   themselves (already listed under `contracts`) and excluding `node:` builtins. Each entry is unique (deduplicated).
-- `result` — `"pass"` or `"fail"` per contract.
-- `receiptHash` — `sha256(canonicalJson(receiptWithoutHashAndCreatedAt))`: the SHA-256 of the canonical JSON of the
+- `result`: `"pass"` or `"fail"` per contract.
+- `receiptHash`: `sha256(canonicalJson(receiptWithoutHashAndCreatedAt))`: the SHA-256 of the canonical JSON of the
   receipt object with the `receiptHash` and `createdAt` fields removed (Req 5.2).
-- `createdAt` — ISO 8601 UTC timestamp, added after the hash is computed.
+- `createdAt`: ISO 8601 UTC timestamp, added after the hash is computed.
 
 Because `receiptHash` is derived from all other fields (minus `createdAt`), two receipts from identical inputs produce
 the same `receiptHash` (Req 5.3).
@@ -239,7 +239,7 @@ All user-facing messages are short plain sentences that say what to do next (per
 
 ### PreToolUse flow
 
-`necro hook pre` — no matcher, so it runs for every tool (Req 8.4); the handler allows read-only tools itself.
+`necro hook pre`: no matcher, so it runs for every tool (Req 8.4); the handler allows read-only tools itself.
 
 ```
 Read STDIN → parse JSON → resolve path (project-relative)
@@ -269,7 +269,7 @@ Task-done detection:
 
 ### PostToolUse flow
 
-`necro hook post` — matcher: `execute_bash`.
+`necro hook post`: matcher: `execute_bash`.
 
 ```
 Read STDIN → parse JSON → read lock
@@ -285,7 +285,7 @@ Read STDIN → parse JSON → read lock
 
 ### Stop flow
 
-`necro hook stop` — no matcher.
+`necro hook stop`: no matcher.
 
 ```
 Read STDIN → parse JSON → read lock
@@ -329,7 +329,7 @@ Triggered by PreToolUse when a `tasks.md` edit increases the `[x]` count:
 
 1. Derive spec name from the tasks.md path (`.kiro/specs/<spec>/tasks.md` → `<spec>`).
 2. Check `isSpecFrozen(cwd, spec)`. If not → exit 2 with a freeze instruction.
-3. `runContracts(cwd, spec, lock)` — run each frozen contract with `node --test <file>`, collect pass/fail by name.
+3. `runContracts(cwd, spec, lock)`: run each frozen contract with `node --test <file>`, collect pass/fail by name.
 4. If any `result === "fail"` → exit 2, list failing contract names on stderr.
 5. If all pass → `buildReceipt` (trace imports, hash all inputs, compute receiptHash) → `writeReceipt` → exit 0.
 

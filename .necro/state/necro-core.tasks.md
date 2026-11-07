@@ -12,7 +12,7 @@ Each task writes its test first, then the implementation, then runs `node --test
 
 - [x] 3. **Contracts runner** (supports Req 4.4, 4.5, 6.1, 6.3)
   - Test first: write `test/contracts.test.js` with fixtures (a passing contract and a failing contract). Assert `runContracts` returns an array with each contract's `name`, `path`, `sha256`, and `result` (`"pass"` or `"fail"`) (4.4); a failing contract's name appears in the results (4.5).
-  - Implement: `src/contracts.js` exporting `runContracts(cwd, spec, lock)` — runs each contract file with `node --test --test-reporter=tap <contractPath>` and parses the TAP output so each named test is one contract with its own `"pass"` or `"fail"`; a file that fails to load counts as one failing contract named after the file. Run `node --test` and pass.
+  - Implement: `src/contracts.js` exporting `runContracts(cwd, spec, lock)`: runs each contract file with `node --test --test-reporter=tap <contractPath>` and parses the TAP output so each named test is one contract with its own `"pass"` or `"fail"`; a file that fails to load counts as one failing contract named after the file. Run `node --test` and pass.
 
 - [x] 3b. **No vacuous passes** (Req 4.7, 4.8)
   - Test first: extend `test/contracts.test.js`. Assert a test marked skip or todo is reported as `"fail"` (4.7). Assert a contract file that loads but defines zero tests produces one failing contract named after the file, so a spec can never pass with zero contracts (4.8).
@@ -24,7 +24,7 @@ Each task writes its test first, then the implementation, then runs `node --test
 
 - [x] 5. **Verify** (Req 6.1, 6.2, 6.3)
   - Test first: write `test/verify.test.js` with fixtures. Assert `verify` prints `CONFIRMED` and the receipt hash and exits 0 when every hashed file matches and contracts give the same results (6.1); prints `MISMATCH` with each differing path and exits 1 when a hashed file differs (6.2); prints `MISMATCH` with each differing contract name and exits 1 when a contract result differs (6.3).
-  - Implement: `src/verify.js` exporting `verify(cwd, receiptFile)` — recomputes file hashes, re-runs contracts, compares, prints result, returns exit code. Run `node --test` and pass.
+  - Implement: `src/verify.js` exporting `verify(cwd, receiptFile)`: recomputes file hashes, re-runs contracts, compares, prints result, returns exit code. Run `node --test` and pass.
 
 - [x] 3c. **Pin contract names and check files before running** (Req 2.5, 2.6, 4.9, 4.10)
   - Test first: extend `test/lock.test.js` and `test/contracts.test.js`. Assert freeze records every contract name in the lock (2.5); a contract path outside the project root is refused at freeze (2.6); a contract file changed after freeze makes all its contracts fail (4.9); a contract name in the lock that is missing from a run is reported as failing (4.10).
@@ -32,7 +32,7 @@ Each task writes its test first, then the implementation, then runs `node --test
 
 - [x] 6. **PreToolUse: block edits to frozen files** (Req 3.1, 3.2, 3.4)
   - Test first: write `test/hooks.test.js` with fixtures (a frozen spec in `.necro/lock.json`). Assert `handlePreToolUse` exits 2 with a reason on stderr for `fs_write` / `str_replace` to a frozen file path (3.1); exits 2 for any path under `.necro/` (3.2); exits 0 and prints nothing when the path is not frozen (3.4).
-  - Implement: `src/hooks.js` with `handlePreToolUse` — resolves the path project-relative, checks `.necro/` and frozen-path conditions. Run `node --test` and pass.
+  - Implement: `src/hooks.js` with `handlePreToolUse`: resolves the path project-relative, checks `.necro/` and frozen-path conditions. Run `node --test` and pass.
 
 - [x] 7. **Gate on marking a task done** (Req 4.1, 4.2, 4.3, 4.4, 4.5, 4.6)
   - Test first: extend `test/hooks.test.js`. Assert `str_replace` on `tasks.md` with more `[x]` in `newStr` than `oldStr` is detected as marking done (4.1); `fs_write` on `tasks.md` with more `[x]` than the file on disk is detected as marking done (4.2); an unfrozen spec exits 2 with a freeze instruction (4.3); contracts are run (4.4); any failing contract exits 2 and lists names (4.5); all passing writes a receipt to `.necro/receipts/<spec>/<hash>.json` and exits 0 (4.6).

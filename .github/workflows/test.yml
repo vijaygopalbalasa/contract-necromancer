@@ -1,0 +1,47 @@
+# Runs the unit tests and every frozen contract, then re-runs the newest receipt of each spec with necro verify.
+name: Tests and receipts
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Git identity for tests that make temporary repositories
+        run: |
+          git config --global user.name "ci"
+          git config --global user.email "ci@example.invalid"
+      - name: Unit tests of the tool
+        run: npm test
+      - name: Frozen contracts of the tool and the viewer
+        run: node --test contracts/necro-core/*.test.js contracts/receipt-viewer/*.test.js
+      - name: Pumpkin Ledger tests and contracts
+        working-directory: examples/pumpkin-ledger
+        run: node --test test/*.test.js contracts/ledger/*.test.js
+      - name: Night Shift tests and contracts
+        working-directory: examples/night-shift
+        run: node --test test/*.test.js contracts/planner/*.test.js
+      - name: Re-run the newest receipt of each spec
+        run: |
+          for dir in . examples/pumpkin-ledger examples/night-shift; do
+            for spec in "$dir"/.necro/receipts/*/; do
+              newest=$(node -e 'const fs=require("fs"),p=require("path");const d=process.argv[1];const r=fs.readdirSync(d).map(f=>({f,t:JSON.parse(fs.readFileSync(p.join(d,f))).createdAt})).sort((a,b)=>a.t<b.t?1:-1)[0];console.log(p.join(d,r.f))' "$spec")
+              echo "$newest"
+              node bin/necro.js verify "$newest"
+            done
+          done
