@@ -6,6 +6,9 @@ import { planGuests } from './guests.js';
 import { suggestKinderTime } from './kinder.js';
 import { offsetAt, formatOffset } from './zones.js';
 
+// The form helpers are re-exported here because site/main.js imports only this module.
+export { EXAMPLE_FORM, EXAMPLE_SEARCH, readForm, formToSearch, refusalFor } from './form.js';
+
 function parseQuery(search) {
   const s = typeof search === 'string' ? search : '';
   const params = new URLSearchParams(s.startsWith('?') ? s.slice(1) : s);

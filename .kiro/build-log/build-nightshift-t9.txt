@@ -1,0 +1,138 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=10
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run Command
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run Command
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run Command
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run Command
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 9 is implemented and passing, and I left it unticked as you asked. `npm test` passes (50 tests, 0 failures). `package.json` only runs `test/*.test.js`, so I ran the contracts separately with `node --test contracts/planner/*.test.js`: 13 pass, including the new R4.4. I did not run `necro freeze`, and no frozen file was edited.
+
+## What I changed
+- **`test/form.test.js` (new):** I wrote it first and saw it fail on the missing exports. It covers the default example, reading a link into form fields, building a link from form values, characters like `&` and `#` in values, and the refusal placed next to the form.
+- **`src/form.js` (new):**
+  - `EXAMPLE_FORM` and `EXAMPLE_SEARCH`.
+  - `readForm`.
+  - `formToSearch` (keeps `/` and `:` readable).
+  - `refusalFor`.
+- **`src/page.js`:** it re-exports the form helpers, because the frozen R4.3 contract says `site/main.js` may import only `../src/page.js`.
+- **`site/main.js`:**
+  - It builds the form with `createElement` and `textContent` only.
+  - It fills the form from the link.
+  - On submit it calls `preventDefault`, updates the address bar with `pushState` (falling back to `location.assign`) and re-renders.
+  - A `popstate` listener makes the back button work.
+  - A refusal, or the earlier/later choice for a repeated hour, appears under the form.
+- **`site/style.css`:** styles for the form, fields and button, plus a visible keyboard focus. There is no animation and no fixed widths.
+- **`contracts/planner/form.contract.test.js` (new):** one contract, named `R4.4 ...`.
+
+## Checked by hand
+I did this in headless Chrome over `python3 -m http.server`, then stopped the server and removed my temporary scripts. It is a one-off check, not a repeatable test.
+- A page with no query string showed the filled form and the example result, with ghost rows for London, Kolkata and Kathmandu and a plain row for Tokyo.
+- Submitting changed the address to the 4.1 form and showed the new result. A bad date and a skipped hour each showed their refusal next to the form. Back restored the previous state.
+- A link that lets the host pick the earlier or later hour showed both choices. A `<b>` in the date appeared as plain text.
+- At 320px, `scrollWidth` equaled `clientWidth` for the example and for long zone names. With reduced motion emulated, transitions were `0s` and animation was `none`.
+- I did not check the look of the focus ring by eye, or Safari, Firefox, or opening the page from `file://`.
+
+## How I read the criterion
+- **Missing part:** a missing `date`, `time` or `zone` key counts as "a part missing". The whole example then replaces the form, not just the missing field. For example, `?date=2026-11-02` shows the 2026-10-31 example. A missing `guests` key does not count, because the frozen R4.1 contract treats a link without guests as valid, with an empty list.
+- **Empty values:** a part that is present but empty (`?date=`) is not missing. It shows the form as typed, with the date refusal beside it.
+- **Link form:** "the `?date=...` form of 4.1" means `?date=…&time=…&zone=…&guests=a,b`, with the guests tidied (trimmed, empties dropped). The `pick` parameter is not carried over on submit.
+- **`buildView` call:** the frozen R4.1 contract requires the literal `buildView(window.location.search)` in `main.js`. The example case therefore calls `buildView(form.search)` in one branch, and a complete link uses the literal call in the other.

@@ -1,6 +1,6 @@
 // Render the view model into the page. All logic lives in src/page.js; this only maps fields to DOM nodes.
 // Values from the link are untrusted and are written with textContent only, never raw markup.
-import { buildView } from '../src/page.js';
+import { buildView, readForm, formToSearch, refusalFor } from '../src/page.js';
 
 function el(tag, text, className) {
   const node = document.createElement(tag);
@@ -68,32 +68,87 @@ function renderOk(main, view) {
   }
 }
 
-function renderChoose(main, view) {
-  main.appendChild(el('p', view.message, 'message'));
-  const ul = el('ul');
-  for (const choice of view.links) {
-    const li = el('li');
-    const a = el('a', choice.label);
-    a.href = choice.search;
-    li.appendChild(a);
-    ul.appendChild(li);
-  }
-  main.appendChild(ul);
+function field(label, name, value, hint) {
+  const wrap = el('div', '', 'field');
+  const id = `field-${name}`;
+  const lab = el('label', label);
+  lab.htmlFor = id;
+  const input = el('input');
+  input.type = 'text';
+  input.id = id;
+  input.name = name;
+  input.value = value;
+  input.placeholder = hint;
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+  wrap.appendChild(lab);
+  wrap.appendChild(input);
+  return wrap;
 }
 
-function renderError(main, view) {
-  main.appendChild(el('p', view.message, 'message'));
+// The form is built from the fields that readForm took from the link (or from the working example).
+function renderForm(main, fields) {
+  const form = el('form');
+  form.noValidate = true;
+  form.appendChild(field('Date', 'date', fields.date, 'YYYY-MM-DD'));
+  form.appendChild(field('Start time (24-hour)', 'time', fields.time, 'HH:MM'));
+  form.appendChild(field('Your city (time zone)', 'zone', fields.zone, 'America/New_York'));
+  form.appendChild(field('Guest cities (time zones, separated by commas)', 'guests', fields.guests, 'Europe/London, Asia/Kolkata'));
+  const button = el('button', 'Show times');
+  button.type = 'submit';
+  form.appendChild(button);
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const data = new FormData(form);
+    const next = formToSearch({
+      date: data.get('date'),
+      time: data.get('time'),
+      zone: data.get('zone'),
+      guests: data.get('guests'),
+    });
+    try {
+      window.history.pushState(null, '', next);
+    } catch {
+      window.location.assign(next); // the address could not be changed in place, so load the new link
+      return;
+    }
+    render();
+  });
+  main.appendChild(form);
+}
+
+// A refusal sits right under the form so the page is never empty; a time that happens twice adds its two choices.
+function renderRefusal(main, refusal) {
+  const p = el('p', refusal.message, 'message');
+  p.setAttribute('role', 'alert');
+  main.appendChild(p);
+  if (refusal.links.length > 0) {
+    const ul = el('ul');
+    for (const choice of refusal.links) {
+      const li = el('li');
+      const a = el('a', choice.label);
+      a.href = choice.search;
+      li.appendChild(a);
+      ul.appendChild(li);
+    }
+    main.appendChild(ul);
+  }
 }
 
 function render() {
-  const view = buildView(window.location.search);
+  const form = readForm(window.location.search);
+  // Without a complete link the page shows the working example, and that example's result.
+  const view = form.example ? buildView(form.search) : buildView(window.location.search);
   const main = document.querySelector('main');
   while (main.firstChild) main.removeChild(main.firstChild);
   main.appendChild(el('h1', 'Night Shift'));
+  renderForm(main, form.fields);
 
-  if (view.status === 'ok') renderOk(main, view);
-  else if (view.status === 'choose') renderChoose(main, view);
-  else renderError(main, view);
+  const refusal = refusalFor(view);
+  if (refusal) renderRefusal(main, refusal);
+  else renderOk(main, view);
 }
 
+window.addEventListener('popstate', render);
 render();
