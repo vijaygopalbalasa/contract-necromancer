@@ -66,4 +66,4 @@ Honest limit shown on the page: contracts re-run in Node with `necro verify`; th
 2. WHEN the page offers samples THE SYSTEM SHALL offer two from this repository: a risen one (every required contract passes) and a buried one (a real receipt with failing required contracts, written by `necro check` on a spec with a planted bug), and switching between them SHALL need one click.
 3. WHEN a receipt is shown after a user action (load, paste, pick, sample switch) THE SYSTEM SHALL bring the verdict banner into view, with no scrolling animation under `prefers-reduced-motion: reduce`.
 4. WHEN the page is taller than the window THE SYSTEM SHALL draw its background without a visible band or seam at any scroll position.
-
+5. WHEN the sample is shown on a first visit THE SYSTEM SHALL show the verdict banner and the first contract rows without scrolling in a 1280x800 window and in a 390x844 phone window, with the way to open your own receipt still reachable on the same page (for example a compact bar above the result, or the open-a-receipt card below it).

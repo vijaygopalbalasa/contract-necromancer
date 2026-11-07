@@ -90,3 +90,7 @@ Do not change anything under `src/`. The viewer reads from it in tests only.
   - Write tests first for the pure parts (choosing what to show on load, the two samples, the order of banner and list) and see them fail. Then update `site/` so the page shows the risen sample on load with a one-click switch to the buried one, brings the banner into view after each user action, and fixes the background seam (for example a fixed background on the root element). Keep Requirements 1 to 8.
   - Add `contracts/receipt-viewer/first-visit.contract.test.js` with contracts named `R9.1 ...` to `R9.4 ...` (a new file; do not change frozen contract files). Run `npm test` and pass. Report what you could only check by hand.
 
+- [ ] 18. The result above the fold (Req 9.5)
+  - Write tests first for the order of the page's parts on a first visit and see them fail. Then change `site/` so the verdict banner and the first contract rows are visible without scrolling at 1280x800 and 390x844 on a first visit, and opening your own receipt (paste, file, the two samples) stays easy to find. Keep Requirements 1 to 9.4 and the frozen contracts.
+  - Check both window sizes in a headless browser and report the banner's top and the first row's bottom in pixels. Add `contracts/receipt-viewer/above-fold.contract.test.js` with one contract named `R9.5 ...` (a new file). Run `npm test` and pass. Do not run `necro freeze`; do not tick task 18 yet.
+
