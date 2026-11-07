@@ -108,6 +108,7 @@ receipts anyone can re-run.
 6. WHEN `necro init` writes the hook commands THE SYSTEM SHALL use the absolute path of the Node.js binary running `init` and the absolute path of `bin/necro.js`, each quoted so paths with spaces work, because the Kiro IDE started from the Dock does not have the shell's PATH.
 7. WHEN `necro init` finishes THE SYSTEM SHALL say that Kiro runs hooks only in a trusted workspace and that after trusting it Kiro must be quit and reopened.
 8. WHEN `necro init` writes the steering file THE SYSTEM SHALL tell the agent that a person freezes specs, that the agent must never run `necro freeze`, and that the frozen specs are listed in `.necro/lock.json`.
+9. WHEN a user runs `necro init` THE SYSTEM SHALL also write `.kiro/agents/necromancer.json`, a Kiro custom agent that loads the steering file of 8.2 as a resource, carries the PreToolUse, PostToolUse and Stop hooks of 8.1, and has permission rules that deny shell commands running `necro freeze` and writes under `.necro/`, so Kiro's own permission engine refuses them before any hook runs; IF the file already exists THEN init leaves it unchanged and says so. The file SHALL pass `kiro-cli agent validate` when the Kiro CLI is installed.
 
 ## Requirement 9: Check on demand
 **User story:** As a developer, I want a receipt without ticking a task, so that I can publish one for the commit I just pushed.
