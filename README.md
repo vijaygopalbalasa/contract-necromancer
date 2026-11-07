@@ -147,7 +147,8 @@ Moments from the logs and the git history:
 
 A shell command or the contract code itself can change any file on disk, including `.necro/`. The hooks are guard
 rails: they stop the agent's ordinary edits and undo a task tick that the contracts do not support, but they cannot stop
-a determined process that runs with your permissions.
+a determined process that runs with your permissions. The hooks keep their own records (the task state and the copy of the lock they restore) under
+`.necro/state/`, and a command that rewrites those too gets past them.
 
 The guarantee is `necro verify`. It re-runs the frozen contracts from the lock and compares hashes and results with the
 receipt, so a false "done" shows up as `MISMATCH`. `verify` trusts the lock file on disk, and `necro freeze` rewrites it,
