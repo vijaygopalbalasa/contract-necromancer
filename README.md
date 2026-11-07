@@ -1,5 +1,7 @@
 # Contract Necromancer
 
+[![Tests and receipts](https://github.com/vijaygopalbalasa/contract-necromancer/actions/workflows/test.yml/badge.svg)](https://github.com/vijaygopalbalasa/contract-necromancer/actions/workflows/test.yml)
+
 In 1986 Bertrand Meyer's Eiffel language made every routine state its contract: preconditions, postconditions and
 invariants that the program checked itself. Design by Contract answered "who decides the work is correct?" before
 anyone wrote the code. It stayed a niche idea, and everyday code kept tests instead. This project raises it
