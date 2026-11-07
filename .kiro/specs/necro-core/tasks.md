@@ -115,10 +115,10 @@ Each task writes its test first, then the implementation, then runs `node --test
   - Test first: verifying an example's receipt from the repository root, from the example folder, and from an unrelated folder gives the same output and exit code; a receipt outside any project with a lock behaves as before (6.9). Run each test against the current code and see it fail first.
   - Implement in the verify code. Then add `contracts/necro-core/verify-anywhere.contract.test.js` with one contract named `R6.9 ...` (a new file). Run `npm test` and pass. Do not run `necro freeze`; do not tick task 22 yet.
 
-- [ ] 23. **Say whose contracts run** (Req 6.10)
+- [x] 23. **Say whose contracts run** (Req 6.10)
   - Test first: verifying a receipt from another folder prints `Project: <absolute path>` before the result; verifying from the project root prints no such line (6.10). See it fail first. Implement in the verify code. Add `contracts/necro-core/verify-root.contract.test.js` with one contract `R6.10 ...`. Run `npm test` and pass.
 
-- [ ] 24. **MCP server and Kiro power** (Req 10.1, 10.2, 10.3, 10.4, 10.5)
+- [x] 24. **MCP server and Kiro power** (Req 10.1, 10.2, 10.3, 10.4, 10.5)
   - Read the MCP spec for stdio transport and the Kiro power format (https://kiro.dev/docs/powers/create/). Test first: spawn `necro mcp`, send `initialize`, `tools/list` and `tools/call` lines, and check the replies: three tools with input schemas; `necro_status` on a frozen spec lists tasks, required contracts and results; `necro_check` writes a receipt; `necro_verify` returns the verdict; an unknown tool, an unfrozen spec, a path outside the project and malformed JSON each give an error reply and the server keeps running (10.1 to 10.4); `power/plugin.json`, `power/mcp.json` and `power/skills/contract-necromancer/SKILL.md` exist with the required fields (10.5). See them fail first.
   - Implement `src/mcp.js` and the `mcp` command in `bin/necro.js`, and the `power/` folder. Then install the power with `kiro-cli powers install ./power` if the CLI allows it, and report the output. Add `contracts/necro-core/mcp.contract.test.js` with contracts `R10.1 ...` to `R10.5 ...` (a new file). Run `npm test` and pass. Do not run `necro freeze`; do not tick tasks 23 or 24 yet.
 

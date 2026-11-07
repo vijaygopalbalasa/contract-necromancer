@@ -94,13 +94,26 @@ when Kiro is started from the Dock and has no shell `PATH`. After `init`, trust 
 reopen Kiro (Cmd+Q on macOS); Kiro runs hooks only in a trusted workspace. If you move the install or switch Node
 versions, delete `.kiro/hooks/necromancer.json` and run `necro init` again.
 
+## MCP server and Kiro power
+
+`necro mcp` serves the Model Context Protocol over stdio with three tools and no dependencies: `necro_status` (for each
+task, the contracts that ticking it requires and whether each passes now), `necro_check` and `necro_verify`. There is no
+tool to freeze a spec, edit a frozen file or tick a task. In a live Kiro CLI session Kiro called `@necro/necro_status`
+and listed every contract task 4 of Pumpkin Ledger needs, with its result (`.kiro/build-log/mcp-live-test.md`).
+
+`power/` packages the workflow as a Kiro power (Agent Plugins format): `plugin.json`, `mcp.json` that starts `necro mcp`,
+and a skill, `skills/contract-necromancer/SKILL.md`, that teaches the workflow. Put `necro` on your PATH
+(`npm install -g github:vijaygopalbalasa/contract-necromancer`, or `npm link` from a clone), then install the power with
+`kiro-cli powers install ./power` or, in the IDE, Powers > Add Custom Power > Import power from GitHub.
+
 ## Commands
 
 ```
 necro init              # write the Kiro hooks and steering file into a project
 necro freeze <spec>     # lock requirements.md and the contracts of a spec
 necro check <spec>      # run every frozen contract now and write a receipt, without ticking a task
-necro verify <receipt>  # re-run a receipt and print CONFIRMED or MISMATCH
+necro verify <receipt>  # re-run a receipt: CONFIRMED, MISMATCH or SUPERSEDED
+necro mcp               # serve necro_status, necro_check and necro_verify over MCP (stdio)
 ```
 
 `necro check <spec>` needs a frozen spec. It prints `pass` or `fail` for each contract, writes a receipt to
@@ -138,14 +151,14 @@ Their hook files use `node ../../bin/necro.js`, so they work where `node` is on 
 Kiro wrote the code of this repository task by task. A person reviewed the contracts and froze them.
 
 - Specs in `.kiro/specs/`:
-  - `necro-core`: the tool. 9 requirements, 27 tasks, 74 contracts in 16 files, 9 receipts.
-  - `receipt-viewer`: the static page in `site/`. 8 requirements, 16 tasks, 20 contracts in 8 files, 17 receipts.
+  - `necro-core`: the tool. 10 requirements, 30 tasks, 81 contracts in 19 files, 13 receipts.
+  - `receipt-viewer`: the static page in `site/`. 9 requirements, 18 tasks, 25 contracts in 10 files, 19 receipts.
 - Steering in `.kiro/steering/`: `product.md`, `structure.md`, `tech.md`, and `necromancer.md`, which tells Kiro not to edit frozen files.
 - A custom agent in `.kiro/agents/necromancer.json` (task 21): the gate's hooks plus Kiro permission rules.
 - Hooks in `.kiro/hooks/`: `necromancer.json` is the gate (`PreToolUse`, `PostToolUse` and `Stop` calling `node bin/necro.js hook ...`). `session-log.json` appends the tool and path of each Kiro tool call to `.kiro/build-log/sess_*.jsonl`. For shell commands it keeps only program names.
 - Build logs in `.kiro/build-log/`: `build-*.txt` are Kiro's session output for each piece of work.
 
-The tool did not gate its own first tasks. Tasks 1 to 16 of `necro-core` were built before that spec was frozen, and they have no receipts. From task 17 on, the tool gated its own development: Kiro drafted 68 contracts from the requirements, a person reviewed and froze them, and tasks 17 to 21 were ticked through the gate. The receipt viewer was built under the gate from its first task.
+The tool did not gate its own first tasks. Tasks 1 to 16 of `necro-core` were built before that spec was frozen, and they have no receipts. From task 17 on, the tool gated its own development: Kiro drafted 68 contracts from the requirements, a person reviewed and froze them, and tasks 17 to 24 were ticked through the gate. The receipt viewer was built under the gate from its first task.
 
 Moments from the logs and the git history:
 

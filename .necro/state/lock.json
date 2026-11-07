@@ -106,6 +106,18 @@
           "sha256": "c26300c8404a2648cf986db55d880efb0c690fd73e6e4f39967de002099284ae"
         },
         {
+          "name": "mcp",
+          "names": [
+            "R10.1 necro mcp answers initialize, ignores notifications, answers ping and tools/list, and exits 0 when stdin closes, writing only JSON-RPC messages to stdout and using no dependencies",
+            "R10.2 tools/list offers exactly necro_status, necro_check and necro_verify with input schemas, and each tool returns what Requirement 10 says",
+            "R10.3 no tool freezes, edits or ticks, and an unknown tool, an unfrozen spec and malformed JSON each get an error reply while the server keeps running",
+            "R10.4 a spec name or receipt path outside the project root is refused, also through ../ and a symbolic link",
+            "R10.5 power/ holds plugin.json with the Agent Plugins 1.0.0 fields, mcp.json that starts necro mcp, and a SKILL.md that teaches the workflow"
+          ],
+          "path": "contracts/necro-core/mcp.contract.test.js",
+          "sha256": "6b8ee5f9313e810e534b8f74cc75380e13f7f4102ff5ba9bdc27e473abc656f5"
+        },
+        {
           "name": "person-freeze",
           "names": [
             "R3.14 PreToolUse exits 2 for a shell command that runs necro freeze and says freezing is a person's step, and allows necro check, necro verify and a command that only mentions the word",
@@ -180,7 +192,15 @@
             "R6.9 necro verify on an example's receipt gives the same output and exit code from the repository root, the example folder and an unrelated folder, and a receipt outside any project is checked in the current folder"
           ],
           "path": "contracts/necro-core/verify-anywhere.contract.test.js",
-          "sha256": "4c7449977c5afd063c7f26fdaea0cb6157c28938f882f810872f0a0c653cbe2d"
+          "sha256": "de4b270f732d4f17837457c4fd44a04821a98e19d43954274075ddf0adeaca11"
+        },
+        {
+          "name": "verify-root",
+          "names": [
+            "R6.10 necro verify prints Project: and the absolute path of the project first when its root is not the current folder, and no such line from the root itself"
+          ],
+          "path": "contracts/necro-core/verify-root.contract.test.js",
+          "sha256": "34d6efbb3620da1ae272440c82d94d80212a5ea845bdbe96614b3eb8e58b16e1"
         },
         {
           "name": "verify",
@@ -197,10 +217,10 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-07T20:06:55.594Z",
+      "frozenAt": "2026-11-07T20:24:31.381Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
-        "sha256": "1c53729bd1a4dd3064ef5ba614587cd06a3e604a25c78d97dd52b73db457f268"
+        "sha256": "87480cf62f8b1611f944bf578fad202d52275df609ac743a49c2315f0de4e6ce"
       },
       "tasks": {
         "1": {
