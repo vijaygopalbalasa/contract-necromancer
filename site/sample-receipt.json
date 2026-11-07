@@ -1,9 +1,9 @@
 {
   "spec": "necro-core",
-  "gitCommit": "57921be6eaf8baadb866186984795cc3d098de45",
+  "gitCommit": "e6a6a317344f01824155e73cebafb4582e47bd34",
   "requirements": {
     "path": ".kiro/specs/necro-core/requirements.md",
-    "sha256": "d5bac98622adb838f34bdf9cb4741acccd1a571733c5f6ec73e80ee4e55d7195"
+    "sha256": "1723686f6fbd763f7c722f5950a7bfb6c6eed671d20d01db4dc5f0c38a674bdb"
   },
   "contracts": [
     {
@@ -187,6 +187,12 @@
       "result": "pass"
     },
     {
+      "name": "R3.15 PostToolUse puts back the lock a shell command moved, byte for byte, before the 3.3 restore; a command that leaves the lock alone prints nothing; a lock a command created is removed",
+      "path": "contracts/necro-core/lock-restore.contract.test.js",
+      "sha256": "b534ef1abb785115b64a8d9693e454751a044c6d83e2ebe5d682926bea15a8c5",
+      "result": "pass"
+    },
+    {
       "name": "R2.1 freeze records the SHA-256 of requirements.md and of every contract file in .necro/lock.json",
       "path": "contracts/necro-core/lock.contract.test.js",
       "sha256": "c26300c8404a2648cf986db55d880efb0c690fd73e6e4f39967de002099284ae",
@@ -232,6 +238,24 @@
       "name": "R2.8 freeze records each task's full line text after the checkbox",
       "path": "contracts/necro-core/lock.contract.test.js",
       "sha256": "c26300c8404a2648cf986db55d880efb0c690fd73e6e4f39967de002099284ae",
+      "result": "pass"
+    },
+    {
+      "name": "R3.14 PreToolUse exits 2 for a shell command that runs necro freeze and says freezing is a person's step, and allows necro check, necro verify and a command that only mentions the word",
+      "path": "contracts/necro-core/person-freeze.contract.test.js",
+      "sha256": "197233cfe4434ea9d11f9055e51e6117e4ae54afc51806bbad08049b9efbe88f",
+      "result": "pass"
+    },
+    {
+      "name": "R6.8 a receipt written before its spec was frozen again prints SUPERSEDED with the spec and the changed paths and exits 1, not MISMATCH, but a receipt whose files no longer match the lock is still a MISMATCH",
+      "path": "contracts/necro-core/person-freeze.contract.test.js",
+      "sha256": "197233cfe4434ea9d11f9055e51e6117e4ae54afc51806bbad08049b9efbe88f",
+      "result": "pass"
+    },
+    {
+      "name": "R8.8 init writes a steering file saying a person freezes specs, the agent never runs necro freeze, and frozen specs are listed in .necro/lock.json",
+      "path": "contracts/necro-core/person-freeze.contract.test.js",
+      "sha256": "197233cfe4434ea9d11f9055e51e6117e4ae54afc51806bbad08049b9efbe88f",
       "result": "pass"
     },
     {
@@ -444,7 +468,7 @@
     },
     {
       "path": "src/hooks.js",
-      "sha256": "77583e93e1c86863da3b31540b59bc3c5d232de1dcc8f7286d894be3137a73f4"
+      "sha256": "4a9ef9c77b6351ca1153d3064958805e7f2076cb84438f3d2ee9a48beb9cfa5d"
     },
     {
       "path": "src/lock.js",
@@ -456,11 +480,15 @@
     },
     {
       "path": "src/verify.js",
-      "sha256": "81cbf1ba74ca08afd7cfbaabde9614968c5311944980ef3de22dc6b7eb37caf3"
+      "sha256": "a4b2128eba0b9ff3caeb26391546b7ad20e1aa5c918153fce6731d5a1ce9d61f"
     },
     {
       "path": "templates/necromancer.hooks.json",
       "sha256": "b6754ffa7e4167ac9e9db7fd78c8367232d8a0eca1c378680b86f743eb6441a7"
+    },
+    {
+      "path": "templates/necromancer.steering.md",
+      "sha256": "a186eff3761a7cc25dac06bd5b96d379a56b91e09f0ec7b1ab92f998671dbcd7"
     }
   ],
   "task": null,
@@ -482,6 +510,8 @@
     "R3.11 a non-read-only tool call with a too long or NUL-containing input string is blocked",
     "R3.12 every Kiro shell tool gets the execute_bash treatment",
     "R3.13 fs_append and delete_file on tasks.md are writes to tasks.md for the done gate",
+    "R3.14 PreToolUse exits 2 for a shell command that runs necro freeze and says freezing is a person's step, and allows necro check, necro verify and a command that only mentions the word",
+    "R3.15 PostToolUse puts back the lock a shell command moved, byte for byte, before the 3.3 restore; a command that leaves the lock alone prints nothing; a lock a command created is removed",
     "R3.2 a write tool call to any path under .necro/ exits 2",
     "R3.3 after a shell command, a frozen file whose SHA-256 changed is restored and named on stderr",
     "R3.4 a tool call that touches no frozen file exits 0 and prints nothing",
@@ -522,6 +552,7 @@
     "R6.5 verify prints MISMATCH and exits 1 for a receipt that pins no requirements file or no contracts",
     "R6.6 when the spec is frozen in the local lock verify also checks the receipt's requirements and contract hashes against it",
     "R6.7 when a lock exists verify requires the receipt to equal the lock exactly and runs the lock's contracts, so a receipt that leaves out a failing contract is a MISMATCH",
+    "R6.8 a receipt written before its spec was frozen again prints SUPERSEDED with the spec and the changed paths and exits 1, not MISMATCH, but a receipt whose files no longer match the lock is still a MISMATCH",
     "R7.1 the Stop handler prints, for each frozen spec, the tasks marked done, the receipts, and the names of the contracts failing now",
     "R8.1 init writes .kiro/hooks/necromancer.json with PreToolUse, PostToolUse and Stop hooks that call necro hook pre, post and stop, each with a timeout of 300 seconds",
     "R8.2 init writes .kiro/steering/necromancer.md telling the agent that frozen contracts decide \"done\" and must not be edited",
@@ -530,12 +561,13 @@
     "R8.5 the PostToolUse hook init writes matches every write and shell tool named in Requirement 3",
     "R8.6 init writes hook commands with the absolute, quoted path of the Node.js binary that ran init and of bin/necro.js",
     "R8.7 init says Kiro runs hooks only in a trusted workspace and that after trusting it Kiro must be quit and reopened",
+    "R8.8 init writes a steering file saying a person freezes specs, the agent never runs necro freeze, and frozen specs are listed in .necro/lock.json",
     "R9.1 check on a frozen spec runs every frozen contract, prints each result by name, and writes a receipt with task null and every contract required",
     "R9.2 check exits 0 and prints the receipt path when every contract passes, and exits 1 and still writes the receipt when any fails",
     "R9.3 check on a spec that is not frozen exits 1 and says to freeze it first",
     "R9.4 check does not change tasks.md"
   ],
   "uncommitted": [],
-  "receiptHash": "30a567d5b3aa9ac5efed8331bc3769acb06e74acd3c15578fa8b4e44b66cd8d8",
-  "createdAt": "2026-11-07T13:39:47.927Z"
+  "receiptHash": "9dad8d81172e351d8406faf6afff0d4e23ca3d4ad2a0cb95c3722d730c472f43",
+  "createdAt": "2026-11-07T19:17:56.629Z"
 }
