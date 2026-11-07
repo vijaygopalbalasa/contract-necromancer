@@ -3,6 +3,14 @@
     "planner": {
       "contracts": [
         {
+          "name": "form",
+          "names": [
+            "R4.4 shows a form filled with the working example and its result when the link is missing a part, builds the 4.1 link on submit, and shows a refusal next to the form"
+          ],
+          "path": "contracts/planner/form.contract.test.js",
+          "sha256": "0300de278d36e6bc59d4d83afe06d57d278a4d7720fba2ac1802389fc401d27b"
+        },
+        {
           "name": "req1-start-time",
           "names": [
             "R1.1 turns a local date, time and zone into the single UTC instant",
@@ -43,7 +51,7 @@
           "sha256": "b5a73ae9a0f7b19b810f02ddd6a204bf26f3b203a8d310548c944dd897fa39cf"
         }
       ],
-      "frozenAt": "2026-11-07T19:20:21.020Z",
+      "frozenAt": "2026-11-07T19:24:14.616Z",
       "requirements": {
         "path": ".kiro/specs/planner/requirements.md",
         "sha256": "cbe5827e989a72b1c413cb3bd141df98bafd7f5ad1cc599e935a47ae9a97903a"

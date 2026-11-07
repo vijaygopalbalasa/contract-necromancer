@@ -79,7 +79,7 @@ Page logic stays in `src/`; `site/` only renders the view model.
     results.
   - (Req 4.1, 4.2, 4.3)
 
-- [ ] 9. A form with a working example (Req 4.4)
+- [x] 9. A form with a working example (Req 4.4)
   - Write tests first for the pure parts (reading form values into the link and back, the default example, a refusal message placed next to the form) and see them fail. Then update `site/` so the page with no query string shows the filled form and the example's result, and submitting it updates the link. Keep 4.1 to 4.3: no external assets, dark theme, AA contrast, no sideways scrolling at 320px, no animation under reduced motion.
   - Add `contracts/planner/form.contract.test.js` with one contract named `R4.4 ...` (a new file; do not change the frozen contract files). Run `npm test` and pass. Report any check you could only do by hand as manual.
 

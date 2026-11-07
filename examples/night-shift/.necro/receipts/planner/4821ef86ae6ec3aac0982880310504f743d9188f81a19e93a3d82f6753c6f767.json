@@ -1,0 +1,144 @@
+{
+  "spec": "planner",
+  "gitCommit": "ab812ac0c2a2452fc23f82ae3ed9a7186c9bcf4e",
+  "requirements": {
+    "path": ".kiro/specs/planner/requirements.md",
+    "sha256": "cbe5827e989a72b1c413cb3bd141df98bafd7f5ad1cc599e935a47ae9a97903a"
+  },
+  "contracts": [
+    {
+      "name": "R4.4 shows a form filled with the working example and its result when the link is missing a part, builds the 4.1 link on submit, and shows a refusal next to the form",
+      "path": "contracts/planner/form.contract.test.js",
+      "sha256": "0300de278d36e6bc59d4d83afe06d57d278a4d7720fba2ac1802389fc401d27b",
+      "result": "pass"
+    },
+    {
+      "name": "R1.1 turns a local date, time and zone into the single UTC instant",
+      "path": "contracts/planner/req1-start-time.contract.test.js",
+      "sha256": "d0b924d61d83a23f8f0bc49926a3544fd399f975acef480fad3ba19de57743be",
+      "result": "pass"
+    },
+    {
+      "name": "R1.2 refuses a local time skipped by clocks jumping forward, naming the skipped range",
+      "path": "contracts/planner/req1-start-time.contract.test.js",
+      "sha256": "d0b924d61d83a23f8f0bc49926a3544fd399f975acef480fad3ba19de57743be",
+      "result": "pass"
+    },
+    {
+      "name": "R1.3 requires a choice when a local time happens twice, and returns the instant for the choice",
+      "path": "contracts/planner/req1-start-time.contract.test.js",
+      "sha256": "d0b924d61d83a23f8f0bc49926a3544fd399f975acef480fad3ba19de57743be",
+      "result": "pass"
+    },
+    {
+      "name": "R1.4 refuses an invalid date, time or zone with one plain sentence saying which one",
+      "path": "contracts/planner/req1-start-time.contract.test.js",
+      "sha256": "d0b924d61d83a23f8f0bc49926a3544fd399f975acef480fad3ba19de57743be",
+      "result": "pass"
+    },
+    {
+      "name": "R2.1 gives each guest the local date, local HH:MM and UTC offset at the start instant",
+      "path": "contracts/planner/req2-guest-times.contract.test.js",
+      "sha256": "4959865c33757c22c1690a3be8eeefcdcea6acc23d8b312e47c1a8db0395c7b4",
+      "result": "pass"
+    },
+    {
+      "name": "R2.2 says whether a guest is on the day before or the day after the host",
+      "path": "contracts/planner/req2-guest-times.contract.test.js",
+      "sha256": "4959865c33757c22c1690a3be8eeefcdcea6acc23d8b312e47c1a8db0395c7b4",
+      "result": "pass"
+    },
+    {
+      "name": "R2.3 orders guests by local time at the start instant, earliest first, ties by zone name",
+      "path": "contracts/planner/req2-guest-times.contract.test.js",
+      "sha256": "4959865c33757c22c1690a3be8eeefcdcea6acc23d8b312e47c1a8db0395c7b4",
+      "result": "pass"
+    },
+    {
+      "name": "R3.1 marks a guest whose local start is from 00:00 up to but not including 06:00",
+      "path": "contracts/planner/req3-dead-of-night.contract.test.js",
+      "sha256": "ccacc610c393a5b94ac82a83a142398c4fe5d14682e61972fb83e68bf51ca136",
+      "result": "pass"
+    },
+    {
+      "name": "R3.2 returns the on-the-hour start on the host date with the fewest dead-of-night guests, earliest on ties",
+      "path": "contracts/planner/req3-dead-of-night.contract.test.js",
+      "sha256": "ccacc610c393a5b94ac82a83a142398c4fe5d14682e61972fb83e68bf51ca136",
+      "result": "pass"
+    },
+    {
+      "name": "R4.1 shows the party start for every guest in the link, using the same src/ functions as the tests",
+      "path": "contracts/planner/req4-page.contract.test.js",
+      "sha256": "b5a73ae9a0f7b19b810f02ddd6a204bf26f3b203a8d310548c944dd897fa39cf",
+      "result": "pass"
+    },
+    {
+      "name": "R4.2 shows a dead-of-night row with a ghost marker and the words \"dead of night\"",
+      "path": "contracts/planner/req4-page.contract.test.js",
+      "sha256": "b5a73ae9a0f7b19b810f02ddd6a204bf26f3b203a8d310548c944dd897fa39cf",
+      "result": "pass"
+    },
+    {
+      "name": "R4.3 uses a dark AA-contrast theme, no external assets, a phone-width layout and no animation under reduced motion",
+      "path": "contracts/planner/req4-page.contract.test.js",
+      "sha256": "b5a73ae9a0f7b19b810f02ddd6a204bf26f3b203a8d310548c944dd897fa39cf",
+      "result": "pass"
+    }
+  ],
+  "sources": [
+    {
+      "path": "src/form.js",
+      "sha256": "95b1958123bb7f4c62fa99850a967ab7f1cf12b8df437daf23532ff6372e3ded"
+    },
+    {
+      "path": "src/guests.js",
+      "sha256": "1014bc358fb8a0770b4e8c8bd5ef8d09afca1a098e0d1e6e7cbf7cd8d473769c"
+    },
+    {
+      "path": "src/input.js",
+      "sha256": "b7a5131f3cf630929a03099d422f2d62bc35c2e4f019c1e85abd62bb9b9b257b"
+    },
+    {
+      "path": "src/kinder.js",
+      "sha256": "6d961b93aadb3664b9753faa4ab7417ead886cef43faf82e248dc7e0ff706cb7"
+    },
+    {
+      "path": "src/night.js",
+      "sha256": "379545c7a979a55fd56ce5af20230859b5bd3f165092593fb8c66df90491e6b7"
+    },
+    {
+      "path": "src/page.js",
+      "sha256": "65b4ee165e5793f6738b048f45058e20cc60bd2afde14467419c0af949d1df4b"
+    },
+    {
+      "path": "src/resolve.js",
+      "sha256": "9568684181cb5660bb98bdb73f9ab7a1a50370ef23f8a95ba7a249a079426ca4"
+    },
+    {
+      "path": "src/zones.js",
+      "sha256": "0f990628b5d4e9077ce90bfb276574789a3a3309e35addbd1c974be90d0bd084"
+    }
+  ],
+  "task": {
+    "id": "9",
+    "line": "9. A form with a working example (Req 4.4)"
+  },
+  "required": [
+    "R1.1 turns a local date, time and zone into the single UTC instant",
+    "R1.2 refuses a local time skipped by clocks jumping forward, naming the skipped range",
+    "R1.3 requires a choice when a local time happens twice, and returns the instant for the choice",
+    "R1.4 refuses an invalid date, time or zone with one plain sentence saying which one",
+    "R2.1 gives each guest the local date, local HH:MM and UTC offset at the start instant",
+    "R2.2 says whether a guest is on the day before or the day after the host",
+    "R2.3 orders guests by local time at the start instant, earliest first, ties by zone name",
+    "R3.1 marks a guest whose local start is from 00:00 up to but not including 06:00",
+    "R3.2 returns the on-the-hour start on the host date with the fewest dead-of-night guests, earliest on ties",
+    "R4.1 shows the party start for every guest in the link, using the same src/ functions as the tests",
+    "R4.2 shows a dead-of-night row with a ghost marker and the words \"dead of night\"",
+    "R4.3 uses a dark AA-contrast theme, no external assets, a phone-width layout and no animation under reduced motion",
+    "R4.4 shows a form filled with the working example and its result when the link is missing a part, builds the 4.1 link on submit, and shows a refusal next to the form"
+  ],
+  "uncommitted": [],
+  "receiptHash": "4821ef86ae6ec3aac0982880310504f743d9188f81a19e93a3d82f6753c6f767",
+  "createdAt": "2026-11-07T19:24:25.060Z"
+}
