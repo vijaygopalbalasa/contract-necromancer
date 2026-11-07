@@ -1,0 +1,33 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=9
+[tool] Run the test suite
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+Tests pass. Now let me see task 20.
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Check task state and receipts after tick
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Verify the new receipt
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 20 is ticked and the tick stood. The gate wrote a receipt and `necro verify` confirmed it.
+
+- **`npm test`:** 423 tests ran, 423 passed, and none failed or were skipped.
+- **Tick:** I changed `- [ ] 20.` to `- [x] 20.` in `.kiro/specs/necro-core/tasks.md`. After the edit the line still reads `[x]`, so the gate did not revert it.
+- **Receipt:** The gate wrote `.necro/receipts/necro-core/3c230f2497863a5a21d9f38ac7d0a01c93a3f850082d65c86953a004268f3f86.json`.
+- **`node bin/necro.js verify` on that receipt:** `CONFIRMED 3c230f2497863a5a21d9f38ac7d0a01c93a3f850082d65c86953a004268f3f86.` It exited with code 0.
+
+The task text said "do not tick task 20 yet". I took your request as the go-ahead, since the contracts are now reviewed and frozen.
+
+I didn't run `necro freeze`, and I didn't edit any frozen files.

@@ -122,19 +122,25 @@ Their hook files use `node ../../bin/necro.js`, so they work where `node` is on 
 Kiro wrote the code of this repository task by task. A person reviewed the contracts and froze them.
 
 - Specs in `.kiro/specs/`:
-  - `necro-core`: the tool. 9 requirements, 24 tasks, 69 contracts in 13 files, 3 receipts.
+  - `necro-core`: the tool. 9 requirements, 26 tasks, 73 contracts in 15 files, 6 receipts.
   - `receipt-viewer`: the static page in `site/`. 8 requirements, 16 tasks, 20 contracts in 8 files, 16 receipts.
 - Steering in `.kiro/steering/`: `product.md`, `structure.md`, `tech.md`, and `necromancer.md`, which tells Kiro not to edit frozen files.
 - Hooks in `.kiro/hooks/`: `necromancer.json` is the gate (`PreToolUse`, `PostToolUse` and `Stop` calling `node bin/necro.js hook ...`). `session-log.json` appends the tool and path of each Kiro tool call to `.kiro/build-log/sess_*.jsonl`. For shell commands it keeps only program names.
 - Build logs in `.kiro/build-log/`: `build-*.txt` are Kiro's session output for each piece of work.
 
-The tool did not gate its own first tasks. Tasks 1 to 16 of `necro-core` were built before that spec was frozen, and they have no receipts. From task 17 on, the tool gated its own development: Kiro drafted 68 contracts from the requirements, a person reviewed and froze them, and tasks 17 and 18 were ticked through the gate. The receipt viewer was built under the gate from its first task.
+The tool did not gate its own first tasks. Tasks 1 to 16 of `necro-core` were built before that spec was frozen, and they have no receipts. From task 17 on, the tool gated its own development: Kiro drafted 68 contracts from the requirements, a person reviewed and froze them, and tasks 17 to 20 were ticked through the gate. The receipt viewer was built under the gate from its first task.
 
 Moments from the logs and the git history:
 
 - Kiro ticked task 8c without building it, before the gate existed. A review found it, and the commit history reopens the task (`b63a530`, `a7283a3`) and redoes it (`8c4f996`). That is the failure this tool is built to catch.
 - Kiro finished tasks 16 and 17 of `necro-core`, and the gate refused each tick with "Spec 'necro-core' is not frozen". Kiro left the boxes unticked and did not retry (`build-t16.txt`, `build-t17.txt`). After the freeze, the task 17 tick went through and wrote a receipt.
-- Task 18 changed `src/lock.js` and re-froze the spec. Its receipt prints `CONFIRMED`. The task 17 receipt, written earlier, prints `MISMATCH` and lists `src/lock.js` among the changed files. The same happens to older receipts of `receipt-viewer`, which was re-frozen when requirements 7 and 8 were added. The newest receipt of each spec prints `CONFIRMED`.
+- An outside review found that nothing stopped the agent from running `necro freeze` itself, which rewrites the lock
+  that `verify` trusts, and the steering file even suggested it. Tasks 19 and 20 close it, built by Kiro under the
+  gate: the PreToolUse hook refuses a shell command that runs `freeze`, and after any shell command the PostToolUse hook
+  puts `.necro/lock.json` back byte for byte, however the command was spelled. A person froze the new contracts
+  (R3.14, R3.15, R6.8, R8.8), then the ticks went through (`build-t19.txt`, `build-t20.txt`).
+- Old receipts now print `SUPERSEDED` when their spec was frozen again later, instead of `MISMATCH` (task 19). The
+  newest receipt of each spec prints `CONFIRMED`.
 - The receipt viewer: 14 tasks were ticked through the gate with a receipt each, and tasks 15 and 16 followed. Its log records that every tick was accepted by the gate (`build-viewer.txt`).
 
 ## Limits

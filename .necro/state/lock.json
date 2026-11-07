@@ -75,6 +75,14 @@
           "sha256": "91bf25bb40c73741edc8f5a6a7bda4ccf3e7b7a5d20fd2b49c8563778c3b4504"
         },
         {
+          "name": "lock-restore",
+          "names": [
+            "R3.15 PostToolUse puts back the lock a shell command moved, byte for byte, before the 3.3 restore; a command that leaves the lock alone prints nothing; a lock a command created is removed"
+          ],
+          "path": "contracts/necro-core/lock-restore.contract.test.js",
+          "sha256": "b534ef1abb785115b64a8d9693e454751a044c6d83e2ebe5d682926bea15a8c5"
+        },
+        {
           "name": "lock",
           "names": [
             "R2.1 freeze records the SHA-256 of requirements.md and of every contract file in .necro/lock.json",
@@ -173,7 +181,7 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-07T19:09:28.551Z",
+      "frozenAt": "2026-11-07T19:14:03.071Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
         "sha256": "1723686f6fbd763f7c722f5950a7bfb6c6eed671d20d01db4dc5f0c38a674bdb"

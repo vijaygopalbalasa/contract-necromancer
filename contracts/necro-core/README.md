@@ -4,7 +4,7 @@ Draft contracts for `.kiro/specs/necro-core/requirements.md`. Every one of them 
 reviews them and runs `necro freeze necro-core`. After that, nobody edits them during a task.
 
 Each test name starts with its criterion (`R4.14 `, with a space), because `requiredNames` in `src/lock.js` matches a
-task's criteria to contract names with `n === 'R<c>' || n.startsWith('R<c> ')`. There is one test per criterion, 68 in
+task's criteria to contract names with `n === 'R<c>' || n.startsWith('R<c> ')`. There is one test per criterion, 73 in
 total, and every task in `tasks.md` names criteria that have a contract.
 
 ## How the files are written
@@ -115,7 +115,7 @@ total, and every task in `tasks.md` names criteria that have a contract.
 
 ## Criteria with no contract
 
-None. All 68 criteria in `requirements.md` can be checked in Node, and each has a contract.
+None. All 73 criteria in `requirements.md` can be checked in Node, and each has a contract.
 
 ## Contracts that cover only part of the criterion
 
