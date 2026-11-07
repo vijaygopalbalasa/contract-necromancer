@@ -1,0 +1,107 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=8
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run Command
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] Run Command
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 9's code and tests are written, and `npm test` passes (35 tests). The new contract file passes when run directly (18 contract tests in total). The planted bugs were all caught. The properties found no real bug in `src/`, so I changed nothing there. I did not tick task 9, run `necro freeze`, or edit any frozen file.
+
+`npm test` only runs `test/*.test.js`, so it never runs `contracts/`. I ran the contracts with `node --test contracts/ledger/*.test.js`.
+
+## What I changed
+All three files are new. `src/`, `bin/` and `package.json` are untouched.
+- **`test/gen.js`** has the seeded generator, the property runner and the shrinker. It uses a seeded PRNG (mulberry32), generates parties, and writes them as ledger text. It also has `checkProperty` and `PropertyFailure`.
+  - A generated party has 1–12 people, 1–30 expenses and amounts from 1 to 999,999 cents. Splits and spellings vary: case, padding, repeats, `split` in the description, blank and comment lines.
+  - About 30% of parties use only round amounts, so tied balances actually happen.
+  - The shrinker retries with fewer people, fewer expenses, simpler splits and smaller amounts.
+- **`test/properties.test.js`** runs each of R5.1–R5.4 on 300 parties. It also tests the generator's ranges and determinism, the failure report, and the shrinker. Setting `PUMPKIN_SEED` explores another seed.
+- **`contracts/ledger/properties.contract.test.js`** has contracts R5.1 to R5.5.
+
+## Planted bugs
+I planted each bug in a scratch copy under `/tmp`, which is now deleted. "Fails" means the property failed with a report naming the seed and a small party.
+
+| Planted bug | Properties that failed |
+|---|---|
+| `Math.round` instead of `Math.floor` in `split.js` | R5.1 first, then R5.2, R5.3 and R5.4 |
+| Extra cents lost (`extra = 0`) | R5.1 first, then R5.2, R5.3 and R5.4 |
+| Last payment dropped from `settle` | R5.3 only |
+| Balances ignore `split` lists (everyone always shares) | R5.2 only |
+| Extra cents go in input order instead of sorted order | R5.2 and R5.4 |
+| Random tie-break in `settle` | R5.4 only |
+| Each payment split into two | R5.3 only (payment count above the limit) |
+
+I also ran the contract file against these bugs. The five bugs that touch `src/` all fail the right contracts. It also fails when I mutate `test/gen.js` to drop the seed from the report, skip shrinking, or run fewer than 300 parties.
+
+Two things the first draft missed:
+- **Ignoring `split` lists:** this passed at first, because the shares still summed correctly. I added an independent paid/share calculation to R5.2, and that catches it.
+- **Random tie-break:** this passed at first, because random amounts almost never produce tied balances. Adding the round-amount parties fixed that.
+
+I also ran 150 other seeds (45,000 parties) against the real code. No property failed.
+
+## How I read each criterion
+- **R5.1:** For each parsed expense, the shares from `splitExpense` must sum to the amount, and the largest and smallest differ by at most 1. Every sharer must get a share. The shares in the balances must also add up to the total spent.
+- **R5.2:** The balances sum to 0, and each equals paid minus share. Each person's paid and share must match an independent calculation: floor of amount over N, with the leftover cents going to the alphabetically first keys.
+- **R5.3:** Every payment is a safe integer above 0 between two different people. Applying them leaves everyone at 0. The count is at most `max(k − 1, 0)`, where k is the number of people with a non-zero balance.
+- **R5.4:** Two reads of the same text give identical rows, payments, text output and JSON output. For a shuffled line order I only compare balances per person, matched case-insensitively. Row order and the displayed spelling follow first appearance, so they change legitimately. I read "the same payments for the same line order" as applying only when the order is unchanged, so payments are not compared across a reorder.
+- **R5.5:** A failing property throws an error that gives the seed, a replay seed (re-running with that seed and `runs` 1 fails again with the same party), the reason, and the smallest party as ledger text. In the contract I check this with a deliberately wrong splitter. The printed party must be 5 lines or fewer and must still fail when re-read as text. "Smallest" means the shrinker finds no smaller failing party by dropping a person, dropping an expense, simplifying a split or reducing an amount. It is not a guaranteed global minimum.
+
+## For the reviewer
+- **Shared dependency:** the contract imports `test/gen.js`, which is not frozen. The five property checks are written inside the contract. Only the generator, runner and shrinker are shared. The contract asserts the generator's ranges, the 300-run count and the report format, so weakening `gen.js` should fail the contract. Freezing `test/gen.js` as well would close that gap.
+- **Settle bound:** the design admits that greedy settling is not a global minimum. R5.3's `k − 1` bound is the only thing it guarantees, and it holds.
