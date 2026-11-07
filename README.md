@@ -77,7 +77,12 @@ A tick needs the contracts for the criteria listed on the ticked task, such as `
 node <path>/bin/necro.js init
 ```
 
-`init` writes `.kiro/hooks/necromancer.json` and `.kiro/steering/necromancer.md` into the project. Below, `necro` stands for `node <path>/bin/necro.js`.
+`init` writes `.kiro/hooks/necromancer.json`, `.kiro/steering/necromancer.md` and a custom Kiro agent,
+`.kiro/agents/necromancer.json`, into the project. The agent carries the same hooks and adds Kiro permission rules that
+deny a shell command running `necro freeze` and any write under `.necro/`, so Kiro's own permission engine refuses them
+before a hook runs. Start it with `kiro-cli chat --agent necromancer`. In a live test with the hooks and the steering
+removed, Kiro answered "A permission rule in this environment blocks any shell command matching `necro.js freeze`" and the
+lock stayed unchanged (`.kiro/build-log/agent-live-test.md`). Below, `necro` stands for `node <path>/bin/necro.js`.
 
 `necro init` writes hook commands with the absolute path of the `node` that ran it and of `bin/necro.js`, so they work
 when Kiro is started from the Dock and has no shell `PATH`. After `init`, trust the workspace in Kiro and quit and
@@ -104,14 +109,20 @@ Both apps have their own spec, frozen contracts, receipts and unit tests. A pers
 
 **Pumpkin Ledger** (`examples/pumpkin-ledger`) is a command line tool. It splits shared party costs to the exact cent and settles them in few payments.
 
-- 8 tasks, 13 contracts in 4 files, 27 unit tests, 9 receipts (one per ticked task, plus one from `necro check`).
+- 9 tasks, 18 contracts in 5 files, 35 unit tests, 10 receipts (one per ticked task, plus one from `necro check`).
+- Property-based contracts (R5.1 to R5.5, task 9): each runs on 300 parties from a seeded generator with no dependencies,
+  and on failure prints the seed and the smallest failing party. Kiro planted seven bugs in a scratch copy (rounding,
+  lost cents, a dropped payment, ignored `split` lists, unsorted extra cents, a random tie-break, split payments) and a
+  property caught each one; 45,000 more parties found no bug in the real code (`.kiro/build-log/build-ledger-t9.txt`).
 - Run: `cd examples/pumpkin-ledger`, then `node bin/ledger.js party.txt`, or add `--json`.
 - A real moment: Kiro tried to tick task 1 first. The gate refused, because the contracts for its criteria 1.1 and 1.4 need the line parser, which is a later task. Kiro built the rest of the code, and then every tick passed (`.kiro/build-log/build-ledger.txt`).
 
 **Night Shift** (`examples/night-shift`) is a web page. It plans a Halloween watch party across time zones and flags guests who would be up in the dead of night (00:00 up to 06:00 local), with daylight-saving gaps and overlaps handled.
 
-- 8 tasks, 12 contracts in 4 files, 42 unit tests, 9 receipts (one per ticked task, plus one from `necro check`).
-- Run: serve the folder, for example `python3 -m http.server -d examples/night-shift`, and open `http://localhost:8000/site/?date=2026-10-31&time=20:00&zone=America/New_York&guests=Europe/London,Asia/Kolkata`. The page reads its input from the link.
+- 9 tasks, 13 contracts in 5 files, 50 unit tests, 11 receipts (one per ticked task, plus two from `necro check`).
+- Run: serve the folder, for example `python3 -m http.server -d examples/night-shift`, and open `http://localhost:8000/site/`. The page opens with a filled form and a working example (Halloween 2026, 20:00 in
+  New York, guests in London, Kolkata, Tokyo and Kathmandu); change the form and the link updates, so a plan can be shared
+  as a link such as `?date=2026-10-31&time=20:00&zone=America/New_York&guests=Europe/London,Asia/Kolkata`.
 - A real moment: Kiro tried to tick task 1 early and the gate refused, because task 1 covers criteria 1.4 and 2.1, and contracts for those need code from later tasks (`.kiro/build-log/build-nightshift.txt`).
 - Receipts for tasks 1 to 5 print `MISMATCH` today. They were written before the page existed, and they record the page contracts R4.1 to R4.3 as failing. Those contracts pass now. The receipts for tasks 6 to 8 print `CONFIRMED`.
 
@@ -122,13 +133,14 @@ Their hook files use `node ../../bin/necro.js`, so they work where `node` is on 
 Kiro wrote the code of this repository task by task. A person reviewed the contracts and froze them.
 
 - Specs in `.kiro/specs/`:
-  - `necro-core`: the tool. 9 requirements, 26 tasks, 73 contracts in 15 files, 6 receipts.
+  - `necro-core`: the tool. 9 requirements, 27 tasks, 74 contracts in 16 files, 8 receipts.
   - `receipt-viewer`: the static page in `site/`. 8 requirements, 16 tasks, 20 contracts in 8 files, 16 receipts.
 - Steering in `.kiro/steering/`: `product.md`, `structure.md`, `tech.md`, and `necromancer.md`, which tells Kiro not to edit frozen files.
+- A custom agent in `.kiro/agents/necromancer.json` (task 21): the gate's hooks plus Kiro permission rules.
 - Hooks in `.kiro/hooks/`: `necromancer.json` is the gate (`PreToolUse`, `PostToolUse` and `Stop` calling `node bin/necro.js hook ...`). `session-log.json` appends the tool and path of each Kiro tool call to `.kiro/build-log/sess_*.jsonl`. For shell commands it keeps only program names.
 - Build logs in `.kiro/build-log/`: `build-*.txt` are Kiro's session output for each piece of work.
 
-The tool did not gate its own first tasks. Tasks 1 to 16 of `necro-core` were built before that spec was frozen, and they have no receipts. From task 17 on, the tool gated its own development: Kiro drafted 68 contracts from the requirements, a person reviewed and froze them, and tasks 17 to 20 were ticked through the gate. The receipt viewer was built under the gate from its first task.
+The tool did not gate its own first tasks. Tasks 1 to 16 of `necro-core` were built before that spec was frozen, and they have no receipts. From task 17 on, the tool gated its own development: Kiro drafted 68 contracts from the requirements, a person reviewed and froze them, and tasks 17 to 21 were ticked through the gate. The receipt viewer was built under the gate from its first task.
 
 Moments from the logs and the git history:
 
