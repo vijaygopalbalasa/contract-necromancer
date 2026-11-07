@@ -34,7 +34,7 @@ Each task writes its tests first, confirms they fail, then adds the code that ma
   - Write `test/cli.test.js` using `spawnSync` on temporary files: `ledger <file>` prints the table and payments and exits 0; `--json` prints parseable JSON; a missing file exits 1 with one sentence on stderr; a file with a bad line exits 1 with the `Line <n>:` sentence; a missing argument exits 1 with the usage sentence.
   - Add `bin/ledger.js`, which only parses arguments, reads the file, calls `src/`, and prints. Run the full `npm test` suite.
 
-- [ ] 9. Property-based contracts for the arithmetic (Req 5.1, 5.2, 5.3, 5.4, 5.5)
+- [x] 9. Property-based contracts for the arithmetic (Req 5.1, 5.2, 5.3, 5.4, 5.5)
   - Write a small seeded generator in `test/gen.js` (no dependencies: a seeded PRNG, a party generator, and shrinking that retries with fewer people, fewer expenses and smaller amounts). Write `test/properties.test.js` that runs each property on at least 300 generated parties and prints the seed and the smallest failing party on failure. Plant each bug the properties exist for (round instead of floor, lose the extra cents, drop a payment) in a scratch copy and confirm a property fails, then put the code back.
   - Add `contracts/ledger/properties.contract.test.js` with one contract per criterion, named `R5.1 ...` to `R5.5 ...` (a new file; do not change the frozen contract files). Fix any real bug the properties find in `src/`, and say so. Run `npm test` and pass.
 

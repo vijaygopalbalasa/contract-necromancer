@@ -3,6 +3,18 @@
     "ledger": {
       "contracts": [
         {
+          "name": "properties",
+          "names": [
+            "R5.1 shares of every expense sum to its amount and differ by at most one cent",
+            "R5.2 balances are paid minus shares and sum to exactly zero",
+            "R5.3 settling zeroes every balance with positive whole-cent payments, at most one fewer than people owing or owed",
+            "R5.4 reading the same file twice, or its lines in another order, gives the same balances",
+            "R5.5 a failing property reports the seed and the smallest failing party so it can be replayed"
+          ],
+          "path": "contracts/ledger/properties.contract.test.js",
+          "sha256": "cbc9c4d4a6a4b19b73db1855b3cc7b888c9a8cfcba462658e83032ffcf5e6f34"
+        },
+        {
           "name": "requirement-1-read",
           "names": [
             "R1.1 records payer, whole-cent amount and what for each line",
@@ -44,7 +56,7 @@
           "sha256": "bc4534920291653be3afd12e1dba823e52cf3be583edd8472f9d1068dc17d06d"
         }
       ],
-      "frozenAt": "2026-11-07T19:20:20.703Z",
+      "frozenAt": "2026-11-07T19:26:21.648Z",
       "requirements": {
         "path": ".kiro/specs/ledger/requirements.md",
         "sha256": "2471c3d12bd1e3b553f630224bc09a9833bc715958f02af8f130219e7cd1eb35"
