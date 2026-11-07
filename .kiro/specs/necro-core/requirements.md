@@ -91,6 +91,7 @@ receipts anyone can re-run.
 6. WHEN the spec is frozen in the local lock THE SYSTEM SHALL also check that the receipt's requirements and contract hashes match the lock and IF not THEN print `MISMATCH` with each differing path.
 7. WHEN a lock exists THE SYSTEM SHALL require the receipt's spec to be in it, require the receipt's contract files, hashes and names to equal the lock's exactly (none missing, none extra), and run the lock's contracts rather than the receipt's list, so a receipt that leaves out a failing contract is a `MISMATCH`.
 8. IF the receipt's requirements or contract hashes differ from the lock's for its spec AND the requirements and contract files on disk match the lock (the spec was frozen again after the receipt was written) THEN THE SYSTEM SHALL print `SUPERSEDED` with the spec name and each path whose hash changed, say that the receipt describes an earlier freeze and not today's code, and exit with code 1, instead of printing `MISMATCH`. When the files on disk do not match the lock, the rules above still print `MISMATCH`.
+9. WHEN `necro verify <receiptFile>` runs from a folder that does not contain the receipt's project THE SYSTEM SHALL take as the project root the nearest folder above the receipt file that contains `.necro/lock.json`, so the result is the same from any working directory, and IF no such folder exists THEN use the current folder as before.
 
 ## Requirement 7: Session summary
 **User story:** As a developer, I want a summary when the agent stops, so that a false "done" is visible.

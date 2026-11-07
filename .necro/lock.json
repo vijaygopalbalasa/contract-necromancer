@@ -189,10 +189,10 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-07T19:26:08.476Z",
+      "frozenAt": "2026-11-07T19:36:32.894Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
-        "sha256": "aee55c4893187ea12b5a0f94146a5114d82f1c5494709726d1f65205271ec568"
+        "sha256": "12baf5d57c0184d0d1c4ea8ca2101775c3cd6a463656c47812cd841a09e05a9c"
       },
       "tasks": {
         "1": {
@@ -359,6 +359,12 @@
           ],
           "text": "21. **A custom Kiro agent that brings the gate with it** (Req 8.9)"
         },
+        "22": {
+          "criteria": [
+            "6.9"
+          ],
+          "text": "22. **Verify from any folder** (Req 6.9)"
+        },
         "3b": {
           "criteria": [
             "4.7",
@@ -493,10 +499,10 @@
           "sha256": "47e17273eef50b96c039f01d4ab62d0c907bffe8f911b03d90a5dc1d4c19a08f"
         }
       ],
-      "frozenAt": "2026-11-06T22:01:39.915Z",
+      "frozenAt": "2026-11-07T19:36:33.712Z",
       "requirements": {
         "path": ".kiro/specs/receipt-viewer/requirements.md",
-        "sha256": "2603845ba645d0f61769719b4c1f8d42d10f5b164d113c3175bc6c472ae93164"
+        "sha256": "374716aad76cb4f498a83777049017bd4ea0c8302abcfd8f01f72301428ba9f9"
       },
       "tasks": {
         "1": {
@@ -608,6 +614,15 @@
             "8.4"
           ],
           "text": "16. **Kiroween look** (Req 8.1, 8.2, 8.3, 8.4)"
+        },
+        "17": {
+          "criteria": [
+            "9.1",
+            "9.2",
+            "9.3",
+            "9.4"
+          ],
+          "text": "17. First visit shows a receipt, risen and buried (Req 9.1, 9.2, 9.3, 9.4)"
         }
       }
     }
