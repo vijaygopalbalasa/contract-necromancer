@@ -197,10 +197,10 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-07T19:52:59.885Z",
+      "frozenAt": "2026-11-07T20:06:55.594Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
-        "sha256": "12baf5d57c0184d0d1c4ea8ca2101775c3cd6a463656c47812cd841a09e05a9c"
+        "sha256": "1c53729bd1a4dd3064ef5ba614587cd06a3e604a25c78d97dd52b73db457f268"
       },
       "tasks": {
         "1": {
@@ -372,6 +372,22 @@
             "6.9"
           ],
           "text": "22. **Verify from any folder** (Req 6.9)"
+        },
+        "23": {
+          "criteria": [
+            "6.10"
+          ],
+          "text": "23. **Say whose contracts run** (Req 6.10)"
+        },
+        "24": {
+          "criteria": [
+            "10.1",
+            "10.2",
+            "10.3",
+            "10.4",
+            "10.5"
+          ],
+          "text": "24. **MCP server and Kiro power** (Req 10.1, 10.2, 10.3, 10.4, 10.5)"
         },
         "3b": {
           "criteria": [

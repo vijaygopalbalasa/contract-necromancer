@@ -1,0 +1,14 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "contract-necromancer",
+  "version": "0.1.0",
+  "description": "Frozen, executable contracts decide when a Kiro spec task is done. Check which contracts a task needs before ticking it, and re-run receipts.",
+  "author": {
+    "name": "Vijaygopal Balasa",
+    "url": "https://github.com/vijaygopalbalasa"
+  },
+  "keywords": ["contracts", "ears", "acceptance criteria", "spec", "tasks", "done", "receipt", "verify", "necro", "freeze"],
+  "homepage": "https://github.com/vijaygopalbalasa/contract-necromancer",
+  "repository": "https://github.com/vijaygopalbalasa/contract-necromancer",
+  "license": "MIT"
+}

@@ -7,13 +7,14 @@ import { freezeSpec } from '../src/lock.js';
 import { verify } from '../src/verify.js';
 import { checkSpec } from '../src/check.js';
 import { handlePreToolUse, handlePostToolUse, handleStop } from '../src/hooks.js';
+import { serve } from '../src/mcp.js';
 
 const cwd = process.cwd();
 const args = process.argv.slice(2);
 
 if (args.length === 0) {
   console.error('Usage: necro <command> [args]');
-  console.error('Commands: freeze <spec>, check <spec>, verify <receiptFile>, init, hook pre|post|stop');
+  console.error('Commands: freeze <spec>, check <spec>, verify <receiptFile>, init, mcp, hook pre|post|stop');
   process.exit(1);
 }
 
@@ -55,6 +56,12 @@ try {
 
     case 'init': {
       initProject(cwd);
+      break;
+    }
+
+    case 'mcp': {
+      // Req 10.1: serve the Model Context Protocol on stdin and stdout until stdin closes.
+      serve(cwd);
       break;
     }
 

@@ -22,6 +22,18 @@ function projectRoot(cwd, receiptAbs) {
   }
 }
 
+// True when two paths name the same folder, after resolving symbolic links.
+function sameFolder(a, b) {
+  const resolve = (p) => {
+    try {
+      return fs.realpathSync(p);
+    } catch {
+      return path.resolve(p);
+    }
+  };
+  return resolve(a) === resolve(b);
+}
+
 // Recompute the hash of a pinned file. Returns null if the file is missing.
 function currentHash(cwd, relPath) {
   try {
@@ -73,6 +85,9 @@ export function verify(workingDir, receiptFile) {
   // Req 6.9: everything below is relative to the receipt's project, not to where
   // the command was started.
   const cwd = projectRoot(workingDir, receiptAbs);
+  // Req 6.10: say whose contracts run when the root is not the current folder. Two
+  // spellings of one folder that differ by a symbolic link are the same folder.
+  if (!sameFolder(cwd, workingDir)) console.log(`Project: ${cwd}`);
 
   // Req 6.5: a receipt must have requirements and contracts.
   if (!receipt.requirements || !receipt.contracts || receipt.contracts.length === 0) {

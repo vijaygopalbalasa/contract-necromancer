@@ -88,7 +88,8 @@ function repoWithExample(make) {
 // `necro verify` in `cwd`, naming the receipt by a path relative to `cwd`.
 function verifyFrom(cwd, receiptAbs) {
   const res = necro(cwd, ['verify', path.relative(cwd, receiptAbs)]);
-  return { status: res.status, stdout: res.stdout, stderr: res.stderr };
+  // Req 6.10 adds a first line `Project: <path>` when the root is not the current folder; 6.9 compares the rest.
+  return { status: res.status, stdout: res.stdout.replace(/^Project: .*\n/, ''), stderr: res.stderr };
 }
 
 test('R6.9 necro verify on an example\'s receipt gives the same output and exit code from the repository root, the example folder and an unrelated folder, and a receipt outside any project is checked in the current folder', () =>

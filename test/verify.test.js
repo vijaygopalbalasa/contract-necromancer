@@ -703,6 +703,12 @@ function repoWithExample() {
   return { root, example, receipt: path.join(example, file) };
 }
 
+// Req 6.10 adds a leading "Project: <path>" line when the root is not the current
+// folder. R6.9 compares the verdict, so that line is taken off before comparing.
+function withoutProject(out) {
+  return out.replace(/^Project: .*\n/, '');
+}
+
 // verify() from `cwd`, naming the receipt by a path relative to `cwd`.
 function verifyFrom(cwd, receiptAbs) {
   return captureStdout(() => verify(cwd, path.relative(cwd, receiptAbs)));
@@ -719,7 +725,7 @@ test('R6.9 verifying an example\'s receipt from the repository root, the example
     for (const [label, cwd] of [['repository root', root], ['unrelated folder', elsewhere]]) {
       const got = verifyFrom(cwd, receipt);
       assert.equal(got.code, here.code, `${label}: ${got.out}`);
-      assert.equal(got.out, here.out, label);
+      assert.equal(withoutProject(got.out), here.out, label);
     }
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -740,7 +746,7 @@ test('R6.9 a mismatch reads the same from every folder too', () => {
     for (const [label, cwd] of [['repository root', root], ['unrelated folder', elsewhere]]) {
       const got = verifyFrom(cwd, receipt);
       assert.equal(got.code, here.code, `${label}: ${got.out}`);
-      assert.equal(got.out, here.out, label);
+      assert.equal(withoutProject(got.out), here.out, label);
     }
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -799,9 +805,89 @@ test('R6.9 the real pumpkin-ledger receipt is CONFIRMED from the repository root
     for (const cwd of [repo, elsewhere]) {
       const got = verifyFrom(cwd, receipt);
       assert.equal(got.code, 0, `${cwd}: ${got.out}`);
-      assert.equal(got.out, inExample.out, cwd);
+      assert.equal(withoutProject(got.out), inExample.out, cwd);
     }
   } finally {
     fs.rmSync(elsewhere, { recursive: true, force: true });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Req 6.10: when verify uses a project root other than the current folder, it
+// first says whose contracts run
+// ---------------------------------------------------------------------------
+
+test('R6.10 verifying from another folder prints Project: <absolute path> before the result', () => {
+  const { root, example, receipt } = repoWithExample();
+  const elsewhere = tmpCwd();
+  try {
+    for (const [label, cwd] of [['repository root', root], ['unrelated folder', elsewhere]]) {
+      const got = verifyFrom(cwd, receipt);
+      assert.equal(got.code, 0, `${label}: ${got.out}`);
+      const lines = got.out.split('\n');
+      assert.equal(lines[0], `Project: ${example}`, label);
+      assert.match(lines[1], /^CONFIRMED [0-9a-f]{64}/, label);
+    }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+    fs.rmSync(elsewhere, { recursive: true, force: true });
+  }
+});
+
+test('R6.10 the Project: line comes before a MISMATCH too', () => {
+  const { root, example, receipt } = repoWithExample();
+  try {
+    fs.appendFileSync(path.join(example, 'contracts/demo/a.contract.test.js'), '// changed\n');
+    const got = verifyFrom(root, receipt);
+    assert.equal(got.code, 1, got.out);
+    const lines = got.out.split('\n');
+    assert.equal(lines[0], `Project: ${example}`);
+    assert.match(lines[1], /^MISMATCH/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('R6.10 verifying from the project root prints no Project: line', () => {
+  const { root, example, receipt } = repoWithExample();
+  try {
+    const here = verifyFrom(example, receipt);
+    assert.equal(here.code, 0, here.out);
+    assert.doesNotMatch(here.out, /Project:/);
+    assert.match(here.out, /^CONFIRMED/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('R6.10 a project root reached through a different spelling of the current folder prints no Project: line', () => {
+  const { root, example, receipt } = repoWithExample();
+  try {
+    const link = path.join(os.tmpdir(), `necro-verify-link-${process.pid}-${Date.now()}`);
+    fs.symlinkSync(fs.realpathSync(example), link);
+    try {
+      const got = captureStdout(() => verify(link, receipt));
+      assert.equal(got.code, 0, got.out);
+      assert.doesNotMatch(got.out, /Project:/);
+    } finally {
+      fs.rmSync(link, { force: true });
+    }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('R6.10 a receipt outside any project is checked in the current folder and prints no Project: line', () => {
+  const { example, receipt } = repoWithExample();
+  const orphans = tmpCwd();
+  try {
+    const orphan = path.join(orphans, 'receipt.json');
+    fs.copyFileSync(receipt, orphan);
+    const got = verifyFrom(example, orphan);
+    assert.equal(got.code, 0, got.out);
+    assert.doesNotMatch(got.out, /Project:/);
+  } finally {
+    fs.rmSync(example, { recursive: true, force: true });
+    fs.rmSync(orphans, { recursive: true, force: true });
   }
 });
