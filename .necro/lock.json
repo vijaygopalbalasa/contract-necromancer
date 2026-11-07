@@ -173,10 +173,10 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-07T19:06:02.297Z",
+      "frozenAt": "2026-11-07T19:09:28.551Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
-        "sha256": "7670dcfd39a0a60715636d103ea4d490340be70e6b5b70c47e910367730755b1"
+        "sha256": "1723686f6fbd763f7c722f5950a7bfb6c6eed671d20d01db4dc5f0c38a674bdb"
       },
       "tasks": {
         "1": {
@@ -330,6 +330,12 @@
             "8.8"
           ],
           "text": "19. **Freezing is a person's step, and a re-frozen spec's old receipts say so** (Req 3.14, 6.8, 8.8)"
+        },
+        "20": {
+          "criteria": [
+            "3.15"
+          ],
+          "text": "20. **An agent's shell cannot move the lock** (Req 3.15)"
         },
         "3b": {
           "criteria": [

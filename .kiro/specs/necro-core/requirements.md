@@ -45,6 +45,7 @@ receipts anyone can re-run.
 12. WHEN this specification says `execute_bash` THE SYSTEM SHALL apply the same rule to every Kiro shell tool (`execute_bash`, `execute_pwsh`, `control_bash_process`, `control_pwsh_process`).
 13. WHEN `fs_append` or `delete_file` targets `tasks.md` THE SYSTEM SHALL treat it like any other write to `tasks.md` for the done gate.
 14. WHEN the PreToolUse handler receives a shell tool call whose command runs this tool's `freeze` command (the word `freeze` as the first argument after `necro`, `necro.js` or a path ending in `bin/necro.js`, anywhere in the command, including after `&&`, `;`, `|` or inside `bash -c`/`sh -c`) THE SYSTEM SHALL exit with code 2 and write to stderr that freezing is a person's step, because freezing rewrites the lock that `verify` trusts.
+15. WHEN the PreToolUse handler runs for a shell tool THE SYSTEM SHALL record a copy of `.necro/lock.json` (or that it is absent), and WHEN the PostToolUse handler runs after a shell tool and `.necro/lock.json` differs from that record THE SYSTEM SHALL restore the recorded lock before any other check, so the frozen-file restore of 3.3 then works against the lock the person froze, and write to stderr that the lock was restored because freezing is a person's step. This holds however the command was written, so it does not depend on 3.14 recognising the command.
 
 ## Requirement 4: Gate on marking a task done
 **User story:** As a developer, I want "done" refused until contracts pass, so that a ticked task means the requirements hold.
