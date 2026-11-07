@@ -1,9 +1,9 @@
 {
   "spec": "necro-core",
-  "gitCommit": "e6a6a317344f01824155e73cebafb4582e47bd34",
+  "gitCommit": "227da85d96e2c3806c662030d040e798254ed9ea",
   "requirements": {
     "path": ".kiro/specs/necro-core/requirements.md",
-    "sha256": "1723686f6fbd763f7c722f5950a7bfb6c6eed671d20d01db4dc5f0c38a674bdb"
+    "sha256": "aee55c4893187ea12b5a0f94146a5114d82f1c5494709726d1f65205271ec568"
   },
   "contracts": [
     {
@@ -88,6 +88,12 @@
       "name": "R2.9 freeze reads criteria from the task line and from the indented sub-lines under it, in both formats",
       "path": "contracts/necro-core/criteria-format.contract.test.js",
       "sha256": "742c76bf54490f58db03c2f11dbf96f1bcc08e471cdbed98a66a8879d1ea0101",
+      "result": "pass"
+    },
+    {
+      "name": "R8.9 init writes .kiro/agents/necromancer.json with the steering resource, the three hooks, and deny rules for necro freeze and writes under .necro/; a second init leaves it unchanged and says so",
+      "path": "contracts/necro-core/custom-agent.contract.test.js",
+      "sha256": "c403183f7dc16004d2855600e8265a7f37e64c5380bc910feede12eb23f6b334",
       "result": "pass"
     },
     {
@@ -448,7 +454,7 @@
   "sources": [
     {
       "path": "bin/necro.js",
-      "sha256": "19754bf19a9546a20faf1a2993433a16d63cdddfa39739bfeff72329d697f429"
+      "sha256": "fa2009928f71863ce50dd811863f5050cd9f8e6ade98653f6a836656296a433d"
     },
     {
       "path": "src/canon.js",
@@ -481,6 +487,10 @@
     {
       "path": "src/verify.js",
       "sha256": "a4b2128eba0b9ff3caeb26391546b7ad20e1aa5c918153fce6731d5a1ce9d61f"
+    },
+    {
+      "path": "templates/necromancer.agent.json",
+      "sha256": "bb5f3c2eaae18e9763da3148e3aa963d794e308d9699f1675c026c8aafbb15c5"
     },
     {
       "path": "templates/necromancer.hooks.json",
@@ -562,12 +572,13 @@
     "R8.6 init writes hook commands with the absolute, quoted path of the Node.js binary that ran init and of bin/necro.js",
     "R8.7 init says Kiro runs hooks only in a trusted workspace and that after trusting it Kiro must be quit and reopened",
     "R8.8 init writes a steering file saying a person freezes specs, the agent never runs necro freeze, and frozen specs are listed in .necro/lock.json",
+    "R8.9 init writes .kiro/agents/necromancer.json with the steering resource, the three hooks, and deny rules for necro freeze and writes under .necro/; a second init leaves it unchanged and says so",
     "R9.1 check on a frozen spec runs every frozen contract, prints each result by name, and writes a receipt with task null and every contract required",
     "R9.2 check exits 0 and prints the receipt path when every contract passes, and exits 1 and still writes the receipt when any fails",
     "R9.3 check on a spec that is not frozen exits 1 and says to freeze it first",
     "R9.4 check does not change tasks.md"
   ],
   "uncommitted": [],
-  "receiptHash": "9dad8d81172e351d8406faf6afff0d4e23ca3d4ad2a0cb95c3722d730c472f43",
-  "createdAt": "2026-11-07T19:17:56.629Z"
+  "receiptHash": "1bf4b4b1c29e5f55eac24438c951b2b97735bedc9ca5be739af7995b06f3b029",
+  "createdAt": "2026-11-07T19:30:00.225Z"
 }
