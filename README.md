@@ -30,12 +30,16 @@ Ann pays Bob 4.57
 Dee pays Bob 4.21
 ```
 
-Kiro built this app under the gate. Each task it ticked left a receipt in `.necro/receipts/ledger/`. Re-run one:
+Kiro built this app under the gate. Each task it ticked left a receipt in `.necro/receipts/ledger/`. Re-run the newest
+one, from task 9 (run `necro verify` from the folder that holds the spec's `.necro/`, here `examples/pumpkin-ledger`):
 
 ```
-node ../../bin/necro.js verify .necro/receipts/ledger/e6371c6c38186f7db271dc2b9e943bc0d9b216b34d4ccef0a2ebeb1797165481.json
-CONFIRMED e6371c6c38186f7db271dc2b9e943bc0d9b216b34d4ccef0a2ebeb1797165481.
+node ../../bin/necro.js verify .necro/receipts/ledger/2c6a247bf4ddaa3cdbedf06e5abf719cf6da88bdf12a86df1097c26264811f71.json
+CONFIRMED 2c6a247bf4ddaa3cdbedf06e5abf719cf6da88bdf12a86df1097c26264811f71.
 ```
+
+The older receipts print `SUPERSEDED`: they were written before task 9 added contracts and a person froze the spec again,
+so they describe an earlier freeze, not today's code.
 
 See the gate refuse a tick, with no Kiro install. Still in `examples/pumpkin-ledger`, plant the bug from the demo video
 (each share rounded, so cents are lost), reopen task 4, and send the gate the same `task_update` call the Kiro IDE sends
@@ -47,7 +51,8 @@ perl -pi -e 's/^- \[x\] 4\./- [ ] 4./' .kiro/specs/ledger/tasks.md
 echo '{"hook_event_name":"preToolUse","tool_name":"task_update","tool_input":{"tasksFilePath":".kiro/specs/ledger/tasks.md","taskId":"4","status":"completed"}}' | node ../../bin/necro.js hook pre; echo "exit $?"
 ```
 
-The gate prints `Contracts failed: R2.1 ..., R2.2 ..., R3.1 ..., R4.1 ..., R4.2 ...` and exits 2, which is how a Kiro
+The gate prints `Contracts failed:` and names the contracts the bug breaks (R2.1, R2.2, R3.1, R4.1, R4.2 and the
+property contracts R5.1 to R5.4), then exits 2, which is how a Kiro
 hook refuses a tool call. Undo the bug with `git checkout src/split.js` and run the `echo` line again: exit 0, and a new
 receipt appears in `.necro/receipts/ledger/`. Run `git checkout .` and remove the new receipt to clean up.
 
@@ -124,7 +129,7 @@ Both apps have their own spec, frozen contracts, receipts and unit tests. A pers
   New York, guests in London, Kolkata, Tokyo and Kathmandu); change the form and the link updates, so a plan can be shared
   as a link such as `?date=2026-10-31&time=20:00&zone=America/New_York&guests=Europe/London,Asia/Kolkata`.
 - A real moment: Kiro tried to tick task 1 early and the gate refused, because task 1 covers criteria 1.4 and 2.1, and contracts for those need code from later tasks (`.kiro/build-log/build-nightshift.txt`).
-- Receipts for tasks 1 to 5 print `MISMATCH` today. They were written before the page existed, and they record the page contracts R4.1 to R4.3 as failing. Those contracts pass now. The receipts for tasks 6 to 8 print `CONFIRMED`.
+- The receipt for task 9 (`4821ef86...`) and the newest `necro check` receipt (`a3d2bf63...`) print `CONFIRMED`. The receipts for tasks 1 to 8 print `SUPERSEDED`, because task 9 added a contract and the spec was frozen again.
 
 Their hook files use `node ../../bin/necro.js`, so they work where `node` is on your `PATH`. If Kiro is started from the Dock, delete the example's `.kiro/hooks/necromancer.json` and run `node ../../bin/necro.js init` from that folder.
 
@@ -133,8 +138,8 @@ Their hook files use `node ../../bin/necro.js`, so they work where `node` is on 
 Kiro wrote the code of this repository task by task. A person reviewed the contracts and froze them.
 
 - Specs in `.kiro/specs/`:
-  - `necro-core`: the tool. 9 requirements, 27 tasks, 74 contracts in 16 files, 8 receipts.
-  - `receipt-viewer`: the static page in `site/`. 8 requirements, 16 tasks, 20 contracts in 8 files, 16 receipts.
+  - `necro-core`: the tool. 9 requirements, 27 tasks, 74 contracts in 16 files, 9 receipts.
+  - `receipt-viewer`: the static page in `site/`. 8 requirements, 16 tasks, 20 contracts in 8 files, 17 receipts.
 - Steering in `.kiro/steering/`: `product.md`, `structure.md`, `tech.md`, and `necromancer.md`, which tells Kiro not to edit frozen files.
 - A custom agent in `.kiro/agents/necromancer.json` (task 21): the gate's hooks plus Kiro permission rules.
 - Hooks in `.kiro/hooks/`: `necromancer.json` is the gate (`PreToolUse`, `PostToolUse` and `Stop` calling `node bin/necro.js hook ...`). `session-log.json` appends the tool and path of each Kiro tool call to `.kiro/build-log/sess_*.jsonl`. For shell commands it keeps only program names.
