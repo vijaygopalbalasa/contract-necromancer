@@ -1,8 +1,71 @@
 # Contract Necromancer
 
-Design by Contract for Kiro specs. Each EARS acceptance criterion in `.kiro/specs/<spec>/requirements.md` gets an
-executable contract in `contracts/<spec>/`. A person freezes them, and Kiro hooks refuse to let a task in `tasks.md` be
-marked done until the frozen contracts pass. Every task that passes gets a receipt that anyone can re-run.
+A coding agent can mark a task done when the work is not done. Kiro specs already have EARS acceptance criteria, but nothing checks them at the moment a task is ticked. Contract Necromancer gives each criterion an executable contract, a person freezes the contracts, Kiro hooks refuse the tick until the frozen contracts pass, and every passing task gets a receipt that anyone can re-run.
+
+## Try it in a minute
+
+Requires Node.js 24 or newer. There is no `npm install`.
+
+```
+git clone https://github.com/vijaygopalbalasa/contract-necromancer.git
+cd contract-necromancer/examples/pumpkin-ledger
+node bin/ledger.js party.txt
+```
+
+`party.txt` holds a few shared costs from a Halloween party. The ledger prints each person's balance and the payments that settle them:
+
+```
+Name   Paid  Share  Balance
+Ann   48.60  53.17    -4.57
+Bob   48.24  39.46     8.78
+Cy    61.00  39.46    21.54
+Dee   27.40  53.15   -25.75
+Dee pays Cy 21.54
+Ann pays Bob 4.57
+Dee pays Bob 4.21
+```
+
+Kiro built this app under the gate. Each task it ticked left a receipt in `.necro/receipts/ledger/`. Re-run one:
+
+```
+node ../../bin/necro.js verify .necro/receipts/ledger/e6371c6c38186f7db271dc2b9e943bc0d9b216b34d4ccef0a2ebeb1797165481.json
+CONFIRMED e6371c6c38186f7db271dc2b9e943bc0d9b216b34d4ccef0a2ebeb1797165481.
+```
+
+Then run the unit tests of the tool itself from the repository root:
+
+```
+cd ../..
+npm test
+```
+
+## How it works
+
+1. You write `requirements.md` for a spec in EARS form (`WHEN ... THE SYSTEM SHALL ...`).
+2. Kiro drafts the contracts under `contracts/<spec>/`, as files named `*.contract.test.js`. Each contract is one test named after its criterion (`R2.1 ...`). A person reviews them.
+3. `necro freeze <spec>` locks `requirements.md` and the contracts by hash. After that, the hooks stop edits to them.
+4. While Kiro builds, the hooks watch each tool call:
+   - `PreToolUse` blocks a tick with exit code 2 and names the failing contracts. A tick is an edit of `tasks.md` or the Kiro IDE's `task_update` tool with status `completed`.
+   - `PostToolUse` restores a frozen file that a command changed, and undoes a tick that the contracts do not support.
+   - `Stop` reports, for each frozen spec, the tasks ticked, the receipts written, and the contracts failing now.
+5. Each tick that passes writes a receipt to `.necro/receipts/<spec>/<hash>.json`. `necro verify` re-runs it and prints `CONFIRMED` or `MISMATCH`.
+
+A tick needs the contracts for the criteria listed on the ticked task, such as `(Req 1.1, 1.4)`, as recorded when the spec was frozen. It needs every contract when the task is the last unticked one, when the lock does not know the task, when the task line was edited after the freeze, or when the task lists no criteria that have a contract. A spec that is not frozen refuses every tick.
+
+## Use it in your project
+
+```
+node <path>/bin/necro.js init
+```
+
+`init` writes `.kiro/hooks/necromancer.json` and `.kiro/steering/necromancer.md` into the project. Below, `necro` stands for `node <path>/bin/necro.js`.
+
+`necro init` writes hook commands with the absolute path of the `node` that ran it and of `bin/necro.js`, so they work
+when Kiro is started from the Dock and has no shell `PATH`. After `init`, trust the workspace in Kiro and quit and
+reopen Kiro (Cmd+Q on macOS); Kiro runs hooks only in a trusted workspace. If you move the install or switch Node
+versions, delete `.kiro/hooks/necromancer.json` and run `necro init` again.
+
+## Commands
 
 ```
 necro init              # write the Kiro hooks and steering file into a project
@@ -11,17 +74,49 @@ necro check <spec>      # run every frozen contract now and write a receipt, wit
 necro verify <receipt>  # re-run a receipt and print CONFIRMED or MISMATCH
 ```
 
-Requires Node.js 24 or newer. There are no runtime dependencies.
-
-`necro init` writes hook commands with the absolute path of the `node` that ran it and of `bin/necro.js`, so they work
-when Kiro is started from the Dock and has no shell `PATH`. After `init`, trust the workspace in Kiro and quit and
-reopen Kiro; Kiro runs hooks only in a trusted workspace. If you move the install or switch Node versions, delete
-`.kiro/hooks/necromancer.json` and run `necro init` again.
-
 `necro check <spec>` needs a frozen spec. It prints `pass` or `fail` for each contract, writes a receipt to
 `.necro/receipts/<spec>/` with `task` set to null and every contract required, and exits 0 when all pass or 1 when any
 fails (the receipt is written either way). It does not touch `tasks.md`. Use it to publish a receipt for the commit you
 just pushed.
+
+## Demo apps, built by Kiro under the gate
+
+Both apps have their own spec, frozen contracts, receipts and unit tests. A person wrote the requirements. Kiro drafted the design, the tasks and the contracts, and a person reviewed and froze them. Kiro then wrote the code.
+
+**Pumpkin Ledger** (`examples/pumpkin-ledger`) is a command line tool. It splits shared party costs to the exact cent and settles them in few payments.
+
+- 8 tasks, 8 receipts, 13 contracts in 4 files, 27 unit tests.
+- Run: `cd examples/pumpkin-ledger`, then `node bin/ledger.js party.txt`, or add `--json`.
+- A real moment: Kiro tried to tick task 1 first. The gate refused, because the contracts for its criteria 1.1 and 1.4 need the line parser, which is a later task. Kiro built the rest of the code, and then every tick passed (`.kiro/build-log/build-ledger.txt`).
+
+**Night Shift** (`examples/night-shift`) is a web page. It plans a Halloween watch party across time zones and flags guests who would be up in the dead of night (00:00 up to 06:00 local), with daylight-saving gaps and overlaps handled.
+
+- 8 tasks, 8 receipts, 12 contracts in 4 files, 42 unit tests.
+- Run: serve the folder, for example `python3 -m http.server -d examples/night-shift`, and open `http://localhost:8000/site/?date=2026-10-31&time=20:00&zone=America/New_York&guests=Europe/London,Asia/Kolkata`. The page reads its input from the link.
+- A real moment: Kiro tried to tick task 1 early and the gate refused, because task 1 covers criteria 1.4 and 2.1, and contracts for those need code from later tasks (`.kiro/build-log/build-nightshift.txt`).
+- Receipts for tasks 1 to 5 print `MISMATCH` today. They were written before the page existed, and they record the page contracts R4.1 to R4.3 as failing. Those contracts pass now. The receipts for tasks 6 to 8 print `CONFIRMED`.
+
+Their hook files use `node ../../bin/necro.js`, so they work where `node` is on your `PATH`. If Kiro is started from the Dock, delete the example's `.kiro/hooks/necromancer.json` and run `node ../../bin/necro.js init` from that folder.
+
+## How Kiro built this
+
+Kiro wrote the code of this repository task by task. A person reviewed the contracts and froze them.
+
+- Specs in `.kiro/specs/`:
+  - `necro-core`: the tool. 9 requirements, 24 tasks, 69 contracts in 13 files, 3 receipts.
+  - `receipt-viewer`: the static page in `site/`. 8 requirements, 16 tasks, 20 contracts in 8 files, 16 receipts.
+- Steering in `.kiro/steering/`: `product.md`, `structure.md`, `tech.md`, and `necromancer.md`, which tells Kiro not to edit frozen files.
+- Hooks in `.kiro/hooks/`: `necromancer.json` is the gate (`PreToolUse`, `PostToolUse` and `Stop` calling `node bin/necro.js hook ...`). `session-log.json` appends the tool and path of each Kiro tool call to `.kiro/build-log/sess_*.jsonl`. For shell commands it keeps only program names.
+- Build logs in `.kiro/build-log/`: `build-*.txt` are Kiro's session output for each piece of work.
+
+The tool did not gate its own first tasks. Tasks 1 to 16 of `necro-core` were built before that spec was frozen, and they have no receipts. From task 17 on, the tool gated its own development: Kiro drafted 68 contracts from the requirements, a person reviewed and froze them, and tasks 17 and 18 were ticked through the gate. The receipt viewer was built under the gate from its first task.
+
+Moments from the logs and the git history:
+
+- Kiro ticked task 8c without building it, before the gate existed. A review found it, and the commit history reopens the task (`b63a530`, `a7283a3`) and redoes it (`8c4f996`). That is the failure this tool is built to catch.
+- Kiro finished tasks 16 and 17 of `necro-core`, and the gate refused each tick with "Spec 'necro-core' is not frozen". Kiro left the boxes unticked and did not retry (`build-t16.txt`, `build-t17.txt`). After the freeze, the task 17 tick went through and wrote a receipt.
+- Task 18 changed `src/lock.js` and re-froze the spec. Its receipt prints `CONFIRMED`. The task 17 receipt, written earlier, prints `MISMATCH` and lists `src/lock.js` among the changed files. The same happens to older receipts of `receipt-viewer`, which was re-frozen when requirements 7 and 8 were added. The newest receipt of each spec prints `CONFIRMED`.
+- The receipt viewer: 14 tasks were ticked through the gate with a receipt each, and tasks 15 and 16 followed. Its log records that every tick was accepted by the gate (`build-viewer.txt`).
 
 ## Limits
 
@@ -52,3 +147,7 @@ browser, and shows the command to re-run the receipt. It has no server, no build
 
 The page's tests run with `npm test`. Layout at phone width and the clipboard cannot be tested in Node; check them by
 hand.
+
+## License
+
+MIT

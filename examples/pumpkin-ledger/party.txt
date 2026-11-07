@@ -1,0 +1,6 @@
+# Halloween party, shared costs
+Ann paid 48.60 for pumpkins and candles
+Bob paid 32.25 for candy
+Cy paid 61 for pizza
+Dee paid 27.40 for fog machine fluid split Ann,Dee
+Bob paid 15.99 for cider
