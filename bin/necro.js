@@ -84,43 +84,64 @@ function shellQuote(p) {
   return `"${p.replace(/[\\"$`]/g, '\\$&')}"`;
 }
 
-// Initialize a project with hook and steering templates.
-// Req 8.1, 8.2, 8.3: write files if they don't exist, else report they're already there.
+// Initialize a project with the hook, steering and custom agent templates.
+// Req 8.1, 8.2, 8.3, 8.9: write each file if it doesn't exist, else leave it and say so.
 // Req 8.6: hook commands use the absolute node and necro.js paths, because the
 // Kiro IDE started from the Dock does not have the shell's PATH.
 function initProject(cwd) {
   const hookDest = path.join(cwd, '.kiro', 'hooks', 'necromancer.json');
   const steeringDest = path.join(cwd, '.kiro', 'steering', 'necromancer.md');
+  const agentDest = path.join(cwd, '.kiro', 'agents', 'necromancer.json');
 
   // fileURLToPath decodes the URL, so install paths with spaces work.
   const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
   const templates = path.join(root, 'templates');
   const hookSrc = path.join(templates, 'necromancer.hooks.json');
   const steeringSrc = path.join(templates, 'necromancer.steering.md');
+  const agentSrc = path.join(templates, 'necromancer.agent.json');
 
-  let wrote = [];
+  // The hooks come from one template and go into both the hook file and the agent
+  // file (Req 8.9), so the two carry the same commands and timeouts.
+  const prefix = `${shellQuote(process.execPath)} ${shellQuote(path.join(root, 'bin', 'necro.js'))}`;
+  const hookConfig = JSON.parse(fs.readFileSync(hookSrc, 'utf8'));
+  for (const hook of hookConfig.hooks) {
+    hook.action.command = hook.action.command.replace(/^necro /, () => `${prefix} `);
+  }
 
-  if (!fs.existsSync(hookDest)) {
-    const prefix = `${shellQuote(process.execPath)} ${shellQuote(path.join(root, 'bin', 'necro.js'))}`;
-    const config = JSON.parse(fs.readFileSync(hookSrc, 'utf8'));
-    for (const hook of config.hooks) {
-      hook.action.command = hook.action.command.replace(/^necro /, () => `${prefix} `);
-    }
+  const wrote = [];
+  const kept = [];
+
+  if (fs.existsSync(hookDest)) {
+    kept.push(hookDest);
+  } else {
     fs.mkdirSync(path.dirname(hookDest), { recursive: true });
-    fs.writeFileSync(hookDest, JSON.stringify(config, null, 2) + '\n');
+    fs.writeFileSync(hookDest, JSON.stringify(hookConfig, null, 2) + '\n');
     wrote.push(hookDest);
   }
 
-  if (!fs.existsSync(steeringDest)) {
+  if (fs.existsSync(steeringDest)) {
+    kept.push(steeringDest);
+  } else {
     fs.mkdirSync(path.dirname(steeringDest), { recursive: true });
     fs.copyFileSync(steeringSrc, steeringDest);
     wrote.push(steeringDest);
   }
 
-  if (wrote.length === 0) {
-    console.log('Necromancer hook and steering files already exist. Left unchanged.');
+  if (fs.existsSync(agentDest)) {
+    kept.push(agentDest);
   } else {
-    console.log(`Wrote: ${wrote.join(', ')}`);
+    const agent = JSON.parse(fs.readFileSync(agentSrc, 'utf8'));
+    agent.hooks = hookConfig.hooks;
+    fs.mkdirSync(path.dirname(agentDest), { recursive: true });
+    fs.writeFileSync(agentDest, JSON.stringify(agent, null, 2) + '\n');
+    wrote.push(agentDest);
+  }
+
+  if (wrote.length > 0) console.log(`Wrote: ${wrote.join(', ')}`);
+  if (kept.length === 3) {
+    console.log('Necromancer hook, steering and agent files already exist. Left unchanged.');
+  } else if (kept.length > 0) {
+    console.log(`Already exist, left unchanged: ${kept.join(', ')}`);
   }
   // Req 8.7
   console.log('Kiro runs hooks only in a trusted workspace. Trust this workspace, then quit and reopen Kiro.');

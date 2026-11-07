@@ -1,0 +1,144 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=7
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+Let me read the requirements file directly.
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Fetch URL
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] web_search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Append to File
+[tool] status: Pending
+[tool] status: Completed
+Run the new tests against current code to see them fail.
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 21 is implemented and `npm test` passes (431 tests, 0 failures). The new `R8.9` contract passes when run on its own (`node --test contracts/necro-core/custom-agent.contract.test.js`), because `npm test` only covers `test/*.test.js`.
+
+**What changed**
+- `templates/necromancer.agent.json` (new) is the agent template. It has the name, a description, `tools: ["*"]`, and the resource `file://.kiro/steering/necromancer.md`. Its `permissions.rules` has two deny rules.
+  - The first denies `shell` commands that run `necro freeze`: 15 patterns, covering `necro`, `necro.js`, `necro.cmd`, `necro.exe` and `necro.ps1`, each bare or followed by a closing `"` or `'`, then ` freeze*`.
+  - The second denies `fs_write` for `.necro/**` and `**/.necro/**`.
+  - The template's `hooks` is empty.
+- `bin/necro.js` now builds the hooks once from `templates/necromancer.hooks.json` and uses that list for both the hook file and the agent file. Their commands and timeouts therefore cannot differ.
+- Init writes the agent file only if it is missing. If some files exist and others don't, it says which were left unchanged. If all three exist, it prints `Necromancer hook, steering and agent files already exist. Left unchanged.`, which the frozen R8.3 contract still accepts.
+- I kept `initProject` in `bin/necro.js`, where it already lives, instead of moving it to `src/init.js`.
+- `test/cli.test.js` has eight new `Req 8.9` tests. All eight failed first because the agent file didn't exist, and all pass now.
+- `.kiro/agents/necromancer.json` (new) is init's output with the repo's own `node bin/necro.js hook ...` hooks.
+- `contracts/necro-core/custom-agent.contract.test.js` (new) holds one contract, `R8.9 init writes .kiro/agents/necromancer.json ...`.
+
+**Validate output**
+`kiro-cli agent validate --path <file>` (kiro-cli 3.1.0) printed nothing and exited 0, both on a file written by `necro init` in a temp project and on `.kiro/agents/necromancer.json`. As a check that the command can fail, a deliberately bad file exited 1 with "Json supplied at bad.json is invalid".
+
+**How I read the criterion**
+- **Format:** I used the IDE 1.0 / CLI V3 format from Kiro's docs, which I read as raw markdown because the page itself renders client-side. That means `permissions.rules` with `capability`, `match` and `effect`, `file://` resources, and an inline `hooks` array.
+- **Freeze patterns:** shell patterns only support `*`. "Every spelling a glob can express" therefore means one space between the necro word and `freeze`, with an optional closing quote. Extra spaces, `necro "freeze"` and `necro 'fr'eeze` can't be written as a glob. The hook from 3.14 still blocks those.
+- **Over-matching:** the globs also deny harmless text such as `echo "necro freeze x"` and `mynecro freeze`. A glob can't tell those apart, and a deny only errs on the safe side.
+- **`.necro/` writes:** the patterns are case-sensitive, so `.NECRO/` on a case-insensitive disk is left to the 3.5 hook check.
+- **Validation covers the schema, not the engine:** the tests and `validate` check the file's shape and my glob reading, not how Kiro's permission engine enforces the rules. I did not run a live session. That includes whether `*` matches across newlines.
+- **Hooks run twice:** if both `.kiro/hooks/necromancer.json` and the agent are active, each hook may fire twice. The handlers are idempotent, so this should be harmless.
+
+Task 21 is not ticked, I did not run `necro freeze`, and I edited no frozen file. The new contract file isn't in the lock yet, so a person needs to review it and freeze the spec.

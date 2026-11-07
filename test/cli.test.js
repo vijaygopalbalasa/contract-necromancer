@@ -350,3 +350,210 @@ test('Req 8.8: the steering template and this project\'s own steering file say t
   const own = fs.readFileSync(path.join(__dirname, '../.kiro/steering/necromancer.md'), 'utf8');
   assert.equal(own, template);
 });
+
+// Req 8.9: `necro init` also writes .kiro/agents/necromancer.json, a Kiro custom agent
+// (the CLI V3 / IDE 1.0 format) that carries the steering file, the three hooks and
+// deny rules for `necro freeze` and for writes under .necro/.
+const AGENT_REL = '.kiro/agents/necromancer.json';
+const BIN_PATH = path.join(__dirname, '../bin/necro.js');
+
+function runInit(project, bin = BIN_PATH) {
+  return spawnSync(process.execPath, [bin, 'init'], { cwd: project, encoding: 'utf8' });
+}
+
+function readJson(project, rel) {
+  return JSON.parse(fs.readFileSync(path.join(project, rel), 'utf8'));
+}
+
+// Kiro's shell patterns: `*` matches any sequence of characters, nothing else is special.
+function shellGlobMatches(pattern, command) {
+  const source = pattern
+    .split('*')
+    .map((part) => part.replace(/[.+?^${}()|[\]\\]/g, '\\$&'))
+    .join('.*');
+  return new RegExp(`^${source}$`, 's').test(command);
+}
+
+function denyPatterns(agent, capability) {
+  return agent.permissions.rules
+    .filter((rule) => rule.capability === capability && rule.effect === 'deny')
+    .flatMap((rule) => rule.match || []);
+}
+
+test('Req 8.9: necro init writes .kiro/agents/necromancer.json with the steering file as a file:// resource', () => {
+  const project = tmpCwd();
+  try {
+    const res = runInit(project);
+    assert.equal(res.status, 0, res.stderr);
+    assert.ok(fs.existsSync(path.join(project, AGENT_REL)), 'the agent file is written');
+    const agent = readJson(project, AGENT_REL);
+    assert.equal(agent.name, 'necromancer');
+    assert.equal(typeof agent.description, 'string');
+    assert.ok(agent.resources.includes('file://.kiro/steering/necromancer.md'), `resources: ${agent.resources}`);
+    assert.ok(Array.isArray(agent.tools) && agent.tools.length > 0, 'the agent has tools');
+    assert.match(res.stdout, /agents[\\/]necromancer\.json/, 'says it wrote the agent file');
+  } finally {
+    fs.rmSync(project, { recursive: true, force: true });
+  }
+});
+
+test('Req 8.9: the agent carries the same three hooks, commands and timeouts as .kiro/hooks/necromancer.json', () => {
+  const project = tmpCwd();
+  try {
+    runInit(project);
+    const agent = readJson(project, AGENT_REL);
+    const hooksFile = readJson(project, '.kiro/hooks/necromancer.json');
+    assert.deepEqual(agent.hooks, hooksFile.hooks);
+    assert.deepEqual(agent.hooks.map((h) => h.trigger), ['PreToolUse', 'PostToolUse', 'Stop']);
+    for (const hook of agent.hooks) {
+      assert.equal(hook.timeout, 300);
+      assert.match(hook.action.command, /^".*node.*" ".*necro\.js" hook (pre|post|stop)$/);
+    }
+  } finally {
+    fs.rmSync(project, { recursive: true, force: true });
+  }
+});
+
+test('Req 8.9: the agent denies shell commands that run necro freeze, in every spelling a glob can express', () => {
+  const project = tmpCwd();
+  try {
+    runInit(project);
+    const patterns = denyPatterns(readJson(project, AGENT_REL), 'shell');
+    assert.ok(patterns.length > 0, 'there are shell deny patterns');
+    const denied = (command) => patterns.some((p) => shellGlobMatches(p, command));
+
+    const spellings = [
+      'necro freeze x',
+      'necro freeze',
+      'node bin/necro.js freeze x',
+      'node ./bin/necro.js freeze x',
+      'node "/abs/path with space/bin/necro.js" freeze x',
+      "node '/abs/path with space/bin/necro.js' freeze x",
+      '"/usr/local/bin/node" "/abs/path with space/bin/necro.js" freeze x',
+      'npm test && necro freeze x',
+      'npm test; necro freeze x',
+      'npm test|necro freeze x',
+      'echo a & necro freeze x',
+      'bash -c "necro freeze x"',
+      "sh -c 'necro freeze x'",
+      'sudo bash -c "node /p/bin/necro.js freeze x"',
+      '(necro freeze x)',
+      'echo $(necro freeze x)',
+      'echo start\nnecro freeze x\necho end',
+      'FOO=1 necro freeze x',
+      'npx necro freeze x',
+      '/opt/necro/bin/necro freeze x',
+      'necro.js freeze x',
+      'necro.cmd freeze x',
+      'necro.exe freeze x',
+      'necro.ps1 freeze x',
+      'cd /tmp && node "$HOME/p/bin/necro.js" freeze x',
+    ];
+    for (const command of spellings) {
+      assert.ok(denied(command), `should deny: ${JSON.stringify(command)}`);
+    }
+
+    for (const command of [
+      'necro check x',
+      'necro verify r.json',
+      'necro init',
+      'node bin/necro.js check x',
+      'node "/abs/path with space/bin/necro.js" verify r.json',
+      'echo freeze',
+      'grep freeze README.md',
+      'necro check freeze',
+      'npm test',
+      'ls',
+      'freeze x',
+      'necro-freeze x',
+    ]) {
+      assert.ok(!denied(command), `should not deny: ${JSON.stringify(command)}`);
+    }
+  } finally {
+    fs.rmSync(project, { recursive: true, force: true });
+  }
+});
+
+test('Req 8.9: the agent denies writes under .necro/ and has no rule that allows them', () => {
+  const project = tmpCwd();
+  try {
+    runInit(project);
+    const agent = readJson(project, AGENT_REL);
+    const patterns = denyPatterns(agent, 'fs_write');
+    assert.ok(patterns.includes('.necro/**'), `fs_write deny patterns: ${patterns}`);
+    assert.ok(patterns.includes('**/.necro/**'), `fs_write deny patterns: ${patterns}`);
+    for (const rule of agent.permissions.rules) {
+      assert.ok(['deny', 'ask'].includes(rule.effect), `only restrictive rules: ${JSON.stringify(rule)}`);
+    }
+  } finally {
+    fs.rmSync(project, { recursive: true, force: true });
+  }
+});
+
+test('Req 8.9: a second init leaves an existing agent file unchanged and says so', () => {
+  const project = tmpCwd();
+  try {
+    runInit(project);
+    const file = path.join(project, AGENT_REL);
+    fs.writeFileSync(file, '{"name":"necromancer","description":"edited by a person"}\n');
+    const second = runInit(project);
+    assert.equal(second.status, 0, second.stderr);
+    assert.equal(fs.readFileSync(file, 'utf8'), '{"name":"necromancer","description":"edited by a person"}\n');
+    assert.match(second.stdout, /already exist/i);
+    assert.match(second.stdout, /unchanged/i);
+    assert.match(second.stdout, /agent/i, 'the message names the agent file');
+  } finally {
+    fs.rmSync(project, { recursive: true, force: true });
+  }
+});
+
+test('Req 8.9: init in a project that has the hook and steering files but no agent file writes only the agent file', () => {
+  const project = tmpCwd();
+  try {
+    runInit(project);
+    const hooksBefore = fs.readFileSync(path.join(project, '.kiro/hooks/necromancer.json'), 'utf8');
+    fs.rmSync(path.join(project, AGENT_REL));
+    const again = runInit(project);
+    assert.equal(again.status, 0, again.stderr);
+    assert.ok(fs.existsSync(path.join(project, AGENT_REL)), 'the agent file is written again');
+    assert.equal(fs.readFileSync(path.join(project, '.kiro/hooks/necromancer.json'), 'utf8'), hooksBefore);
+    assert.match(again.stdout, /already exist/i, 'says the other files were left');
+    assert.match(again.stdout, /Wrote:.*necromancer\.json/);
+  } finally {
+    fs.rmSync(project, { recursive: true, force: true });
+  }
+});
+
+test('Req 8.9: the written agent file passes kiro-cli agent validate when the Kiro CLI is installed', (t) => {
+  const probe = spawnSync('kiro-cli', ['--version'], { encoding: 'utf8' });
+  if (probe.error || probe.status !== 0) {
+    t.diagnostic('kiro-cli is not installed, so the file was not validated');
+    return;
+  }
+  const project = tmpCwd();
+  try {
+    runInit(project);
+    const res = spawnSync('kiro-cli', ['agent', 'validate', '--path', path.join(project, AGENT_REL)], {
+      cwd: project,
+      encoding: 'utf8',
+    });
+    assert.equal(res.status, 0, `${res.stdout}${res.stderr}`);
+  } finally {
+    fs.rmSync(project, { recursive: true, force: true });
+  }
+});
+
+test('Req 8.9: this project\'s own agent file is init\'s output adapted to node bin/necro.js', () => {
+  const root = path.join(__dirname, '..');
+  const own = JSON.parse(fs.readFileSync(path.join(root, AGENT_REL), 'utf8'));
+  const project = tmpCwd();
+  try {
+    runInit(project);
+    const written = readJson(project, AGENT_REL);
+    const ownHooks = JSON.parse(fs.readFileSync(path.join(root, '.kiro/hooks/necromancer.json'), 'utf8'));
+    assert.deepEqual(own.hooks, ownHooks.hooks, "the hooks are the ones in this project's own hook file");
+    assert.deepEqual({ ...own, hooks: null }, { ...written, hooks: null }, 'everything but the hook commands is init\'s output');
+  } finally {
+    fs.rmSync(project, { recursive: true, force: true });
+  }
+});

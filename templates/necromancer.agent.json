@@ -1,0 +1,37 @@
+{
+  "name": "necromancer",
+  "description": "Frozen contracts decide done. Carries the Contract Necromancer gate: steering, hooks, and permission rules that refuse necro freeze and writes under .necro/.",
+  "tools": ["*"],
+  "resources": ["file://.kiro/steering/necromancer.md"],
+  "permissions": {
+    "rules": [
+      {
+        "capability": "shell",
+        "effect": "deny",
+        "match": [
+          "*necro freeze*",
+          "*necro\" freeze*",
+          "*necro' freeze*",
+          "*necro.js freeze*",
+          "*necro.js\" freeze*",
+          "*necro.js' freeze*",
+          "*necro.cmd freeze*",
+          "*necro.cmd\" freeze*",
+          "*necro.cmd' freeze*",
+          "*necro.exe freeze*",
+          "*necro.exe\" freeze*",
+          "*necro.exe' freeze*",
+          "*necro.ps1 freeze*",
+          "*necro.ps1\" freeze*",
+          "*necro.ps1' freeze*"
+        ]
+      },
+      {
+        "capability": "fs_write",
+        "effect": "deny",
+        "match": [".necro/**", "**/.necro/**"]
+      }
+    ]
+  },
+  "hooks": []
+}
