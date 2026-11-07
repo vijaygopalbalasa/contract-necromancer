@@ -181,10 +181,10 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-07T19:14:03.071Z",
+      "frozenAt": "2026-11-07T19:19:48.908Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
-        "sha256": "1723686f6fbd763f7c722f5950a7bfb6c6eed671d20d01db4dc5f0c38a674bdb"
+        "sha256": "aee55c4893187ea12b5a0f94146a5114d82f1c5494709726d1f65205271ec568"
       },
       "tasks": {
         "1": {
@@ -344,6 +344,12 @@
             "3.15"
           ],
           "text": "20. **An agent's shell cannot move the lock** (Req 3.15)"
+        },
+        "21": {
+          "criteria": [
+            "8.9"
+          ],
+          "text": "21. **A custom Kiro agent that brings the gate with it** (Req 8.9)"
         },
         "3b": {
           "criteria": [

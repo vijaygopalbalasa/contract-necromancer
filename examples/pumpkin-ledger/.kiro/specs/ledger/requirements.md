@@ -31,3 +31,13 @@ Pumpkin Ledger reads a list of shared expenses and prints each person's balance 
 1. WHEN a user runs `ledger <file>` THE SYSTEM SHALL print a balances table (name, paid, share, balance) and then one line per payment as `<from> pays <to> <amount>`, with amounts written with two decimals.
 2. WHEN a user runs `ledger <file> --json` THE SYSTEM SHALL print `{"balances":[...],"payments":[...]}` with amounts in integer cents.
 3. IF the file is missing or unreadable THEN THE SYSTEM SHALL exit with code 1 and one plain sentence.
+
+## Requirement 5: Properties that hold for every party
+**User story:** As someone who splits real bills, I want the arithmetic to hold for any party, not only the examples, so that nobody ever loses a cent.
+### Acceptance criteria
+1. WHEN any valid list of expenses is split (generated from a fixed seed: 1 to 12 people, 1 to 30 expenses, amounts from 0.01 to 9,999.99, random `split` lists and name spellings) THE SYSTEM SHALL give each expense shares that sum to exactly its amount, with no two shares of one expense differing by more than one cent.
+2. WHEN any such list is split THE SYSTEM SHALL make the balances sum to exactly zero.
+3. WHEN any such balances are settled THE SYSTEM SHALL bring every balance to zero with positive whole-cent payments, at most one fewer than the number of people with a non-zero balance.
+4. WHEN the same file is read twice, or its lines are given in another order, THE SYSTEM SHALL print the same balances, and the same payments for the same line order.
+5. WHEN a property fails THE SYSTEM SHALL report the seed and the smallest failing input it found, so the failure can be replayed.
+

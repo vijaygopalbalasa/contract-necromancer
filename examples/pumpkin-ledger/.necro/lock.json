@@ -44,10 +44,10 @@
           "sha256": "bc4534920291653be3afd12e1dba823e52cf3be583edd8472f9d1068dc17d06d"
         }
       ],
-      "frozenAt": "2026-11-06T23:32:24.135Z",
+      "frozenAt": "2026-11-07T19:20:20.703Z",
       "requirements": {
         "path": ".kiro/specs/ledger/requirements.md",
-        "sha256": "b8b43ee8d65fc87a4b360f6c94bbc8c4ee20d279829a3b6da3f5c85ff1b299b7"
+        "sha256": "2471c3d12bd1e3b553f630224bc09a9833bc715958f02af8f130219e7cd1eb35"
       },
       "tasks": {
         "1": {
@@ -109,6 +109,16 @@
             "4.3"
           ],
           "text": "8. Command line (Req 4.1, 4.2, 4.3, 1.4)"
+        },
+        "9": {
+          "criteria": [
+            "5.1",
+            "5.2",
+            "5.3",
+            "5.4",
+            "5.5"
+          ],
+          "text": "9. Property-based contracts for the arithmetic (Req 5.1, 5.2, 5.3, 5.4, 5.5)"
         }
       }
     }

@@ -43,10 +43,10 @@
           "sha256": "b5a73ae9a0f7b19b810f02ddd6a204bf26f3b203a8d310548c944dd897fa39cf"
         }
       ],
-      "frozenAt": "2026-11-06T23:51:08.337Z",
+      "frozenAt": "2026-11-07T19:20:21.020Z",
       "requirements": {
         "path": ".kiro/specs/planner/requirements.md",
-        "sha256": "2684df9934b058fa4bc7af4dd35d16abf9936c8ccf1ae2370a3cf16ec51cbd12"
+        "sha256": "cbe5827e989a72b1c413cb3bd141df98bafd7f5ad1cc599e935a47ae9a97903a"
       },
       "tasks": {
         "1": {
@@ -108,6 +108,12 @@
             "4.3"
           ],
           "text": "8. Page markup and rendering, then final check"
+        },
+        "9": {
+          "criteria": [
+            "4.4"
+          ],
+          "text": "9. A form with a working example (Req 4.4)"
         }
       }
     }
