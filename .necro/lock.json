@@ -240,10 +240,10 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-09T15:35:00.451Z",
+      "frozenAt": "2026-11-09T16:56:11.011Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
-        "sha256": "a881635eb5960dffcbab0c50b1667e4f27ed459259e13c0d71b76f8a2518d6cb"
+        "sha256": "14ede87b259f6724c91b4e76e111ff30e863cf6a6eba9d0357f7f883ee71e7ea"
       },
       "tasks": {
         "1": {
@@ -450,6 +450,22 @@
             "12.3"
           ],
           "text": "26. **A demo that reads at a glance** (Req 12.1, 12.2, 12.3)"
+        },
+        "27": {
+          "criteria": [
+            "13.1",
+            "13.2",
+            "13.3",
+            "13.4",
+            "13.5"
+          ],
+          "text": "27. **Contracts in any language** (Req 13.1, 13.2, 13.3, 13.4, 13.5)"
+        },
+        "28": {
+          "criteria": [
+            "13.6"
+          ],
+          "text": "28. **A Python example** (Req 13.6)"
         },
         "3b": {
           "criteria": [
