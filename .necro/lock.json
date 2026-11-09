@@ -3,6 +3,18 @@
     "necro-core": {
       "contracts": [
         {
+          "name": "audit-fast",
+          "names": [
+            "R14.7 stop and posttask run only the contracts of the task ticked since the freeze and untick it; the others are left alone",
+            "R14.7 posttask runs no contract when no task was ticked since the freeze",
+            "R14.7 necro audit still checks every ticked task, and changes nothing",
+            "R14.8 the README says receipts are files an agent can add, and what a forged receipt can and cannot do",
+            "R14.9 CI runs necro audit and re-runs the newest receipt of each spec of the two examples only"
+          ],
+          "path": "contracts/necro-core/audit-fast.contract.test.js",
+          "sha256": "f84c6b798649731ae8352332c01af7dc0c2b06c597c2601845524828e67a8d32"
+        },
+        {
           "name": "audit-upgrade",
           "names": [
             "R14.6 a lock with no list of tasks ticked at freeze: stop and posttask untick nothing and say once that a person must freeze again, while necro audit still reports every verdict"
@@ -306,10 +318,10 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-09T20:11:46.159Z",
+      "frozenAt": "2026-11-09T20:31:27.423Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
-        "sha256": "45159c39edf2cd115a6501ed0fb18d049f9de656ebb2e9335f9a80cf8c91434d"
+        "sha256": "9e1fd159db292d0bdf8d4ffc493cdf814d3293c47e04537ccd37bfab6a5a9749"
       },
       "tasks": {
         "1": {
@@ -567,11 +579,18 @@
         },
         "33": {
           "criteria": [
+            "7.1",
             "14.7",
             "14.8",
             "14.9"
           ],
-          "text": "33. **A fast safety net, honest receipts, a steady CI** (Req 14.7, 14.8, 14.9)"
+          "text": "33. **A fast safety net, honest receipts, a steady CI** (Req 7.1, 14.7, 14.8, 14.9)"
+        },
+        "34": {
+          "criteria": [
+            "13.13"
+          ],
+          "text": "34. **Symbolic links under frozen globs** (Req 13.13)"
         },
         "3b": {
           "criteria": [
@@ -814,7 +833,7 @@
           "sha256": "47e17273eef50b96c039f01d4ab62d0c907bffe8f911b03d90a5dc1d4c19a08f"
         }
       ],
-      "frozenAt": "2026-11-09T15:13:04.193Z",
+      "frozenAt": "2026-11-09T20:32:42.636Z",
       "requirements": {
         "path": ".kiro/specs/receipt-viewer/requirements.md",
         "sha256": "37f5e957f06e74a0dad95bf5ea4beb5331f76f836797f9aa3264c95051a1bc08"
@@ -978,7 +997,31 @@
           ],
           "text": "22. The first screen tells the story (Req 9.5 revised, 11.1, 11.2, 11.3, 11.4, 11.5)"
         }
-      }
+      },
+      "ticked": [
+        "1. **Canonical JSON and hash module** (Req 3.1)",
+        "10. **App: file check and run command** (Req 4.1, 4.2, 4.3, 5.1)",
+        "11. **App: sample receipt button** (Req 6.2)",
+        "12. **Sample receipt from this repository** (Req 6.2)",
+        "13. **GitHub Pages deploy** (supports the page being published)",
+        "14. **Docs and manual check**",
+        "15. **Read cleanly** (Req 7.1, 7.2, 7.3, 7.4)",
+        "16. **Kiroween look** (Req 8.1, 8.2, 8.3, 8.4)",
+        "17. First visit shows a receipt, risen and buried (Req 9.1, 9.2, 9.3, 9.4)",
+        "18. The result above the fold (Req 9.5)",
+        "19. The re-run command works in a fresh clone (Req 5.2)",
+        "2. **Hash parity with the CLI** (Req 3.2)",
+        "20. The verifier in the re-run command is the official one, pinned (Req 5.3)",
+        "21. The story in one glance (Req 10.1, 10.2, 10.3, 10.4, 10.5)",
+        "22. The first screen tells the story (Req 9.5 revised, 11.1, 11.2, 11.3, 11.4, 11.5)",
+        "3. **Receipt parsing and validation** (Req 1.3)",
+        "4. **Summary and grouping by requirement** (Req 2.1, 2.2)",
+        "5. **Repository and URL parsing** (Req 1.2)",
+        "6. **Run command** (Req 5.1)",
+        "7. **Pinned file check against GitHub** (Req 4.1, 4.2, 4.3)",
+        "8. **Page shell and styling** (Req 6.1)",
+        "9. **App: open a receipt and show it** (Req 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 3.1)"
+      ]
     }
   }
 }

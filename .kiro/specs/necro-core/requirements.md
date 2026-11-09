@@ -97,7 +97,7 @@ receipts anyone can re-run.
 ## Requirement 7: Session summary
 **User story:** As a developer, I want a summary when the agent stops, so that a false "done" is visible.
 ### Acceptance criteria
-1. WHEN the Stop handler runs THE SYSTEM SHALL print each spec's count of tasks marked done, count of receipts, and the names of contracts failing now.
+1. WHEN the Stop handler runs THE SYSTEM SHALL print each spec's count of tasks marked done and count of receipts, and the names of the contracts failing among those it ran for tasks ticked since the last freeze; WHEN it ran none THE SYSTEM SHALL say so and name `necro audit` as the full check. (Revised Nov 10: running every contract at each stop took close to the hooks' time limit.)
 
 ## Requirement 8: Init
 **User story:** As a developer, I want one command to set up a project, so that adoption takes a minute.
@@ -162,6 +162,7 @@ receipts anyone can re-run.
 10. THE README SHALL state plainly what runner contracts cannot defend against: code under test runs inside the test framework's own process and can tamper with it, and the gate trusts the language environment (installed packages, interpreter) as much as the test framework does.
 11. WHEN a runner command runs THE SYSTEM SHALL remove from its environment the variables that redirect an interpreter or test framework to other code (`PYTHONPATH`, `PYTHONHOME`, `PYTHONSTARTUP`, `PYTHONUSERBASE`, `PYTEST_ADDOPTS`, `PYTEST_PLUGINS`, `NODE_OPTIONS`, `NODE_PATH`), and the same SHALL hold for JavaScript contract files.
 12. WHEN runner contracts run, and WHEN `necro verify` runs, THE SYSTEM SHALL expand the `"frozen"` globs of the locked `runners.json` again and count every runner file of the spec as failing (verify: MISMATCH) IF the set of matching files differs from the locked set, so a matching file added after the freeze (for example a new `conftest.py`) is caught as well as a changed one.
+13. WHEN `"frozen"` globs are expanded THE SYSTEM SHALL count a symbolic link whose path matches a glob as a matching file (never skip it), so a link planted where a frozen file is expected is caught as added.
 
 ## Requirement 14: Catch a tick however it got there
 **User story:** As a developer who runs Kiro's "Run all tasks" or lets sub-agents work unattended, I want a tick that did not go through the gate to be caught and undone, so that a task Kiro marks done after a failed or killed run (as in kirodotdev/Kiro#11786) never stays done.
