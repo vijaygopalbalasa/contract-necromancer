@@ -68,7 +68,7 @@ Honest limit shown on the page: contracts re-run in Node with `necro verify`; th
 2. WHEN the page offers samples THE SYSTEM SHALL offer two from this repository: a risen one (every required contract passes) and a buried one (a real receipt with failing required contracts, written by `necro check` on a spec with a planted bug), and switching between them SHALL need one click.
 3. WHEN a receipt is shown after a user action (load, paste, pick, sample switch) THE SYSTEM SHALL bring the verdict banner into view, with no scrolling animation under `prefers-reduced-motion: reduce`.
 4. WHEN the page is taller than the window THE SYSTEM SHALL draw its background without a visible band or seam at any scroll position.
-5. WHEN the sample is shown on a first visit THE SYSTEM SHALL show the verdict banner and the first contract rows without scrolling in a 1280x800 window and in a 390x844 phone window, with the way to open your own receipt still reachable on the same page (for example a compact bar above the result, or the open-a-receipt card below it).
+5. WHEN the sample is shown on a first visit THE SYSTEM SHALL show the verdict banner without scrolling in a 1280x800 window and in a 390x844 phone window, with no horizontal scrolling and with the way to open your own receipt still reachable on the same page. (Revised Nov 9: the earlier word limit above the banner is dropped so that the story of Requirement 11 can sit above it.)
 
 ## Requirement 10: The story in one glance
 **User story:** As a judge who lands on the page from the submission, I want to know in ten seconds what the tool does and how to try it, so that the receipt makes sense and I can run the demo myself.
@@ -78,3 +78,12 @@ Honest limit shown on the page: contracts re-run in Node with `necro verify`; th
 3. WHEN the page loads THE SYSTEM SHALL show plain links to the demo video (`https://youtu.be/TYrSyhIYqlk`) and the repository in that section, readable without JavaScript, and SHALL keep the Content Security Policy unchanged (no embedded video, no external script, style, font or image).
 4. THE SYSTEM SHALL keep the page title starting with "Contract Necromancer", keep the DOM order the same as the visual order, and work at phone width without horizontal scrolling.
 5. WHEN the page loads THE SYSTEM SHALL show, above the verdict banner, one short plain link (at most six words, such as "How it works, and try it") that jumps to the "How it works" section, and the page SHALL still pass the frozen Requirement 9.5 contract as written.
+
+## Requirement 11: The first screen tells the story
+**User story:** As a judge who has never heard of the tool, I want the first screen to show what happens when Kiro claims a task is done, so that the receipt below means something to me.
+### Acceptance criteria
+1. WHEN the page loads THE SYSTEM SHALL show, between the heading and the verdict banner, a compact strip of three beats taken from the real `necro demo` output: Kiro says task 4 is done; the gate refuses the tick and names failing contracts (at least R2.1 and R2.2); after the fix the gate accepts the tick, writes a receipt and `necro verify` prints CONFIRMED. The beats SHALL be plain text in reading order, readable without JavaScript.
+2. WHERE the strip animates (for example each beat appearing in turn) THE SYSTEM SHALL use CSS only and SHALL show all three beats at once, with no animation, under `prefers-reduced-motion: reduce`.
+3. WHEN the page loads THE SYSTEM SHALL show the command `npx -y github:vijaygopalbalasa/contract-necromancer demo` with a copy button within the first screen at 1280x800, as the way to see the strip happen for real.
+4. WHEN the sample buttons are shown THE SYSTEM SHALL label them in plain words a newcomer understands (for example "A passing receipt" and "A refused one"), and the sample note SHALL say in one sentence what a receipt is (the contracts that had to pass before Kiro could tick the task).
+5. WHEN the page loads THE SYSTEM SHALL have an inline `data:` SVG favicon of the gravestone mark, so the browser requests no missing icon, and a title that starts with "Contract Necromancer" and says what it does, with the Content Security Policy unchanged.
