@@ -139,3 +139,10 @@ receipts anyone can re-run.
 4. WHEN the receipt has been written THE SYSTEM SHALL run `necro verify` on it and print `CONFIRMED`, then change the copy's `src/split.js`, verify the same receipt again and print `MISMATCH`.
 5. THE SYSTEM SHALL exit 0 only if the refusal, the acceptance, `CONFIRMED` and `MISMATCH` all happened as described, and otherwise exit 1 naming the step that did not.
 6. WHEN the package is run with `npx -y github:vijaygopalbalasa/contract-necromancer demo` on a machine with Node.js 24 and no global `necro` THE SYSTEM SHALL run the same demo, using only files that the package contains.
+
+## Requirement 12: A demo that reads at a glance
+**User story:** As a judge watching `necro demo` in a terminal, I want the refusal, the acceptance and the verdicts to stand out, and to know where to look next, so that the result lands without reading every line.
+### Acceptance criteria
+1. WHEN `necro demo` writes to a terminal (stdout is a TTY) and the `NO_COLOR` environment variable is not set THE SYSTEM SHALL colour the refusal and `MISMATCH` red and the acceptance and `CONFIRMED` green, and mark each with a short text symbol that also reads without colour.
+2. WHEN stdout is not a TTY or `NO_COLOR` is set THE SYSTEM SHALL print no ANSI escape codes, so piped output, CI logs and the existing Requirement 11 contracts see plain text.
+3. WHEN the demo succeeds THE SYSTEM SHALL end with one line naming the live receipt viewer, `https://vijaygopalbalasa.github.io/contract-necromancer/`, and saying the receipt file can be opened there (pasted or chosen), without claiming a direct link to the temporary file.

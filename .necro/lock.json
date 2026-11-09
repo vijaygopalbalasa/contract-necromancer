@@ -230,10 +230,10 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-09T14:02:51.011Z",
+      "frozenAt": "2026-11-09T15:27:33.142Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
-        "sha256": "d0b2b8be3423704a113fa821b4b5eaab02de409d33cb0053e0709bf434877625"
+        "sha256": "a881635eb5960dffcbab0c50b1667e4f27ed459259e13c0d71b76f8a2518d6cb"
       },
       "tasks": {
         "1": {
@@ -432,6 +432,14 @@
             "11.6"
           ],
           "text": "25. **One-command demo** (Req 11.1, 11.2, 11.3, 11.4, 11.5, 11.6)"
+        },
+        "26": {
+          "criteria": [
+            "12.1",
+            "12.2",
+            "12.3"
+          ],
+          "text": "26. **A demo that reads at a glance** (Req 12.1, 12.2, 12.3)"
         },
         "3b": {
           "criteria": [
