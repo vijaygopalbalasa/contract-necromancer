@@ -87,3 +87,9 @@ Honest limit shown on the page: contracts re-run in Node with `necro verify`; th
 3. WHEN the page loads THE SYSTEM SHALL show the command `npx -y github:vijaygopalbalasa/contract-necromancer demo` with a copy button within the first screen at 1280x800, as the way to see the strip happen for real.
 4. WHEN the sample buttons are shown THE SYSTEM SHALL label them in plain words a newcomer understands (for example "A passing receipt" and "A refused one"), and the sample note SHALL say in one sentence what a receipt is (the contracts that had to pass before Kiro could tick the task).
 5. WHEN the page loads THE SYSTEM SHALL have an inline `data:` SVG favicon of the gravestone mark, so the browser requests no missing icon, and a title that starts with "Contract Necromancer" and says what it does, with the Content Security Policy unchanged.
+
+## Requirement 12: The evidence on the first screen
+**User story:** As a judge, I want to see on the first screen that the gate changes what Kiro does, so that I know why to trust the receipt below.
+### Acceptance criteria
+1. WHEN the page loads THE SYSTEM SHALL show, between the story strip and the verdict banner, one line stating the experiment result (on a task that cannot honestly be finished, Kiro marked it done in 11 of 11 runs without the gate and 0 of 19 with it, across two models) with a plain link to `https://github.com/vijaygopalbalasa/contract-necromancer/blob/main/experiments/README.md`, while Requirement 9.5 still holds at 1280x800 and 390x844.
+2. THE page SHALL not say that contracts re-run only in Node; it SHALL say that `necro verify` re-runs JavaScript contracts and runner contracts (for example pytest) alike.
