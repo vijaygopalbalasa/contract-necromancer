@@ -104,6 +104,14 @@
           "sha256": "59d0ef36ccfa3382c92b090d5dbfbe8d98a97a11ed3d031a14c993161de9daaf"
         },
         {
+          "name": "frozen-globs",
+          "names": [
+            "R13.12 a file that matches a frozen glob now and was not locked at the freeze, or a locked file that is gone, makes every runner file fail and verify print MISMATCH naming it, while an unrelated new file changes nothing"
+          ],
+          "path": "contracts/necro-core/frozen-globs.contract.test.js",
+          "sha256": "0a18a97857b6247979d9a5355300d80a6a8bed16c4c3882dcccea2ef44f36281"
+        },
+        {
           "name": "gate",
           "names": [
             "R4.1 a str_replace on tasks.md is applied to the file on disk and gated when a task line changes from [ ] to [x]",
@@ -298,7 +306,7 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-09T19:23:26.047Z",
+      "frozenAt": "2026-11-09T20:02:21.169Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
         "sha256": "bbf858f790f7cf64423b421f65a78fa440e45186e65d85bb45e85eee8fa1486f"
@@ -635,6 +643,7 @@
         "29. **Harden runner contracts** (Req 13.7, 13.8, 13.9, 13.10)",
         "3. **Contracts runner** (supports Req 4.4, 4.5, 6.1, 6.3)",
         "30. **A clean environment for contracts** (Req 13.11)",
+        "31. **Catch a tick however it got there** (Req 14.1, 14.2, 14.3, 14.4, 14.5, 14.6)",
         "3b. **No vacuous passes** (Req 4.7, 4.8)",
         "3c. **Pin contract names and check files before running** (Req 2.5, 2.6, 4.9, 4.10)",
         "4. **Receipts** (Req 5.1, 5.2, 5.3)",

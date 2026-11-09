@@ -318,6 +318,7 @@ export function freezeSpec(cwd, spec) {
   const partialLock = {
     specs: {
       [spec]: {
+        requirements: { path: reqRel, sha256: reqHash },
         contracts,
         ...(runnersEntry ? { runners: runnersEntry } : {}),
         ...(frozenEntries.length > 0 ? { frozen: frozenEntries } : {}),

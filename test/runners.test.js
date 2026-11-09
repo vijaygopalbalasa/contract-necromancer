@@ -11,7 +11,7 @@ import { verify } from '../src/verify.js';
 import { computeReceiptHash } from '../src/receipts.js';
 import { handlePreToolUse, handlePostToolUse } from '../src/hooks.js';
 import { spawnSync } from 'node:child_process';
-import { parseRunners, readRunners, matchesPattern, splitCommand, findRunner, expandGlobs, runnerTimeLimitMs, RUNNER_TIME_LIMIT_MS, REDIRECT_VARS, withoutRedirects } from '../src/runners.js';
+import { parseRunners, readRunners, matchesPattern, splitCommand, findRunner, expandGlobs, runnerTimeLimitMs, RUNNER_TIME_LIMIT_MS, REDIRECT_VARS, withoutRedirects, frozenGlobDrift } from '../src/runners.js';
 
 const FAKE = path.join(import.meta.dirname, 'fixtures', 'fake-runner.js');
 const SPEC = 'demo';
@@ -1357,4 +1357,131 @@ test('R13.11 withoutRedirects drops exactly the redirecting variables and leaves
 test('R13.11 on Windows, where variable names ignore case, a differently spelled variable is dropped too', () => {
   assert.deepEqual(withoutRedirects({ Path: 'p', Node_Options: 'x', node_options: 'y', PythonPath: 'z' }, 'win32'), { Path: 'p' });
   assert.deepEqual(withoutRedirects({ node_options: 'y', NODE_OPTIONS: 'x' }, 'linux'), { node_options: 'y' });
+});
+
+// --- 13.12: the frozen globs are expanded again, so a new matching file is caught ----------------
+
+// A frozen spec whose "frozen" glob matches two files. The runner file has one contract that passes.
+function globProject() {
+  const cwd = project({ 'a_contract.fake': 'pass R1.1 x\n', 'b_contract.fake': 'pass R1.2 y\n' }, { runners: runnersJson(COMMAND, '*_contract.fake', { frozen: ['plug/*.txt'] }) });
+  put(cwd, 'plug/one.txt', 'one\n');
+  put(cwd, 'plug/two.txt', 'two\n');
+  put(cwd, 'other/free.txt', 'not under the glob\n');
+  freezeSpec(cwd, SPEC);
+  return cwd;
+}
+
+test('R13.12 frozenGlobDrift lists the files that match the frozen globs now and did not at the freeze, and the locked ones that no longer match', () => {
+  const cwd = globProject();
+  try {
+    const entry = readLock(cwd).specs[SPEC];
+    assert.deepEqual(frozenGlobDrift(cwd, entry), { added: [], removed: [] });
+    put(cwd, 'plug/three.txt', 'three\n');
+    put(cwd, 'other/new.txt', 'unrelated\n');
+    fs.rmSync(path.join(cwd, 'plug/one.txt'));
+    assert.deepEqual(frozenGlobDrift(cwd, entry), { added: ['plug/three.txt'], removed: ['plug/one.txt'] });
+    // No frozen globs, or a runners.json that moved: nothing to compare with.
+    assert.deepEqual(frozenGlobDrift(cwd, { ...entry, runners: undefined }), { added: [], removed: [] });
+    put(cwd, RUNNERS_REL, runnersJson(COMMAND, '*_contract.fake', { frozen: ['plug/*.txt', 'other/*.txt'] }));
+    assert.deepEqual(frozenGlobDrift(cwd, entry), { added: [], removed: [] });
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.12 files the lock already holds for the spec (requirements, runners.json, contracts) never count as new, even when a glob matches them', () => {
+  const cwd = project({ 'a_contract.fake': 'pass R1.1 x\n' }, { runners: runnersJson(COMMAND, '*_contract.fake', { frozen: ['.kiro/specs/demo/*', 'contracts/demo/*', 'plug/*.txt'] }) });
+  try {
+    put(cwd, 'plug/one.txt', 'one\n');
+    freezeSpec(cwd, SPEC);
+    const entry = readLock(cwd).specs[SPEC];
+    assert.deepEqual(entry.frozen.map((f) => f.path), ['plug/one.txt']);
+    assert.deepEqual(frozenGlobDrift(cwd, entry), { added: [], removed: [] });
+    assert.deepEqual(byName(runContracts(cwd, SPEC, readLock(cwd))), { 'R1.1 x': 'pass' });
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.12 a new file that matches a frozen glob makes every runner file of the spec fail with a reason naming it, without running the command', () => {
+  const cwd = globProject();
+  try {
+    withLog((log) => {
+      const before = calls(log).length;
+      put(cwd, 'plug/conftest.txt', 'planted\n');
+      const results = runContracts(cwd, SPEC, readLock(cwd));
+      assert.deepEqual(byName(results), { 'R1.1 x': 'fail', 'R1.2 y': 'fail' });
+      for (const r of results) assert.match(r.reason, /plug\/conftest\.txt/);
+      assert.equal(calls(log).length, before, 'the command did not run');
+    });
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.12 a locked file that is removed fails every runner file with a reason naming it', () => {
+  const cwd = globProject();
+  try {
+    fs.rmSync(path.join(cwd, 'plug/two.txt'));
+    const results = runContracts(cwd, SPEC, readLock(cwd));
+    assert.deepEqual(byName(results), { 'R1.1 x': 'fail', 'R1.2 y': 'fail' });
+    for (const r of results) assert.match(r.reason, /plug\/two\.txt/);
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.12 a new file that matches no frozen glob changes nothing', () => {
+  const cwd = globProject();
+  try {
+    put(cwd, 'other/new.txt', 'unrelated\n');
+    put(cwd, 'plug/deeper/new.txt', 'a glob without ** stays in one folder\n');
+    put(cwd, 'plug/new.md', 'another extension\n');
+    assert.deepEqual(byName(runContracts(cwd, SPEC, readLock(cwd))), { 'R1.1 x': 'pass', 'R1.2 y': 'pass' });
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.12 verify prints MISMATCH naming a file that matches a frozen glob now and was not there at the freeze, and one that was removed', () => {
+  const cwd = globProject();
+  try {
+    const { receipt } = runCheck(cwd, SPEC);
+    assert.equal(captureStdout(() => verify(cwd, receipt)).code, 0);
+
+    put(cwd, 'other/new.txt', 'unrelated\n');
+    assert.equal(captureStdout(() => verify(cwd, receipt)).code, 0, 'an unrelated new file changes nothing');
+
+    put(cwd, 'plug/conftest.txt', 'planted\n');
+    let out = captureStdout(() => verify(cwd, receipt));
+    assert.equal(out.code, 1);
+    assert.match(out.out, /MISMATCH/);
+    assert.match(out.out, /plug\/conftest\.txt/);
+    fs.rmSync(path.join(cwd, 'plug/conftest.txt'));
+    assert.equal(captureStdout(() => verify(cwd, receipt)).code, 0);
+
+    fs.rmSync(path.join(cwd, 'plug/one.txt'));
+    out = captureStdout(() => verify(cwd, receipt));
+    assert.equal(out.code, 1);
+    assert.match(out.out, /MISMATCH/);
+    assert.match(out.out, /plug\/one\.txt/);
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.12 verify catches a new matching file when the lock is gone, using the receipt alone', () => {
+  const cwd = globProject();
+  try {
+    const { receipt } = runCheck(cwd, SPEC);
+    fs.rmSync(path.join(cwd, '.necro/lock.json'));
+    assert.equal(captureStdout(() => verify(cwd, receipt)).code, 0);
+    put(cwd, 'plug/conftest.txt', 'planted\n');
+    const out = captureStdout(() => verify(cwd, receipt));
+    assert.equal(out.code, 1);
+    assert.match(out.out, /MISMATCH/);
+    assert.match(out.out, /plug\/conftest\.txt/);
+  } finally {
+    done(cwd);
+  }
 });

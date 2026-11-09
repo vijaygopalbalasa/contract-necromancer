@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { hashFile } from './canon.js';
-import { lockedRunners, findRunner, runReport, spawnLimited, timeoutReason, withoutRedirects } from './runners.js';
+import { lockedRunners, findRunner, runReport, spawnLimited, timeoutReason, withoutRedirects, frozenGlobDrift } from './runners.js';
 
 const RUNNER = fileURLToPath(new URL('./contract-runner.js', import.meta.url));
 
@@ -146,6 +146,14 @@ export function runContracts(cwd, spec, lock) {
     return moved;
   };
 
+  // Req 13.12: the "frozen" globs of the locked runners.json expanded again. The paths that
+  // match now and were not locked, read lazily. (A locked file that is gone is in movedFrozen.)
+  let added;
+  const addedFrozen = () => {
+    if (added === undefined) added = frozenGlobDrift(cwd, entry).added;
+    return added;
+  };
+
   const out = [];
   for (const c of files.values()) {
     const absPath = path.resolve(cwd, c.path);
@@ -190,6 +198,13 @@ export function runContracts(cwd, spec, lock) {
       const changed = movedFrozen();
       if (changed.length > 0) {
         const reason = `Cannot run ${stem}: the frozen file ${changed.join(', ')} changed or is missing. Restore it, or freeze the spec again.`;
+        for (const name of c.names.length ? c.names : [stem]) push(name, 'fail', reason);
+        continue;
+      }
+      // Req 13.12: a file that matches a "frozen" glob now but was not locked at the freeze.
+      const added = addedFrozen();
+      if (added.length > 0) {
+        const reason = `Cannot run ${stem}: ${added.join(', ')} matches a "frozen" glob of runners.json but was not locked at the freeze. Remove it, or ask a person to freeze the spec again.`;
         for (const name of c.names.length ? c.names : [stem]) push(name, 'fail', reason);
         continue;
       }

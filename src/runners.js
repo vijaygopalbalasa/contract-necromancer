@@ -19,7 +19,8 @@ import { parseJunit } from './junit.js';
 // Two keys of runners.json are reserved and are not patterns (Req 13.9): `"sources"`,
 // a list of globs (relative to the project root) of files the contracts exercise,
 // pinned in every receipt; and `"frozen"`, a list of globs of files (a `conftest.py`,
-// a `pytest.ini`) that are locked with the spec like its contracts.
+// a `pytest.ini`) that are locked with the spec like its contracts. The `"frozen"` globs are
+// expanded again on every run and every verify (Req 13.12), so a new matching file is caught.
 
 // Where a spec's runners.json lives, project-relative with forward slashes.
 export function runnersRel(spec) {
@@ -230,6 +231,29 @@ export function expandGlobs(cwd, globs) {
   const found = new Set();
   for (const glob of globs) walkGlob(cwd, '', glob.split('/'), found);
   return [...found].sort();
+}
+
+// Req 13.12: how the files that match the "frozen" globs of the locked runners.json now differ
+// from the set locked with the spec. `entry` is a lock entry of the spec (or one built from a
+// receipt): { requirements, contracts, runners, frozen }. The globs come from the pinned
+// runners.json, and only when it still has its pinned hash; if it moved there is nothing
+// trustworthy to expand, and the moved file is reported by its own check. The files the
+// lock holds for the spec itself (requirements, runners.json, contracts) are not part of
+// the set, as at freeze. Returns sorted project-relative paths:
+// { added: [matching now, not locked], removed: [locked, no longer matching] }.
+export function frozenGlobDrift(cwd, entry) {
+  const none = { added: [], removed: [] };
+  const config = entry ? lockedRunnersConfig(cwd, entry.runners) : null;
+  if (config === null || config.frozen.length === 0) return none;
+  const own = new Set([entry.runners.path]);
+  if (entry.requirements && typeof entry.requirements.path === 'string') own.add(entry.requirements.path);
+  for (const c of entry.contracts || []) own.add(c.path);
+  const now = new Set(expandGlobs(cwd, config.frozen).filter((p) => !own.has(p)));
+  const locked = new Set((entry.frozen || []).map((f) => f.path));
+  return {
+    added: [...now].filter((p) => !locked.has(p)).sort(),
+    removed: [...locked].filter((p) => !now.has(p)).sort(),
+  };
 }
 
 // Req 13.11: the variables that send an interpreter or test framework to other code

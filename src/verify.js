@@ -3,6 +3,7 @@ import path from 'node:path';
 import { canonicalJson, sha256, hashFile } from './canon.js';
 import { runContracts } from './contracts.js';
 import { readLock } from './lock.js';
+import { frozenGlobDrift } from './runners.js';
 
 // The receipt file's absolute path; a relative path is resolved against cwd.
 function receiptPath(cwd, receiptFile) {
@@ -189,6 +190,18 @@ export function verify(workingDir, receiptFile) {
     }
   }
 
+  // Req 13.12: expand the "frozen" globs of the locked runners.json again. A file that matches
+  // now and was not locked, or a locked one that no longer matches, is a changed file. With a
+  // lock the lock's entry is compared; without one, the receipt's own pins are.
+  const driftEntry = frozenSpec || {
+    requirements: receipt.requirements,
+    contracts: receipt.contracts,
+    runners: hasRunners(receipt) ? receipt.runners : null,
+    frozen: frozenOf(receipt),
+  };
+  const drift = frozenGlobDrift(cwd, driftEntry);
+  changedFiles.push(...drift.added, ...drift.removed);
+
   if (changedFiles.length > 0) {
     console.log(`MISMATCH. Files changed: ${[...new Set(changedFiles)].sort().join(', ')}.`);
     return 1;
@@ -205,6 +218,7 @@ export function verify(workingDir, receiptFile) {
     : {
         specs: {
           [receipt.spec]: {
+            requirements: receipt.requirements,
             contracts: receipt.contracts.map((c) => ({ path: c.path, sha256: c.sha256, names: [c.name] })),
             ...(hasRunners(receipt) ? { runners: receipt.runners } : {}),
             ...(frozenOf(receipt).length > 0 ? { frozen: frozenOf(receipt) } : {}),
