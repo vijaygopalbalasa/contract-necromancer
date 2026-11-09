@@ -24,7 +24,10 @@ const TYPES = {
   '.json': 'application/json; charset=utf-8',
 };
 
+// Test-only switch: NECRO_TEST_NO_BROWSER=1 makes findBrowser() answer null, to prove the page tests skip on a machine
+// without a browser. Nothing outside this file reads it, so the frozen contracts still look for a real browser.
 export function findBrowser() {
+  if (process.env.NECRO_TEST_NO_BROWSER === '1') return null;
   const fixed = [
     process.env.CHROME_PATH,
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
@@ -39,6 +42,10 @@ export function findBrowser() {
   }
   return null;
 }
+
+// Pass as the test option, `test(name, { skip: NO_BROWSER }, fn)`: the one skip message when no browser is found, or
+// false when one is. Checked once, when the file is first loaded.
+export const NO_BROWSER = findBrowser() ? false : 'no Chrome or Chromium found, set CHROME_PATH to run the page tests';
 
 function serveSite(requests) {
   const server = http.createServer((req, res) => {

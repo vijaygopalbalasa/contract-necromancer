@@ -183,7 +183,7 @@ Both apps have their own spec, frozen contracts, receipts and unit tests. A pers
 
 **Pumpkin Ledger** (`examples/pumpkin-ledger`) is a command line tool. It splits shared party costs to the exact cent and settles them in few payments.
 
-- 9 tasks, 18 contracts in 5 files, 35 unit tests, 10 receipts (one per ticked task, plus one from `necro check`).
+- Tasks and requirements: `examples/pumpkin-ledger/.kiro/specs/ledger/`. Frozen contracts: `examples/pumpkin-ledger/.necro/lock.json`. Receipts: `examples/pumpkin-ledger/.necro/receipts/ledger/`.
 - Property-based contracts (R5.1 to R5.5, task 9): each runs on 300 parties from a seeded generator with no dependencies,
   and on failure prints the seed and the smallest failing party. Kiro planted seven bugs in a scratch copy (rounding,
   lost cents, a dropped payment, ignored `split` lists, unsorted extra cents, a random tie-break, split payments) and a
@@ -193,28 +193,29 @@ Both apps have their own spec, frozen contracts, receipts and unit tests. A pers
 
 **Night Shift** (`examples/night-shift`) is a web page. It plans a Halloween watch party across time zones and flags guests who would be up in the dead of night (00:00 up to 06:00 local), with daylight-saving gaps and overlaps handled.
 
-- 9 tasks, 13 contracts in 5 files, 50 unit tests, 11 receipts (one per ticked task, plus two from `necro check`).
+- Tasks and requirements: `examples/night-shift/.kiro/specs/planner/`. Frozen contracts: `examples/night-shift/.necro/lock.json`. Receipts: `examples/night-shift/.necro/receipts/planner/`.
 - Run: serve the folder, for example `python3 -m http.server -d examples/night-shift`, and open `http://localhost:8000/site/`. The page opens with a filled form and a working example (Halloween 2026, 20:00 in
   New York, guests in London, Kolkata, Tokyo and Kathmandu); change the form and the link updates, so a plan can be shared
   as a link such as `?date=2026-10-31&time=20:00&zone=America/New_York&guests=Europe/London,Asia/Kolkata`.
 - A real moment: Kiro tried to tick task 1 early and the gate refused, because task 1 covers criteria 1.4 and 2.1, and contracts for those need code from later tasks (`.kiro/build-log/build-nightshift.txt`).
-- The receipt for task 9 (`4821ef86...`) and the newest `necro check` receipt (`a3d2bf63...`) print `CONFIRMED`. The receipts for tasks 1 to 8 print `SUPERSEDED`, because task 9 added a contract and the spec was frozen again.
+- The receipt for task 9 (`4821ef86...`) and the newest `necro check` receipt (`a3d2bf63...`) print `CONFIRMED`. The other receipts in `examples/night-shift/.necro/receipts/planner/` print `SUPERSEDED`, because task 9 added a contract and the spec was frozen again.
 
 Their hook files use `node ../../bin/necro.js`, so they work where `node` is on your `PATH`. If Kiro is started from the Dock, delete the example's `.kiro/hooks/necromancer.json` and run `node ../../bin/necro.js init` from that folder.
 
 ## How Kiro built this
 
-Kiro wrote the code of this repository task by task. A person reviewed the contracts and froze them.
+A person wrote the requirements and, later in the build, some of the task descriptions. Kiro drafted the design, the first task lists and the contracts, and wrote all the code, task by task. A person reviewed the contracts and froze them. Twice, a person made a one-line fix to a frozen contract that conflicted with a revised requirement, and then froze again.
 
 - Specs in `.kiro/specs/`:
-  - `necro-core`: the tool. 11 requirements, 31 tasks, 87 contracts in 20 files, 15 receipts.
-  - `receipt-viewer`: the static page in `site/`. 10 requirements, 21 tasks, 34 contracts in 14 files, 22 receipts.
+  - `necro-core`: the tool.
+  - `receipt-viewer`: the static page in `site/`.
+  - The requirements and tasks of each spec are in its `requirements.md` and `tasks.md`. The frozen contracts of each spec are listed in `.necro/lock.json`, and its receipts are in `.necro/receipts/<spec>/`. These numbers change as the project grows, so read them there.
 - Steering in `.kiro/steering/`: `product.md`, `structure.md`, `tech.md`, and `necromancer.md`, which tells Kiro not to edit frozen files.
 - A custom agent in `.kiro/agents/necromancer.json` (task 21): the gate's hooks plus Kiro permission rules.
 - Hooks in `.kiro/hooks/`: `necromancer.json` is the gate (`PreToolUse`, `PostToolUse` and `Stop` calling `node bin/necro.js hook ...`). `session-log.json` appends the tool and path of each Kiro tool call to `.kiro/build-log/sess_*.jsonl`. For shell commands it keeps only program names.
 - Build logs in `.kiro/build-log/`: `build-*.txt` are Kiro's session output for each piece of work.
 
-The tool did not gate its own first tasks. Tasks 1 to 16 of `necro-core` were built before that spec was frozen, and they have no receipts. From task 17 on, the tool gated its own development: Kiro drafted 68 contracts from the requirements, a person reviewed and froze them, and tasks 17 to 25 were ticked through the gate. The receipt viewer was built under the gate from its first task.
+The tool did not gate its own first tasks. The early tasks of `necro-core` were built before that spec was frozen, and they have no receipts. After the first freeze, the tool gated its own development: Kiro drafted the contracts from the requirements, a person reviewed and froze them, and the later tasks were ticked through the gate. The receipt viewer was built under the gate from its first task.
 
 Moments from the logs and the git history:
 
@@ -225,9 +226,9 @@ Moments from the logs and the git history:
   gate: the PreToolUse hook refuses a shell command that runs `freeze`, and after any shell command the PostToolUse hook
   puts `.necro/lock.json` back byte for byte, however the command was spelled. A person froze the new contracts
   (R3.14, R3.15, R6.8, R8.8), then the ticks went through (`build-t19.txt`, `build-t20.txt`).
-- Old receipts now print `SUPERSEDED` when their spec was frozen again later, instead of `MISMATCH` (task 19). The
-  newest receipt of each spec prints `CONFIRMED`.
-- The receipt viewer: all 21 tasks were ticked through the gate with a receipt each. The log of the first 14 records that every tick was accepted by the gate (`build-viewer.txt`).
+- Old receipts now print `SUPERSEDED` when their spec was frozen again later, instead of `MISMATCH` (task 19). A
+  receipt prints `CONFIRMED` only while its spec has not been frozen again since it was written, so most older receipts print `SUPERSEDED`.
+- The receipt viewer: its tasks were ticked through the gate and left receipts in `.necro/receipts/receipt-viewer/`. `build-viewer.txt` is the log of its first build session and records that every tick in it was accepted by the gate.
 
 ## Limits
 

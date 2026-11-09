@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createDom } from './fixtures/fake-dom.js';
-import { withBrowser } from './fixtures/browser.js';
+import { withBrowser, NO_BROWSER } from './fixtures/browser.js';
 import { start } from '../site/app.js';
 import { SAMPLES } from '../site/lib/samples.js';
 
@@ -88,7 +88,7 @@ test('R11.1 the beats say what the real `necro demo` prints', () => {
   assert.match(beat3, /CONFIRMED/);
 });
 
-test('R11.1 with scripts off the three beats are on screen in order', async () => {
+test('R11.1 with scripts off the three beats are on screen in order', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     for (const size of [{ width: 1280, height: 800 }, { width: 390, height: 844, mobile: true }]) {
       const m = await browser.measure({ ...size, scripts: false, settle: false }, () => {
@@ -129,7 +129,7 @@ test('R11.2 the strip animates in CSS only, and only for people who have not ask
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)\s*{\s*\*,[\s\S]*?animation:\s*none !important/, 'the reduce block turns every animation off');
 });
 
-test('R11.2 under prefers-reduced-motion: reduce all three beats are fully shown at once, with no animation', async () => {
+test('R11.2 under prefers-reduced-motion: reduce all three beats are fully shown at once, with no animation', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     const beats = () => {
       const items = [...document.querySelectorAll('#strip li')];
@@ -156,7 +156,7 @@ test('R11.2 under prefers-reduced-motion: reduce all three beats are fully shown
 
 // ---- R11.3 ----
 
-test('R11.3 the demo command and its copy button are in the first screen at 1280x800', async () => {
+test('R11.3 the demo command and its copy button are in the first screen at 1280x800', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     const m = await browser.measure({ width: 1280, height: 800 }, () => {
       const box = (id) => {
@@ -255,7 +255,7 @@ test('R11.5 an inline data: SVG favicon of the gravestone mark, a title that say
   assert.equal(csp[1], CSP);
 });
 
-test('R11.5 the browser asks for no icon file and no request fails', async () => {
+test('R11.5 the browser asks for no icon file and no request fails', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     await browser.measure({ width: 1280, height: 800 }, () => true);
     const paths = browser.requests.map((r) => r.path);
