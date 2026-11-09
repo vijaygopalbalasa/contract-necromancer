@@ -37,6 +37,14 @@
           "sha256": "6052f07ee6c8217ed0c58429385798c606bf24d384297b167a30c0d93f24f407"
         },
         {
+          "name": "clean-env",
+          "names": [
+            "R13.11 none of PYTHONPATH, PYTHONHOME, PYTHONSTARTUP, PYTHONUSERBASE, PYTEST_ADDOPTS, PYTEST_PLUGINS, NODE_OPTIONS and NODE_PATH set in the parent reaches a runner command or a JavaScript contract file, and a wrong implementation still fails"
+          ],
+          "path": "contracts/necro-core/clean-env.contract.test.js",
+          "sha256": "212038b79d9aecea16ccff524b70b225705264e179c44be53346b5152c8d7e73"
+        },
+        {
           "name": "criteria-format",
           "names": [
             "R2.9 freeze reads criteria from the task line and from the indented sub-lines under it, in both formats"
@@ -270,7 +278,7 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-09T18:18:00.873Z",
+      "frozenAt": "2026-11-09T18:34:48.571Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
         "sha256": "376b8c5d9abab398b3cbc8dd28cf5f0718571b2a70693dd7aed697b0e1420050"

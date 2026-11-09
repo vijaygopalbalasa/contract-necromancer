@@ -232,6 +232,32 @@ export function expandGlobs(cwd, globs) {
   return [...found].sort();
 }
 
+// Req 13.11: the variables that send an interpreter or test framework to other code
+// (a module path, a preloaded file, a plugin, default options). A contract and the
+// command that runs it never receive them from the parent environment.
+export const REDIRECT_VARS = Object.freeze([
+  'PYTHONPATH',
+  'PYTHONHOME',
+  'PYTHONSTARTUP',
+  'PYTHONUSERBASE',
+  'PYTEST_ADDOPTS',
+  'PYTEST_PLUGINS',
+  'NODE_OPTIONS',
+  'NODE_PATH',
+]);
+
+// A copy of `env` without the redirecting variables. Variable names ignore case on
+// Windows, so there a name is dropped whatever its case.
+export function withoutRedirects(env, platform = process.platform) {
+  const insensitive = platform === 'win32';
+  const out = {};
+  for (const [key, value] of Object.entries(env)) {
+    if (REDIRECT_VARS.includes(insensitive ? key.toUpperCase() : key)) continue;
+    out[key] = value;
+  }
+  return out;
+}
+
 // Req 13.7: how long a runner command, or a JavaScript contract file, may run. The
 // default is below the hooks' own limit of 300 seconds. The environment variable
 // NECRO_RUNNER_TIMEOUT_MS can make it shorter, never longer.
@@ -295,7 +321,8 @@ function readCases(report, file) {
 // Req 13.7: a command that exits with a non-zero status fails the file. The
 // result then holds { cases, reason } when the report could still be read, and the
 // caller counts every case as failing; otherwise only { reason }.
-// `env` is the environment of the command. Nothing the command prints is read.
+// `env` is the environment of the command; the variables of Req 13.11 are removed
+// from it here too, so no caller can hand them to a command. Nothing the command prints is read.
 export function runReport(cwd, absPath, command, env) {
   const file = path.basename(absPath);
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'necro-report-'));
@@ -311,7 +338,7 @@ export function runReport(cwd, absPath, command, env) {
     const args = splitCommand(command).map(fill);
     const { res, timedOut, limitMs } = spawnLimited(args[0], args.slice(1), {
       cwd,
-      env: { ...env, PYTHONDONTWRITEBYTECODE: '1', PYTHONPYCACHEPREFIX: pycache },
+      env: { ...withoutRedirects(env), PYTHONDONTWRITEBYTECODE: '1', PYTHONPYCACHEPREFIX: pycache },
       shell: false,
       stdio: ['ignore', 'ignore', 'ignore'],
       windowsHide: true,

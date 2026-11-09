@@ -11,7 +11,7 @@ import { verify } from '../src/verify.js';
 import { computeReceiptHash } from '../src/receipts.js';
 import { handlePreToolUse, handlePostToolUse } from '../src/hooks.js';
 import { spawnSync } from 'node:child_process';
-import { parseRunners, readRunners, matchesPattern, splitCommand, findRunner, expandGlobs, runnerTimeLimitMs, RUNNER_TIME_LIMIT_MS } from '../src/runners.js';
+import { parseRunners, readRunners, matchesPattern, splitCommand, findRunner, expandGlobs, runnerTimeLimitMs, RUNNER_TIME_LIMIT_MS, REDIRECT_VARS, withoutRedirects } from '../src/runners.js';
 
 const FAKE = path.join(import.meta.dirname, 'fixtures', 'fake-runner.js');
 const SPEC = 'demo';
@@ -1234,4 +1234,127 @@ test('R13.1 a pytest.py planted in the project does not stand in for pytest when
   } finally {
     done(cwd);
   }
+});
+
+// ---------------------------------------------------------------------------
+// Task 30: a clean environment for contracts (Req 13.11)
+// ---------------------------------------------------------------------------
+
+const REDIRECTS = ['PYTHONPATH', 'PYTHONHOME', 'PYTHONSTARTUP', 'PYTHONUSERBASE', 'PYTEST_ADDOPTS', 'PYTEST_PLUGINS', 'NODE_OPTIONS', 'NODE_PATH'];
+
+// A preload that records that it ran and, if it reaches a contract process, makes every check pass: assert.equal,
+// assert.ok and assert.strictEqual do nothing, and a fake runner exits 0 with a report that says all passed.
+function leakPreload(dir, mark) {
+  const file = path.join(dir, 'leak.cjs');
+  fs.writeFileSync(
+    file,
+    `const fs = require('node:fs');
+fs.appendFileSync(${JSON.stringify(mark)}, 'loaded\\n');
+const a = require('node:assert/strict');
+a.equal = () => {};
+a.strictEqual = () => {};
+a.ok = () => {};
+process.on('exit', () => {
+  const [contract, report] = process.argv.slice(2);
+  if (contract && /_contract\\.fake$/.test(contract) && report) {
+    fs.writeFileSync(report, '<testsuite><testcase name="R1.2 wrong"/></testsuite>');
+    process.exitCode = 0;
+  }
+});
+`,
+  );
+  return file;
+}
+
+// Run fn with every variable of Req 13.11 set in this process, then put the old values back.
+function withLeakedEnv(preload, fn) {
+  const saved = Object.fromEntries(REDIRECTS.map((name) => [name, process.env[name]]));
+  for (const name of REDIRECTS) process.env[name] = `leak-${name}`;
+  process.env.NODE_OPTIONS = `--require ${preload}`;
+  try {
+    return fn();
+  } finally {
+    for (const [name, value] of Object.entries(saved)) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  }
+}
+
+test('R13.11 none of the redirecting variables set in the parent reaches a runner command, and a wrong implementation still fails', () => {
+  const cwd = project({ 'a_contract.fake': 'pass R1.1 right\nfail R1.2 wrong\n' });
+  const aside = tmpCwd('necro-runners-leak-');
+  try {
+    const mark = path.join(aside, 'mark');
+    const preload = leakPreload(aside, mark);
+    withLog((log) => {
+      freezeSpec(cwd, SPEC);
+      fs.rmSync(log, { force: true });
+      const results = withLeakedEnv(preload, () => runContracts(cwd, SPEC, readLock(cwd)));
+      assert.deepEqual(byName(results), { 'R1.1 right': 'pass', 'R1.2 wrong': 'fail' });
+      const seen = calls(log);
+      assert.equal(seen.length, 1);
+      assert.deepEqual(seen[0].env, Object.fromEntries(REDIRECTS.map((name) => [name, null])));
+    });
+    assert.ok(!fs.existsSync(mark), 'the preload named in NODE_OPTIONS never ran in the command');
+  } finally {
+    done(cwd);
+    done(aside);
+  }
+});
+
+test('R13.11 none of the redirecting variables set in the parent reaches a JavaScript contract file, and a wrong implementation still fails', () => {
+  const cwd = tmpCwd('necro-runners-js-');
+  const aside = tmpCwd('necro-runners-leak-');
+  try {
+    const mark = path.join(aside, 'mark');
+    const seen = path.join(aside, 'seen.json');
+    const preload = leakPreload(aside, mark);
+    const body = `import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const names = ${JSON.stringify(REDIRECTS)};
+test('R1.1 right', () => {
+  fs.writeFileSync(${JSON.stringify(seen)}, JSON.stringify(Object.fromEntries(names.map((n) => [n, process.env[n] ?? null]))));
+  assert.equal(1, 1);
+});
+test('R1.2 wrong', () => {
+  assert.equal(1, 2);
+});
+`;
+    put(cwd, '.kiro/specs/demo/requirements.md', '# Demo\n');
+    put(cwd, 'contracts/demo/leak.contract.test.js', body);
+    const lock = {
+      specs: {
+        demo: {
+          requirements: { path: '.kiro/specs/demo/requirements.md', sha256: hashFile(path.join(cwd, '.kiro/specs/demo/requirements.md')) },
+          contracts: [
+            { name: 'leak', path: 'contracts/demo/leak.contract.test.js', sha256: hashFile(path.join(cwd, 'contracts/demo/leak.contract.test.js')), names: ['R1.1 right', 'R1.2 wrong'] },
+          ],
+        },
+      },
+    };
+    const results = withLeakedEnv(preload, () => runContracts(cwd, SPEC, lock));
+    assert.deepEqual(byName(results), { 'R1.1 right': 'pass', 'R1.2 wrong': 'fail' });
+    assert.deepEqual(JSON.parse(fs.readFileSync(seen, 'utf8')), Object.fromEntries(REDIRECTS.map((name) => [name, null])));
+    assert.ok(!fs.existsSync(mark), 'the preload named in NODE_OPTIONS never ran in the contract process');
+  } finally {
+    done(cwd);
+    done(aside);
+  }
+});
+
+test('R13.11 withoutRedirects drops exactly the redirecting variables and leaves the rest, without changing its input', () => {
+  assert.deepEqual([...REDIRECT_VARS].sort(), [...REDIRECTS].sort());
+  const input = { PATH: '/bin', HOME: '/h', PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1', NODE_ENV: 'test', ...Object.fromEntries(REDIRECTS.map((n) => [n, 'x'])) };
+  const copy = { ...input };
+  const out = withoutRedirects(input);
+  assert.deepEqual(out, { PATH: '/bin', HOME: '/h', PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1', NODE_ENV: 'test' });
+  assert.deepEqual(input, copy);
+  assert.notEqual(out, input);
+});
+
+test('R13.11 on Windows, where variable names ignore case, a differently spelled variable is dropped too', () => {
+  assert.deepEqual(withoutRedirects({ Path: 'p', Node_Options: 'x', node_options: 'y', PythonPath: 'z' }, 'win32'), { Path: 'p' });
+  assert.deepEqual(withoutRedirects({ node_options: 'y', NODE_OPTIONS: 'x' }, 'linux'), { node_options: 'y' });
 });

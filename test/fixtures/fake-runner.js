@@ -10,11 +10,14 @@
 //   @exit <n>       exit with code n after writing the report
 //   @sleep <ms>     wait before going on (a hang, with a large number)
 //   @child <file>   start a child process that stays alive, and write its process id to <file>
-// When FAKE_RUNNER_LOG is set, one JSON line about the call is appended to that file.
+// When FAKE_RUNNER_LOG is set, one JSON line about the call is appended to that file
+// (including `env`, the value or null of each variable that Req 13.11 removes).
 import fs from 'node:fs';
 import { spawn } from 'node:child_process';
 
 const [file, report] = process.argv.slice(2);
+// The variables of Req 13.11; the log says which of them reached the command.
+const REDIRECTS = ['PYTHONPATH', 'PYTHONHOME', 'PYTHONSTARTUP', 'PYTHONUSERBASE', 'PYTEST_ADDOPTS', 'PYTEST_PLUGINS', 'NODE_OPTIONS', 'NODE_PATH'];
 function pycacheEntries() {
   try {
     return fs.readdirSync(process.env.PYTHONPYCACHEPREFIX);
@@ -33,6 +36,7 @@ if (process.env.FAKE_RUNNER_LOG) {
       pycachePrefix: process.env.PYTHONPYCACHEPREFIX ?? null,
       pycacheEntries: pycacheEntries(),
       dontWriteBytecode: process.env.PYTHONDONTWRITEBYTECODE ?? null,
+      env: Object.fromEntries(REDIRECTS.map((name) => [name, process.env[name] ?? null])),
     }) + '\n',
   );
 }

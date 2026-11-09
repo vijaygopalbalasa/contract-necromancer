@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { hashFile } from './canon.js';
-import { lockedRunners, findRunner, runReport, spawnLimited, timeoutReason } from './runners.js';
+import { lockedRunners, findRunner, runReport, spawnLimited, timeoutReason, withoutRedirects } from './runners.js';
 
 const RUNNER = fileURLToPath(new URL('./contract-runner.js', import.meta.url));
 
@@ -10,10 +10,12 @@ export function contractName(filePath) {
   return path.basename(filePath).replace(/\.contract\.test\.js$/, '');
 }
 
-// Environment for the runner. The parent test runner sets NODE_TEST_* variables
-// that would make a nested run behave as a child of it, so they are removed.
+// Environment for the runner and for runner commands. The parent test runner sets
+// NODE_TEST_* variables that would make a nested run behave as a child of it, so they
+// are removed. So are the variables that redirect an interpreter or test framework to
+// other code (Req 13.11); the contract process inherits this environment from the runner.
 function runnerEnv() {
-  const env = { ...process.env };
+  const env = withoutRedirects(process.env);
   for (const k of Object.keys(env)) {
     if (k.startsWith('NODE_TEST_')) delete env[k];
   }
