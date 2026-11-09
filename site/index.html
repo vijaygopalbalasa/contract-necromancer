@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'">
-  <title>Contract Necromancer: receipt viewer</title>
+  <title>Contract Necromancer: a task is done only when frozen contracts pass</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 58V29a20 20 0 0 1 40 0v29z' fill='%23221b2e' stroke='%23b9b0cf' stroke-width='4' stroke-linejoin='round'/%3E%3Cpath d='M22 38l8 8 13-16' fill='none' stroke='%237dffb3' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -22,11 +23,25 @@
       </div>
     </header>
 
+    <section class="strip" id="strip" aria-label="What happens when Kiro says a task is done">
+      <ol class="beats">
+        <li class="beat">Kiro says task 4 is done. The code loses cents.</li>
+        <li class="beat beat-refused">The gate refuses the tick. Failing contracts: R2.1, R2.2 and 7 more.</li>
+        <li class="beat beat-accepted">After the fix, the gate accepts the tick and writes a receipt. necro verify prints CONFIRMED.</li>
+      </ol>
+      <div class="try">
+        <span class="try-label">See it happen for real:</span>
+        <code id="strip-command">npx -y github:vijaygopalbalasa/contract-necromancer demo</code>
+        <button type="button" id="strip-copy" aria-label="Copy the demo command">Copy</button>
+        <span id="strip-copy-note" aria-live="polite"></span>
+      </div>
+    </section>
+
     <section class="bar" id="start" aria-label="Choose a receipt">
       <p class="muted" id="sample-note" aria-live="polite"></p>
       <div class="row" id="sample-row">
-        <button type="button" id="sample">Load the risen sample</button>
-        <button type="button" id="sample-buried">Load the buried sample</button>
+        <button type="button" id="sample">A passing receipt (risen sample)</button>
+        <button type="button" id="sample-buried">A refused one (buried sample)</button>
       </div>
       <p class="error" id="error" role="alert"></p>
       <details class="open-own" id="open">

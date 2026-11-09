@@ -45,7 +45,7 @@ export function start({ document, location, fetch, navigator, matchMedia }) {
     'paste', 'show', 'file', 'error', 'receipt', 'spec', 'commit', 'receipt-hash', 'created', 'task', 'summary', 'groups',
     'hash-check', 'hash-badge', 'hash-detail', 'repo', 'run', 'command', 'copy', 'copy-note', 'command-note', 'file-check',
     'check', 'repo-error', 'file-notice', 'file-summary', 'files', 'sample', 'sample-buried', 'sample-note', 'verdict',
-    'demo-command', 'demo-copy', 'demo-copy-note',
+    'demo-command', 'demo-copy', 'demo-copy-note', 'strip-command', 'strip-copy', 'strip-copy-note',
   ]) {
     els[id] = $(id);
   }
@@ -318,6 +318,7 @@ export function start({ document, location, fetch, navigator, matchMedia }) {
   els.check.addEventListener('click', runFileCheck);
   els.copy.addEventListener('click', () => copyText(els.command, els['copy-note']));
   els['demo-copy'].addEventListener('click', () => copyText(els['demo-command'], els['demo-copy-note']));
+  els['strip-copy'].addEventListener('click', () => copyText(els['strip-command'], els['strip-copy-note']));
 
   els.file.addEventListener('change', async () => {
     const file = els.file.files && els.file.files[0];

@@ -298,7 +298,7 @@ pre {
 
 .open-own summary {
   display: inline-block;
-  padding: 0.25rem 0;
+  padding: 0.125rem 0;
   color: var(--link);
   font-weight: 600;
   cursor: pointer;
@@ -317,8 +317,95 @@ pre {
 
 .jump a {
   display: inline-block;
-  padding: 0.25rem 0;
+  padding: 0.125rem 0;
   font-weight: 600;
+}
+
+/* ---- The first-screen story: three beats from the real `necro demo` output, then the command to see it happen. Plain
+   flow and plain text; the beats are a list that reads in the order it is drawn. ---- */
+
+.strip {
+  min-width: 0;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.beats {
+  counter-reset: beat;
+  list-style: none;
+  margin: 0 0 0.625rem;
+  padding: 0;
+  display: grid;
+  gap: 0.375rem;
+}
+
+.beat {
+  counter-increment: beat;
+  position: relative;
+  min-width: 0;
+  padding: 0.125rem 0 0.125rem 2rem;
+  border-left: 3px solid var(--border);
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.beat::before {
+  content: counter(beat);
+  position: absolute;
+  left: 0.625rem;
+  top: 0.125rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.beat-refused {
+  border-left-color: var(--grave);
+}
+
+.beat-accepted {
+  border-left-color: var(--alive);
+}
+
+.try {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.try > * {
+  min-width: 0;
+}
+
+.try-label {
+  grid-column: 1 / -1;
+  color: var(--muted);
+}
+
+.try #strip-copy-note {
+  grid-column: 1 / -1;
+}
+
+.try code {
+  padding: 0.25rem 0.5rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+
+.try button {
+  padding: 0.3125rem 0.875rem;
+  font-size: 0.875rem;
+}
+
+.try #strip-copy-note:empty {
+  display: none;
 }
 
 .about > :last-child {
@@ -794,8 +881,35 @@ button:disabled {
     padding: 1.125rem 1.75rem;
   }
 
-  .bar {
+  .bar,
+  .strip {
     padding: 0.875rem 1.75rem;
+  }
+
+  .beats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  /* On a wide window each beat is its own small box. On a phone they are three lines with a colored edge, to keep the
+     verdict banner in the first screen. */
+  .beat {
+    padding: 0.4375rem 0.75rem 0.4375rem 2.125rem;
+    background: var(--bg);
+    border-top: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    border-radius: 8px;
+  }
+
+  .beat::before {
+    left: 0.75rem;
+    top: 0.4375rem;
+  }
+
+  .try {
+    display: flex;
+    flex-wrap: wrap;
   }
 }
 
@@ -860,6 +974,19 @@ button:disabled {
 
   .verdict {
     animation: rise 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  /* The three beats appear one after another. Under reduce they are all there at once, with no animation. */
+  .beat {
+    animation: rise 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .beat:nth-child(2) {
+    animation-delay: 350ms;
+  }
+
+  .beat:nth-child(3) {
+    animation-delay: 700ms;
   }
 
   .verdict.risen .verdict-mark {

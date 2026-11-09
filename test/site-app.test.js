@@ -582,8 +582,8 @@ test('with no receipt the page offers a risen and a buried sample button', async
   await p.ready;
   assert.equal(p.el('sample-row').hidden, false);
   const html = fs.readFileSync(new URL('../site/index.html', import.meta.url), 'utf8');
-  assert.match(html, /<button[^>]*id="sample"[^>]*>Load the risen sample<\/button>/);
-  assert.match(html, /<button[^>]*id="sample-buried"[^>]*>Load the buried sample<\/button>/);
+  assert.match(html, /<button[^>]*id="sample"[^>]*>A passing receipt \(risen sample\)<\/button>/);
+  assert.match(html, /<button[^>]*id="sample-buried"[^>]*>A refused one \(buried sample\)<\/button>/);
 });
 
 test('pressing Load the sample fetches ./sample-receipt.json from the same origin, renders it and sets the repository box', async () => {

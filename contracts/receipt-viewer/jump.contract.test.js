@@ -18,7 +18,7 @@ const ROOT = new URL('../../', import.meta.url);
 const read = (p) => fs.readFileSync(new URL(p, ROOT), 'utf8');
 const HTML = read('site/index.html');
 const CSS = read('site/style.css').replace(/\/\*[\s\S]*?\*\//g, '');
-const ABOVE_FOLD = 'contracts/receipt-viewer/above-fold.contract.test.js';
+const ABOVE_FOLD = 'contracts/receipt-viewer/above-fold-v2.contract.test.js';
 const CSP =
   "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'";
 
@@ -92,6 +92,8 @@ test('R10.5 a short plain link above the verdict banner jumps to the How it work
   const pinned = lock.specs?.['receipt-viewer']?.contracts?.find((c) => c.path === ABOVE_FOLD);
   assert.ok(pinned, 'the lock pins the above-fold contract');
   assert.equal(createHash('sha256').update(fs.readFileSync(new URL(ABOVE_FOLD, ROOT))).digest('hex'), pinned.sha256, 'the above-fold contract is unchanged');
-  const run = spawnSync(process.execPath, ['--test', ABOVE_FOLD], { cwd: fileURLToPath(ROOT), encoding: 'utf8' });
+  const env = { ...process.env };
+  for (const k of Object.keys(env)) if (k.startsWith('NODE_TEST_')) delete env[k];
+  const run = spawnSync(process.execPath, ['--test', ABOVE_FOLD], { cwd: fileURLToPath(ROOT), encoding: 'utf8', env });
   assert.equal(run.status, 0, `the frozen R9.5 contract fails:\n${run.stdout}${run.stderr}`);
 });

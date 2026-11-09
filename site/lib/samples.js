@@ -1,18 +1,23 @@
 // The two samples the page ships, what to show when the page opens, and how to scroll the banner into view.
 // Pure: nothing here touches the page or the network.
 
+// The one sentence every sample note starts with, for a visitor who has never seen a receipt.
+const WHAT_A_RECEIPT_IS = 'A receipt lists the contracts that had to pass before Kiro could tick the task.';
+
 // Risen first: the first sample button in index.html loads SAMPLES[0]. The files they come from are named in app.js.
+// The labels are plain words for a newcomer. Each also keeps the words "risen" or "buried" and "sample", which the page
+// uses elsewhere (the banner says Risen or Still buried) and which the frozen first-visit contract looks for.
 export const SAMPLES = [
   {
     id: 'risen',
-    label: 'Load the risen sample',
-    note: 'Sample receipt: a real one from this repository, every contract alive.',
+    label: 'A passing receipt (risen sample)',
+    note: `${WHAT_A_RECEIPT_IS} This sample is a real one from this repository.`,
   },
   {
     id: 'buried',
-    label: 'Load the buried sample',
+    label: 'A refused one (buried sample)',
     note:
-      'Sample receipt: a real necro check run on examples/pumpkin-ledger with a rounding bug planted. ' +
+      `${WHAT_A_RECEIPT_IS} This sample is a real necro check of a spec with a planted bug. ` +
       'It is not stored in this repository, so the re-run command cannot find it.',
   },
 ];

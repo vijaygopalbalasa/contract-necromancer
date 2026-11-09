@@ -1,14 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { createDom } from './fixtures/fake-dom.js';
 import { start } from '../site/app.js';
 
 // Requirement 10: the story in one glance. The page heading says the idea, a "How it works" section sits right after the
 // receipt card, and the demo command can be copied. Node cannot lay the page out, so these tests read the files as text
-// and drive app.js with the small fake DOM. Task 18's frozen contract (above-fold) is run unchanged.
+// and drive app.js with the small fake DOM. The frozen above-fold-v2 contract is checked for tampering below.
 
 const root = new URL('../', import.meta.url);
 const read = (p) => fs.readFileSync(new URL(p, root), 'utf8');
@@ -47,17 +47,15 @@ test('R10.1 the page heading is the one-sentence idea and sits above the sample 
   assert.ok(idAt('brand') < html.indexOf('<h1') && html.indexOf('<h1') < idAt('start'), 'the heading is in the header');
 });
 
-test('R10.1 the frozen above-fold contract still passes, unchanged', () => {
-  const run = spawnSync(process.execPath, ['--test', 'contracts/receipt-viewer/above-fold.contract.test.js'], {
-    cwd: fileURLToPath(root),
-    encoding: 'utf8',
-  });
-  assert.equal(run.status, 0, run.stdout + run.stderr);
-  const changed = spawnSync('git', ['status', '--porcelain', '--', 'contracts/receipt-viewer/above-fold.contract.test.js'], {
-    cwd: fileURLToPath(root),
-    encoding: 'utf8',
-  });
-  assert.equal(changed.stdout.trim(), '', 'the frozen file has no local change');
+test('R10.1 the old above-fold file is gone and the frozen above-fold-v2 file is untouched', () => {
+  const lock = JSON.parse(read('.necro/lock.json'));
+  const contracts = lock.specs['receipt-viewer'].contracts;
+  assert.ok(!fs.existsSync(new URL('contracts/receipt-viewer/above-fold.contract.test.js', root)), 'the old file is removed');
+  assert.ok(!contracts.some((c) => c.path === 'contracts/receipt-viewer/above-fold.contract.test.js'), 'the lock no longer lists the old file');
+  const pinned = contracts.find((c) => c.path === 'contracts/receipt-viewer/above-fold-v2.contract.test.js');
+  assert.ok(pinned, 'the lock lists above-fold-v2');
+  const sha = createHash('sha256').update(fs.readFileSync(new URL(pinned.path, root))).digest('hex');
+  assert.equal(sha, pinned.sha256, 'the file is byte for byte the frozen one');
 });
 
 // ---- R10.2 ----
@@ -138,7 +136,11 @@ test('R10.3 the video and the repository are plain links in the section, and the
   // Nothing is embedded or loaded: no frame, media, object, image, extra script or extra style sheet.
   assert.doesNotMatch(html, /<(iframe|video|audio|embed|object|img|source|picture|style)\b/i);
   assert.equal((html.match(/<script\b/g) || []).length, 1);
-  assert.equal((html.match(/<link\b/g) || []).length, 1);
+  // Two links: the style sheet and, since Requirement 11.5, the inline data: favicon (it loads nothing).
+  const linkTags = html.match(/<link\b[^>]*>/g) || [];
+  assert.equal(linkTags.length, 2);
+  assert.ok(linkTags.some((l) => /rel="stylesheet"[^>]*href="style\.css"/.test(l)));
+  assert.ok(linkTags.some((l) => /rel="icon"[^>]*href="data:image\/svg\+xml,/.test(l)));
 });
 
 test('R10.3 the Content Security Policy is byte for byte the one the design gives', () => {
@@ -247,18 +249,6 @@ test('R10.5 the reading order is the drawn order and the link stays in the flow,
 });
 
 test('R10.5 the target is not hidden under anything when the link is followed: it has a scroll margin', () => {
-  const rule = [...css.matchAll(/(?:^|})\s*([^{}@]+){([^{}]*)}/g)].find((m) => m[1].split(',').some((s) => s.trim() === '#how' || s.trim() === '.how'));
+  const rule = [...css.matchAll(/(?<=^|})\s*([^{}@]+){([^{}]*)}/g)].find((m) => m[1].split(',').some((s) => s.trim() === '#how' || s.trim() === '.how'));
   assert.ok(rule && /scroll-margin-top\s*:\s*[\d.]+rem/.test(rule[2]), 'the How it works section sets scroll-margin-top');
-});
-
-test('R10.5 the frozen above-fold contract still passes, unchanged, with the link in the page', () => {
-  const run = spawnSync(process.execPath, ['--test', 'contracts/receipt-viewer/above-fold.contract.test.js'], {
-    cwd: fileURLToPath(root),
-    encoding: 'utf8',
-  });
-  assert.equal(run.status, 0, run.stdout + run.stderr);
-  const lock = JSON.parse(read('.necro/lock.json'));
-  const pinned = lock.specs['receipt-viewer'].contracts.find((c) => c.path === 'contracts/receipt-viewer/above-fold.contract.test.js');
-  const sha = spawnSync('shasum', ['-a', '256', 'contracts/receipt-viewer/above-fold.contract.test.js'], { cwd: fileURLToPath(root), encoding: 'utf8' });
-  assert.equal(sha.stdout.split(' ')[0], pinned.sha256, 'the file is byte for byte the frozen one');
 });

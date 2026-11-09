@@ -210,7 +210,7 @@ test('R10.3 plain links to the demo video and the repository, with the Content S
   // Nothing is embedded or loaded for the story: no frame, media, image, object, extra script, style or style sheet.
   assert.doesNotMatch(HTML, /<(iframe|video|audio|embed|object|img|source|picture|style)\b/i);
   assert.equal((HTML.match(/<script\b/g) || []).length, 1, 'the one module script');
-  assert.equal((HTML.match(/<link\b/g) || []).length, 1, 'the one style sheet');
+  assert.equal((HTML.match(/<link\b(?![^>]*rel="icon")/g) || []).length, 1, 'the one style sheet (the inline data: favicon of R11.5 aside)');
 });
 
 // ---- R10.4 ----
