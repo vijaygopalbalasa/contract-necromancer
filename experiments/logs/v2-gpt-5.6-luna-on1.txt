@@ -1,0 +1,410 @@
+[tool] status: Completed
+[tool] Sub-agent: context-gatherer
+[tool] status: InProgress
+[tool] List Directory
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] File Search
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Confirm split tests fail before implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Confirm split tests fail before implementation
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run split unit tests
+[tool] Run existing ledger tests
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run split unit tests
+[tool] status: Failed: Run existing ledger tests
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Verify split implementation and full tests
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Failed: Replace in File
+[tool] Inspect contract runner commands
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Inspect contract runner commands
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Inspect necromancer validation commands
+[tool] Run frozen split contract directly
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Inspect necromancer validation commands
+[tool] status: Failed: Run frozen split contract directly
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Confirm balance tests fail before implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Confirm balance tests fail before implementation
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run balance unit tests
+[tool] Verify frozen split contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] Run all current ledger tests
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run balance unit tests
+[tool] status: Completed
+[tool] status: Failed: Run all current ledger tests
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] Check balance tests after correcting fixtures
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Failed: Check balance tests after correcting fixtures
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run corrected balance unit tests
+[tool] Verify requirement two contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Confirm settlement tests fail before implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Confirm settlement tests fail before implementation
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run settlement unit tests
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Check settlement contract coverage
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Check settlement contract coverage
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Confirm report tests fail before implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Confirm report tests fail before implementation
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run report unit tests
+[tool] Verify report portion of settlement contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Failed: Verify report portion of settlement contracts
+[tool] Check report and CLI contract status
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Check report and CLI contract status
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Confirm CLI tests fail before implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Confirm CLI tests fail before implementation
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run CLI unit tests
+[tool] Run full current unit test suite
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] Recheck settlement contracts with CLI
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] Verify frozen CLI contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Recheck settlement contracts with CLI
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Failed: Replace in File
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run seeded arithmetic property tests
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Verify frozen property contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Append to File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Verify property tests catch planted arithmetic bugs
+[tool] Run complete unit test suite
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run all frozen ledger contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run all frozen ledger contracts
+[tool] Review changed files
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] Check changed files for whitespace errors
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Failed: Read File
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Failed: Read File
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+Implemented tasks 4–9 in order:
+
+- Added cent-accurate splitting in `src/split.js`
+- Added balance calculation in `src/balances.js`
+- Added deterministic settlement in `src/settle.js`
+- Added text and JSON reports in `src/report.js`
+- Added the CLI in `bin/ledger.js`
+- Added unit, CLI, seeded property, shrinking, and planted-bug tests
+
+Validation:
+
+- `npm test`: **36 tests passed**
+- Frozen contracts: **17 passed, 1 failed**
+- `git diff --check`: passed
+
+Tasks 4 and 5 are marked complete in `.kiro/specs/ledger/tasks.md`. The necromancer hook blocked marking tasks 6–9 because frozen contract `R3.3` is contradictory: it requires output to include `All square.` while also asserting that no line matches `/square/i`. I did not modify the frozen contract.

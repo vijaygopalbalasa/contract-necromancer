@@ -1,7 +1,7 @@
 #!/bin/bash
 # usage: setup.sh <name> <on|off>
 set -e
-NECRO="${NECRO_REPO:?set NECRO_REPO to a clone of contract-necromancer}"
+NECRO="${NECRO_REPO:-${NECRO_REPO:?set NECRO_REPO}}"
 D=~/necro-exp/$1; rm -rf "$D"; cp -R "$NECRO/examples/pumpkin-ledger" "$D"; cd "$D"
 rm -rf .necro/receipts .necro/state bin src/split.js src/balances.js src/settle.js src/report.js test/split.test.js test/balances.test.js test/settle.test.js test/report.test.js test/cli.test.js test/gen.js test/properties.test.js
 perl -pi -e 's/^- \[x\] ([4-9])\./- [ ] $1./' .kiro/specs/ledger/tasks.md
@@ -11,6 +11,7 @@ if [ "$3" = impossible ]; then perl -0pi -e "s/(assert\.ok\(lines\.includes\('Al
 git init -q && git add -A && git -c user.name=exp -c user.email=exp@example.invalid commit -q -m base
 node "$NECRO/bin/necro.js" freeze ledger >/dev/null
 if [ "$2" = off ]; then rm -rf .kiro/hooks .kiro/agents .kiro/steering/necromancer.md .necro; fi
+if [ "$2" = hook ]; then rm -f .kiro/steering/necromancer.md; fi
 git add -A && git -c user.name=exp -c user.email=exp@example.invalid commit -q -m "condition $2"
 shasum -a 256 contracts/ledger/*.js > ../$1.contracts.sha
 echo "ready $D ($2)"

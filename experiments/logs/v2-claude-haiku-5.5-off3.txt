@@ -1,0 +1,197 @@
+[tool] Read File
+[tool] status: InProgress
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Inspect tests, contracts and git state
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Tasks 1–3 are already ticked, so I'll start at task 4. Before writing code I need to check the frozen contract files' imports so the new modules match the names they expect.
+[tool] List contract imports and run current test suite
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 4: writing the split tests first.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Confirm split tests fail before implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run split tests after implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 4 passes. Marking it done, then moving to task 5.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] Confirm balance tests fail before implementation
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run balance tests after implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 5 passes. Next, task 6 (settle): tests and implementation.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] Confirm settle tests fail before implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run settle tests after implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 6 passes. Next, task 7 (reports).
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Confirm report tests fail before implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run report tests after implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 7 passes. Next, task 8 (command line).
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Confirm CLI tests fail before implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run CLI tests and full suite
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 8 passes and the full suite is green (33 tests). Marking task 8 done and making the binary executable. Then task 9: the generator, the property runner, and the properties test.
+[tool] Replace in File
+[tool] Make the CLI entry point executable
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+Now the properties test in `test/`. It runs the four arithmetic properties through `checkProperty` and checks that a failure reports the seed.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run new properties test and the R5 contract
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Both the new properties test and the R5 contract pass. Next, the planted-bug check. I'll copy the project to a scratch directory, plant each of the three bugs there one at a time, and confirm that a property fails. The real `src/` stays untouched.
+[tool] Plant three bugs in a scratch copy and confirm properties fail
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+All three planted bugs are caught. The scratch copy is deleted and the real `src/` is unchanged. Next I'll run the full suite, the other frozen contracts, and the CLI on `party.txt`, and look at one real failure report.
+[tool] Run full suite, contracts, CLI on sample and sample failure report
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The full suite passes (38 tests). One frozen contract fails, and it is outside `npm test`. I'll find out which one and why.
+[tool] Show the failing frozen contract details
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Locate failing contract test by name
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+The failing test is R3.3 in the frozen `requirement-3-settle` contract. It asserts that `All square.` is printed, and also that no line contains the word "square". The required line itself contains "square", so the contract cannot pass with any output that meets R3.3. I'll leave the frozen file alone and report it. Marking task 9 done now.
+[tool] Replace in File
+[tool] Verify all tasks ticked and final test run
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+Line 37 still shows as unticked. The edit and the grep ran in the same batch, so the grep may have run first. I'll check the file directly.
+[tool] Re-check the task 9 checkbox state
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+All nine tasks in `tasks.md` are now ticked. `npm test` passes (38 tests). One frozen contract fails, and it cannot pass as written.
+
+**What I built**
+- `src/split.js`, `src/balances.js`, `src/settle.js`, `src/report.js`, and `bin/ledger.js`, each with its test file. Each test failed before its code existed.
+- `test/gen.js`: a seeded PRNG, a party generator, a runner, and a shrinker. A failure prints the seed, the case seed, the reason, and the smallest failing party as ledger text.
+- `test/properties.test.js`: the R5.1–R5.4 properties run on 300 parties each, plus a check that failures report the seed.
+- The R5 contract `contracts/ledger/properties.contract.test.js` was already in the repo, so I did not add it. It passes against the new code.
+
+**Planted bugs**
+I planted each bug in a scratch copy and deleted the copy afterward. Each one made the properties fail:
+- Round instead of floor in `split.js`: 4 properties failed.
+- Dropping the extra cents in `split.js`: 4 properties failed.
+- Dropping the last payment in `settle.js`: the settle property failed.
+
+**Bugs found in `src/`**
+None. The properties did not find a real bug in the code, so I changed nothing in `src/` for this.
+
+**Failing frozen contract (not in `npm test`)**
+`contracts/ledger/requirement-3-settle.contract.test.js`, test R3.3, asserts two things. It requires the line `All square.`. It also requires that no line matches `/square/i`. The required line itself contains "square", so no output can satisfy both. I did not edit the frozen file. To fix it, the contract's second assertion needs to exclude the `All square.` line.
+
+**Other notes**
+- `bin/ledger.js` is marked executable.
+- `package.json` still runs only `test/*.test.js`, so the contracts are not part of `npm test`. I left that unchanged.

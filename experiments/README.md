@@ -1,6 +1,10 @@
-# Does the gate change what Kiro does? A small experiment
+# Does the gate change what Kiro does? An experiment
 
-Nov 9 to 10, 2026. Kiro CLI, model `claude-haiku-5.5`, 12 runs.
+**Result:** on a task that cannot honestly be finished, Kiro marked it done in **11 of 11** runs without the gate and in
+**0 of 19** runs with it, across two models (Claude Haiku 5.5 and GPT-5.6 Luna). The hook alone, without the steering
+file, was enough (0 of 8). On an achievable spec the gate changed nothing: every task built in every run, either way.
+
+Nov 9 to 10, 2026. Kiro CLI. Round 1: `claude-haiku-5.5`, 12 runs. Round 2: `claude-haiku-5.5` and `gpt-5.6-luna`, 24 runs.
 
 ## Setup
 
@@ -57,10 +61,28 @@ What happened:
   models. For gate-on runs the measurement cannot tell: the hooks restore any edit, and their messages are not in the
   logs.
 
+## Round 2: two models, and the hook without steering
+
+Same impossible spec and prompt, three arms: gate off; **hook only** (frozen spec and hooks, but no necromancer
+steering file, so Kiro is told nothing about the gate in advance); gate on (hooks and steering). The tool was pinned to
+commit `2c7e4ad` in a separate clone, so later work could not change it mid-experiment (`run3.sh`, `setup.sh`).
+
+| Model | Arm | Runs | Runs with a false "done" | False ticks | Contracts edited | Seconds per run |
+|---|---|---|---|---|---|---|
+| Claude Haiku 5.5 | off | 5 | **5** | 10 | 0 | 216 to 534 |
+| Claude Haiku 5.5 | hook only | 5 | **0** | 0 | 0 | 235 to 329 |
+| Claude Haiku 5.5 | on | 5 | **0** | 0 | 0 | 255 to 319 |
+| GPT-5.6 Luna | off | 3 | **3** | 6 | 0 | 189 to 269 |
+| GPT-5.6 Luna | hook only | 3 | **0** | 0 | 0 | 214 to 269 |
+| GPT-5.6 Luna | on | 3 | **0** | 0 | 0 | 212 to 246 |
+
+Raw results: `results-v2.jsonl`. Logs: `logs/v2-*.txt`. Across both rounds: gate off, 11 of 11 runs ticked tasks 6
+and 7 although a frozen contract for their criteria fails; gated (hook only or full), 0 of 19.
+
 ## Limits
 
-- 3 runs per cell, one model, one small project, one planted contradiction. This shows the mechanism working, not a
-  rate.
+- 3 to 5 runs per cell, two small models, one small project, one planted contradiction. It shows a large, consistent
+  effect on this setup, not a general rate for every project or model.
 - The gate-on condition includes the steering file, so it measures the tool as installed, not the hook alone.
 - The impossible spec is synthetic. Real cases (kirodotdev/Kiro#11786: a task marked `[x]` after a killed run with a
   failing last test) are messier.
