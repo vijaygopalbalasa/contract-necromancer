@@ -135,6 +135,7 @@ function frozenKeys(cwd, resolve) {
     const paths = [];
     if (entry.requirements) paths.push(entry.requirements.path);
     for (const c of entry.contracts || []) paths.push(c.path);
+    if (entry.runners) paths.push(entry.runners.path); // Req 13.5
     for (const p of paths) {
       keys.set(compareKey(p), p);
       const real = resolve(p);
@@ -717,7 +718,14 @@ function decideTicks(lock, spec, results, change) {
     const ids = ticked.map(taskIdOf);
     task = { id: ids.length === 1 ? ids[0] : ids.map((i) => i ?? '?').join(', '), line: ticked.join('\n') };
   }
-  return { failing, required, task };
+  // Req 13.4: a contract file that gave no usable report says why, naming the file.
+  const reasons = [...new Set(results.filter((r) => r.result === 'fail' && failing.includes(r.name) && r.reason).map((r) => r.reason))];
+  return { failing, required, task, reasons };
+}
+
+// "Contracts failed: a, b." and, for contract files that could not run, the reasons (Req 4.5, 13.4).
+function failedMessage(failing, reasons) {
+  return [`Contracts failed: ${failing.join(', ')}.`, ...reasons].join(' ');
 }
 
 // Gate: run the spec's frozen contracts; block unless the contracts the ticked
@@ -736,14 +744,14 @@ function runGate(cwd, spec, change) {
   const lock = readLock(cwd);
   // Req 4.4, 4.14: run every frozen contract with node --test.
   const results = runContracts(cwd, spec, lock);
-  const { failing, required, task } = decideTicks(lock, spec, results, change);
+  const { failing, required, task, reasons } = decideTicks(lock, spec, results, change);
 
   // Req 4.5: a failing required contract blocks the edit, listing each by name.
   if (failing.length > 0) {
     return {
       exitCode: 2,
       stdout: '',
-      stderr: `Contracts failed: ${failing.join(', ')}.`,
+      stderr: failedMessage(failing, reasons),
     };
   }
 
@@ -782,13 +790,13 @@ function checkShellTicks(cwd, lock) {
     }
 
     const results = runContracts(cwd, spec, lock);
-    const { failing, required, task } = decideTicks(lock, spec, results, { before: baseline, after: current, exact: true });
+    const { failing, required, task, reasons } = decideTicks(lock, spec, results, { before: baseline, after: current, exact: true });
     if (failing.length > 0) {
       fs.writeFileSync(file, baseline);
       recordState(cwd, spec, baseline);
       const rel = toRel(path.relative(cwd, file));
       messages.push(
-        `Contracts failed: ${failing.join(', ')}. Restored ${rel} to its last recorded state. Fix the code, then tick the task again.`,
+        `${failedMessage(failing, reasons)} Restored ${rel} to its last recorded state. Fix the code, then tick the task again.`,
       );
       continue;
     }

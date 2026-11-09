@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { hashFile } from './canon.js';
 import { runContracts } from './contracts.js';
+import { readRunners, findRunner } from './runners.js';
 
 const LOCK_FILE = path.join('.necro', 'lock.json');
 const FROZEN_DIR = path.join('.necro', 'frozen');
@@ -203,11 +204,17 @@ function contractName(filePath) {
   return path.basename(filePath).replace(/\.contract\.test\.js$/, '');
 }
 
-function listContractFiles(cwd, spec) {
+// Contract files of a spec: every `*.contract.test.js` in contracts/<spec>/, and
+// every other file there whose name matches a pattern of the spec's runners.json
+// (Req 13.1). A file that ends in `.contract.test.js` always runs on node:test.
+function listContractFiles(cwd, spec, patterns) {
   const dir = path.join(cwd, 'contracts', spec);
   let entries = [];
   try {
-    entries = fs.readdirSync(dir).filter((f) => f.endsWith('.contract.test.js'));
+    entries = fs
+      .readdirSync(dir, { withFileTypes: true })
+      .filter((e) => e.name.endsWith('.contract.test.js') || (!e.isDirectory() && findRunner(patterns, e.name) !== null))
+      .map((e) => e.name);
   } catch (e) {
     if (e.code !== 'ENOENT') throw e;
   }
@@ -223,7 +230,10 @@ export function freezeSpec(cwd, spec) {
   }
   const reqHash = hashFile(reqAbs);
 
-  const contractPaths = listContractFiles(cwd, spec);
+  // Req 13.1, 13.5: a runners.json maps file-name patterns to commands for contracts
+  // in other languages. It is pinned by hash with the requirements and contracts.
+  const runners = readRunners(cwd, spec);
+  const contractPaths = listContractFiles(cwd, spec, runners ? runners.patterns : []);
   if (contractPaths.length === 0) {
     throw new Error(`No contracts found for spec '${spec}'. Add at least one file in contracts/${spec}/.`);
   }
@@ -238,6 +248,10 @@ export function freezeSpec(cwd, spec) {
     }
   }
 
+  if (runners && !insideRoot(realCwd, fs.realpathSync(path.join(cwd, runners.path)))) {
+    throw new Error(`'${runners.path}' resolves outside the project root. Move it inside the project.`);
+  }
+
   const contracts = contractPaths.map((p) => ({
     name: contractName(p),
     path: p,
@@ -246,7 +260,8 @@ export function freezeSpec(cwd, spec) {
 
   // Req 2.5: run the contracts once and record the name of every contract in the
   // lock. Names come from the run results (one per named test), grouped by file.
-  const partialLock = { specs: { [spec]: { contracts } } };
+  const runnersEntry = runners ? { path: runners.path, sha256: runners.sha256 } : null;
+  const partialLock = { specs: { [spec]: { contracts, ...(runnersEntry ? { runners: runnersEntry } : {}) } } };
   const results = runContracts(cwd, spec, partialLock);
   const namesByPath = {};
   for (const r of results) {
@@ -262,6 +277,7 @@ export function freezeSpec(cwd, spec) {
     frozenAt: new Date().toISOString(),
     requirements: { path: reqRel, sha256: reqHash },
     contracts,
+    ...(runnersEntry ? { runners: runnersEntry } : {}),
     tasks: taskTable(cwd, spec),
   };
   writeLock(cwd, lock);
@@ -271,6 +287,7 @@ export function freezeSpec(cwd, spec) {
   fs.mkdirSync(frozenDir, { recursive: true });
   copyFrozen(frozenDir, reqAbs, reqHash);
   for (const c of contracts) copyFrozen(frozenDir, path.join(cwd, c.path), c.sha256);
+  if (runnersEntry) copyFrozen(frozenDir, path.join(cwd, runnersEntry.path), runnersEntry.sha256);
 }
 
 // True when `target` is `root` or somewhere beneath it (both resolved to real paths).
@@ -296,6 +313,7 @@ export function isFrozenPath(cwd, relPath) {
     const entry = lock.specs[spec];
     if (entry.requirements && entry.requirements.path === relPath) return true;
     if (entry.contracts && entry.contracts.some((c) => c.path === relPath)) return true;
+    if (entry.runners && entry.runners.path === relPath) return true;
   }
   return false;
 }
@@ -307,6 +325,7 @@ export function frozenFiles(cwd, spec) {
   const out = [];
   if (entry.requirements) out.push({ path: entry.requirements.path, sha256: entry.requirements.sha256 });
   if (entry.contracts) for (const c of entry.contracts) out.push({ path: c.path, sha256: c.sha256 });
+  if (entry.runners) out.push({ path: entry.runners.path, sha256: entry.runners.sha256 });
   return out;
 }
 
@@ -320,6 +339,7 @@ export function getExpectedHash(cwd, relPath) {
     for (const c of entry.contracts || []) {
       if (c.path === relPath) return c.sha256;
     }
+    if (entry.runners && entry.runners.path === relPath) return entry.runners.sha256;
   }
   return null;
 }

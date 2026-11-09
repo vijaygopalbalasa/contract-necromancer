@@ -188,6 +188,18 @@
           "sha256": "4b3732f149b9b80e1e52c11c5110539f2ff7147ed81cf2f7e489c521f249ab07"
         },
         {
+          "name": "runners",
+          "names": [
+            "R13.1 files matching a pattern in runners.json are contract files of the spec in freeze, check, the gate and verify",
+            "R13.2 a contract file runs its command without a shell, with {file} and a new {report} path, and results come only from the report",
+            "R13.3 testcase names are contract names, and the gate requires the contracts of the ticked task by criterion",
+            "R13.4 a missing command, no report, bad XML and an empty report each fail the file, with the file named",
+            "R13.5 runners.json is locked by hash with the spec, restored after an agent edit, and an edited one makes verify print MISMATCH"
+          ],
+          "path": "contracts/necro-core/runners.contract.test.js",
+          "sha256": "535de17b86c764252c263f168aa42430a8593af950593c0f4c619a5f6ba736e6"
+        },
+        {
           "name": "shell",
           "names": [
             "R3.3 after a shell command, a frozen file whose SHA-256 changed is restored and named on stderr",
@@ -240,7 +252,7 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-09T16:56:11.011Z",
+      "frozenAt": "2026-11-09T17:11:24.443Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
         "sha256": "14ede87b259f6724c91b4e76e111ff30e863cf6a6eba9d0357f7f883ee71e7ea"

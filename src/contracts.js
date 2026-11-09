@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { hashFile } from './canon.js';
+import { lockedRunners, findRunner, runReport } from './runners.js';
 
 const RUNNER = fileURLToPath(new URL('./contract-runner.js', import.meta.url));
 
@@ -73,7 +74,22 @@ function interpret(run, stem) {
   return contracts;
 }
 
-// Run every frozen contract file for a spec through the node:test run() API and
+// Req 13.2, 13.3, 13.4: turn the report of a runner file into [{ name, result, reason? }].
+// Each testcase is a contract named by its `name` attribute; one that holds a failure
+// or error, or is skipped, does not pass. A run that gave no usable report is one
+// failing contract named after the file, with a plain reason.
+function interpretReport(run, stem) {
+  if (run.reason !== undefined) return [{ name: stem, result: 'fail', reason: run.reason }];
+  return run.cases.map((t) => ({ name: t.name, result: t.outcome === 'passed' ? 'pass' : 'fail' }));
+}
+
+// A file that runs on node:test; every other contract file runs with a command from runners.json.
+function isNodeContract(filePath) {
+  return filePath.endsWith('.contract.test.js');
+}
+
+// Run every frozen contract file for a spec through the node:test run() API (or,
+// for files other than *.contract.test.js, the command of runners.json) and
 // return one result per named test: { name, path, sha256, result } (Req 4.4, 4.12).
 // Req 4.8: a file that fails to load, or loads but defines zero tests, counts as
 // exactly one failing contract named after the file.
@@ -97,11 +113,23 @@ export function runContracts(cwd, spec, lock) {
     }
   }
 
+  // Req 13.1: the patterns of the spec's frozen runners.json, read lazily. null
+  // means the file is missing, differs from the lock, or cannot be parsed.
+  let patterns;
+  const frozenPatterns = () => {
+    if (patterns === undefined) patterns = lockedRunners(cwd, entry.runners);
+    return patterns;
+  };
+
   const out = [];
   for (const c of files.values()) {
     const absPath = path.resolve(cwd, c.path);
     const stem = contractName(c.path);
-    const push = (name, result) => out.push({ name, path: c.path, sha256: c.sha256, result });
+    const push = (name, result, reason) => {
+      const r = { name, path: c.path, sha256: c.sha256, result };
+      if (reason !== undefined) r.reason = reason;
+      out.push(r);
+    };
 
     // Req 4.9: if the hash differs from the lock (or the file is gone or
     // unreadable), the file moved during the task, so everything in it fails.
@@ -116,8 +144,26 @@ export function runContracts(cwd, spec, lock) {
       continue;
     }
 
-    const contracts = interpret(runFile(cwd, absPath), stem);
-    for (const r of contracts) push(r.name, r.result);
+    let contracts;
+    if (isNodeContract(c.path)) {
+      contracts = interpret(runFile(cwd, absPath), stem);
+    } else {
+      // Req 13.1, 13.5: a contract file of another language runs with the command of
+      // the frozen runners.json. When that file moved, or no pattern matches, the
+      // file counts as failing in the same way as a changed contract file (Req 4.9).
+      const known = frozenPatterns();
+      const command = known === null ? null : findRunner(known, path.basename(c.path));
+      if (command === null) {
+        const reason =
+          known === null
+            ? `Cannot run ${stem}: the frozen runners.json is missing or has changed. Restore it, or freeze the spec again.`
+            : `Cannot run ${stem}: no pattern in runners.json matches this file. Restore runners.json, or freeze the spec again.`;
+        for (const name of c.names.length ? c.names : [stem]) push(name, 'fail', reason);
+        continue;
+      }
+      contracts = interpretReport(runReport(cwd, absPath, command, runnerEnv()), stem);
+    }
+    for (const r of contracts) push(r.name, r.result, r.reason);
 
     // Req 4.10, per file.
     const seen = new Set(contracts.map((r) => r.name));

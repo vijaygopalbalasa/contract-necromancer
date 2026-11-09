@@ -152,6 +152,9 @@ export function buildReceipt(cwd, spec, lock, results, gate = {}) {
   const contractPaths = new Set(contracts.map((c) => c.path));
   const sourceSet = new Set();
   for (const c of entry.contracts || []) {
+    // Imports are followed in JavaScript only; a contract in another language
+    // is pinned by its own hash (Req 13.1).
+    if (!/\.(?:js|mjs|cjs)$/.test(c.path)) continue;
     for (const s of traceImports(cwd, c.path)) {
       if (!contractPaths.has(s)) sourceSet.add(s);
     }
@@ -171,9 +174,13 @@ export function buildReceipt(cwd, spec, lock, results, gate = {}) {
     task: gate.task || null,
     required: [...new Set(gate.required || contracts.map((c) => c.name))].sort(),
   };
+  // Req 13.5: a spec with a runners.json pins it with the other frozen files. A spec
+  // without one has no such field, so its receipts are the same as before.
+  if (entry.runners) receipt.runners = { path: entry.runners.path, sha256: entry.runners.sha256 };
   // Req 5.4: in a git repository, say which pinned files the commit does not hold.
   if (commit) {
     const pinned = [requirements.path, ...contracts.map((c) => c.path), ...sources.map((s) => s.path)];
+    if (receipt.runners) pinned.push(receipt.runners.path);
     receipt.uncommitted = uncommittedPaths(cwd, commit, pinned.filter(Boolean));
   }
   receipt.receiptHash = computeReceiptHash(receipt);

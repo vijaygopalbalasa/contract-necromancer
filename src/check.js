@@ -36,6 +36,8 @@ export function checkSpec(cwd, spec) {
   const failing = results.filter((r) => r.result !== 'pass');
 
   if (results.length === 0 || failing.length > 0) {
+    // Req 13.4: a contract file that could not run says why, naming the file.
+    for (const reason of new Set(failing.filter((r) => r.reason).map((r) => r.reason))) lines.push(reason);
     lines.push(
       results.length === 0
         ? 'No contracts ran. Check the contract files in the spec.'
