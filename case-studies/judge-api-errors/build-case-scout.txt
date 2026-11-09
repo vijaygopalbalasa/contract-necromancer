@@ -1,0 +1,119 @@
+I'll start with the test baseline and the source layout.
+[tool] Run Command
+[denied] tool permission approval is not supported in non-interactive mode. Use --trust-all-tools to auto-approve.
+[tool] status: Failed: Run Command
+Retrying the same command.
+[tool] Run Command
+[denied] tool permission approval is not supported in non-interactive mode. Use --trust-all-tools to auto-approve.
+[tool] status: Failed: Run Command
+The shell tool isn't running, so I'll read files directly.
+[tool] Read File
+[tool] status: InProgress
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+Next I'll read the small, risky modules, which are the checkers, criteria, cursor and safe-fetch.
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Probe SSRF denylist edge cases
+[denied] tool permission approval is not supported in non-interactive mode. Use --trust-all-tools to auto-approve.
+[tool] status: Failed: Probe SSRF denylist edge cases
+The shell is unavailable, so I'll fall back to static analysis. I'll read the HTTP entry points and the evaluation path.
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+I couldn't run anything. The shell tool failed its permission request on three tries, so I have no `npm test` baseline and no reproductions. These findings come from reading the code, and the "observed" behavior is what the code does by Node semantics. Please run the one-liners before filing.
+
+**1. The dry run coerces bad input instead of rejecting it** (`src/evaluate.js:23-30`, highest value)
+- **Input:** `dryRunEvaluate({criteria, deliverable: {a:1}})` hashes the string `"[object Object]"`. `deliverable: null` hashes `"null"`.
+- **Input:** `deliverableBase64: "***"` decodes to an empty buffer. A `length` check with `max: 10` then passes.
+- **Input:** `jobId: "007"` goes into the hash as `"007"`, not `"7"`. The route promises "exactly the evidenceHash a real run would produce", and this one can't match.
+- **Test gap:** `test/evaluate.test.js` covers neither case.
+- **Acceptance criteria:**
+  - WHEN `deliverable` is not a string, THE SYSTEM SHALL return 400.
+  - WHEN `deliverableBase64` contains non-base64 characters or malformed padding, THE SYSTEM SHALL return 400.
+  - WHEN `jobId` has leading zeros, THE SYSTEM SHALL reject it or normalize it before hashing.
+
+**2. `/verdict` returns raw RPC error text in a 500** (`src/http.js:145`)
+- **Input:** a `publicClient.readContract` stub that throws `new Error("URL: https://rpc.example/KEY")`. The response body then contains that URL.
+- **Why it matters:** viem's error messages include the RPC URL, and `ARC_RPC_URL` may carry an API key.
+- **Related:** `new URL(req.url, …)` on a bad target such as `//` throws inside the same `try`, so it also gets a 500 instead of a 400.
+- **Acceptance criteria:**
+  - WHEN an upstream RPC call fails, THE SYSTEM SHALL return 502 with a fixed message that contains no URL or request body.
+  - WHEN the RPC call fails, THE SYSTEM SHALL log the full error server-side.
+  - WHEN the request target cannot be parsed, THE SYSTEM SHALL return 400.
+
+**3. The `length` check's `chars` unit counts UTF-16 units** (`src/checkers/index.js:113`)
+- **Input:** `{kind:"length", params:{min:1,max:1,unit:"chars"}}` against `"😀"`. `text.length` is 2, so the check fails.
+- **Inconsistency:** `json-shape.js` counts code points specifically so every implementation gives the same answer. This check doesn't. Its copy in `web/app.js` is the first place divergence would show up.
+- **Docs:** I found no definition of `chars` in the workspace, so confirm the intended unit first.
+- **Acceptance criteria:**
+  - WHEN `unit` is `chars`, THE SYSTEM SHALL count Unicode code points, not UTF-16 units.
+  - WHEN the deliverable contains a surrogate pair, THE SYSTEM SHALL count it as one character.
+  - WHEN `unit` is `words`, THE SYSTEM SHALL keep its current counting.
+
+**Smaller items, not ranked:**
+- **Evidence filter:** the `/evidence/:id` filter (`http.js:113`) is `startsWith("job-<id>-")`. It would also match `job-186820-arbitration.json`, the file that sits next to the evidence file in `evidence/arcbounty-arc-testnet/`, and could serve it as the newest file. Matching `job-<id>-<8 hex>.json` would fix this.
+- **Poll interval:** `POLL_INTERVAL_MS=4s` becomes `NaN` (`config.js:39`), and `setTimeout(r, NaN)` makes `engine.js:361` poll in a tight loop.

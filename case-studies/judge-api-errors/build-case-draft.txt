@@ -1,0 +1,87 @@
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] Run Command
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+I drafted the spec and the contracts. Against today's code, 5 of the 6 contracts fail and 1 passes, as intended.
+
+I didn't touch `src/`, the existing tests, `package.json` or `.necro/`, and I didn't run `necro freeze`.
+
+**Files written**
+- `.kiro/specs/api-errors/design.md`: short, covers the changes to `src/http.js` and how the contracts check them.
+- `.kiro/specs/api-errors/tasks.md`: 3 unticked tasks, each with its criteria on the task line:
+  - Task 1: the fixed 500 body and logging (Req 1.2, 1.3, 1.4)
+  - Task 2: the 502 for a failing chain read (Req 1.1, 1.3)
+  - Task 3: the evidence filename filter (Req 2.1, 2.2)
+- `contracts/api-errors/errors.contract.test.js`: R1.1 to R1.4.
+- `contracts/api-errors/evidence.contract.test.js`: R2.1 and R2.2.
+
+Each contract starts `createJudgeApi` on port 0 and calls it with `fetch`. The chain client is a stub, and evidence comes from temp folders. The stub "RPC URL" is a fake host with a fake key.
+
+Run them with `node --test contracts/api-errors/*.contract.test.js`. They aren't part of `npm test`, whose glob is `test/*.test.js`.
+
+**Results against current code**
+
+| Contract | Result | Why |
+|---|---|---|
+| R1.1 | fail | A failing `readContract` gives 500 instead of 502. The body is `e.message`, which includes the URL and key. |
+| R1.2 | fail | The body is the raw error text instead of `{"error":"internal error"}`. |
+| R1.3 | fail | Nothing is written to stderr for either the chain failure or the unexpected error. |
+| R1.4 | pass | The 422, 413 and 400 responses already keep their status and message. It guards against regressions. |
+| R2.1 | fail | The newer `job-42-arbitration.json` is served instead of the older `job-42-abcd1234.json`. |
+| R2.2 | fail | A job with only `job-42-arbitration.json` or a `.bak` file returns 200 instead of 404. |
+
+**Choices to check when you review**
+- R1.3 captures stderr by wrapping `process.stderr.write`. That also catches `console.error`, so the fix can log either way.
+- R1.2 triggers the 500 by making `getState` throw on `/healthz`, because that is a simple way to force an error that isn't a chain read.
+- R2.1 also ignores `job-42-notes.json`, `job-42-deadbeef.json.bak` and `job-42-deadbeef.txt`. The requirement doesn't list these, but they follow from the "hexadecimal hash, `.json`" form.

@@ -25,6 +25,7 @@ MISMATCH. Files changed: src/split.js.
 
 - Live receipt viewer: https://vijaygopalbalasa.github.io/contract-necromancer/
 - Demo video: https://youtu.be/TYrSyhIYqlk
+- Used on a real project: [a fix in Judge Protocol, gated end to end](case-studies/judge-api-errors/README.md), where the gate refused a half-done tick
 
 [![Tests and receipts](https://github.com/vijaygopalbalasa/contract-necromancer/actions/workflows/test.yml/badge.svg)](https://github.com/vijaygopalbalasa/contract-necromancer/actions/workflows/test.yml)
 
