@@ -198,9 +198,13 @@ browser, and shows the command to re-run the receipt. It has no server, no build
   raw.githubusercontent.com, for example `https://vijaygopalbalasa.github.io/contract-necromancer/?receipt=https://raw.githubusercontent.com/vijaygopalbalasa/contract-necromancer/main/.necro/receipts/SPEC/HASH.json`.
   Other hosts are refused. You can also paste the JSON or pick the file.
 - Re-run command: it clones the repository at the receipt's commit, takes the receipt file from the default branch
-  (a receipt is written after the commit it names), defines `necro` as `node bin/necro.js` for that shell, and runs
-  `necro verify`. It needs Git and Node.js 24, no install, and writes only inside the `necro-check` folder it clones.
-  The receipt must be on the default branch of the repository.
+  (a receipt is written after the commit it names), then clones the official verifier from
+  `vijaygopalbalasa/contract-necromancer` at one fixed commit (`VERIFIER_COMMIT` in `site/lib/repo.js`) into
+  `.necro-verifier`, defines `necro` as `node .necro-verifier/bin/necro.js` for that shell, and runs `necro verify`.
+  The verifier never comes from the repository being verified. It needs Git and Node.js 24, no install, and writes only
+  inside the `necro-check` folder it clones. The receipt must be on the default branch of the repository.
+  Verifying runs the project's own contracts, which is code from that repository: run it only for a repository you are
+  willing to run.
 - Honest limit: contracts re-run in Node with `necro verify`. The browser checks hashes, not test runs. MATCH means the
   receipt was not edited. It does not mean the contracts pass today.
 - Run it locally: browsers do not load ES modules from `file://`, so serve the folder, for example

@@ -346,3 +346,14 @@ test('9.3 smooth scrolling is only on under no-preference, and the banner leaves
   );
   assert.ok(rulesFor('.verdict').some((r) => decl(r.body, 'scroll-margin-top')), 'scroll-margin-top on the banner');
 });
+
+test('5.3 the run section warns that verifying runs the project\'s own contracts and names where the verifier comes from', () => {
+  const run = html.slice(html.indexOf('id="run"'), html.indexOf('id="file-check"'));
+  const text = run.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
+  assert.match(text, /runs the project's own contracts, which is code from that repository/);
+  assert.match(text, /only for a repository you are willing to run/);
+  assert.match(text, /vijaygopalbalasa\/contract-necromancer/);
+  assert.match(text, /fixed commit/);
+  assert.match(text, /never from the repository being verified/);
+  assert.doesNotMatch(text, /node bin\/necro\.js/, 'the page no longer says the verified repository supplies bin/necro.js');
+});

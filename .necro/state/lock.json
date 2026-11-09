@@ -535,6 +535,16 @@
           "sha256": "9f25a545c89a9ecae5b502bfd8cedf051ccfbd0d8669b9b8e69d7dfe3da67eb4"
         },
         {
+          "name": "pinned-verifier",
+          "names": [
+            "R5.3 the command takes the verifier from vijaygopalbalasa/contract-necromancer at one fixed commit, inside the folder it clones, never from the repository being verified",
+            "R5.3 a project that ships its own bin/necro.js that always prints CONFIRMED cannot make the command print CONFIRMED",
+            "R5.3 the page says next to the command that verifying runs the project's own contracts, which is code from that repository"
+          ],
+          "path": "contracts/receipt-viewer/pinned-verifier.contract.test.js",
+          "sha256": "f34b7a477f66a55ec5504f51a6bdc4ee82f699ef85840f5c766fee750c4fcc63"
+        },
+        {
           "name": "receipt",
           "names": [
             "R1.3 input that is not a valid receipt gets one plain sentence",
@@ -570,10 +580,10 @@
           "sha256": "47e17273eef50b96c039f01d4ab62d0c907bffe8f911b03d90a5dc1d4c19a08f"
         }
       ],
-      "frozenAt": "2026-11-09T10:53:21.293Z",
+      "frozenAt": "2026-11-09T11:19:06.201Z",
       "requirements": {
         "path": ".kiro/specs/receipt-viewer/requirements.md",
-        "sha256": "afe59aeb0b931a4c920759aa0ed623917417b042f1eac317584dfb32a32351e5"
+        "sha256": "60f30e101f2fcc9d02ea9c2d82f6a94795068173ba4e4f0a5dcc800abb0b2161"
       },
       "tasks": {
         "1": {
@@ -706,6 +716,12 @@
             "5.2"
           ],
           "text": "19. The re-run command works in a fresh clone (Req 5.2)"
+        },
+        "20": {
+          "criteria": [
+            "5.3"
+          ],
+          "text": "20. The verifier in the re-run command is the official one, pinned (Req 5.3)"
         }
       }
     }

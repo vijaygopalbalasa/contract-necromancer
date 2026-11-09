@@ -36,6 +36,8 @@ Honest limit shown on the page: contracts re-run in Node with `necro verify`; th
 **User story:** As a reviewer, I want the exact command to re-run the contracts, so that I do not need to trust the page.
 ### Acceptance criteria
 1. WHEN a receipt is shown THE SYSTEM SHALL show a copyable command that clones the repository at the commit and runs `necro verify` on the receipt.
+2. WHEN the copyable command is pasted into a POSIX shell (sh, bash or zsh) on a machine with Git and Node.js 24 but no global `necro` install THE SYSTEM SHALL make it run to the verify result, for example by defining `necro` inside the command, and it SHALL change nothing outside the folder it clones.
+3. WHEN the copyable command runs `necro verify` THE SYSTEM SHALL take the verifier from the repository `vijaygopalbalasa/contract-necromancer` at a fixed commit named in the command, never from the repository being verified, so a project cannot ship its own verifier that always says CONFIRMED; and the page SHALL say next to the command that verifying runs the project's own contracts, which is code from that repository, so a reviewer should run it only for a repository they are willing to run.
 
 ## Requirement 6: Design
 **User story:** As a visitor, I want the page to feel like Kiroween without getting in the way of the facts.

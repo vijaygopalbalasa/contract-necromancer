@@ -1,0 +1,260 @@
+{
+  "spec": "receipt-viewer",
+  "gitCommit": "c82fd078325db7a54ef5764d32531074f5832eaf",
+  "requirements": {
+    "path": ".kiro/specs/receipt-viewer/requirements.md",
+    "sha256": "60f30e101f2fcc9d02ea9c2d82f6a94795068173ba4e4f0a5dcc800abb0b2161"
+  },
+  "contracts": [
+    {
+      "name": "R9.5 the first visit shows the verdict banner and the first contract rows without scrolling, with the sample switch and the way to open your own receipt still on the page",
+      "path": "contracts/receipt-viewer/above-fold.contract.test.js",
+      "sha256": "96025201d56239cc347a186e1ba8b59313a4cdb78529b124aca0bac230425ee8",
+      "result": "pass"
+    },
+    {
+      "name": "R3.1 the receipt hash is recomputed with Web Crypto from canonical JSON",
+      "path": "contracts/receipt-viewer/canon.contract.test.js",
+      "sha256": "09eeb20f187b71e831344c931d30201ecf1dba65b8383ccb8f848df4d6d01eeb",
+      "result": "pass"
+    },
+    {
+      "name": "R3.2 the page and necro compute the same receipt hash",
+      "path": "contracts/receipt-viewer/canon.contract.test.js",
+      "sha256": "09eeb20f187b71e831344c931d30201ecf1dba65b8383ccb8f848df4d6d01eeb",
+      "result": "pass"
+    },
+    {
+      "name": "R7.1 the task line is shown without Markdown emphasis markers",
+      "path": "contracts/receipt-viewer/clean.contract.test.js",
+      "sha256": "d74228af5c2284836da87154b3e68f03c728878df99df492a9fcf290a3a8b252",
+      "result": "pass"
+    },
+    {
+      "name": "R7.2 requirements and the contracts inside each one are ordered by criterion number",
+      "path": "contracts/receipt-viewer/clean.contract.test.js",
+      "sha256": "d74228af5c2284836da87154b3e68f03c728878df99df492a9fcf290a3a8b252",
+      "result": "pass"
+    },
+    {
+      "name": "R7.3 a contract that was not required is labelled \"not required for this task\" when it passes and \"not built yet\" when it fails",
+      "path": "contracts/receipt-viewer/clean.contract.test.js",
+      "sha256": "d74228af5c2284836da87154b3e68f03c728878df99df492a9fcf290a3a8b252",
+      "result": "pass"
+    },
+    {
+      "name": "R7.4 the sample and the re-run command use vijaygopalbalasa/contract-necromancer, and the README gives the page address",
+      "path": "contracts/receipt-viewer/clean.contract.test.js",
+      "sha256": "d74228af5c2284836da87154b3e68f03c728878df99df492a9fcf290a3a8b252",
+      "result": "pass"
+    },
+    {
+      "name": "R4.1 each pinned file is fetched at the commit, hashed, and marked matching or different",
+      "path": "contracts/receipt-viewer/files.contract.test.js",
+      "sha256": "41114194aba14d19cfa52f107c5574af3e9721b66a2d6e4996da05bd45533344",
+      "result": "pass"
+    },
+    {
+      "name": "R4.2 a receipt with no commit gets a message that the file check needs a commit",
+      "path": "contracts/receipt-viewer/files.contract.test.js",
+      "sha256": "41114194aba14d19cfa52f107c5574af3e9721b66a2d6e4996da05bd45533344",
+      "result": "pass"
+    },
+    {
+      "name": "R4.3 a file in uncommitted is marked not in the commit yet, not different",
+      "path": "contracts/receipt-viewer/files.contract.test.js",
+      "sha256": "41114194aba14d19cfa52f107c5574af3e9721b66a2d6e4996da05bd45533344",
+      "result": "pass"
+    },
+    {
+      "name": "R9.1 a page with no ?receipt= and nothing pasted shows the bundled sample at once, without a click, and says it is a sample",
+      "path": "contracts/receipt-viewer/first-visit.contract.test.js",
+      "sha256": "28c9b27ddb47bd4480aed046ee0129ee2f5f9523a0012467abd31c9e2c61980f",
+      "result": "pass"
+    },
+    {
+      "name": "R9.2 the page offers a risen and a buried sample from this repository, and one click switches between them",
+      "path": "contracts/receipt-viewer/first-visit.contract.test.js",
+      "sha256": "28c9b27ddb47bd4480aed046ee0129ee2f5f9523a0012467abd31c9e2c61980f",
+      "result": "pass"
+    },
+    {
+      "name": "R9.3 a receipt shown after a user action brings the verdict banner into view, with no scrolling animation under reduced motion",
+      "path": "contracts/receipt-viewer/first-visit.contract.test.js",
+      "sha256": "28c9b27ddb47bd4480aed046ee0129ee2f5f9523a0012467abd31c9e2c61980f",
+      "result": "pass"
+    },
+    {
+      "name": "R9.4 the root element paints the whole background fixed to the window, so a tall page has no band or seam at any scroll position",
+      "path": "contracts/receipt-viewer/first-visit.contract.test.js",
+      "sha256": "28c9b27ddb47bd4480aed046ee0129ee2f5f9523a0012467abd31c9e2c61980f",
+      "result": "pass"
+    },
+    {
+      "name": "R5.2 the command for the risen sample, pasted into sh with git and node but no necro, runs to CONFIRMED and changes nothing outside the folder it clones",
+      "path": "contracts/receipt-viewer/fresh-clone.contract.test.js",
+      "sha256": "c29dcfc72f48023905c2d6f2bfbd804b854397b3a31effc70b23bbecce0caf38",
+      "result": "pass"
+    },
+    {
+      "name": "R8.1 a verdict banner comes first: \"Risen\" with the count of living contracts, or \"Still buried\" with the count of failing required contracts",
+      "path": "contracts/receipt-viewer/look.contract.test.js",
+      "sha256": "9f25a545c89a9ecae5b502bfd8cedf051ccfbd0d8669b9b8e69d7dfe3da67eb4",
+      "result": "pass"
+    },
+    {
+      "name": "R8.2 an inline SVG mark is drawn in the page with no external images or fonts, and text keeps AA contrast",
+      "path": "contracts/receipt-viewer/look.contract.test.js",
+      "sha256": "9f25a545c89a9ecae5b502bfd8cedf051ccfbd0d8669b9b8e69d7dfe3da67eb4",
+      "result": "pass"
+    },
+    {
+      "name": "R8.3 every animation is off under prefers-reduced-motion: reduce",
+      "path": "contracts/receipt-viewer/look.contract.test.js",
+      "sha256": "9f25a545c89a9ecae5b502bfd8cedf051ccfbd0d8669b9b8e69d7dfe3da67eb4",
+      "result": "pass"
+    },
+    {
+      "name": "R8.4 a failing contract row is drawn as a gravestone and a passing one as alive, with CSS only",
+      "path": "contracts/receipt-viewer/look.contract.test.js",
+      "sha256": "9f25a545c89a9ecae5b502bfd8cedf051ccfbd0d8669b9b8e69d7dfe3da67eb4",
+      "result": "pass"
+    },
+    {
+      "name": "R5.3 the command takes the verifier from vijaygopalbalasa/contract-necromancer at one fixed commit, inside the folder it clones, never from the repository being verified",
+      "path": "contracts/receipt-viewer/pinned-verifier.contract.test.js",
+      "sha256": "f34b7a477f66a55ec5504f51a6bdc4ee82f699ef85840f5c766fee750c4fcc63",
+      "result": "pass"
+    },
+    {
+      "name": "R5.3 a project that ships its own bin/necro.js that always prints CONFIRMED cannot make the command print CONFIRMED",
+      "path": "contracts/receipt-viewer/pinned-verifier.contract.test.js",
+      "sha256": "f34b7a477f66a55ec5504f51a6bdc4ee82f699ef85840f5c766fee750c4fcc63",
+      "result": "pass"
+    },
+    {
+      "name": "R5.3 the page says next to the command that verifying runs the project's own contracts, which is code from that repository",
+      "path": "contracts/receipt-viewer/pinned-verifier.contract.test.js",
+      "sha256": "f34b7a477f66a55ec5504f51a6bdc4ee82f699ef85840f5c766fee750c4fcc63",
+      "result": "pass"
+    },
+    {
+      "name": "R1.3 input that is not a valid receipt gets one plain sentence",
+      "path": "contracts/receipt-viewer/receipt.contract.test.js",
+      "sha256": "26957b085388526c95090abe2549da8a92ae4a7ee70c5f410959e8689f31d5cc",
+      "result": "pass"
+    },
+    {
+      "name": "R2.1 every contract is listed by name with pass or fail, with spec, commit and receipt hash",
+      "path": "contracts/receipt-viewer/receipt.contract.test.js",
+      "sha256": "26957b085388526c95090abe2549da8a92ae4a7ee70c5f410959e8689f31d5cc",
+      "result": "pass"
+    },
+    {
+      "name": "R2.2 contracts named R<n>.<m> are grouped by requirement",
+      "path": "contracts/receipt-viewer/receipt.contract.test.js",
+      "sha256": "26957b085388526c95090abe2549da8a92ae4a7ee70c5f410959e8689f31d5cc",
+      "result": "pass"
+    },
+    {
+      "name": "R1.2 a raw GitHub receipt link in the query is accepted and any other link is refused",
+      "path": "contracts/receipt-viewer/repo.contract.test.js",
+      "sha256": "d15bbc20079dd6623e6681bf8e17cec3e20547aa35a27dd8a16a290f8f453281",
+      "result": "pass"
+    },
+    {
+      "name": "R5.1 a copyable command clones the repository at the commit and runs necro verify on the receipt",
+      "path": "contracts/receipt-viewer/repo.contract.test.js",
+      "sha256": "d15bbc20079dd6623e6681bf8e17cec3e20547aa35a27dd8a16a290f8f453281",
+      "result": "pass"
+    },
+    {
+      "name": "R6.2 the page ships a real sample receipt from this repository and loads it when no receipt is open",
+      "path": "contracts/receipt-viewer/sample.contract.test.js",
+      "sha256": "87ce1e690ac80e4c32994f8b5592ff4978974e41cdf599c361c0d6c58d893d78",
+      "result": "pass"
+    },
+    {
+      "name": "R6.1 dark theme with AA contrast, alive and gravestone contract styles, and a layout that can wrap at phone width",
+      "path": "contracts/receipt-viewer/style.contract.test.js",
+      "sha256": "47e17273eef50b96c039f01d4ab62d0c907bffe8f911b03d90a5dc1d4c19a08f",
+      "result": "pass"
+    }
+  ],
+  "sources": [
+    {
+      "path": "site/app.js",
+      "sha256": "291517afc50b24b178a986b723aa8c52769dbf486d2dbc4668ea6ca9b755b45d"
+    },
+    {
+      "path": "site/lib/canon.js",
+      "sha256": "4b1b1133cc02b53351060f6b5296b5f3f194c56f1bfd46b29e6f8f28cd4e142e"
+    },
+    {
+      "path": "site/lib/files.js",
+      "sha256": "8bee4cd78ef67e5adcd282e1bbca3101266f93a29aa9e0c970972c233981813a"
+    },
+    {
+      "path": "site/lib/receipt.js",
+      "sha256": "8023f9888d54ae03378ec24be8a3e84f8125ca8128f249f078bb7c012f3fcfac"
+    },
+    {
+      "path": "site/lib/repo.js",
+      "sha256": "58b0c22e02e45d473213abb42097506a428d5cac7d1a98f81dddd16dae470c05"
+    },
+    {
+      "path": "site/lib/samples.js",
+      "sha256": "26265e1486fb8e5d9929d5143f5ebe56eda26cdbb0ef76bca4d29607a6ccd435"
+    },
+    {
+      "path": "src/canon.js",
+      "sha256": "2b239ed2ebc3639d7444fb6ae952f38881e43fec2b80b4cee43893e172792ae8"
+    },
+    {
+      "path": "src/receipts.js",
+      "sha256": "517c3fa3dc6453228d62dfdb91321c365551c4a744b4768c240a0dd583dc108e"
+    }
+  ],
+  "task": {
+    "id": "20",
+    "line": "20. The verifier in the re-run command is the official one, pinned (Req 5.3)"
+  },
+  "required": [
+    "R1.2 a raw GitHub receipt link in the query is accepted and any other link is refused",
+    "R1.3 input that is not a valid receipt gets one plain sentence",
+    "R2.1 every contract is listed by name with pass or fail, with spec, commit and receipt hash",
+    "R2.2 contracts named R<n>.<m> are grouped by requirement",
+    "R3.1 the receipt hash is recomputed with Web Crypto from canonical JSON",
+    "R3.2 the page and necro compute the same receipt hash",
+    "R4.1 each pinned file is fetched at the commit, hashed, and marked matching or different",
+    "R4.2 a receipt with no commit gets a message that the file check needs a commit",
+    "R4.3 a file in uncommitted is marked not in the commit yet, not different",
+    "R5.1 a copyable command clones the repository at the commit and runs necro verify on the receipt",
+    "R5.2 the command for the risen sample, pasted into sh with git and node but no necro, runs to CONFIRMED and changes nothing outside the folder it clones",
+    "R5.3 a project that ships its own bin/necro.js that always prints CONFIRMED cannot make the command print CONFIRMED",
+    "R5.3 the command takes the verifier from vijaygopalbalasa/contract-necromancer at one fixed commit, inside the folder it clones, never from the repository being verified",
+    "R5.3 the page says next to the command that verifying runs the project's own contracts, which is code from that repository",
+    "R6.1 dark theme with AA contrast, alive and gravestone contract styles, and a layout that can wrap at phone width",
+    "R6.2 the page ships a real sample receipt from this repository and loads it when no receipt is open",
+    "R7.1 the task line is shown without Markdown emphasis markers",
+    "R7.2 requirements and the contracts inside each one are ordered by criterion number",
+    "R7.3 a contract that was not required is labelled \"not required for this task\" when it passes and \"not built yet\" when it fails",
+    "R7.4 the sample and the re-run command use vijaygopalbalasa/contract-necromancer, and the README gives the page address",
+    "R8.1 a verdict banner comes first: \"Risen\" with the count of living contracts, or \"Still buried\" with the count of failing required contracts",
+    "R8.2 an inline SVG mark is drawn in the page with no external images or fonts, and text keeps AA contrast",
+    "R8.3 every animation is off under prefers-reduced-motion: reduce",
+    "R8.4 a failing contract row is drawn as a gravestone and a passing one as alive, with CSS only",
+    "R9.1 a page with no ?receipt= and nothing pasted shows the bundled sample at once, without a click, and says it is a sample",
+    "R9.2 the page offers a risen and a buried sample from this repository, and one click switches between them",
+    "R9.3 a receipt shown after a user action brings the verdict banner into view, with no scrolling animation under reduced motion",
+    "R9.4 the root element paints the whole background fixed to the window, so a tall page has no band or seam at any scroll position",
+    "R9.5 the first visit shows the verdict banner and the first contract rows without scrolling, with the sample switch and the way to open your own receipt still on the page"
+  ],
+  "uncommitted": [
+    ".kiro/specs/receipt-viewer/requirements.md",
+    "contracts/receipt-viewer/pinned-verifier.contract.test.js",
+    "site/lib/repo.js"
+  ],
+  "receiptHash": "924b2ddc644546532a17b6140044102ff096ee4bb6a411f8af857d4faa186909",
+  "createdAt": "2026-11-09T11:21:16.605Z"
+}

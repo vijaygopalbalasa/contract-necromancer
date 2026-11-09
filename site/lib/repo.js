@@ -78,17 +78,30 @@ function shQuote(value) {
   return `'${s.replace(/'/g, `'\\''`)}'`;
 }
 
-// The command defines `necro` itself, so a machine with Git and Node.js but no global necro can run it. The function
-// lives only in the shell that runs the command and runs the clone's own bin/necro.js.
-const DEFINE_NECRO = 'necro() { node bin/necro.js "$@"; }';
+// The verifier. The command never runs the verifier of the repository being verified: that repository could ship a
+// bin/necro.js that always says CONFIRMED. It clones the official repository at one fixed commit, inside the folder
+// the command already clones (so it changes nothing outside it), and defines `necro` to run that copy.
+// The commit is a full commit id, never a branch or tag, so the verifier cannot change under a reviewer. It is the
+// newest commit on the default branch when it was chosen, the one whose verifier read every receipt the samples need.
+// To move to a newer verifier, change this one constant after checking that the commit is pushed to GitHub.
+export const VERIFIER_REPO = 'vijaygopalbalasa/contract-necromancer';
+export const VERIFIER_COMMIT = 'c82fd078325db7a54ef5764d32531074f5832eaf';
+const VERIFIER_DIR = '.necro-verifier';
+const VERIFIER_STEPS = [
+  `git clone https://github.com/${VERIFIER_REPO}.git ${VERIFIER_DIR}`,
+  `git -C ${VERIFIER_DIR} checkout ${VERIFIER_COMMIT}`,
+  `necro() { node ${VERIFIER_DIR}/bin/necro.js "$@"; }`,
+];
 
 // verifyCommand({ repo, receipt }) → one line a reviewer can paste into a POSIX shell (sh, bash or zsh):
 //   git clone <url> necro-check && cd necro-check && git checkout <commit> && git checkout origin/HEAD -- <receipt file>
-//     && necro() { node bin/necro.js "$@"; } && necro verify <receipt file>
+//     && git clone <official url> .necro-verifier && git -C .necro-verifier checkout <pinned commit>
+//     && necro() { node .necro-verifier/bin/necro.js "$@"; } && necro verify <receipt file>
 // repo is "owner/name"; anything else shows the placeholder OWNER/NAME (no angle brackets, which are shell redirection).
 // Without a valid commit the checkout steps are left out.
 // The receipt is written after the commit it names, so the checkout of that commit does not hold it. The second checkout
 // takes the receipt file from the default branch, inside the clone, and leaves the code at the commit.
+// The verifier is fetched last, after the verified repository is checked out, so nothing in it can replace the verifier.
 export function verifyCommand({ repo, receipt }) {
   const parsed = parseRepo(repo);
   const name = parsed.ok ? parsed.repo : 'OWNER/NAME';
@@ -98,7 +111,7 @@ export function verifyCommand({ repo, receipt }) {
     steps.push(`git checkout ${receipt.gitCommit}`);
     steps.push(`git checkout origin/HEAD -- ${file}`);
   }
-  steps.push(DEFINE_NECRO);
+  steps.push(...VERIFIER_STEPS);
   steps.push(`necro verify ${file}`);
   return steps.join(' && ');
 }

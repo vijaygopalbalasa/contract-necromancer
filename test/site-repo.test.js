@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parseRepo, parseReceiptUrl, isCommitId, isSafeRepoPath, rawUrl, verifyCommand } from '../site/lib/repo.js';
+import * as repoModule from '../site/lib/repo.js';
 
 const COMMIT = '0123456789abcdef0123456789abcdef01234567';
 const RAW = 'https://raw.githubusercontent.com/octo/spec-repo/main/.necro/receipts/demo/abc.json';
@@ -164,33 +165,63 @@ function commands(line) {
   return out;
 }
 
-// Task 19: the command defines `necro` itself, so a machine with Git and Node.js but no global necro can run it.
-const DEFINE_NECRO = 'necro() { node bin/necro.js "$@"; }';
+// Task 20: the verifier comes from the official repository at one fixed commit, cloned inside the folder the command
+// clones. The command defines `necro` to run that copy, never the bin/necro.js of the repository being verified.
+const VERIFIER_URL = 'https://github.com/vijaygopalbalasa/contract-necromancer.git';
+const VERIFIER_DIR = '.necro-verifier';
+const PIN = repoModule.VERIFIER_COMMIT;
+const CLONE_VERIFIER = `git clone ${VERIFIER_URL} ${VERIFIER_DIR}`;
+const CHECKOUT_PIN = `git -C ${VERIFIER_DIR} checkout ${PIN}`;
+const DEFINE_NECRO = `necro() { node ${VERIFIER_DIR}/bin/necro.js "$@"; }`;
+const VERIFIER_STEPS = ` && ${CLONE_VERIFIER} && ${CHECKOUT_PIN} && ${DEFINE_NECRO}`;
 
-// The command without the fixed function definition, so the tokenizer sees only what shQuote produces.
+// The command without the fixed verifier steps, so the tokenizer sees only what shQuote produces.
 function withoutDefinition(command) {
-  assert.ok(command.includes(` && ${DEFINE_NECRO} && `), 'the command must define necro between the other steps and necro verify');
-  return command.replace(` ${DEFINE_NECRO} &&`, '');
+  assert.ok(command.includes(`${VERIFIER_STEPS} && necro verify `), 'the verifier steps must come right before necro verify');
+  return command.replace(VERIFIER_STEPS, '');
 }
 
-test('verifyCommand clones, checks out the commit, brings in the receipt, defines necro, then runs necro verify, in that order', () => {
+test('the pinned verifier commit is a full commit id kept as a constant in site/lib/repo.js', () => {
+  assert.equal(repoModule.VERIFIER_REPO, 'vijaygopalbalasa/contract-necromancer');
+  assert.ok(isCommitId(repoModule.VERIFIER_COMMIT), 'VERIFIER_COMMIT must be 40 lowercase hex characters');
+});
+
+test('verifyCommand clones, checks out the commit, brings in the receipt, gets the pinned verifier, defines necro, then runs necro verify, in that order', () => {
   const command = verifyCommand({ repo: 'octo/spec-repo', receipt: receiptOf() });
   const file = `.necro/receipts/receipt-viewer/${HASH}.json`;
   assert.equal(
     command,
-    `git clone https://github.com/octo/spec-repo.git necro-check && cd necro-check && git checkout ${COMMIT} && git checkout origin/HEAD -- ${file} && ${DEFINE_NECRO} && necro verify ${file}`,
+    `git clone https://github.com/octo/spec-repo.git necro-check && cd necro-check && git checkout ${COMMIT} && git checkout origin/HEAD -- ${file}${VERIFIER_STEPS} && necro verify ${file}`,
   );
   assert.ok(!/[\r\n]/.test(command));
 });
 
-test('verifyCommand defines necro as node bin/necro.js before it is used, and uses no global necro', () => {
+test('verifyCommand for another repository never runs that repository\'s bin/necro.js', () => {
   for (const gitCommit of [COMMIT, null]) {
-    const command = verifyCommand({ repo: 'octo/spec-repo', receipt: receiptOf({ gitCommit }) });
-    const definition = command.indexOf(DEFINE_NECRO);
-    const use = command.indexOf('necro verify ');
-    assert.ok(definition > 0 && use > definition, 'the definition must come before necro verify');
+    const command = verifyCommand({ repo: 'someone/project', receipt: receiptOf({ gitCommit }) });
+    assert.ok(command.includes('git clone https://github.com/someone/project.git necro-check'));
+    // The only bin/necro.js in the command is the one inside the verifier folder.
+    assert.equal(command.split('bin/necro.js').length, 2, 'bin/necro.js appears once');
+    assert.ok(command.includes(`node ${VERIFIER_DIR}/bin/necro.js "$@"`));
+    assert.doesNotMatch(command.replace(`${VERIFIER_DIR}/bin/necro.js`, ''), /bin\/necro\.js/);
+    // The verifier is fetched from the official repository, whatever repository is typed.
+    assert.ok(command.includes(CLONE_VERIFIER));
+    assert.ok(command.includes(CHECKOUT_PIN));
+    // It is fetched after the verified repository is checked out, so that checkout cannot change it, and before use.
+    const last = Math.max(command.lastIndexOf('git checkout '), command.indexOf('cd necro-check'));
+    assert.ok(command.indexOf(CLONE_VERIFIER) > last);
+    assert.ok(command.indexOf(CHECKOUT_PIN) > command.indexOf(CLONE_VERIFIER));
+    assert.ok(command.indexOf(DEFINE_NECRO) > command.indexOf(CHECKOUT_PIN));
+    assert.ok(command.indexOf('necro verify ') > command.indexOf(DEFINE_NECRO));
     assert.equal(command.split('necro verify').length, 2, 'necro verify appears once');
   }
+});
+
+test('the verifier steps do not depend on the repository or the receipt', () => {
+  const hostile = verifyCommand({ repo: '$(id)/x; rm -rf ~', receipt: receiptOf({ spec: "x'; rm -rf ~", gitCommit: 'main' }) });
+  assert.ok(hostile.includes(VERIFIER_STEPS));
+  assert.ok(!hostile.includes('$(id)'));
+  assert.ok(hostile.includes('git clone https://github.com/OWNER/NAME.git'));
 });
 
 test('verifyCommand shows OWNER/NAME and no angle brackets for an empty or invalid repository', () => {
@@ -208,7 +239,7 @@ test('verifyCommand drops the checkout step when the commit is missing or malfor
     const command = verifyCommand({ repo: 'octo/spec-repo', receipt: receiptOf({ gitCommit }) });
     assert.doesNotMatch(command, /git checkout/, String(gitCommit));
     assert.ok(command.includes('git clone'));
-    assert.ok(command.includes(`cd necro-check && ${DEFINE_NECRO} && necro verify`));
+    assert.ok(command.includes(`cd necro-check${VERIFIER_STEPS} && necro verify`));
     assert.ok(!command.includes('rm -rf'));
   }
 });
