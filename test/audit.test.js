@@ -7,7 +7,8 @@ import { spawnSync } from 'node:child_process';
 import { sha256 } from '../src/canon.js';
 import { freezeSpec, readLock, writeLock } from '../src/lock.js';
 import { handlePreToolUse, handleStop, handlePostTaskExec } from '../src/hooks.js';
-import { auditSpec } from '../src/audit.js';
+import { auditSpec, planAudit, failingRequired, problems } from '../src/audit.js';
+import { runContracts } from '../src/contracts.js';
 
 const BIN = path.join(import.meta.dirname, '..', 'bin', 'necro.js');
 
@@ -631,3 +632,95 @@ test('R14.9 CI runs necro audit for this repository and verifies the newest rece
   assert.deepEqual(loops[0][1].trim().split(/\s+/), ['examples/pumpkin-ledger', 'examples/night-shift']);
   assert.match(workflow, /node bin\/necro\.js verify "\$newest"/);
 });
+
+// ---------------------------------------------------------------------------
+// Req 14.10: a required contract with no result in the run counts as failing
+// ---------------------------------------------------------------------------
+
+const FILE_A = 'contracts/demo/a.contract.test.js';
+
+test('R14.10 failingRequired counts a required name with no result as failing, and a passing or other result as it did', () => {
+  const results = [
+    { name: 'R1.1 a', path: 'x', result: 'pass' },
+    { name: 'R1.2 b', path: 'x', result: 'fail' },
+  ];
+  assert.deepEqual(failingRequired(results, ['R1.1 a']), []);
+  assert.deepEqual(failingRequired(results, ['R1.1 a', 'R1.2 b', 'R9.9 gone']), ['R1.2 b', 'R9.9 gone']);
+  assert.deepEqual(failingRequired([], ['R1.1 a']), ['R1.1 a']);
+});
+
+test('R14.10 a ticked task whose required contract is missing from the results is "failing", not ok', () =>
+  temp((cwd) => {
+    frozen(cwd);
+    gate(cwd, TASK2);
+    put(cwd, TASKS_REL, tasksText([TASK2]));
+    const lock = readLock(cwd);
+    const results = runContracts(cwd, 'demo', lock, new Set([FILE_A])); // the file of R2.1 did not run
+    assert.deepEqual(results.map((r) => r.name), ['R1.1 first holds']);
+    const task = auditSpec(cwd, 'demo', lock, results).tasks[0];
+    assert.equal(task.verdict, 'failing');
+    assert.deepEqual(task.failing, ['R2.1 second holds']);
+  }));
+
+test('R14.10 the same holds when only the tasks ticked since the freeze are audited', () =>
+  temp((cwd) => {
+    frozen(cwd);
+    gate(cwd, TASK2);
+    put(cwd, TASKS_REL, tasksText([TASK2]));
+    const lock = readLock(cwd);
+    const results = runContracts(cwd, 'demo', lock, new Set([FILE_A]));
+    const task = auditSpec(cwd, 'demo', lock, results, { onlyNew: true }).tasks[0];
+    assert.equal(task.verdict, 'failing');
+    assert.deepEqual(task.failing, ['R2.1 second holds']);
+    assert.match(problems({ tasks: [task] })[0].reason, /required contracts fail now: R2\.1 second holds/);
+  }));
+
+test('R14.10 a contract file removed after the audit was planned makes its task "failing"', () =>
+  temp((cwd) => {
+    frozen(cwd);
+    gate(cwd, TASK2);
+    put(cwd, TASKS_REL, tasksText([TASK2]));
+    const lock = readLock(cwd);
+    const plan = planAudit(cwd, 'demo', lock);
+    fs.rmSync(path.join(cwd, 'contracts/demo/b.contract.test.js'));
+    const task = auditSpec(cwd, 'demo', lock, runContracts(cwd, 'demo', lock, plan.paths), { onlyNew: true }).tasks[0];
+    assert.equal(task.verdict, 'failing');
+    assert.deepEqual(task.failing, ['R2.1 second holds']);
+  }));
+
+// The contract file of task 4 ticks task 5 while it runs, if a file tick-five exists. Task 5 names no contract, so it
+// requires every contract, and the Stop handler planned a run of the contract file of task 4 only.
+const TICKS_FIVE = `import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+if (fs.existsSync(new URL('../../tick-five', import.meta.url))) {
+  const tasks = new URL('../../.kiro/specs/big/tasks.md', import.meta.url);
+  fs.writeFileSync(tasks, fs.readFileSync(tasks, 'utf8').replace('- [ ] 5.', '- [x] 5.'));
+}
+test('R4.1 holds', () => { assert.ok(true); });
+`;
+
+test('R14.10 stop unticks a task that became ticked after it planned, because the contracts it requires did not run', () =>
+  temp((cwd) => {
+    put(cwd, '.kiro/specs/big/requirements.md', '# Requirements: big\n');
+    for (const n of [1, 2, 3]) put(cwd, `contracts/big/c${n}.contract.test.js`, counting(n));
+    put(cwd, 'contracts/big/c4.contract.test.js', TICKS_FIVE);
+    put(cwd, BIG_TASKS_REL, bigTasksText([1, 2, 3]));
+    freezeSpec(cwd, 'big');
+    put(cwd, BIG_TASKS_REL, bigTasksText([1, 2, 3]));
+    const accepted = handlePreToolUse({
+      hook_event_name: 'PreToolUse',
+      cwd,
+      tool_name: 'task_update',
+      tool_input: { tasksFilePath: BIG_TASKS_REL, taskId: BIG_TASKS[3], status: 'completed' },
+    });
+    assert.equal(accepted.exitCode, 0, accepted.stderr);
+    put(cwd, BIG_TASKS_REL, bigTasksText([1, 2, 3, 4]));
+    put(cwd, 'tick-five', '');
+    const stop = handleStop({ hook_event_name: 'Stop', cwd });
+    assert.equal(stop.exitCode, 0, stop.stderr);
+    assert.equal(read(cwd, BIG_TASKS_REL), bigTasksText([1, 2, 3, 4]), 'task 5 is unticked, task 4 stays');
+    assert.match(stop.stderr, /Unticked "5\. Five \(Req 5\.1\)"/);
+    assert.match(stop.stderr, /required contracts fail now: R1\.1 holds, R2\.1 holds, R3\.1 holds/);
+    assert.doesNotMatch(stop.stderr, /no receipt/);
+  }));

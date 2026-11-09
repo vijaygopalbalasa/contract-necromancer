@@ -1,0 +1,10 @@
+{"t":"2026-11-09T22:03:41.006Z","tool":"grep_search","what":""}
+{"t":"2026-11-09T22:03:43.761Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-09T22:03:44.047Z","tool":"execute_bash","what":"ls && cat && head && node && head"}
+{"t":"2026-11-09T22:03:48.791Z","tool":"execute_bash","what":"ls && grep && grep && grep && head"}
+{"t":"2026-11-09T22:05:16.499Z","tool":"str_replace","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-09T22:05:20.043Z","tool":"execute_bash","what":"grep && ls && head && git && head"}
+{"t":"2026-11-09T22:06:45.717Z","tool":"execute_bash","what":"cd && for && head && do && grep && taskId && taskNumber && result && status)\"' && head && done && cd && node && tail"}
+{"t":"2026-11-09T22:06:51.653Z","tool":"execute_bash","what":"head && echo && grep && ls && tail && date"}
+{"t":"2026-11-09T22:06:54.387Z","tool":"execute_bash","what":"grep && name)\"' && grep && R14.10 && \"task\"' && grep && ls && tail"}
+{"t":"2026-11-09T22:06:56.559Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.necro/receipts/necro-core/c5d4e1fca3fa221564cb0757918a79a3fb22d422a7e6616b9494f8d73fd02827.json"}

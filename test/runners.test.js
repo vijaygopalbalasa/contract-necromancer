@@ -1506,7 +1506,8 @@ test('R13.13 expandGlobs still skips symbolic links by default, and lists a link
     assert.deepEqual(expandGlobs(cwd, ['plug/*.txt']), ['plug/one.txt', 'plug/two.txt']);
     assert.deepEqual(expandGlobs(cwd, ['plug/*.txt'], { links: true }), [...LINKS, 'plug/one.txt', 'plug/two.txt'].sort());
     assert.deepEqual(expandGlobs(cwd, ['plug/**'], { links: true }), [...LINKS, 'plug/one.txt', 'plug/two.txt'].sort());
-    assert.deepEqual(expandGlobs(cwd, ['**/to-*.txt'], { links: true }), ['plug/to-file.txt', 'plug/to-folder.txt']);
+    // Req 13.14: under ** every link counts, since a linked folder could hold the file the glob names.
+    assert.deepEqual(expandGlobs(cwd, ['**/to-*.txt'], { links: true }), LINKS);
     assert.deepEqual(expandGlobs(cwd, ['plug/*.md'], { links: true }), []);
   } finally {
     done(cwd);
@@ -1577,6 +1578,97 @@ test('R13.13 verify prints MISMATCH naming a link under a frozen glob, to a file
       assert.ok(out.out.includes(link), `${link}: ${out.out}`);
       fs.rmSync(path.join(cwd, link));
       assert.equal(captureStdout(() => verify(cwd, receipt)).code, 0, 'removed, all is well');
+    } finally {
+      done(cwd);
+    }
+  }
+});
+
+// --- 13.14: a link met part way along a frozen glob counts too -------------------------------------
+
+// A project whose frozen globs reach a file below a folder: `conf/*/settings.txt`, `data/sub/file.txt` and `**/conftest.txt`.
+function deepGlobProject(frozen) {
+  const cwd = project({ 'a_contract.fake': 'pass R1.1 x\n', 'b_contract.fake': 'pass R1.2 y\n' }, { runners: runnersJson(COMMAND, '*_contract.fake', { frozen }) });
+  put(cwd, 'conf/real/settings.txt', 'settings\n');
+  put(cwd, 'data/sub/file.txt', 'file\n');
+  put(cwd, 'src/deep/conftest.txt', 'conftest\n');
+  put(cwd, 'outside/folder/planted.txt', 'a folder elsewhere\n');
+  freezeSpec(cwd, SPEC);
+  return cwd;
+}
+
+test('R13.14 expandGlobs with links lists a link at an intermediate segment, a link under **, and a dangling one; without links it still lists none', () => {
+  const cwd = deepGlobProject(['conf/*/settings.txt']);
+  try {
+    fs.symlinkSync(path.join(cwd, 'outside/folder'), path.join(cwd, 'conf/linked'));
+    fs.symlinkSync(path.join(cwd, 'outside/nothing-here'), path.join(cwd, 'conf/dangling'));
+    fs.symlinkSync(path.join(cwd, 'outside/folder'), path.join(cwd, 'data/sub-link'));
+    assert.deepEqual(expandGlobs(cwd, ['conf/*/settings.txt']), ['conf/real/settings.txt'], 'a link is not followed by default');
+    assert.deepEqual(expandGlobs(cwd, ['conf/*/settings.txt'], { links: true }), ['conf/dangling', 'conf/linked', 'conf/real/settings.txt']);
+
+    // A literal intermediate segment that is a link.
+    fs.rmSync(path.join(cwd, 'data/sub'), { recursive: true });
+    fs.symlinkSync(path.join(cwd, 'outside/folder'), path.join(cwd, 'data/sub'));
+    assert.deepEqual(expandGlobs(cwd, ['data/sub/file.txt']), []);
+    assert.deepEqual(expandGlobs(cwd, ['data/sub/file.txt'], { links: true }), ['data/sub']);
+    assert.deepEqual(expandGlobs(cwd, ['data/other/file.txt'], { links: true }), [], 'a link the glob cannot reach is not listed');
+
+    // Any link under **, at any depth, whatever it points to.
+    fs.symlinkSync(path.join(cwd, 'outside/folder'), path.join(cwd, 'src/deep/hidden'));
+    fs.symlinkSync(path.join(cwd, 'outside/nothing-here'), path.join(cwd, 'src/dangling'));
+    assert.deepEqual(expandGlobs(cwd, ['**/conftest.txt']), ['src/deep/conftest.txt']);
+    assert.deepEqual(
+      expandGlobs(cwd, ['**/conftest.txt'], { links: true }),
+      ['conf/dangling', 'conf/linked', 'data/sub', 'data/sub-link', 'src/dangling', 'src/deep/conftest.txt', 'src/deep/hidden'].sort(),
+    );
+    // A link in a folder that ** does not enter is not met.
+    fs.mkdirSync(path.join(cwd, 'node_modules'), { recursive: true });
+    fs.symlinkSync(path.join(cwd, 'outside/folder'), path.join(cwd, 'node_modules/pkg'));
+    assert.ok(!expandGlobs(cwd, ['**/conftest.txt'], { links: true }).includes('node_modules/pkg'));
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.14 frozenGlobDrift counts a linked folder part way along a frozen glob as added, also when it replaced a locked folder', () => {
+  const cwd = deepGlobProject(['conf/*/settings.txt', 'data/sub/file.txt']);
+  try {
+    const entry = readLock(cwd).specs[SPEC];
+    assert.deepEqual(frozenGlobDrift(cwd, entry), { added: [], removed: [] });
+    fs.symlinkSync(path.join(cwd, 'outside/folder'), path.join(cwd, 'conf/linked'));
+    assert.deepEqual(frozenGlobDrift(cwd, entry), { added: ['conf/linked'], removed: [] });
+    fs.rmSync(path.join(cwd, 'conf/linked'));
+    // The locked folder is swapped for a link to a folder with the same files: the locked file is gone and the link is added.
+    fs.rmSync(path.join(cwd, 'data/sub'), { recursive: true });
+    fs.symlinkSync(path.join(cwd, 'outside/folder'), path.join(cwd, 'data/sub'));
+    assert.deepEqual(frozenGlobDrift(cwd, entry), { added: ['data/sub'], removed: ['data/sub/file.txt'] });
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.14 a linked folder part way along a frozen glob, and a link under **, make every runner file fail with a reason naming it, without running the command', () => {
+  const cases = [
+    { frozen: ['conf/*/settings.txt'], link: 'conf/linked' },
+    { frozen: ['conf/*/settings.txt'], link: 'conf/dangling', dangling: true },
+    { frozen: ['data/sub/file.txt', 'conf/*/settings.txt'], link: 'conf/other-link' },
+    { frozen: ['**/conftest.txt'], link: 'src/deep/hidden' },
+    { frozen: ['**/conftest.txt'], link: 'elsewhere/dangling', dangling: true },
+  ];
+  for (const { frozen, link, dangling } of cases) {
+    const cwd = deepGlobProject(frozen);
+    try {
+      const target = path.join(cwd, dangling ? 'outside/nothing-here' : 'outside/folder');
+      fs.mkdirSync(path.dirname(path.join(cwd, link)), { recursive: true });
+      fs.symlinkSync(target, path.join(cwd, link));
+      withLog((log) => {
+        const results = runContracts(cwd, SPEC, readLock(cwd));
+        assert.deepEqual(byName(results), { 'R1.1 x': 'fail', 'R1.2 y': 'fail' }, link);
+        for (const r of results) assert.ok(r.reason.includes(link), `${link}: ${r.reason}`);
+        assert.equal(calls(log).length, 0, 'the command did not run');
+      });
+      fs.rmSync(path.join(cwd, link));
+      assert.deepEqual(byName(runContracts(cwd, SPEC, readLock(cwd))), { 'R1.1 x': 'pass', 'R1.2 y': 'pass' }, `${link} removed, all is well`);
     } finally {
       done(cwd);
     }

@@ -116,6 +116,15 @@
           "sha256": "59d0ef36ccfa3382c92b090d5dbfbe8d98a97a11ed3d031a14c993161de9daaf"
         },
         {
+          "name": "fail-closed",
+          "names": [
+            "R13.14 a linked folder part way along a frozen glob, and any link under **, make every runner file fail with a reason naming the link, while a link no glob can reach changes nothing",
+            "R14.10 a required contract with no result in the run counts as failing: in the audit, and in Stop, which audits with the results it planned"
+          ],
+          "path": "contracts/necro-core/fail-closed.contract.test.js",
+          "sha256": "d44889633785f3603840533095fa424a66c9987161bae8dcf61e47d926b51257"
+        },
+        {
           "name": "frozen-globs",
           "names": [
             "R13.12 a file that matches a frozen glob now and was not locked at the freeze, or a locked file that is gone, makes every runner file fail and verify print MISMATCH naming it, while an unrelated new file changes nothing"
@@ -334,7 +343,7 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-09T21:43:16.749Z",
+      "frozenAt": "2026-11-09T22:03:33.859Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
         "sha256": "35cc11d694d08995fd31508c7cd969f97018893d2e102e0a417f1c03b9d45869"

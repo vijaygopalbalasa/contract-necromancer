@@ -984,7 +984,7 @@ export function handleStop(payload) {
     const fresh = plan !== null && plan.fresh.length > 0;
     const partial = fresh && plan.paths !== null;
     const results = fresh ? runContracts(cwd, spec, lock, plan.paths) : [];
-    resultsBySpec[spec] = results;
+    resultsBySpec[spec] = results; // Req 14.10: the audit below uses these results and plans nothing again
     const failing = results
       .filter((r) => r.result === 'fail')
       .map((r) => r.name)

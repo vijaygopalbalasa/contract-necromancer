@@ -21,7 +21,10 @@ export function failingRequired(results, required) {
   const failing = results.filter(
     (r) => r.result === 'fail' && (required.includes(r.name) || (requiredPaths.has(r.path) && r.name === contractName(r.path))),
   );
-  return [...new Set(failing.map((r) => r.name))].sort();
+  // Req 14.10: a required contract with no result at all did not run, which is not a pass.
+  const ran = new Set(results.map((r) => r.name));
+  const missing = required.filter((n) => !ran.has(n));
+  return [...new Set([...failing.map((r) => r.name), ...missing])].sort();
 }
 
 // What the gate's receipts of a spec say about its tasks: the task ids and the task
@@ -61,6 +64,20 @@ export function lockedNames(entry) {
   return [...names].sort();
 }
 
+// The ticked lines of a tasks.md that were not ticked when a person last froze the spec (Req 14.7).
+// A line ticked at the freeze is matched by text, once per recorded occurrence, in file order,
+// so a copy of such a line added later is new. Returns [{ index, text }].
+function freshTicks(entry, markdown) {
+  const credit = new Map();
+  for (const text of Array.isArray(entry.ticked) ? entry.ticked : []) credit.set(text, (credit.get(text) || 0) + 1);
+  const fresh = [];
+  for (const t of tickedLines(markdown)) {
+    if ((credit.get(t.text) || 0) > 0) credit.set(t.text, credit.get(t.text) - 1);
+    else fresh.push(t);
+  }
+  return fresh;
+}
+
 // Req 14.7: the ticked tasks of a frozen spec that were not ticked when a person last froze it,
 // and the contract files whose contracts those tasks require. A line ticked at the freeze is
 // matched by text, once per recorded occurrence, in file order, so a copy of such a line added
@@ -79,14 +96,7 @@ export function planAudit(cwd, spec, lock = readLock(cwd)) {
   } catch {
     return none;
   }
-  const credit = new Map();
-  for (const text of Array.isArray(entry.ticked) ? entry.ticked : []) credit.set(text, (credit.get(text) || 0) + 1);
-  const fresh = [];
-  for (const t of tickedLines(markdown)) {
-    if ((credit.get(t.text) || 0) > 0) credit.set(t.text, credit.get(t.text) - 1);
-    else fresh.push(t);
-  }
-
+  const fresh = freshTicks(entry, markdown);
   const table = entry.tasks || {};
   const lines = parseTasks(markdown);
   const required = new Set();
@@ -123,13 +133,17 @@ export function auditSpec(cwd, spec, lock = readLock(cwd), results = null, { onl
   } catch {
     return { spec, tasks: [] };
   }
-  const plan = onlyNew ? planAudit(cwd, spec, lock) : null;
-  const ticked = onlyNew ? plan.fresh : tickedLines(markdown);
+  // Req 14.10: with results from the caller (the Stop handler planned and ran them), nothing is
+  // planned again here: the tasks ticked now are audited against those results, and a task that
+  // needs a contract the results do not hold fails. Without results the plan decides what to run.
+  const plan = onlyNew && results === null ? planAudit(cwd, spec, lock) : null;
+  const ticked = onlyNew ? (plan ? plan.fresh : freshTicks(entry, markdown)) : tickedLines(markdown);
   if (ticked.length === 0) return { spec, tasks: [] };
 
   const ran = results || runContracts(cwd, spec, lock, plan ? plan.paths : null);
-  // A partial run knows only some names; the lock knows them all.
-  const names = onlyNew ? plan.names : [...new Set(ran.map((r) => r.name))].sort();
+  // A partial run knows only some names; the lock knows them all. A name the lock records and
+  // the results lack is still a name, so a contract that did not run can be required (Req 14.10).
+  const names = [...new Set([...lockedNames(entry), ...ran.map((r) => r.name)])].sort();
   const table = entry.tasks || {};
   const lines = parseTasks(markdown);
   const idCount = new Map();

@@ -196,7 +196,10 @@ export function findRunner(patterns, fileName) {
 const SKIPPED_FOLDERS = new Set(['.git', '.necro', 'node_modules', '__pycache__']);
 
 // With `links`, a symbolic link whose path matches the last part of a glob counts as a match,
-// whatever it points to (a file, a folder or nothing). A link is never followed.
+// whatever it points to (a file, a folder or nothing). A link is never followed. A link met
+// part way along a glob counts as well (Req 13.14): one that matches a segment with more
+// segments after it, and any link below `**`, since a linked folder could hold the file the
+// glob names. The link's own path is listed, so it is caught as a file that was not locked.
 function walkGlob(cwd, rel, segments, found, links) {
   const [segment, ...rest] = segments;
   let entries;
@@ -211,7 +214,8 @@ function walkGlob(cwd, rel, segments, found, links) {
     if (rest.length > 0) walkGlob(cwd, rel, rest, found, links);
     for (const e of entries) {
       if (e.isDirectory() && !SKIPPED_FOLDERS.has(e.name)) walkGlob(cwd, at(e.name), segments, found, links);
-      else if (rest.length === 0 && (e.isFile() || (links && e.isSymbolicLink()))) found.add(at(e.name));
+      else if (links && e.isSymbolicLink() && (rest.length === 0 || !SKIPPED_FOLDERS.has(e.name))) found.add(at(e.name));
+      else if (rest.length === 0 && e.isFile()) found.add(at(e.name));
     }
     return;
   }
@@ -222,6 +226,8 @@ function walkGlob(cwd, rel, segments, found, links) {
       if (e.isFile() || (links && e.isSymbolicLink())) found.add(at(e.name));
     } else if (e.isDirectory() && !(wild && SKIPPED_FOLDERS.has(e.name))) {
       walkGlob(cwd, at(e.name), rest, found, links);
+    } else if (links && e.isSymbolicLink() && !(wild && SKIPPED_FOLDERS.has(e.name))) {
+      found.add(at(e.name));
     }
   }
 }
@@ -244,7 +250,7 @@ export function expandGlobs(cwd, globs, { links = false } = {}) {
 // lock holds for the spec itself (requirements, runners.json, contracts) are not part of
 // the set, as at freeze. A symbolic link that matches a glob always counts as added (Req 13.13):
 // the freeze locks regular files only, so a link is never a locked file, even one at the path of a
-// file that was locked. Returns sorted project-relative paths:
+// file that was locked. A link met part way along a glob counts as added too (Req 13.14). Returns sorted project-relative paths:
 // { added: [matching now, not locked, and every link], removed: [locked, no longer matching] }.
 export function frozenGlobDrift(cwd, entry) {
   const none = { added: [], removed: [] };
