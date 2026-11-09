@@ -1,0 +1,6 @@
+{"t":"2026-11-09T15:35:06.390Z","tool":"grep_search","what":""}
+{"t":"2026-11-09T15:35:09.985Z","tool":"grep_search","what":""}
+{"t":"2026-11-09T15:36:15.863Z","tool":"str_replace","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-09T15:36:19.702Z","tool":"execute_bash","what":"git && grep && ls && head && git"}
+{"t":"2026-11-09T15:36:22.793Z","tool":"execute_bash","what":"head"}
+{"t":"2026-11-09T15:36:25.089Z","tool":"execute_bash","what":"grep && grep && grep && head"}

@@ -189,6 +189,107 @@ test('R11.6 the demo needs no dependency that is not a Node built-in', () => {
   for (const m of source.matchAll(/from '([^']+)'/g)) assert.match(m[1], /^(node:|\.)/, `non built-in import ${m[1]}`);
 });
 
+// Req 12: the look of the demo. A real terminal cannot be attached in a test, so the tests set NECRO_DEMO_FORCE_TTY=1, a
+// hook that exists for them only.
+const ESC = '\x1b[';
+const RED = '\x1b[31m';
+const GREEN = '\x1b[32m';
+const VIEWER = 'https://vijaygopalbalasa.github.io/contract-necromancer/';
+
+function runLook(extra, drop = []) {
+  const env = cleanEnv();
+  delete env.NO_COLOR;
+  for (const k of drop) delete env[k];
+  Object.assign(env, extra);
+  const res = spawnSync(process.execPath, [BIN, 'demo'], { cwd: os.tmpdir(), encoding: 'utf8', env, timeout: 280_000 });
+  return { status: res.status, stdout: res.stdout, stderr: res.stderr };
+}
+
+const looks = {};
+const lookFolders = [];
+function look(name, extra) {
+  if (!looks[name]) {
+    looks[name] = runLook(extra);
+    const dir = folderOf(looks[name].stdout.replaceAll(/\x1b\[[0-9;]*m/g, ''));
+    if (dir) lookFolders.push(dir);
+  }
+  return looks[name];
+}
+const colored = () => look('tty', { NECRO_DEMO_FORCE_TTY: '1' });
+const strip = (s) => s.replaceAll(/\x1b\[[0-9;]*m/g, '');
+const lineWith = (out, text) => out.split('\n').find((l) => strip(l).includes(text));
+
+test('R12.1 on a terminal without NO_COLOR the refusal and MISMATCH are red and the acceptance and CONFIRMED are green, each with a text symbol', () => {
+  const run = colored();
+  assert.equal(run.status, 0, `${run.stdout}${run.stderr}`);
+  const refused = lineWith(run.stdout, 'The gate refused the tick');
+  const accepted = lineWith(run.stdout, 'The gate accepted the tick');
+  const confirmed = lineWith(run.stdout, 'CONFIRMED ');
+  const mismatch = lineWith(run.stdout, 'MISMATCH');
+  for (const [line, colour] of [[refused, RED], [mismatch, RED], [accepted, GREEN], [confirmed, GREEN]]) {
+    assert.ok(line, run.stdout);
+    assert.ok(line.startsWith(colour), `not coloured ${JSON.stringify(colour)}: ${JSON.stringify(line)}`);
+    assert.ok(line.endsWith(`${ESC}0m`), `colour not reset: ${JSON.stringify(line)}`);
+    // A symbol in plain text, so the line still says which side it is on once the colour is gone.
+    assert.match(strip(line), /^[✓✗] \S/, `no symbol: ${JSON.stringify(strip(line))}`);
+  }
+  assert.match(strip(refused), /^✗ /);
+  assert.match(strip(mismatch), /^✗ MISMATCH/);
+  assert.match(strip(accepted), /^✓ /);
+  assert.match(strip(confirmed), /^✓ CONFIRMED [0-9a-f]{64}\.$/);
+  // The failing contract lines and everything that is not a verdict stay uncoloured.
+  assert.doesNotMatch(lineWith(run.stdout, 'Demo folder:'), /\x1b/);
+  assert.doesNotMatch(lineWith(run.stdout, 'Receipt:'), /\x1b/);
+});
+
+test('R12.2 with NO_COLOR set, or when stdout is piped, the demo prints no ANSI escape codes at all', () => {
+  const noColor = look('nocolor', { NECRO_DEMO_FORCE_TTY: '1', NO_COLOR: '1' });
+  assert.equal(noColor.status, 0, `${noColor.stdout}${noColor.stderr}`);
+  assert.ok(!noColor.stdout.includes(ESC) && !noColor.stderr.includes(ESC), JSON.stringify(noColor.stdout));
+  // Piped: this run has no forced terminal, and its stdout is a pipe.
+  const piped = look('piped', {});
+  assert.equal(piped.status, 0, `${piped.stdout}${piped.stderr}`);
+  assert.ok(!piped.stdout.includes(ESC) && !piped.stderr.includes(ESC), JSON.stringify(piped.stdout));
+  // The plain text is the same lines that the Requirement 11 tests read.
+  assert.ok(piped.stdout.split('\n').includes('The gate refused the tick (exit 2).'));
+  assert.match(piped.stdout, /^CONFIRMED [0-9a-f]{64}\.$/m);
+  assert.match(piped.stdout, /^MISMATCH/m);
+  // Colour carries no new words beyond the symbols: stripped, the terminal run is the plain run with symbols in front.
+  const unsymbol = strip(colored().stdout).replaceAll(/^[✓✗] /gm, '').replaceAll(/necro-demo-\w+/g, 'F').replaceAll(/[0-9a-f]{64}/g, 'H');
+  const plain = piped.stdout.replaceAll(/necro-demo-\w+/g, 'F').replaceAll(/[0-9a-f]{64}/g, 'H');
+  assert.equal(unsymbol, plain);
+});
+
+test('R12.3 on success the last line names the live viewer and says the receipt file can be pasted or chosen there', () => {
+  for (const run of [look('piped', {}), colored()]) {
+    const lines = strip(run.stdout).trimEnd().split('\n');
+    const last = lines[lines.length - 1];
+    assert.ok(last.includes(VIEWER), last);
+    assert.match(last, /receipt/i);
+    assert.match(last, /paste/i);
+    assert.match(last, /choose/i);
+    // It does not claim a link to the temporary file.
+    assert.doesNotMatch(last, /file:\/\/|necro-demo-|\.json/);
+    assert.doesNotMatch(last, /\u2014|\u2013/);
+  }
+});
+
+test('R12.3 a failed demo does not print the viewer line', async () => {
+  const { runDemo } = await import('../src/demo.js');
+  const out = [];
+  const result = runDemo({ out: (s) => out.push(s), err: () => {}, restore: () => {} });
+  try {
+    assert.equal(result.exitCode, 1);
+    assert.doesNotMatch(out.join('\n'), /github\.io/);
+  } finally {
+    removeDemoFolder(result.folder);
+  }
+});
+
+test('cleanup of the demo folders made by the look tests', () => {
+  for (const dir of lookFolders) removeDemoFolder(dir);
+});
+
 test('cleanup of the demo folders made by this file', () => {
   for (const run of [runs.root, runs.far]) {
     const dir = folderOf(run.stdout);

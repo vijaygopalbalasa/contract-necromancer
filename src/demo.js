@@ -24,6 +24,29 @@ const CHILD_TIMEOUT_MS = 240_000;
 // The steps, in order. A failed run names one of them (Req 11.5).
 export const STEPS = ['setup', 'refusal', 'acceptance', 'confirmed', 'mismatch'];
 
+// Where a receipt file can be opened in a browser (Req 12.3).
+export const VIEWER_URL = 'https://vijaygopalbalasa.github.io/contract-necromancer/';
+
+const RED = '\x1b[31m';
+const GREEN = '\x1b[32m';
+const RESET = '\x1b[0m';
+
+// Whether the demo colours its verdicts (Req 12.1, 12.2): stdout is a terminal and NO_COLOR is not set. The environment
+// variable NECRO_DEMO_FORCE_TTY=1 stands in for the terminal and exists for tests only.
+export function useColour(env = process.env, isTTY = Boolean(process.stdout.isTTY)) {
+  if (env.NO_COLOR !== undefined && env.NO_COLOR !== '') return false;
+  return isTTY || env.NECRO_DEMO_FORCE_TTY === '1';
+}
+
+// A verdict line: a symbol and the colour when colour is on, the plain text otherwise. A multi-line text is marked line by line,
+// the symbol only on the first line.
+function verdict(on, good, text) {
+  if (!on) return text;
+  const colour = good ? GREEN : RED;
+  const symbol = good ? '\u2713' : '\u2717';
+  return text.split('\n').map((line, i) => `${colour}${i === 0 ? `${symbol} ` : ''}${line}${RESET}`).join('\n');
+}
+
 class StepFailed extends Error {
   constructor(step, message) {
     super(message);
@@ -117,11 +140,13 @@ function newReceipt(folder, since) {
 //   out, err   functions that print a line (default console.log, console.error)
 //   plant      (folder) => void, replaces the step that plants the bug
 //   restore    (folder) => void, replaces the step that restores the correct code
+//   colour     true or false, replaces the terminal and NO_COLOR check (Req 12)
 // Returns { exitCode, failedStep, folder }; failedStep is null when every step
 // happened as described (Req 11.5).
 export function runDemo(options = {}) {
   const out = options.out || ((s) => console.log(s));
   const err = options.err || ((s) => console.error(s));
+  const on = options.colour === undefined ? useColour() : options.colour;
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'necro-demo-'));
   let step = 'setup';
   try {
@@ -148,7 +173,7 @@ export function runDemo(options = {}) {
     if (refused.status !== 2 || !failed) {
       throw new StepFailed(step, `The gate should have refused the tick (exit 2 with failing contracts) but exited ${refused.status}. ${refused.stderr.trim()}`.trim());
     }
-    out(`The gate refused the tick (exit ${refused.status}).`);
+    out(verdict(on, false, `The gate refused the tick (exit ${refused.status}).`));
     // One line a reader takes in at a glance: the IDs. The full names follow, one per line.
     out(`Contracts failed: ${failed.ids.join(', ')}`);
     for (const name of failed.names) out(`  ${name}`);
@@ -166,7 +191,7 @@ export function runDemo(options = {}) {
     }
     const receipt = newReceipt(folder, since);
     if (!receipt) throw new StepFailed(step, 'The gate accepted the tick but wrote no receipt.');
-    out(`The gate accepted the tick (exit ${accepted.status}).`);
+    out(verdict(on, true, `The gate accepted the tick (exit ${accepted.status}).`));
     out(`Receipt: ${receipt}`);
 
     // Req 11.4: verify the receipt, change the code, verify again.
@@ -177,7 +202,7 @@ export function runDemo(options = {}) {
     if (confirmed.status !== 0 || !/^CONFIRMED /m.test(confirmed.stdout)) {
       throw new StepFailed(step, `necro verify should print CONFIRMED and exit 0 but exited ${confirmed.status}. ${(confirmed.stdout + confirmed.stderr).trim()}`.trim());
     }
-    out(confirmed.stdout.trim());
+    out(verdict(on, true, confirmed.stdout.trim()));
     out(`Step 5. Change ${SPLIT_REL} in the copy and verify the same receipt again.`);
     fs.appendFileSync(split, '// edited by the demo\n');
     step = 'mismatch';
@@ -185,11 +210,13 @@ export function runDemo(options = {}) {
     if (mismatch.status !== 1 || !/^MISMATCH/m.test(mismatch.stdout)) {
       throw new StepFailed(step, `necro verify should print MISMATCH and exit 1 but exited ${mismatch.status}. ${(mismatch.stdout + mismatch.stderr).trim()}`.trim());
     }
-    out(mismatch.stdout.trim());
+    out(verdict(on, false, mismatch.stdout.trim()));
 
     out('');
     out('The gate refused the false "done", accepted the real fix, and the receipt caught the later change.');
     out(`The copy stays at ${folder}. Delete it when you are done.`);
+    // Req 12.3: the last line. The viewer opens a receipt file that is pasted or chosen; it has no link to the temporary file.
+    out(`To see a receipt in your browser, open ${VIEWER_URL} and paste or choose the receipt file there.`);
     return { exitCode: 0, failedStep: null, folder };
   } catch (e) {
     const failedStep = e instanceof StepFailed ? e.step : step;
