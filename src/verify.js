@@ -53,11 +53,13 @@ function supersededPaths(cwd, receipt, frozenSpec) {
   if (frozenSpec.requirements) lockFiles.push(frozenSpec.requirements);
   lockFiles.push(...(frozenSpec.contracts || []));
   if (frozenSpec.runners) lockFiles.push(frozenSpec.runners); // Req 13.5
+  lockFiles.push(...(frozenSpec.frozen || [])); // Req 13.9
   const inLock = new Map(lockFiles.map((f) => [f.path, f.sha256]));
 
   const changed = new Set();
   const receiptFiles = [receipt.requirements, ...receipt.contracts];
   if (hasRunners(receipt)) receiptFiles.push(receipt.runners);
+  receiptFiles.push(...frozenOf(receipt));
   for (const f of receiptFiles) {
     if (inLock.has(f.path) && inLock.get(f.path) !== f.sha256) changed.add(f.path);
   }
@@ -72,6 +74,12 @@ function supersededPaths(cwd, receipt, frozenSpec) {
 // Req 13.5: true when a receipt pins a runners.json.
 function hasRunners(receipt) {
   return Boolean(receipt.runners) && typeof receipt.runners.path === 'string' && typeof receipt.runners.sha256 === 'string';
+}
+
+// Req 13.9: the locked files (conftest.py and the like) a receipt pins, or [] when it pins none.
+function frozenOf(receipt) {
+  if (!Array.isArray(receipt.frozen)) return [];
+  return receipt.frozen.filter((f) => f && typeof f.path === 'string' && typeof f.sha256 === 'string');
 }
 
 // Names that appear a different number of times in two lists.
@@ -119,6 +127,7 @@ export function verify(workingDir, receiptFile) {
   for (const c of receipt.contracts) pinned.push({ path: c.path, sha256: c.sha256 });
   for (const s of receipt.sources || []) pinned.push({ path: s.path, sha256: s.sha256 });
   if (hasRunners(receipt)) pinned.push(receipt.runners);
+  pinned.push(...frozenOf(receipt));
 
   const changedFiles = [];
   for (const f of pinned) {
@@ -157,6 +166,12 @@ export function verify(workingDir, receiptFile) {
         changedFiles.push((lockRunners || receiptRunners).path);
       }
     }
+    // Req 13.9: the locked files are pinned in the receipt exactly as the lock holds them.
+    const lockFrozen = new Map((frozenSpec.frozen || []).map((f) => [f.path, f.sha256]));
+    const receiptFrozen = new Map(frozenOf(receipt).map((f) => [f.path, f.sha256]));
+    for (const p of new Set([...lockFrozen.keys(), ...receiptFrozen.keys()])) {
+      if (lockFrozen.get(p) !== receiptFrozen.get(p)) changedFiles.push(p);
+    }
     // Contract files and hashes: none missing, none extra, none different.
     const lockFiles = new Map((frozenSpec.contracts || []).map((c) => [c.path, c]));
     const receiptFiles = new Map();
@@ -192,6 +207,7 @@ export function verify(workingDir, receiptFile) {
           [receipt.spec]: {
             contracts: receipt.contracts.map((c) => ({ path: c.path, sha256: c.sha256, names: [c.name] })),
             ...(hasRunners(receipt) ? { runners: receipt.runners } : {}),
+            ...(frozenOf(receipt).length > 0 ? { frozen: frozenOf(receipt) } : {}),
           },
         },
       };

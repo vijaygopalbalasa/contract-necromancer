@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { sha256, canonicalJson, hashFile } from './canon.js';
+import { lockedRunnersConfig, expandGlobs } from './runners.js';
 
 // Normalize a path to forward slashes, project-relative style.
 function toRel(p) {
@@ -159,6 +160,18 @@ export function buildReceipt(cwd, spec, lock, results, gate = {}) {
       if (!contractPaths.has(s)) sourceSet.add(s);
     }
   }
+  // Req 13.9: a runners.json that lists "sources" pins the files those globs match, like
+  // the imports of a JavaScript contract. It is read only while it is the frozen one.
+  const frozenFiles = (entry.frozen || []).map((f) => ({ path: f.path, sha256: f.sha256 }));
+  if (entry.runners) {
+    const config = lockedRunnersConfig(cwd, entry.runners);
+    const own = new Set([req.path, entry.runners.path, ...frozenFiles.map((f) => f.path)]);
+    if (config) {
+      for (const p of expandGlobs(cwd, config.sources)) {
+        if (!contractPaths.has(p) && !own.has(p)) sourceSet.add(p);
+      }
+    }
+  }
   const sources = [...sourceSet].sort().map((p) => ({
     path: p,
     sha256: hashFile(path.join(cwd, p)),
@@ -177,10 +190,13 @@ export function buildReceipt(cwd, spec, lock, results, gate = {}) {
   // Req 13.5: a spec with a runners.json pins it with the other frozen files. A spec
   // without one has no such field, so its receipts are the same as before.
   if (entry.runners) receipt.runners = { path: entry.runners.path, sha256: entry.runners.sha256 };
+  // Req 13.9: the files locked next to runners.json are pinned too; without any, there is no field.
+  if (frozenFiles.length > 0) receipt.frozen = frozenFiles;
   // Req 5.4: in a git repository, say which pinned files the commit does not hold.
   if (commit) {
     const pinned = [requirements.path, ...contracts.map((c) => c.path), ...sources.map((s) => s.path)];
     if (receipt.runners) pinned.push(receipt.runners.path);
+    if (receipt.frozen) pinned.push(...receipt.frozen.map((f) => f.path));
     receipt.uncommitted = uncommittedPaths(cwd, commit, pinned.filter(Boolean));
   }
   receipt.receiptHash = computeReceiptHash(receipt);

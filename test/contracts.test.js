@@ -504,3 +504,55 @@ test('R4.12 a lock that lists the same file twice runs it once and reports each 
     fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Task 29: a JavaScript contract file is cut off at the runner time limit (Req 13.7)
+// ---------------------------------------------------------------------------
+
+test('R13.7 a JavaScript contract file that runs past the time limit fails with a reason, and its process is killed', () => {
+  const cwd = tmpCwd();
+  const pidFile = path.join(cwd, 'contract.pid');
+  try {
+    writeReq(cwd, 'demo', '# Demo\n');
+    const hang = `import { test } from 'node:test';
+import fs from 'node:fs';
+
+test('R1.1 hangs', async () => {
+  fs.writeFileSync(${JSON.stringify(pidFile)}, String(process.pid));
+  await new Promise((resolve) => setTimeout(resolve, 8000));
+});
+`;
+    writeContract(cwd, 'demo', 'hang.contract.test.js', hang);
+    const lock = buildLock(cwd, 'demo', [{ ...contractEntry(cwd, 'contracts/demo/hang.contract.test.js'), names: ['R1.1 hangs'] }]);
+
+    process.env.NECRO_RUNNER_TIMEOUT_MS = '2500';
+    const started = Date.now();
+    let results;
+    try {
+      results = runContracts(cwd, 'demo', lock);
+    } finally {
+      delete process.env.NECRO_RUNNER_TIMEOUT_MS;
+    }
+    assert.ok(Date.now() - started < 7000, 'cut off before the contract would have finished');
+    assert.ok(results.length >= 1 && results.every((r) => r.result === 'fail'));
+    const named = results.find((r) => r.name === 'hang');
+    assert.ok(named, JSON.stringify(results));
+    assert.match(named.reason, /hang\.contract\.test\.js/);
+    assert.match(named.reason, /time limit/);
+
+    const pid = Number(fs.readFileSync(pidFile, 'utf8'));
+    const end = Date.now() + 3000;
+    const alive = () => {
+      try {
+        process.kill(pid, 0);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+    while (alive() && Date.now() < end) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 25);
+    assert.equal(alive(), false, 'the process of the contract file is gone');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});

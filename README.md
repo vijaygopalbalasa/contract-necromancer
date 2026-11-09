@@ -153,6 +153,44 @@ and a skill, `skills/contract-necromancer/SKILL.md`, that teaches the workflow. 
 (`npm install -g github:vijaygopalbalasa/contract-necromancer`, or `npm link` from a clone), then install the power with
 `kiro-cli powers install ./power` or, in the IDE, Powers > Add Custom Power > Import power from GitHub.
 
+## Contracts in other languages
+
+Contracts are JavaScript by default. A spec can hold contracts in any test framework that writes a JUnit XML report.
+Add `.kiro/specs/<spec>/runners.json`, which maps a file-name pattern in `contracts/<spec>/` to a command:
+
+```json
+{
+  "test_*_contract.py": "python3 -P -m pytest {file} --junitxml={report} -q -p no:cacheprovider",
+  "sources": ["app/**/*.py"],
+  "frozen": ["conftest.py", "pytest.ini"]
+}
+```
+
+The command runs without a shell, in the project folder. `{file}` and `{report}` are replaced in one pass, `{report}` by
+a path in a new temporary folder. Results come only from that report, never from printed output. A testcase named
+`R<n>.<m> ...` is the contract for that criterion. pytest must be installed for the Python example.
+
+The command runs under these rules:
+
+- It must exit with status 0. A non-zero status fails the file, whatever the report says. That also means one failing
+  test in a file fails the file: keep the contracts of different tasks in different files.
+- It may run for 240 seconds. Past that, the file fails and the command and its child processes are killed. The same
+  limit applies to JavaScript contract files. `NECRO_RUNNER_TIMEOUT_MS` can lower it for one run, never raise it.
+- It gets a fresh, empty `PYTHONPYCACHEPREFIX` folder and `PYTHONDONTWRITEBYTECODE=1`, so compiled files written earlier
+  cannot stand in for changed source.
+- `"sources"` lists globs, relative to the project root, of the files the contracts exercise. The receipt pins the files
+  that match, like the imports of a JavaScript contract, and `necro verify` prints `MISMATCH` when one changes.
+- `"frozen"` lists globs of files that decide how the framework runs, such as `conftest.py` and `pytest.ini`. They are
+  locked with the spec like the contracts: the hooks put them back if an edit changes them, the contracts fail while
+  one differs from the lock, and receipts pin them. A glob that matches no file is refused when you freeze, so create
+  the file first (an empty one is enough).
+- `*` and `?` stay inside one name, `**` stands for any number of folders. Links, `.git`, `node_modules` and
+  `__pycache__` are skipped.
+
+Use `python3 -P` (Python 3.11 or newer) in the command. Without it, `python3 -m pytest` puts the project folder first on
+the import path, and a `pytest.py` written there stands in for pytest. With `-P`, a contract that imports the code under
+test needs the path set in the contract file or in `PYTHONPATH`.
+
 ## Commands
 
 ```
@@ -242,6 +280,15 @@ The guarantee is `necro verify`. It re-runs the frozen contracts from the lock a
 receipt, so a false "done" shows up as `MISMATCH`. `verify` trusts the lock file on disk, and `necro freeze` rewrites it,
 so freezing is a person's job: commit `.necro/lock.json` with the contracts, and before you trust a receipt, check that
 `git diff` shows no change to the lock or the contracts. Run `necro verify` in CI.
+
+### What runner contracts cannot defend against
+
+Code under test runs inside the test framework's own process. It can tamper with that process: write the report from an
+exit handler, exit early with status 0, or patch the framework. The exit status, the time limit and the locked files make
+that harder, not impossible. The gate also trusts the language environment as much as the test framework does: the
+installed packages and the interpreter. An agent that can install a package that the framework loads on its own, or
+replace the interpreter, can make a failing run look like a pass. Run `necro verify` on a machine you control, from a
+clean checkout and a clean environment, before you trust a receipt for code in another language.
 
 ## Receipt viewer
 

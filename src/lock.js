@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { hashFile } from './canon.js';
 import { runContracts } from './contracts.js';
-import { readRunners, findRunner } from './runners.js';
+import { readRunners, findRunner, expandGlobs, runnersRel } from './runners.js';
 
 const LOCK_FILE = path.join('.necro', 'lock.json');
 const FROZEN_DIR = path.join('.necro', 'frozen');
@@ -222,6 +222,20 @@ function listContractFiles(cwd, spec, patterns) {
   return entries.map((f) => toRel(path.join('contracts', spec, f)));
 }
 
+// Req 13.9: the files that globs of runners.json name. A glob that matches no file is
+// refused, so a typo cannot leave a file unlocked without a word.
+function listedFiles(cwd, spec, key, globs) {
+  const found = [];
+  for (const glob of globs) {
+    const hit = expandGlobs(cwd, [glob]);
+    if (hit.length === 0) {
+      throw new Error(`${runnersRel(spec)} lists "${glob}" under "${key}", which matches no file. Fix the list or add the file, then freeze the spec again.`);
+    }
+    found.push(...hit);
+  }
+  return found;
+}
+
 export function freezeSpec(cwd, spec) {
   const reqRel = toRel(path.join('.kiro', 'specs', spec, 'requirements.md'));
   const reqAbs = path.join(cwd, reqRel);
@@ -252,6 +266,21 @@ export function freezeSpec(cwd, spec) {
     throw new Error(`'${runners.path}' resolves outside the project root. Move it inside the project.`);
   }
 
+  // Req 13.9: files listed under "frozen" are locked with the spec, next to its contracts.
+  // The files under "sources" are pinned in receipts, so they only have to exist here.
+  let frozen = [];
+  if (runners) {
+    listedFiles(cwd, spec, 'sources', runners.sources);
+    const own = new Set([reqRel, runners.path, ...contractPaths]);
+    frozen = [...new Set(listedFiles(cwd, spec, 'frozen', runners.frozen))].filter((p) => !own.has(p)).sort();
+    for (const p of frozen) {
+      if (!insideRoot(realCwd, fs.realpathSync(path.join(cwd, p)))) {
+        throw new Error(`Frozen file '${p}' resolves outside the project root. Move it inside the project.`);
+      }
+    }
+  }
+  const frozenEntries = frozen.map((p) => ({ path: p, sha256: hashFile(path.join(cwd, p)) }));
+
   const contracts = contractPaths.map((p) => ({
     name: contractName(p),
     path: p,
@@ -261,7 +290,15 @@ export function freezeSpec(cwd, spec) {
   // Req 2.5: run the contracts once and record the name of every contract in the
   // lock. Names come from the run results (one per named test), grouped by file.
   const runnersEntry = runners ? { path: runners.path, sha256: runners.sha256 } : null;
-  const partialLock = { specs: { [spec]: { contracts, ...(runnersEntry ? { runners: runnersEntry } : {}) } } };
+  const partialLock = {
+    specs: {
+      [spec]: {
+        contracts,
+        ...(runnersEntry ? { runners: runnersEntry } : {}),
+        ...(frozenEntries.length > 0 ? { frozen: frozenEntries } : {}),
+      },
+    },
+  };
   const results = runContracts(cwd, spec, partialLock);
   const namesByPath = {};
   for (const r of results) {
@@ -278,6 +315,7 @@ export function freezeSpec(cwd, spec) {
     requirements: { path: reqRel, sha256: reqHash },
     contracts,
     ...(runnersEntry ? { runners: runnersEntry } : {}),
+    ...(frozenEntries.length > 0 ? { frozen: frozenEntries } : {}),
     tasks: taskTable(cwd, spec),
   };
   writeLock(cwd, lock);
@@ -288,6 +326,7 @@ export function freezeSpec(cwd, spec) {
   copyFrozen(frozenDir, reqAbs, reqHash);
   for (const c of contracts) copyFrozen(frozenDir, path.join(cwd, c.path), c.sha256);
   if (runnersEntry) copyFrozen(frozenDir, path.join(cwd, runnersEntry.path), runnersEntry.sha256);
+  for (const f of frozenEntries) copyFrozen(frozenDir, path.join(cwd, f.path), f.sha256);
 }
 
 // True when `target` is `root` or somewhere beneath it (both resolved to real paths).
@@ -314,6 +353,7 @@ export function isFrozenPath(cwd, relPath) {
     if (entry.requirements && entry.requirements.path === relPath) return true;
     if (entry.contracts && entry.contracts.some((c) => c.path === relPath)) return true;
     if (entry.runners && entry.runners.path === relPath) return true;
+    if ((entry.frozen || []).some((f) => f.path === relPath)) return true; // Req 13.9
   }
   return false;
 }
@@ -326,6 +366,7 @@ export function frozenFiles(cwd, spec) {
   if (entry.requirements) out.push({ path: entry.requirements.path, sha256: entry.requirements.sha256 });
   if (entry.contracts) for (const c of entry.contracts) out.push({ path: c.path, sha256: c.sha256 });
   if (entry.runners) out.push({ path: entry.runners.path, sha256: entry.runners.sha256 });
+  for (const f of entry.frozen || []) out.push({ path: f.path, sha256: f.sha256 }); // Req 13.9
   return out;
 }
 
@@ -340,6 +381,9 @@ export function getExpectedHash(cwd, relPath) {
       if (c.path === relPath) return c.sha256;
     }
     if (entry.runners && entry.runners.path === relPath) return entry.runners.sha256;
+    for (const f of entry.frozen || []) {
+      if (f.path === relPath) return f.sha256; // Req 13.9
+    }
   }
   return null;
 }

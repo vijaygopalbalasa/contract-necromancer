@@ -10,7 +10,8 @@ import { runCheck, checkSpec } from '../src/check.js';
 import { verify } from '../src/verify.js';
 import { computeReceiptHash } from '../src/receipts.js';
 import { handlePreToolUse, handlePostToolUse } from '../src/hooks.js';
-import { parseRunners, readRunners, matchesPattern, splitCommand, findRunner } from '../src/runners.js';
+import { spawnSync } from 'node:child_process';
+import { parseRunners, readRunners, matchesPattern, splitCommand, findRunner, expandGlobs, runnerTimeLimitMs, RUNNER_TIME_LIMIT_MS } from '../src/runners.js';
 
 const FAKE = path.join(import.meta.dirname, 'fixtures', 'fake-runner.js');
 const SPEC = 'demo';
@@ -27,8 +28,8 @@ function put(cwd, rel, text) {
   fs.writeFileSync(abs, text);
 }
 
-function runnersJson(command = COMMAND, pattern = '*_contract.fake') {
-  return JSON.stringify({ [pattern]: command }, null, 2) + '\n';
+function runnersJson(command = COMMAND, pattern = '*_contract.fake', extra = {}) {
+  return JSON.stringify({ [pattern]: command, ...extra }, null, 2) + '\n';
 }
 
 // A project whose spec has fake-framework contracts. `files` maps a file name in
@@ -306,11 +307,41 @@ test('R13.2 a failure, an error and a skipped testcase do not pass, and a clean 
   }
 });
 
-test('R13.2 an exit code does not change what the report says', () => {
-  const cwd = project({ 'a_contract.fake': 'pass R1.1 x\nfail R1.2 y\n@exit 1\n' });
+test('R13.7 a non-zero exit fails the file even when the report says every testcase passed', () => {
+  const cwd = project({ 'a_contract.fake': 'pass R1.1 x\nfail R1.2 y\n@exit 1\n', 'b_contract.fake': 'pass R2.1 z\n@exit 3\n' });
   try {
     freezeSpec(cwd, SPEC);
-    assert.deepEqual(byName(runContracts(cwd, SPEC, readLock(cwd))), { 'R1.1 x': 'pass', 'R1.2 y': 'fail' });
+    const results = runContracts(cwd, SPEC, readLock(cwd));
+    assert.deepEqual(byName(results), { 'R1.1 x': 'fail', 'R1.2 y': 'fail', 'R2.1 z': 'fail' }, 'names are kept, none passes');
+    const reasonOf = (name) => results.find((r) => r.name === name).reason;
+    assert.match(reasonOf('R1.1 x'), /a_contract\.fake/);
+    assert.match(reasonOf('R1.1 x'), /status 1\b/);
+    assert.match(reasonOf('R2.1 z'), /status 3\b/);
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.7 a non-zero exit with no readable report is one failing contract named after the file, with the status', () => {
+  const cwd = project({ 'a_contract.fake': '@no-report\n@exit 2\n' });
+  try {
+    freezeSpec(cwd, SPEC);
+    const results = runContracts(cwd, SPEC, readLock(cwd));
+    assert.equal(results.length, 1);
+    assert.equal(results[0].result, 'fail');
+    assert.ok(results[0].name.includes('a_contract.fake'));
+    assert.match(results[0].reason, /status 2\b/);
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.7 a report rewritten to all-pass by another process cannot rescue a run that exited non-zero', () => {
+  // The real run fails (exit 1); the report on disk says everything passed, as a background process would leave it.
+  const cwd = project({ 'a_contract.fake': 'pass R1.1 add\n@exit 1\n' });
+  try {
+    freezeSpec(cwd, SPEC);
+    assert.deepEqual(byName(runContracts(cwd, SPEC, readLock(cwd))), { 'R1.1 add': 'fail' });
   } finally {
     done(cwd);
   }
@@ -755,5 +786,452 @@ test('R13.5 freeze refuses a runners.json that resolves outside the project', ()
   } finally {
     done(cwd);
     done(outside);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Task 29: hardening after an independent review (Req 13.7 to 13.9)
+// ---------------------------------------------------------------------------
+
+// Set the runner time limit for one block of code.
+function withLimit(ms, fn) {
+  process.env.NECRO_RUNNER_TIMEOUT_MS = String(ms);
+  try {
+    return fn();
+  } finally {
+    delete process.env.NECRO_RUNNER_TIMEOUT_MS;
+  }
+}
+
+function alive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function waitDead(pid, ms = 3000) {
+  const end = Date.now() + ms;
+  while (alive(pid) && Date.now() < end) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 25);
+  return !alive(pid);
+}
+
+test('R13.7 the runner time limit is 240 seconds, and the environment can only lower it', () => {
+  assert.equal(RUNNER_TIME_LIMIT_MS, 240000);
+  assert.equal(runnerTimeLimitMs({}), 240000);
+  assert.equal(runnerTimeLimitMs({ NECRO_RUNNER_TIMEOUT_MS: '1500' }), 1500);
+  assert.equal(runnerTimeLimitMs({ NECRO_RUNNER_TIMEOUT_MS: '99999999' }), 240000, 'never above the default');
+  for (const bad of ['', '0', '-5', 'abc', '1.5e3x']) assert.equal(runnerTimeLimitMs({ NECRO_RUNNER_TIMEOUT_MS: bad }), 240000, bad);
+});
+
+test('R13.7 a hung runner command is stopped at the limit: the file fails with a reason, the folder is gone', () => {
+  const cwd = project({ 'a_contract.fake': 'pass R1.1 x\n' });
+  try {
+    freezeSpec(cwd, SPEC);
+    put(cwd, 'contracts/demo/a_contract.fake', 'pass R1.1 x\n@sleep 60000\n');
+    const lock = readLock(cwd);
+    lock.specs[SPEC].contracts[0].sha256 = hashFile(path.join(cwd, 'contracts/demo/a_contract.fake'));
+    withLog((log) => {
+      const started = Date.now();
+      const results = withLimit(600, () => runContracts(cwd, SPEC, lock));
+      assert.ok(Date.now() - started < 20000, 'the hang was cut off');
+      assert.ok(results.every((r) => r.result === 'fail'), 'nothing passes, recorded names included');
+      const named = results.find((r) => r.name.includes('a_contract.fake'));
+      assert.match(named.reason, /a_contract\.fake/);
+      assert.match(named.reason, /time limit/);
+      const [c] = calls(log);
+      assert.ok(!fs.existsSync(path.dirname(c.report)), 'the temporary folder is removed');
+      assert.ok(!fs.existsSync(c.pycachePrefix), 'the bytecode folder is removed');
+    });
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.7 on a timeout the command and its child processes are killed', () => {
+  const pidFile = path.join(tmpCwd('necro-runners-pid-'), 'child.pid');
+  const cwd = project({ 'a_contract.fake': 'pass R1.1 x\n' });
+  try {
+    freezeSpec(cwd, SPEC);
+    put(cwd, 'contracts/demo/a_contract.fake', `@child ${pidFile}\n@sleep 60000\n`);
+    const lock = readLock(cwd);
+    lock.specs[SPEC].contracts[0].sha256 = hashFile(path.join(cwd, 'contracts/demo/a_contract.fake'));
+    const results = withLimit(1500, () => runContracts(cwd, SPEC, lock));
+    assert.equal(results[0].result, 'fail');
+    assert.match(results[0].reason, /time limit/);
+    const childPid = Number(fs.readFileSync(pidFile, 'utf8'));
+    assert.ok(childPid > 0, 'the command started a child');
+    assert.ok(waitDead(childPid), 'the child process is gone');
+  } finally {
+    done(cwd);
+    fs.rmSync(path.dirname(pidFile), { recursive: true, force: true });
+  }
+});
+
+test('R13.7 a run that finishes inside the limit is not affected by it', () => {
+  const cwd = project({ 'a_contract.fake': 'pass R1.1 x\n@sleep 100\n' });
+  try {
+    freezeSpec(cwd, SPEC);
+    assert.deepEqual(byName(withLimit(20000, () => runContracts(cwd, SPEC, readLock(cwd)))), { 'R1.1 x': 'pass' });
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.8 {file} and {report} are replaced in one pass: a project path that holds {report} stays intact', () => {
+  const parent = tmpCwd('necro-runners-braces-');
+  const cwd = path.join(parent, 'x{report}y {file}z');
+  try {
+    project({ 'a_contract.fake': 'pass R1.1 x\n' }, { cwd });
+    withLog((log) => {
+      freezeSpec(cwd, SPEC);
+      assert.deepEqual(byName(runContracts(cwd, SPEC, readLock(cwd))), { 'R1.1 x': 'pass' });
+      const [c] = calls(log);
+      assert.equal(c.argv.length, 2);
+      assert.ok(c.file.endsWith('x{report}y {file}z/contracts/demo/a_contract.fake'), c.file);
+      assert.ok(!c.report.includes('x{report}y'), 'the report path is not built from the project path');
+    });
+  } finally {
+    done(parent);
+  }
+});
+
+test('R13.8 the command gets a fresh empty PYTHONPYCACHEPREFIX folder, new each run, and PYTHONDONTWRITEBYTECODE=1', () => {
+  const cwd = project({ 'a_contract.fake': 'pass R1.1 x\n' });
+  try {
+    withLog((log) => {
+      freezeSpec(cwd, SPEC);
+      runContracts(cwd, SPEC, readLock(cwd));
+      const seen = calls(log);
+      assert.equal(seen.length, 2);
+      for (const c of seen) {
+        assert.equal(c.dontWriteBytecode, '1');
+        assert.ok(typeof c.pycachePrefix === 'string' && path.isAbsolute(c.pycachePrefix));
+        assert.deepEqual(c.pycacheEntries, [], 'the bytecode folder is empty when the command starts');
+        assert.ok(path.relative(cwd, c.pycachePrefix).startsWith('..'), 'the bytecode folder is not inside the project');
+        assert.notEqual(path.dirname(c.pycachePrefix), path.dirname(c.report));
+        assert.ok(!fs.existsSync(c.pycachePrefix), 'the bytecode folder is removed after the run');
+      }
+      assert.notEqual(seen[0].pycachePrefix, seen[1].pycachePrefix);
+    });
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.8 a value of PYTHONPYCACHEPREFIX or PYTHONDONTWRITEBYTECODE in the environment does not replace the fresh one', () => {
+  const cwd = project({ 'a_contract.fake': 'pass R1.1 x\n' });
+  process.env.PYTHONPYCACHEPREFIX = '/tmp/stale-cache';
+  process.env.PYTHONDONTWRITEBYTECODE = '';
+  try {
+    withLog((log) => {
+      freezeSpec(cwd, SPEC);
+      const [c] = calls(log);
+      assert.notEqual(c.pycachePrefix, '/tmp/stale-cache');
+      assert.equal(c.dontWriteBytecode, '1');
+    });
+  } finally {
+    delete process.env.PYTHONPYCACHEPREFIX;
+    delete process.env.PYTHONDONTWRITEBYTECODE;
+    done(cwd);
+  }
+});
+
+// --- 13.9: reserved keys "sources" and "frozen" in runners.json ---------------------------------
+
+test('R13.9 sources and frozen are reserved keys: they are not patterns, and they must be arrays of project-relative globs', () => {
+  const text = JSON.stringify({ 'test_*.py': 'x {file} {report}', sources: ['app/**/*.py'], frozen: ['conftest.py', 'pytest.ini'] });
+  assert.deepEqual(parseRunners(text), [{ pattern: 'test_*.py', command: 'x {file} {report}' }]);
+  const bad = [
+    { sources: 'app/*.py' },
+    { frozen: 'conftest.py' },
+    { sources: [1] },
+    { frozen: [''] },
+    { sources: ['/etc/passwd'] },
+    { frozen: ['../outside.py'] },
+    { sources: ['a/../../b.py'] },
+    { frozen: ['a\\b.py'] },
+    { sources: ['a//b.py'] },
+    { frozen: ['C:/x.py'] },
+    { sources: null },
+  ];
+  for (const extra of bad) {
+    const t = JSON.stringify({ '*.t': 'x {file} {report}', ...extra });
+    assert.throws(() => parseRunners(t), (e) => e instanceof Error && /runners\.json/.test(e.message), t);
+  }
+});
+
+test('R13.9 expandGlobs lists project files that match: * and ? inside a name, ** across folders, generated folders skipped', () => {
+  const cwd = tmpCwd('necro-globs-');
+  try {
+    for (const f of ['x.txt', 'a/b.txt', 'a/c/d.txt', 'a/c/e.md', 'node_modules/n.txt', 'a/__pycache__/z.txt', '.git/g.txt']) put(cwd, f, 'x');
+    fs.symlinkSync(path.join(cwd, 'x.txt'), path.join(cwd, 'link.txt'));
+    assert.deepEqual(expandGlobs(cwd, ['x.txt']), ['x.txt']);
+    assert.deepEqual(expandGlobs(cwd, ['a/*.txt']), ['a/b.txt']);
+    assert.deepEqual(expandGlobs(cwd, ['a/**/*.txt']), ['a/b.txt', 'a/c/d.txt']);
+    assert.deepEqual(expandGlobs(cwd, ['**/*.txt']), ['a/b.txt', 'a/c/d.txt', 'x.txt'], 'links and generated folders are skipped');
+    assert.deepEqual(expandGlobs(cwd, ['?.txt', 'a/b.txt']), ['a/b.txt', 'x.txt']);
+    assert.deepEqual(expandGlobs(cwd, ['node_modules/n.txt']), ['node_modules/n.txt'], 'named on purpose');
+    assert.deepEqual(expandGlobs(cwd, ['nope/*.txt', 'nothing.md']), []);
+  } finally {
+    done(cwd);
+  }
+});
+
+function sourcesProject(extra) {
+  const cwd = project({ 'a_contract.fake': 'pass R1.1 x\n' }, { runners: runnersJson(COMMAND, '*_contract.fake', extra) });
+  put(cwd, 'app/calc.txt', 'one\n');
+  put(cwd, 'app/more.txt', 'two\n');
+  put(cwd, 'conftest.txt', 'plugin-free\n');
+  put(cwd, 'pytest.txt', 'ini-free\n');
+  return cwd;
+}
+
+test('R13.9 the receipt pins the files that match sources, and verify prints MISMATCH when one changes', () => {
+  const cwd = sourcesProject({ sources: ['app/*.txt'] });
+  try {
+    freezeSpec(cwd, SPEC);
+    const { receipt } = runCheck(cwd, SPEC);
+    const written = JSON.parse(fs.readFileSync(path.join(cwd, receipt), 'utf8'));
+    assert.deepEqual(
+      written.sources,
+      [
+        { path: 'app/calc.txt', sha256: hashFile(path.join(cwd, 'app/calc.txt')) },
+        { path: 'app/more.txt', sha256: hashFile(path.join(cwd, 'app/more.txt')) },
+      ],
+    );
+    assert.equal(captureStdout(() => verify(cwd, receipt)).code, 0);
+    put(cwd, 'app/more.txt', 'changed\n');
+    const out = captureStdout(() => verify(cwd, receipt));
+    assert.equal(out.code, 1);
+    assert.match(out.out, /MISMATCH/);
+    assert.match(out.out, /app\/more\.txt/);
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.9 a spec without sources keeps a receipt with no sources from runner files', () => {
+  const cwd = sourcesProject({});
+  try {
+    freezeSpec(cwd, SPEC);
+    const { receipt } = runCheck(cwd, SPEC);
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(cwd, receipt), 'utf8')).sources, []);
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.9 freeze locks every file listed under frozen with the spec, stores a copy, and the hooks protect them', () => {
+  const cwd = sourcesProject({ frozen: ['conftest.txt', 'pytest.txt'] });
+  try {
+    freezeSpec(cwd, SPEC);
+    const entry = readLock(cwd).specs[SPEC];
+    const hashes = { 'conftest.txt': hashFile(path.join(cwd, 'conftest.txt')), 'pytest.txt': hashFile(path.join(cwd, 'pytest.txt')) };
+    assert.deepEqual(entry.frozen, [
+      { path: 'conftest.txt', sha256: hashes['conftest.txt'] },
+      { path: 'pytest.txt', sha256: hashes['pytest.txt'] },
+    ]);
+    for (const [p, h] of Object.entries(hashes)) {
+      assert.equal(fs.readFileSync(path.join(cwd, '.necro/frozen', h), 'utf8'), fs.readFileSync(path.join(cwd, p), 'utf8'));
+      assert.ok(isFrozenPath(cwd, p));
+      assert.equal(getExpectedHash(cwd, p), h);
+      assert.ok(frozenFiles(cwd, SPEC).some((f) => f.path === p && f.sha256 === h));
+    }
+    // PreToolUse refuses a write, PostToolUse puts the file back.
+    const res = pre(cwd, 'fs_write', { path: path.join(cwd, 'conftest.txt'), text: 'plugin' });
+    assert.equal(res.exitCode, 2);
+    assert.match(res.stderr, /conftest\.txt/);
+    pre(cwd, 'execute_bash', { command: 'echo plugin > conftest.txt' });
+    fs.writeFileSync(path.join(cwd, 'conftest.txt'), 'plugin\n');
+    fs.rmSync(path.join(cwd, 'pytest.txt'));
+    const back = post(cwd, 'execute_bash', { command: 'x' });
+    assert.match(back.stderr, /Restored frozen file conftest\.txt/);
+    assert.match(back.stderr, /Restored frozen file pytest\.txt/);
+    assert.equal(fs.readFileSync(path.join(cwd, 'conftest.txt'), 'utf8'), 'plugin-free\n');
+    assert.equal(fs.readFileSync(path.join(cwd, 'pytest.txt'), 'utf8'), 'ini-free\n');
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.9 a frozen file that changed or is gone fails every runner file without running the command', () => {
+  const cwd = sourcesProject({ frozen: ['conftest.txt'] });
+  try {
+    withLog((log) => {
+      freezeSpec(cwd, SPEC);
+      const before = calls(log).length;
+      put(cwd, 'conftest.txt', 'planted\n');
+      let results = runContracts(cwd, SPEC, readLock(cwd));
+      assert.deepEqual(byName(results), { 'R1.1 x': 'fail' });
+      assert.match(results[0].reason, /conftest\.txt/);
+      fs.rmSync(path.join(cwd, 'conftest.txt'));
+      results = runContracts(cwd, SPEC, readLock(cwd));
+      assert.deepEqual(byName(results), { 'R1.1 x': 'fail' });
+      assert.equal(calls(log).length, before, 'the command did not run');
+    });
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.9 the receipt pins the frozen files, and verify prints MISMATCH when one changes or the receipt leaves them out', () => {
+  const cwd = sourcesProject({ frozen: ['conftest.txt'] });
+  try {
+    freezeSpec(cwd, SPEC);
+    const { receipt } = runCheck(cwd, SPEC);
+    const written = JSON.parse(fs.readFileSync(path.join(cwd, receipt), 'utf8'));
+    assert.deepEqual(written.frozen, [{ path: 'conftest.txt', sha256: hashFile(path.join(cwd, 'conftest.txt')) }]);
+    assert.equal(captureStdout(() => verify(cwd, receipt)).code, 0);
+
+    rewriteReceipt(cwd, receipt, (r) => delete r.frozen);
+    let out = captureStdout(() => verify(cwd, receipt));
+    assert.equal(out.code, 1);
+    assert.match(out.out, /MISMATCH/);
+    assert.match(out.out, /conftest\.txt/);
+
+    const { receipt: again } = runCheck(cwd, SPEC);
+    assert.equal(captureStdout(() => verify(cwd, again)).code, 0);
+    put(cwd, 'conftest.txt', 'planted\n');
+    out = captureStdout(() => verify(cwd, again));
+    assert.equal(out.code, 1);
+    assert.match(out.out, /MISMATCH/);
+    assert.match(out.out, /conftest\.txt/);
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.9 freeze says which entry of sources or frozen matches no file, and a spec without them has no frozen entry', () => {
+  for (const key of ['sources', 'frozen']) {
+    const cwd = sourcesProject({ [key]: ['missing/*.txt'] });
+    try {
+      assert.throws(() => freezeSpec(cwd, SPEC), (e) => /runners\.json/.test(e.message) && /missing\/\*\.txt/.test(e.message) && new RegExp(key).test(e.message));
+    } finally {
+      done(cwd);
+    }
+  }
+  const cwd = sourcesProject({});
+  try {
+    freezeSpec(cwd, SPEC);
+    assert.equal(Object.hasOwn(readLock(cwd).specs[SPEC], 'frozen'), false);
+    const { receipt } = runCheck(cwd, SPEC);
+    assert.equal(Object.hasOwn(JSON.parse(fs.readFileSync(path.join(cwd, receipt), 'utf8')), 'frozen'), false);
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.9 verify prints SUPERSEDED when the spec was frozen again with a changed frozen file', () => {
+  const cwd = sourcesProject({ frozen: ['conftest.txt'] });
+  try {
+    freezeSpec(cwd, SPEC);
+    const { receipt } = runCheck(cwd, SPEC);
+    put(cwd, 'conftest.txt', 'a deliberate change by a person\n');
+    freezeSpec(cwd, SPEC);
+    const out = captureStdout(() => verify(cwd, receipt));
+    assert.equal(out.code, 1);
+    assert.match(out.out, /SUPERSEDED/);
+    assert.match(out.out, /conftest\.txt/);
+  } finally {
+    done(cwd);
+  }
+});
+
+// --- The review's attacks against a real pytest (skipped with a plain message when it is missing) -----------
+
+const HAS_PYTEST = (() => {
+  try {
+    return spawnSync('python3', ['-m', 'pytest', '--version'], { stdio: 'ignore' }).status === 0;
+  } catch {
+    return false;
+  }
+})();
+const PYTEST = HAS_PYTEST ? {} : { skip: 'python3 -m pytest is not installed, so this Python check was skipped' };
+const PY_COMMAND = 'python3 -m pytest {file} --junitxml={report} -q -p no:cacheprovider';
+const PY_CONTRACT =
+  "import sys, os\nsys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'app'))\nfrom calc import add\n\ndef test_R1_1_add():\n    assert add(2, 3) == 5\n";
+
+// A Python project with the review's shape; `code` is the body of add().
+function pyProject(code, extra = {}, command = PY_COMMAND) {
+  const cwd = tmpCwd('necro-py-');
+  put(cwd, '.kiro/specs/s/requirements.md', '# S\n');
+  put(cwd, '.kiro/specs/s/runners.json', JSON.stringify({ 'test_*_contract.py': command, ...extra }, null, 2) + '\n');
+  put(cwd, 'contracts/s/test_calc_contract.py', PY_CONTRACT);
+  put(cwd, 'app/calc.py', `def add(a, b):\n    return ${code}\n`);
+  return cwd;
+}
+
+const pyResults = (cwd) => Object.fromEntries(runContracts(cwd, 's', readLock(cwd)).map((r) => [r.name, r.result]));
+
+test('R13.8 stale bytecode with a restored modified time cannot stand in for changed source (pytest)', PYTEST, () => {
+  const cwd = pyProject('a + b');
+  try {
+    freezeSpec(cwd, 's');
+    assert.deepEqual(pyResults(cwd), { test_R1_1_add: 'pass' });
+    // Compile the correct code the ordinary way, so a cached copy sits in app/__pycache__.
+    const compiled = spawnSync('python3', ['-c', 'import sys; sys.path.insert(0, "app"); import calc'], { cwd });
+    assert.equal(compiled.status, 0);
+    // Wrong code of the same size, with the old modified time put back.
+    const file = path.join(cwd, 'app/calc.py');
+    const { atime, mtime } = fs.statSync(file);
+    fs.writeFileSync(file, 'def add(a, b):\n    return a - b\n');
+    fs.utimesSync(file, atime, mtime);
+    assert.deepEqual(pyResults(cwd), { test_R1_1_add: 'fail' });
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.9 a conftest.py or pytest.ini written after the freeze cannot turn a failing run into a pass (pytest)', PYTEST, () => {
+  const cwd = pyProject('a - b', { frozen: ['conftest.py', 'pytest.ini'] });
+  put(cwd, 'conftest.py', '# nothing here\n');
+  put(cwd, 'pytest.ini', '[pytest]\n');
+  try {
+    // The person freezes wrong code on purpose here, so the contract fails before and after.
+    freezeSpec(cwd, 's');
+    assert.deepEqual(pyResults(cwd), { test_R1_1_add: 'fail' });
+    const plugin =
+      "import pytest\n@pytest.hookimpl(hookwrapper=True)\ndef pytest_runtest_makereport(item, call):\n    outcome = yield\n    rep = outcome.get_result()\n    if rep.when == 'call':\n        rep.outcome = 'passed'\n";
+    put(cwd, 'conftest.py', plugin);
+    assert.deepEqual(pyResults(cwd), { test_R1_1_add: 'fail' }, 'a planted conftest.py');
+    put(cwd, 'conftest.py', '# nothing here\n');
+    put(cwd, 'plug.py', plugin);
+    put(cwd, 'pytest.ini', '[pytest]\naddopts = -p plug\n');
+    assert.deepEqual(pyResults(cwd), { test_R1_1_add: 'fail' }, 'a planted pytest.ini');
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.7 a hang in the code under test is cut off at the limit (pytest)', PYTEST, () => {
+  const cwd = pyProject('a + b');
+  try {
+    freezeSpec(cwd, 's');
+    put(cwd, 'app/calc.py', 'import time\ntime.sleep(10**6)\ndef add(a, b):\n    return a + b\n');
+    const started = Date.now();
+    const results = withLimit(4000, () => runContracts(cwd, 's', readLock(cwd)));
+    assert.ok(Date.now() - started < 30000);
+    assert.equal(results.every((r) => r.result === 'fail'), true);
+    assert.ok(results.some((r) => /time limit/.test(r.reason || '')));
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.1 a pytest.py planted in the project does not stand in for pytest when the command uses -P', PYTEST, () => {
+  const cwd = pyProject('a - b', {}, 'python3 -P -m pytest {file} --junitxml={report} -q -p no:cacheprovider');
+  try {
+    freezeSpec(cwd, 's');
+    put(
+      cwd,
+      'pytest.py',
+      "import sys\nfor a in sys.argv:\n    if a.startswith('--junitxml='):\n        open(a.split('=', 1)[1], 'w').write('<testsuite><testcase name=\"test_R1_1_add\"/></testsuite>')\n",
+    );
+    assert.deepEqual(pyResults(cwd), { test_R1_1_add: 'fail' });
+  } finally {
+    done(cwd);
   }
 });

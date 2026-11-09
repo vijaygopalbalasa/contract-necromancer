@@ -136,6 +136,7 @@ function frozenKeys(cwd, resolve) {
     if (entry.requirements) paths.push(entry.requirements.path);
     for (const c of entry.contracts || []) paths.push(c.path);
     if (entry.runners) paths.push(entry.runners.path); // Req 13.5
+    for (const f of entry.frozen || []) paths.push(f.path); // Req 13.9
     for (const p of paths) {
       keys.set(compareKey(p), p);
       const real = resolve(p);

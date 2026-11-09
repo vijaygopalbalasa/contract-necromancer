@@ -1,8 +1,7 @@
-import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { hashFile } from './canon.js';
-import { lockedRunners, findRunner, runReport } from './runners.js';
+import { lockedRunners, findRunner, runReport, spawnLimited, timeoutReason } from './runners.js';
 
 const RUNNER = fileURLToPath(new URL('./contract-runner.js', import.meta.url));
 
@@ -22,15 +21,18 @@ function runnerEnv() {
 }
 
 // Run one contract file through src/contract-runner.js, which uses the node:test
-// run() API. Returns { file, events } or null when the runner itself failed.
+// run() API. Returns { file, events }, { reason } when the file ran past the time
+// limit (Req 13.7; the runner and everything it started are killed), or null when
+// the runner itself failed.
 function runFile(cwd, absPath) {
-  const res = spawnSync(process.execPath, [RUNNER, absPath, cwd], {
+  const { res, timedOut, limitMs } = spawnLimited(process.execPath, [RUNNER, absPath, cwd], {
     cwd,
     env: runnerEnv(),
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
     maxBuffer: 64 * 1024 * 1024,
   });
+  if (timedOut) return { reason: timeoutReason(path.basename(absPath), limitMs) };
   if (res.error || res.status !== 0) return null;
   try {
     const parsed = JSON.parse(res.stdout);
@@ -74,12 +76,15 @@ function interpret(run, stem) {
   return contracts;
 }
 
-// Req 13.2, 13.3, 13.4: turn the report of a runner file into [{ name, result, reason? }].
+// Req 13.2, 13.3, 13.4, 13.7: turn the report of a runner file into [{ name, result, reason? }].
 // Each testcase is a contract named by its `name` attribute; one that holds a failure
 // or error, or is skipped, does not pass. A run that gave no usable report is one
-// failing contract named after the file, with a plain reason.
+// failing contract named after the file, with a plain reason. A run that exited with a
+// non-zero status or ran too long fails the file: the names of its report are kept
+// when it has one, but none of them passes.
 function interpretReport(run, stem) {
-  if (run.reason !== undefined) return [{ name: stem, result: 'fail', reason: run.reason }];
+  if (run.cases === undefined) return [{ name: stem, result: 'fail', reason: run.reason }];
+  if (run.reason !== undefined) return run.cases.map((t) => ({ name: t.name, result: 'fail', reason: run.reason }));
   return run.cases.map((t) => ({ name: t.name, result: t.outcome === 'passed' ? 'pass' : 'fail' }));
 }
 
@@ -121,6 +126,24 @@ export function runContracts(cwd, spec, lock) {
     return patterns;
   };
 
+  // Req 13.9: the files locked with the spec next to runners.json (a conftest.py, a
+  // pytest.ini). The paths of those that changed or are gone, read lazily.
+  let moved;
+  const movedFrozen = () => {
+    if (moved === undefined) {
+      moved = (entry.frozen || [])
+        .filter((f) => {
+          try {
+            return hashFile(path.resolve(cwd, f.path)) !== f.sha256;
+          } catch {
+            return true;
+          }
+        })
+        .map((f) => f.path);
+    }
+    return moved;
+  };
+
   const out = [];
   for (const c of files.values()) {
     const absPath = path.resolve(cwd, c.path);
@@ -146,7 +169,8 @@ export function runContracts(cwd, spec, lock) {
 
     let contracts;
     if (isNodeContract(c.path)) {
-      contracts = interpret(runFile(cwd, absPath), stem);
+      const ran = runFile(cwd, absPath);
+      contracts = ran && ran.reason !== undefined ? [{ name: stem, result: 'fail', reason: ran.reason }] : interpret(ran, stem);
     } else {
       // Req 13.1, 13.5: a contract file of another language runs with the command of
       // the frozen runners.json. When that file moved, or no pattern matches, the
@@ -158,6 +182,12 @@ export function runContracts(cwd, spec, lock) {
           known === null
             ? `Cannot run ${stem}: the frozen runners.json is missing or has changed. Restore it, or freeze the spec again.`
             : `Cannot run ${stem}: no pattern in runners.json matches this file. Restore runners.json, or freeze the spec again.`;
+        for (const name of c.names.length ? c.names : [stem]) push(name, 'fail', reason);
+        continue;
+      }
+      const changed = movedFrozen();
+      if (changed.length > 0) {
+        const reason = `Cannot run ${stem}: the frozen file ${changed.join(', ')} changed or is missing. Restore it, or freeze the spec again.`;
         for (const name of c.names.length ? c.names : [stem]) push(name, 'fail', reason);
         continue;
       }
