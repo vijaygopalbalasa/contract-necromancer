@@ -163,6 +163,7 @@ receipts anyone can re-run.
 11. WHEN a runner command runs THE SYSTEM SHALL remove from its environment the variables that redirect an interpreter or test framework to other code (`PYTHONPATH`, `PYTHONHOME`, `PYTHONSTARTUP`, `PYTHONUSERBASE`, `PYTEST_ADDOPTS`, `PYTEST_PLUGINS`, `NODE_OPTIONS`, `NODE_PATH`), and the same SHALL hold for JavaScript contract files.
 12. WHEN runner contracts run, and WHEN `necro verify` runs, THE SYSTEM SHALL expand the `"frozen"` globs of the locked `runners.json` again and count every runner file of the spec as failing (verify: MISMATCH) IF the set of matching files differs from the locked set, so a matching file added after the freeze (for example a new `conftest.py`) is caught as well as a changed one.
 13. WHEN `"frozen"` globs are expanded THE SYSTEM SHALL count a symbolic link whose path matches a glob as a matching file (never skip it), so a link planted where a frozen file is expected is caught as added.
+14. WHEN `"frozen"` globs are expanded THE SYSTEM SHALL also count a symbolic link met part way along a glob (a linked folder at an intermediate segment, or any link under `**`) whose path the glob could match, so a linked folder cannot hide a file from the check.
 
 ## Requirement 14: Catch a tick however it got there
 **User story:** As a developer who runs Kiro's "Run all tasks" or lets sub-agents work unattended, I want a tick that did not go through the gate to be caught and undone, so that a task Kiro marks done after a failed or killed run (as in kirodotdev/Kiro#11786) never stays done.
@@ -176,4 +177,4 @@ receipts anyone can re-run.
 7. WHEN the Stop or PostTaskExec handler runs THE SYSTEM SHALL audit only the tasks that are ticked now and were not ticked when a person last froze the spec, so the handler finishes well inside the hooks' time limit on a large project; `necro audit` SHALL still check every ticked task.
 8. THE README SHALL say that receipts are files in the project, so an agent able to write files can add one; a forged receipt can only make `necro audit` accept a task whose required contracts pass now, so it can fake where a tick came from, not whether the work holds.
 9. THE repository's CI SHALL run `necro audit` for this repository and SHALL re-run with `necro verify` the newest receipt of each spec of the two examples, instead of the newest receipt of this repository's own specs (whose shared source files change with every later task, so their receipts are snapshots).
-
+10. WHEN the Stop, PostTaskExec or audit code decides a task's verdict THE SYSTEM SHALL count a required contract that has no result in the run as failing, never as passing or absent, and the Stop and PostTaskExec handlers SHALL plan which contracts to run once and audit with that same plan.

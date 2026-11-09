@@ -334,10 +334,10 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-09T21:15:41.204Z",
+      "frozenAt": "2026-11-09T21:43:16.749Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
-        "sha256": "9e1fd159db292d0bdf8d4ffc493cdf814d3293c47e04537ccd37bfab6a5a9749"
+        "sha256": "35cc11d694d08995fd31508c7cd969f97018893d2e102e0a417f1c03b9d45869"
       },
       "tasks": {
         "1": {
@@ -608,6 +608,13 @@
           ],
           "text": "34. **Symbolic links under frozen globs** (Req 13.13)"
         },
+        "35": {
+          "criteria": [
+            "13.14",
+            "14.10"
+          ],
+          "text": "35. **Fail closed on missing results and linked folders** (Req 13.14, 14.10)"
+        },
         "3b": {
           "criteria": [
             "4.7",
@@ -683,6 +690,7 @@
         "25. **One-command demo** (Req 11.1, 11.2, 11.3, 11.4, 11.5, 11.6)",
         "26. **A demo that reads at a glance** (Req 12.1, 12.2, 12.3)",
         "27. **Contracts in any language** (Req 13.1, 13.2, 13.3, 13.4, 13.5)",
+        "28. **A Python example** (Req 13.6)",
         "29. **Harden runner contracts** (Req 13.7, 13.8, 13.9, 13.10)",
         "3. **Contracts runner** (supports Req 4.4, 4.5, 6.1, 6.3)",
         "30. **A clean environment for contracts** (Req 13.11)",
