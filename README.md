@@ -1,19 +1,34 @@
 # Contract Necromancer
 
-[![Tests and receipts](https://github.com/vijaygopalbalasa/contract-necromancer/actions/workflows/test.yml/badge.svg)](https://github.com/vijaygopalbalasa/contract-necromancer/actions/workflows/test.yml)
-
-In 1986 Bertrand Meyer's Eiffel language made every routine state its contract: preconditions, postconditions and
-invariants that the program checked itself. Design by Contract answered "who decides the work is correct?" before
-anyone wrote the code. It stayed a niche idea, and everyday code kept tests instead. This project raises it
-for coding agents, where the question matters again.
-
-A coding agent can mark a task done when the work is not done. Kiro specs already have EARS acceptance criteria, but nothing checks them at the moment a task is ticked. Contract Necromancer gives each criterion an executable contract (the postcondition), a person freezes the contracts, Kiro hooks refuse the tick until the frozen contracts pass, and every passing task gets a receipt that anyone can re-run.
-
-## Try it in one command
+A coding agent can mark a task done in Kiro when the work does not meet the requirements. Contract Necromancer's Kiro hooks refuse the tick in `tasks.md` until the frozen contracts for that task pass, and each passing task leaves a receipt that anyone can re-run.
 
 ```
 npx -y github:vijaygopalbalasa/contract-necromancer demo
 ```
+
+Real output, trimmed (`<tmp>` stands for a temporary folder; the receipt hash differs on each run):
+
+```
+Step 2. Send the gate what the Kiro IDE sends when task 4 completes (task_update, status completed).
+The gate refused the tick (exit 2).
+Contracts failed: R2.1, R2.2, R3.1, R4.1, R4.2, R5.1, R5.2, R5.3, R5.4
+...
+Step 3. Restore the correct src/split.js and send the same call again.
+The gate accepted the tick (exit 0).
+Receipt: <tmp>/necro-demo-iini5u/.necro/receipts/ledger/769459d7d21a8c77e857ba8d7823ddf7cb954dd08bc3d52958e5744a908db20d.json
+
+Step 4. Re-run the receipt with necro verify.
+CONFIRMED 769459d7d21a8c77e857ba8d7823ddf7cb954dd08bc3d52958e5744a908db20d.
+Step 5. Change src/split.js in the copy and verify the same receipt again.
+MISMATCH. Files changed: src/split.js.
+```
+
+- Live receipt viewer: https://vijaygopalbalasa.github.io/contract-necromancer/
+- Demo video: https://youtu.be/TYrSyhIYqlk
+
+[![Tests and receipts](https://github.com/vijaygopalbalasa/contract-necromancer/actions/workflows/test.yml/badge.svg)](https://github.com/vijaygopalbalasa/contract-necromancer/actions/workflows/test.yml)
+
+## What the demo does
 
 Requires Node.js 24 or newer, and git: npx needs git to fetch a `github:` package. No Kiro, no npm account, no setup. It takes
 under a minute, including the download. The command copies the
@@ -153,6 +168,15 @@ necro demo              # show the gate refuse a false "done", accept the fix an
 fails (the receipt is written either way). It does not touch `tasks.md`. Use it to publish a receipt for the commit you
 just pushed.
 
+## Where the idea comes from
+
+In 1986 Bertrand Meyer's Eiffel language made every routine state its contract: preconditions, postconditions and
+invariants that the program checked itself. Design by Contract answered "who decides the work is correct?" before
+anyone wrote the code. It stayed a niche idea, and everyday code kept tests instead. This project raises it
+for coding agents, where the question matters again. Kiro specs already have EARS acceptance criteria, but nothing
+checked them at the moment a task is ticked. Here each criterion gets an executable contract (the postcondition), and a
+person freezes the contracts.
+
 ## Demo apps, built by Kiro under the gate
 
 Both apps have their own spec, frozen contracts, receipts and unit tests. A person wrote the requirements. Kiro drafted the design, the tasks and the contracts, and a person reviewed and froze them. Kiro then wrote the code.
@@ -183,14 +207,14 @@ Their hook files use `node ../../bin/necro.js`, so they work where `node` is on 
 Kiro wrote the code of this repository task by task. A person reviewed the contracts and froze them.
 
 - Specs in `.kiro/specs/`:
-  - `necro-core`: the tool. 10 requirements, 30 tasks, 81 contracts in 19 files, 14 receipts.
-  - `receipt-viewer`: the static page in `site/`. 9 requirements, 18 tasks, 25 contracts in 10 files, 19 receipts.
+  - `necro-core`: the tool. 11 requirements, 31 tasks, 87 contracts in 20 files, 15 receipts.
+  - `receipt-viewer`: the static page in `site/`. 10 requirements, 21 tasks, 34 contracts in 14 files, 22 receipts.
 - Steering in `.kiro/steering/`: `product.md`, `structure.md`, `tech.md`, and `necromancer.md`, which tells Kiro not to edit frozen files.
 - A custom agent in `.kiro/agents/necromancer.json` (task 21): the gate's hooks plus Kiro permission rules.
 - Hooks in `.kiro/hooks/`: `necromancer.json` is the gate (`PreToolUse`, `PostToolUse` and `Stop` calling `node bin/necro.js hook ...`). `session-log.json` appends the tool and path of each Kiro tool call to `.kiro/build-log/sess_*.jsonl`. For shell commands it keeps only program names.
 - Build logs in `.kiro/build-log/`: `build-*.txt` are Kiro's session output for each piece of work.
 
-The tool did not gate its own first tasks. Tasks 1 to 16 of `necro-core` were built before that spec was frozen, and they have no receipts. From task 17 on, the tool gated its own development: Kiro drafted 68 contracts from the requirements, a person reviewed and froze them, and tasks 17 to 24 were ticked through the gate. The receipt viewer was built under the gate from its first task.
+The tool did not gate its own first tasks. Tasks 1 to 16 of `necro-core` were built before that spec was frozen, and they have no receipts. From task 17 on, the tool gated its own development: Kiro drafted 68 contracts from the requirements, a person reviewed and froze them, and tasks 17 to 25 were ticked through the gate. The receipt viewer was built under the gate from its first task.
 
 Moments from the logs and the git history:
 
@@ -203,7 +227,7 @@ Moments from the logs and the git history:
   (R3.14, R3.15, R6.8, R8.8), then the ticks went through (`build-t19.txt`, `build-t20.txt`).
 - Old receipts now print `SUPERSEDED` when their spec was frozen again later, instead of `MISMATCH` (task 19). The
   newest receipt of each spec prints `CONFIRMED`.
-- The receipt viewer: 14 tasks were ticked through the gate with a receipt each, and tasks 15 and 16 followed. Its log records that every tick was accepted by the gate (`build-viewer.txt`).
+- The receipt viewer: all 21 tasks were ticked through the gate with a receipt each. The log of the first 14 records that every tick was accepted by the gate (`build-viewer.txt`).
 
 ## Limits
 
