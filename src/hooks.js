@@ -2,8 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { hashFile, sha256 } from './canon.js';
 import { readLock, isSpecFrozen, frozenFiles, TASK_LINE, taskIdOf, requiredNames } from './lock.js';
-import { runContracts, contractName } from './contracts.js';
+import { runContracts } from './contracts.js';
 import { buildReceipt, writeReceipt } from './receipts.js';
+import { auditSpec, failingRequired, problems } from './audit.js';
 
 const ALLOW = Object.freeze({ exitCode: 0, stdout: '', stderr: '' });
 
@@ -706,14 +707,7 @@ function decideTicks(lock, spec, results, change) {
   // (it did not load, or exited badly) fails the tick, even when the required
   // contract passed on its own. The runner reports such a file as a failing
   // result named after the file.
-  const requiredPaths = new Set(results.filter((r) => required.includes(r.name)).map((r) => r.path));
-  const failing = [
-    ...new Set(
-      results
-        .filter((r) => r.result === 'fail' && (required.includes(r.name) || (requiredPaths.has(r.path) && r.name === contractName(r.path))))
-        .map((r) => r.name),
-    ),
-  ].sort();
+  const failing = failingRequired(results, required);
   let task = null;
   if (ticked.length > 0) {
     const ids = ticked.map(taskIdOf);
@@ -879,9 +873,75 @@ export function handlePostToolUse(payload) {
   return { exitCode: 0, stdout: '', stderr: messages.join('\n') };
 }
 
-// Stop: print a session summary for each frozen spec (Req 7.1).
+// Req 14.3: put every ticked task that is not ok (Req 14.1) back to `[ ]` in its
+// tasks.md and return one message per task undone, with the reason. `audits` are the
+// results of auditSpec for the frozen specs. The tasks.md is recorded afterwards, as
+// after any other write to it (Req 3.10). Line endings and everything else in the file
+// stay as they were.
+function undoUnsupportedTicks(cwd, audits) {
+  const messages = [];
+  for (const audit of audits) {
+    const bad = problems(audit);
+    if (bad.length === 0) continue;
+    const file = tasksFile(cwd, audit.spec);
+    const rel = toRel(path.relative(cwd, file));
+    const text = readText(file);
+    if (text === null) continue;
+    const parts = text.split(/(\r?\n)/); // keeps the line breaks at the odd indexes
+    const undone = [];
+    for (const t of bad) {
+      const before = parts[t.index * 2];
+      const after = before.replace(/\[[xX]\]/, '[ ]');
+      if (after !== before) {
+        parts[t.index * 2] = after;
+        undone.push(t);
+      }
+    }
+    if (undone.length === 0) continue;
+    const next = parts.join('');
+    fs.writeFileSync(file, next);
+    recordState(cwd, audit.spec, next);
+    for (const t of undone) {
+      messages.push(`Unticked "${t.text}" in ${rel}: ${t.reason}. Fix the code, then tick the task again through the gate.`);
+    }
+  }
+  return messages;
+}
+
+// Audit every frozen spec and undo the ticks that are not ok (Req 14.3). `resultsBySpec`
+// holds contract results the caller already has. A spec whose lock records no list of
+// tasks ticked at freeze was frozen before Req 14: it is left alone, so an upgrade does
+// not untick a project's older work, and one message says a person must freeze it again
+// (Req 14.6). `necro audit` still reports every verdict for it.
+function auditAndUndo(cwd, lock, resultsBySpec = {}) {
+  const messages = [];
+  const audits = [];
+  for (const spec of Object.keys(lock.specs || {}).sort()) {
+    if (!Array.isArray(lock.specs[spec] && lock.specs[spec].ticked)) {
+      messages.push(
+        `Spec ${spec} was frozen before the lock recorded ticked tasks, so no tick of it is checked or undone. Ask a person to freeze it again to turn the check on.`,
+      );
+      continue;
+    }
+    audits.push(auditSpec(cwd, spec, lock, resultsBySpec[spec] || null));
+  }
+  return [...messages, ...undoUnsupportedTicks(cwd, audits)];
+}
+
+// PostTaskExec (Req 14.3): when Kiro finishes a spec task, find every ticked task that is
+// not ok and put it back to `[ ]`. Kiro documents no stdin payload for this trigger, so
+// nothing in the input is used: the project is the current folder, and all frozen specs
+// are audited. Always exits 0; the tasks undone are listed on stderr.
+export function handlePostTaskExec(payload) {
+  const cwd = payload && typeof payload.cwd === 'string' && payload.cwd !== '' ? payload.cwd : process.cwd();
+  const messages = auditAndUndo(cwd, readLock(cwd));
+  return { exitCode: 0, stdout: '', stderr: messages.join('\n') };
+}
+
+// Stop: print a session summary for each frozen spec (Req 7.1), then undo the ticks that
+// are not ok (Req 14.3). The summary counts the ticks Stop found, before the undo.
 export function handleStop(payload) {
-  const cwd = payload.cwd;
+  const cwd = payload && payload.cwd;
   if (!cwd) {
     return { exitCode: 0, stdout: '', stderr: '' };
   }
@@ -892,6 +952,7 @@ export function handleStop(payload) {
   }
 
   const lines = [];
+  const resultsBySpec = {};
   for (const spec of Object.keys(lock.specs).sort()) {
     // Count tasks done in .kiro/specs/<spec>/tasks.md
     let tasksDone = 0;
@@ -916,6 +977,7 @@ export function handleStop(payload) {
 
     // Run contracts and collect failing names
     const results = runContracts(cwd, spec, lock);
+    resultsBySpec[spec] = results;
     const failing = results
       .filter((r) => r.result === 'fail')
       .map((r) => r.name)
@@ -933,6 +995,6 @@ export function handleStop(payload) {
   return {
     exitCode: 0,
     stdout: output,
-    stderr: '',
+    stderr: auditAndUndo(cwd, lock, resultsBySpec).join('\n'),
   };
 }

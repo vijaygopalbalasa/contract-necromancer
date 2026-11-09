@@ -1,0 +1,210 @@
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Inspect current source, tests, and contract hashes
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The frozen contract files match the hashes in `.necro/lock.json`, and task 9 asks me to write `contracts/ledger/properties.contract.test.js`, which is already frozen. I'll do tasks 4 to 8 first, then come back to that point. Starting with task 4's tests.
+[tool] Write File
+[tool] Confirm split tests fail before implementation
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] Run tests after adding split module
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Replace in File
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Failed: Replace in File
+The hook reports that the frozen contract R2.1 fails. The contract needs `balances.js`, which is task 5, and it calls `Object.fromEntries` on the output of `splitExpense`. That means `splitExpense` should return `[key, cents]` pairs, not objects. I'll change the return shape and update my task 4 test to match.
+[tool] Write File
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+[tool] Rerun unit tests after split shape change
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 4's own tests pass. Its gate also needs contract R2.1, which depends on task 5, so I'll implement balances next. First its tests.
+[tool] Write File
+[tool] status: Pending
+[tool] Confirm balances tests fail before implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+My second test came out garbled. I'll rewrite it with explicit expected values before implementing.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+Now the implementation for balances.
+[tool] Write File
+[tool] Run unit and R2 contract tests
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+Both unit tests and the R2 contracts pass. Marking tasks 4 and 5 done.
+[tool] Replace in File
+[tool] Replace in File
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Completed
+Task 6 is next. I'll write its test file, then the greedy settle implementation.
+[tool] Write File
+[tool] status: Pending
+[tool] Confirm settle tests fail before implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run unit tests and settle contract tests
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Settle's unit tests pass. The R3.3 contract imports `report.js`, which is task 7, so I'll build that next. First I'll read the CLI contract to match the output format it expects.
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+The CLI contract matches header tokens exactly (`Name Paid Share Balance`), and it fixes the missing-file message, which task 8 will need. Writing the report tests now.
+[tool] Write File
+[tool] status: Pending
+[tool] Confirm report tests fail before implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+The ordering assertion in my second test is convoluted. I'll simplify it before writing the implementation.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run unit tests and settle contract after report
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Show failing settle contract detail
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The settle contract still fails only on its CLI check (R3.3 runs `bin/ledger.js`), which is task 8. Writing the CLI tests next.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Confirm CLI tests fail before bin exists
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The CLI tests fail as expected because `bin/ledger.js` does not exist. Writing it now.
+[tool] Write File
+[tool] status: Pending
+[tool] Run unit tests and all requirement contracts
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+All 33 unit tests and all four requirement contracts pass. Marking tasks 6, 7 and 8 done.
+[tool] Replace in File
+[tool] Replace in File
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+Tasks 1 through 8 are done. Task 9 needs a new contract file, but `contracts/ledger/properties.contract.test.js` already exists and is frozen. Before deciding how to handle that, I'll check what the existing contract imports and whether it runs against the current code.
+[tool] Inspect frozen properties contract and run it
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The frozen contract imports a specific API from `test/gen.js`, which task 9 asks me to write. I'll read the whole contract to get the exact function signatures and expected behavior.
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+The frozen contract requires specific exports from `test/gen.js`: `checkProperty`, `createRng`, `caseSeedOf`, `generateParty`, `partyToText`, `peopleOf`, `keyOf`, `reorder`. Its R5.5 check also needs the error to carry `caseSeed` and `party`, and the replay with `runs: 1` must reproduce the same party. I'll write `test/gen.js` to that API. It is a new file, not a frozen one.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run unit tests and the properties contract
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+R5.1 fails on the first run, and the cause is the shape of `splitExpense`'s return value. The contract calls `.values()` on the result, which means it expects a `Map` keyed by person. Arrays of pairs give `.values()` the pairs themselves, so the sum concatenates arrays. A `Map` also satisfies R2.1's `Object.fromEntries` call, so I'll return a `Map` and update my split tests.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run all unit tests and every frozen contract
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The frozen contracts all pass now, including R5.1 through R5.5. My own `properties.test.js` still uses the old pair destructuring, so I'll fix that.
+[tool] Replace in File
+[tool] status: Pending
+[tool] Run the full unit test suite
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+All 38 unit tests pass. Next I'll plant the three bugs the properties exist for, one at a time in a scratch copy under `/tmp`, so the real `src/` stays untouched.
+[tool] Plant three bugs in scratch copy and confirm properties fail
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Each planted bug trips at least one property. I'll look at one full failure report to confirm it names the seed and shows a small party.
+[tool] Show one full failure report from the planted bug
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The shrinker reduces the failure to one 1-cent expense split between two people. As a final check, I'll confirm the frozen contract and requirement files still match their locked hashes, then run the full suite once more.
+[tool] Verify frozen contract hashes and final test run
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+All nine tasks in `tasks.md` are ticked. `npm test` passes (38 tests), and all five frozen contract files pass and still match their hashes in `.necro/lock.json`.
+
+**What I built**
+- **Task 4:** `src/split.js` with `splitExpense`, which returns a `Map` of person to cents in alphabetical order.
+- **Task 5:** `src/balances.js` with `computeBalances`.
+- **Task 6:** `src/settle.js`, a greedy settle with ties broken by name.
+- **Task 7:** `src/report.js` with `renderText` and `renderJson`.
+- **Task 8:** `bin/ledger.js`. It only parses arguments, reads the file, calls `src/`, and prints.
+- **Task 9:** `test/gen.js` (seeded PRNG, generator, shrinker, `checkProperty`) and `test/properties.test.js`.
+
+**Task 9 details**
+- `contracts/ledger/properties.contract.test.js` already existed and is frozen. I did not write or change it. The task asked me to add it, but the freeze rule prevents that. Its five contracts pass against the code, so I marked the task done. If you expected me to author that file, you will need to unfreeze it or write it yourself.
+- I planted three bugs in a scratch copy under `/tmp` and removed the copy afterward. Round instead of floor, dropping the extra cents, and dropping a payment each made the properties fail. The shrinker reduced one failure to a single 1-cent expense split between two people, and the report printed the seed.
+- No property found a real bug in the arithmetic. The first R5.1 failure came from my own `splitExpense` return shape, which I changed from pairs to a `Map` to match the contract. I did not change any behavior.

@@ -28,6 +28,15 @@
         "command": "necro hook stop"
       },
       "timeout": 300
+    },
+    {
+      "name": "Contract Necromancer PostTaskExec",
+      "trigger": "PostTaskExec",
+      "action": {
+        "type": "command",
+        "command": "necro hook posttask"
+      },
+      "timeout": 300
     }
   ]
 }

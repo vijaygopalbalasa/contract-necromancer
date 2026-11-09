@@ -6,7 +6,8 @@ import { fileURLToPath } from 'node:url';
 import { freezeSpec } from '../src/lock.js';
 import { verify } from '../src/verify.js';
 import { checkSpec } from '../src/check.js';
-import { handlePreToolUse, handlePostToolUse, handleStop } from '../src/hooks.js';
+import { handlePreToolUse, handlePostToolUse, handleStop, handlePostTaskExec } from '../src/hooks.js';
+import { runAudit } from '../src/audit.js';
 import { serve } from '../src/mcp.js';
 import { runDemo } from '../src/demo.js';
 
@@ -15,7 +16,7 @@ const args = process.argv.slice(2);
 
 if (args.length === 0) {
   console.error('Usage: necro <command> [args]');
-  console.error('Commands: freeze <spec>, check <spec>, verify <receiptFile>, init, demo, mcp, hook pre|post|stop');
+  console.error('Commands: freeze <spec>, check <spec>, audit [spec], verify <receiptFile>, init, demo, mcp, hook pre|post|stop|posttask');
   process.exit(1);
 }
 
@@ -40,6 +41,14 @@ try {
         process.exit(1);
       }
       const result = checkSpec(cwd, args[1]);
+      if (result.stdout) console.log(result.stdout);
+      if (result.stderr) console.error(result.stderr);
+      process.exit(result.exitCode);
+    }
+
+    case 'audit': {
+      // Req 14.1, 14.2: list every ticked task with its verdict; change no file.
+      const result = runAudit(cwd, args[1]);
       if (result.stdout) console.log(result.stdout);
       if (result.stderr) console.error(result.stderr);
       process.exit(result.exitCode);
@@ -74,7 +83,7 @@ try {
 
     case 'hook': {
       if (args.length < 2) {
-        console.error('Usage: necro hook pre|post|stop');
+        console.error('Usage: necro hook pre|post|stop|posttask');
         process.exit(1);
       }
       const hookType = args[1];
@@ -169,9 +178,18 @@ function handleHook(cwd, hookType) {
   });
   process.stdin.on('end', () => {
     try {
-      const payload = JSON.parse(input);
-      payload.cwd = payload.cwd || cwd;
-
+      // Req 14.3: Stop and PostTaskExec do not depend on their input. Kiro documents no
+      // payload for PostTaskExec and runs command hooks in the project root, so the
+      // project is the current folder and the input is not even parsed.
+      const lenient = hookType === 'stop' || hookType === 'posttask';
+      let payload = { cwd };
+      if (!lenient) {
+        payload = JSON.parse(input);
+        if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) {
+          throw new Error('the hook input is not a JSON object');
+        }
+        payload.cwd = payload.cwd || cwd;
+      }
       let result;
       switch (hookType) {
         case 'pre':
@@ -182,6 +200,9 @@ function handleHook(cwd, hookType) {
           break;
         case 'stop':
           result = handleStop(payload);
+          break;
+        case 'posttask':
+          result = handlePostTaskExec({ cwd });
           break;
         default:
           console.error(`Unknown hook type: ${hookType}`);

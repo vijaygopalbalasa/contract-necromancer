@@ -68,6 +68,15 @@
         "command": "node bin/necro.js hook stop"
       },
       "timeout": 300
+    },
+    {
+      "name": "Contract Necromancer PostTaskExec",
+      "trigger": "PostTaskExec",
+      "action": {
+        "type": "command",
+        "command": "node bin/necro.js hook posttask"
+      },
+      "timeout": 300
     }
   ]
 }

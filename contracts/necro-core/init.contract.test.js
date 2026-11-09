@@ -159,7 +159,7 @@ function installCopy() {
 
 // Reads a command of the form: "<path>" "<path>" hook <sub>, where each path is a double-quoted shell word.
 function parseCommand(command) {
-  const m = /^"((?:[^"\\]|\\.)*)" "((?:[^"\\]|\\.)*)" hook (pre|post|stop)$/.exec(command);
+  const m = /^"((?:[^"\\]|\\.)*)" "((?:[^"\\]|\\.)*)" hook (pre|post|stop|posttask)$/.exec(command);
   assert.ok(m, `the command is two quoted paths followed by "hook <name>": ${command}`);
   const unquote = (s) => s.replace(/\\(.)/g, '$1');
   return { node: unquote(m[1]), script: unquote(m[2]), sub: m[3] };

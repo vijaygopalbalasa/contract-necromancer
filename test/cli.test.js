@@ -197,8 +197,8 @@ test('Req 8.6: init writes quoted absolute node and necro.js paths into every ho
     assert.equal(res.status, 0, res.stderr);
     const written = JSON.parse(fs.readFileSync(path.join(project, '.kiro/hooks/necromancer.json'), 'utf8'));
     const bin = path.join(root, 'bin/necro.js');
-    const expected = { PreToolUse: 'pre', PostToolUse: 'post', Stop: 'stop' };
-    assert.equal(written.hooks.length, 3);
+    const expected = { PreToolUse: 'pre', PostToolUse: 'post', Stop: 'stop', PostTaskExec: 'posttask' };
+    assert.equal(written.hooks.length, 4);
     for (const hook of written.hooks) {
       const sub = expected[hook.trigger];
       assert.ok(sub, `unexpected trigger ${hook.trigger}`);
@@ -397,17 +397,17 @@ test('Req 8.9: necro init writes .kiro/agents/necromancer.json with the steering
   }
 });
 
-test('Req 8.9: the agent carries the same three hooks, commands and timeouts as .kiro/hooks/necromancer.json', () => {
+test('Req 8.9, 14.4: the agent carries the same four hooks, commands and timeouts as .kiro/hooks/necromancer.json', () => {
   const project = tmpCwd();
   try {
     runInit(project);
     const agent = readJson(project, AGENT_REL);
     const hooksFile = readJson(project, '.kiro/hooks/necromancer.json');
     assert.deepEqual(agent.hooks, hooksFile.hooks);
-    assert.deepEqual(agent.hooks.map((h) => h.trigger), ['PreToolUse', 'PostToolUse', 'Stop']);
+    assert.deepEqual(agent.hooks.map((h) => h.trigger), ['PreToolUse', 'PostToolUse', 'Stop', 'PostTaskExec']);
     for (const hook of agent.hooks) {
       assert.equal(hook.timeout, 300);
-      assert.match(hook.action.command, /^".*node.*" ".*necro\.js" hook (pre|post|stop)$/);
+      assert.match(hook.action.command, /^".*node.*" ".*necro\.js" hook (pre|post|stop|posttask)$/);
     }
   } finally {
     fs.rmSync(project, { recursive: true, force: true });
@@ -555,5 +555,49 @@ test('Req 8.9: this project\'s own agent file is init\'s output adapted to node 
     assert.deepEqual({ ...own, hooks: null }, { ...written, hooks: null }, 'everything but the hook commands is init\'s output');
   } finally {
     fs.rmSync(project, { recursive: true, force: true });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Req 14.4: init also writes a PostTaskExec hook
+// ---------------------------------------------------------------------------
+
+function postTaskHook(config, label) {
+  const found = config.hooks.filter((h) => h.trigger === 'PostTaskExec');
+  assert.equal(found.length, 1, `${label}: exactly one PostTaskExec hook`);
+  return found[0];
+}
+
+test('Req 14.4: the template and the written hooks file and agent hold a PostTaskExec hook that runs hook posttask with the same timeout', () => {
+  const project = tmpCwd();
+  try {
+    const template = JSON.parse(fs.readFileSync(path.join(__dirname, '../templates/necromancer.hooks.json'), 'utf8'));
+    assert.equal(postTaskHook(template, 'template').action.command, 'necro hook posttask');
+
+    const res = spawnSync(process.execPath, [path.join(__dirname, '../bin/necro.js'), 'init'], { cwd: project, encoding: 'utf8' });
+    assert.equal(res.status, 0, res.stderr);
+    const hooksFile = JSON.parse(fs.readFileSync(path.join(project, '.kiro/hooks/necromancer.json'), 'utf8'));
+    const agent = JSON.parse(fs.readFileSync(path.join(project, '.kiro/agents/necromancer.json'), 'utf8'));
+    for (const [label, config] of [['hooks file', hooksFile], ['agent', agent]]) {
+      const hook = postTaskHook(config, label);
+      assert.equal(hook.action.type, 'command');
+      assert.match(hook.action.command, /^".*node.*" ".*necro\.js" hook posttask$/, label);
+      assert.equal(hook.timeout, 300, label);
+      assert.equal(hook.timeout, config.hooks.find((h) => h.trigger === 'Stop').timeout, `${label}: same as the others`);
+      assert.equal(hook.matcher, undefined, `${label}: PostTaskExec takes no matcher`);
+    }
+    assert.deepEqual(agent.hooks, hooksFile.hooks);
+  } finally {
+    fs.rmSync(project, { recursive: true, force: true });
+  }
+});
+
+test("Req 14.4: this project's own hooks file and agent hold the PostTaskExec hook", () => {
+  const root = path.join(__dirname, '..');
+  for (const rel of ['.kiro/hooks/necromancer.json', '.kiro/agents/necromancer.json']) {
+    const config = JSON.parse(fs.readFileSync(path.join(root, rel), 'utf8'));
+    const hook = postTaskHook(config, rel);
+    assert.equal(hook.action.command, 'node bin/necro.js hook posttask', rel);
+    assert.equal(hook.timeout, 300, rel);
   }
 });

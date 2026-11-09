@@ -128,13 +128,17 @@ export function parseTasks(markdown) {
 // more than one task line is ambiguous, so it is recorded with no criteria,
 // which makes ticking it require every contract (Req 4.15). Its text is the
 // first line's.
-function taskTable(cwd, spec) {
-  let markdown = '';
+function readTasksText(cwd, spec) {
   try {
-    markdown = fs.readFileSync(path.join(cwd, '.kiro', 'specs', spec, 'tasks.md'), 'utf8');
+    return fs.readFileSync(path.join(cwd, '.kiro', 'specs', spec, 'tasks.md'), 'utf8');
   } catch (e) {
     if (e.code !== 'ENOENT') throw e;
+    return '';
   }
+}
+
+function taskTable(cwd, spec) {
+  const markdown = readTasksText(cwd, spec);
   const table = {};
   const seen = new Set();
   for (const t of parseTasks(markdown)) {
@@ -183,20 +187,41 @@ export function requiredNames(lock, spec, ticked, after, names) {
 
   const required = new Set();
   for (const text of ticked) {
-    const id = taskIdOf(text);
-    const recorded = id !== null && Object.hasOwn(table, id) ? table[id] : null;
-    if (recorded === null) return null;
-    // Req 4.16: a line that is not the frozen text, or an id on more than one line.
-    if (typeof recorded.text !== 'string' || recorded.text !== text) return null;
-    if (lines.filter((l) => l.id === id).length > 1) return null;
-    // The text equals the frozen text, so the line names the criteria the lock records.
-    const criteria = Array.isArray(recorded.criteria) ? recorded.criteria : [];
-    if (criteria.length === 0) return null;
-    const matching = names.filter((n) => criteria.some((c) => n === `R${c}` || n.startsWith(`R${c} `)));
-    if (matching.length === 0) return null;
+    const matching = requiredForTask(table, lines, text, names);
+    if (matching === null) return null;
     for (const n of matching) required.add(n);
   }
   return [...required].sort();
+}
+
+// The contracts one ticked task requires: the names that start with a criterion the
+// lock records for it. `table` is the lock's task table, `lines` the parsed tasks.md
+// and `text` the ticked line after the checkbox. Null when every contract is required
+// (Req 4.15, 4.16): the id is not in the lock, the line is not the frozen text, the id
+// is on more than one line, no criteria are recorded, or no contract matches them.
+export function requiredForTask(table, lines, text, names) {
+  const id = taskIdOf(text);
+  const recorded = id !== null && Object.hasOwn(table, id) ? table[id] : null;
+  if (recorded === null) return null;
+  // Req 4.16: a line that is not the frozen text, or an id on more than one line.
+  if (typeof recorded.text !== 'string' || recorded.text !== text) return null;
+  if (lines.filter((l) => l.id === id).length > 1) return null;
+  // The text equals the frozen text, so the line names the criteria the lock records.
+  const criteria = Array.isArray(recorded.criteria) ? recorded.criteria : [];
+  if (criteria.length === 0) return null;
+  const matching = names.filter((n) => criteria.some((c) => n === `R${c}` || n.startsWith(`R${c} `)));
+  return matching.length === 0 ? null : matching;
+}
+
+// Every ticked task line of a tasks.md text, as the text after the checkbox, in file
+// order, with the line index. A line without a task id is included: it is ticked all the same (Req 14.1).
+export function tickedLines(markdown) {
+  const out = [];
+  markdown.split(/\r?\n/).forEach((line, index) => {
+    const m = TASK_LINE.exec(line);
+    if (m && m[1] !== ' ') out.push({ index, text: m[2].trim() });
+  });
+  return out;
 }
 
 // Filename stem of a contract file, e.g. "canon" from "canon.contract.test.js".
@@ -317,6 +342,8 @@ export function freezeSpec(cwd, spec) {
     ...(runnersEntry ? { runners: runnersEntry } : {}),
     ...(frozenEntries.length > 0 ? { frozen: frozenEntries } : {}),
     tasks: taskTable(cwd, spec),
+    // Req 14.1: the task lines that are ticked now, which the person accepts by freezing.
+    ticked: tickedLines(readTasksText(cwd, spec)).map((l) => l.text).sort(),
   };
   writeLock(cwd, lock);
 

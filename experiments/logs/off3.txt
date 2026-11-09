@@ -1,0 +1,172 @@
+[tool] Read File
+[tool] status: InProgress
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read contract tests and existing test files
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Tasks 4 through 9 are open. The contract file and `test/gen.js` interfaces it imports shape the work, so I'll build each task in order, starting with its test file.
+[tool] Write File
+[tool] Confirm split tests fail before implementation
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run split tests after implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run split tests after implementation
+[tool] Show split test output in full
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 4 passes. Marking it done, then writing the task 5 tests.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] Confirm balances tests fail before implementation
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Write File
+[tool] Run balances tests after implementation
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+Task 5 passes. Next, the settle tests.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] Confirm settle tests fail before implementation
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Write File
+[tool] Run settle tests after implementation
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+Task 6 passes. Next, the report tests and implementation.
+[tool] Confirm report tests fail before implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Confirm report tests fail before implementation
+[tool] Write File
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Completed
+[tool] Show report test failure output
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] Run report tests after implementation
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+Task 7 passes. Marking it done, then writing the CLI test and binary.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Confirm CLI tests fail before implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] Run full npm test suite
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+The full suite passes with 34 tests, including the CLI tests that failed before the binary existed. Marking task 8 done, then building the generator for task 9.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] Run R5 contract tests against new code
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+All five R5 contracts pass. Now `test/properties.test.js`, which runs the same four properties through `npm test` with the seed reported on failure.
+[tool] Write File
+[tool] Run full npm test suite including properties
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+All 38 tests pass. Next I'll plant the three bugs named in the task, one at a time in a scratch copy, and confirm a property catches each.
+[tool] Plant three bugs in scratch copies and check properties fail
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Each planted bug fails at least one property, and the real `src/` is unchanged. Next I'll check that a failure report actually prints the seed and smallest party.
+[tool] Show a failure report from a planted bug
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The report names the seed, the replay seed, and a two-line smallest party. Last, I'll tick task 9 and run the binary on the real `party.txt`.
+[tool] Replace in File
+[tool] status: Pending
+[tool] Run the CLI on party.txt and check task boxes
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+Tasks 4 through 9 are done and ticked in `tasks.md`. `npm test` passes all 38 tests, and the five R5 contracts pass when run directly.
+
+- **Source:** `src/split.js`, `balances.js`, `settle.js`, `report.js`, and `bin/ledger.js`, plus `test/gen.js` for the seeded generator, shrinker, and `checkProperty` runner.
+- **Planted bugs:** I put three bugs in scratch copies: round instead of floor, dropped extra cents, and a dropped payment. A property failed in each case. The real `src/` is untouched by those plants.
+- **Real bugs:** The properties found none in the existing parser or money code, so I changed nothing there.
+- **Sample run:** `party.txt` settles to three payments, and the balances sum to zero.
+
+Things to know:
+- **Contracts are not in `npm test`.** The script runs `test/*.test.js`, so `contracts/ledger/properties.contract.test.js` only runs if called directly with `node --test contracts/ledger/properties.contract.test.js`. I left `package.json` alone. Adding the path to the script is a one-line change if you want it included.
+- **Replay seeds:** Case 0 of a run uses the seed itself. That is what makes a reported case seed replay as a one-run check.
+- **Case-insensitive sort:** `splitExpense` sorts keys case-insensitively, as Req 2.1 says. Parsed keys are already lowercase, so the results match.
+- **Unknown flags:** The CLI prints the usage sentence for any flag other than `--json`. The requirements do not cover this, so it is my choice.

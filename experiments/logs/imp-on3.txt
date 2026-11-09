@@ -1,0 +1,135 @@
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Failed
+The hook blocked `necro freeze`, and it says freezing is for you to do. I won't run it. I'll continue with the tasks, which don't need it. Next I'll read the existing code.
+[tool] Read existing sources, tests and package config
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Tasks 1 to 3 are done. Before writing task 9, I need to check the requirements, the design, and the existing contract files. `properties.contract.test.js` already exists, and the frozen contracts must not change.
+[tool] Read specs, design and existing contract files
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The R5 contract file already exists and it expects a specific API from `test/gen.js`. I need to know whether it is frozen before deciding anything, so I'll compare its hash with the frozen records and check git.
+[tool] Compare contract file hashes with frozen records
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The R5 contract is frozen. Its hash matches `.necro/lock.json`, so I will not edit it. Task 9 asks me to add that file, but it already exists and is locked, so I'll follow the necromancer rule and keep it unchanged. My `src/` and `test/gen.js` have to satisfy its API. I'll read the other frozen contracts to match their expectations too.
+[tool] Read remaining frozen contract files
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+I have what I need. Two details from the frozen contracts shape the code:
+
+- `computeBalances` rows are exactly `{name, paid, share, balance}`, in first-appearance order.
+- `settle` takes those rows and returns `{from, to, amount}`.
+
+I'll write the remaining source modules now, starting with split, balances and settle.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+The source modules are in place. Next I'll write the unit tests for tasks 4 to 8.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+I wrote a garbled assertion in the "shared by everyone" test in `balances.test.js`. I'll replace it with a clear fixture and hand-computed values.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+Next are the report and CLI tests.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+The missing-file test has a pointless `replace` call. I'll simplify it, then run the unit tests.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run unit tests and frozen requirement contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+All 34 unit tests pass. Of the frozen requirement contracts, only R3.3 failed in the output I grepped, so I'll look at its error.
+[tool] Show R3.3 contract failure details
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+R3.3 is unsatisfiable as written. It requires a line that is exactly `All square.` and also requires that no line matches `/square/i`, which that same line does. The frozen file can't be edited, so I'll report this rather than work around it. Now I'll write `test/gen.js`, using the API the frozen R5 contract calls.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+Next is `test/properties.test.js`, which runs the arithmetic properties on 300 generated parties.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run property tests and R5 frozen contract
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+All four property tests pass. The frozen R5 contract also passes all five checks. Next I'll plant the three bugs from the task in a scratch copy and confirm a property catches each one.
+[tool] Plant three bugs in a scratch copy and check properties fail
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The three planted bugs (round instead of floor, dropped extra cents, dropped payment) each make a property fail. Next I'll run the full `npm test` suite and every frozen contract, including the R1 contract I haven't run yet.
+[tool] Run full test suite and all frozen contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The full suite passes (38 tests). Every frozen contract passes except R3.3. I'll tick tasks 4, 5, 8 and 9, whose frozen criteria pass. Tasks 6 and 7 cover Req 3.3 through the R3.3 contract, so the necromancer gate keeps them unticked.
+[tool] Replace in File
+[tool] Replace in File
+[tool] Replace in File
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+I'll run the CLI on the sample `party.txt` as a final check of the real output.
+[tool] Run the CLI on the sample party file
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Tasks 4, 5, 8 and 9 are done and ticked. Tasks 6 and 7 are not ticked because of a contract conflict described below.
+
+- **Task 4 (split):** `src/split.js` gives floor shares with the extra cents going to the first names alphabetically, ignoring case.
+- **Task 5 (balances):** `src/balances.js` computes paid, share and balance per person, and balances sum to zero.
+- **Task 6 (settle):** `src/settle.js` implements the greedy rule. Its unit tests pass, but the frozen R3.3 contract fails, so I left it unticked.
+- **Task 7 (reports):** `src/report.js` has the text table and JSON output. Its unit tests pass, but it covers Req 3.3 through the same R3.3 contract, so I left it unticked.
+- **Task 8 (CLI):** `bin/ledger.js` and `test/cli.test.js` are in place, and the frozen R4 contracts pass.
+- **Task 9 (properties):** `test/gen.js` and `test/properties.test.js` are added. `contracts/ledger/properties.contract.test.js` already existed and is frozen (its hash matches `lock.json`), so I did not add or edit it. All five R5 contract checks pass.
+
+**Blocking issue: R3.3 contract cannot pass.** The check requires a line that is exactly `All square.` and also requires that no line matches `/square/i`. That same line matches, so no output can satisfy both. Fixing it means editing the frozen file, which I did not do. Someone with authority over the contract needs to change that assertion.
+
+**Other results:**
+- `npm test` passes all 38 tests. The contracts directory is not part of that script, so I ran the frozen contracts separately.
+- The properties found no bugs in `src/`. I planted three bugs in a scratch copy (round instead of floor, dropped extra cents, dropped payment), and each one made a property fail.
+- I did not run `necro freeze`. The pre-tool hook blocked it and said freezing is a person's step.
+- I wrote the source and tests together rather than confirming the tests failed first, so that part of the TDD order was not followed.

@@ -118,7 +118,8 @@ npm test
 4. While Kiro builds, the hooks watch each tool call:
    - `PreToolUse` blocks a tick with exit code 2 and names the failing contracts. A tick is an edit of `tasks.md` or the Kiro IDE's `task_update` tool with status `completed`.
    - `PostToolUse` restores a frozen file that a command changed, and undoes a tick that the contracts do not support.
-   - `Stop` reports, for each frozen spec, the tasks ticked, the receipts written, and the contracts failing now.
+   - `Stop` reports, for each frozen spec, the tasks ticked, the receipts written, and the contracts failing now, then puts back to `[ ]` every ticked task that `necro audit` does not call `ok`.
+   - `PostTaskExec` does the same after Kiro finishes a spec task, whatever the task run did.
 5. Each tick that passes writes a receipt to `.necro/receipts/<spec>/<hash>.json`. `necro verify` re-runs it and prints `CONFIRMED` or `MISMATCH`.
 
 A tick needs the contracts for the criteria listed on the ticked task, such as `(Req 1.1, 1.4)`, as recorded when the spec was frozen. It needs every contract when the task is the last unticked one, when the lock does not know the task, when the task line was edited after the freeze, or when the task lists no criteria that have a contract. A spec that is not frozen refuses every tick.
@@ -140,6 +141,41 @@ lock stayed unchanged (`.kiro/build-log/agent-live-test.md`). Below, `necro` sta
 when Kiro is started from the Dock and has no shell `PATH`. After `init`, trust the workspace in Kiro and quit and
 reopen Kiro (Cmd+Q on macOS); Kiro runs hooks only in a trusted workspace. If you move the install or switch Node
 versions, delete `.kiro/hooks/necromancer.json` and run `necro init` again.
+
+## Catch a tick however it got there
+
+The gate sees a tick only when it goes through a tool call the hooks can read. Kiro's "Run all tasks" and its
+sub-agents can mark a task done after a failed or killed run (see
+[kirodotdev/Kiro#11786](https://github.com/kirodotdev/Kiro/issues/11786)), and an edit made outside Kiro never reaches the
+hooks. `necro audit` checks every ticked task after the fact:
+
+```
+necro audit             # all frozen specs
+necro audit <spec>      # one spec
+```
+
+It lists each ticked task of a frozen spec with one verdict, and exits 0 only if every ticked task is `ok`:
+
+- `ok`: every contract the task requires passes now, and either the gate wrote a receipt for that task id (under any
+  freeze of the spec) or the task was already ticked when a person last froze the spec.
+- `no receipt`: no such receipt exists. This is what a tick made by editing `tasks.md` directly looks like.
+- `failing`: a contract the task requires fails now. The contract names are listed.
+
+`audit` changes no file, so it runs in CI and on a fresh clone. A lock written by an older version of `necro` does not
+record which tasks were ticked at the freeze, so its already-ticked tasks show `no receipt` until a person freezes the
+spec again.
+
+The `Stop` and `PostTaskExec` hooks use the same check and undo what it finds: each ticked task that is not `ok` goes
+back to `[ ]` in `tasks.md`, and stderr says which task and why. Kiro documents no input for the `PostTaskExec` trigger,
+so `necro hook posttask` ignores its input and audits the project it runs in. `necro init` writes the hook into
+`.kiro/hooks/necromancer.json` and the custom agent.
+
+To run the audit in CI, add this step to a workflow after the checkout step:
+
+```yaml
+- name: Audit ticked tasks
+  run: npx -y github:vijaygopalbalasa/contract-necromancer audit
+```
 
 ## MCP server and Kiro power
 
@@ -197,6 +233,7 @@ test needs the path set in the contract file or in `PYTHONPATH`.
 necro init              # write the Kiro hooks and steering file into a project
 necro freeze <spec>     # lock requirements.md and the contracts of a spec
 necro check <spec>      # run every frozen contract now and write a receipt, without ticking a task
+necro audit [spec]      # list every ticked task as ok, no receipt or failing; exit 0 only if all are ok
 necro verify <receipt>  # re-run a receipt: CONFIRMED, MISMATCH or SUPERSEDED
 necro mcp               # serve necro_status, necro_check and necro_verify over MCP (stdio)
 necro demo              # show the gate refuse a false "done", accept the fix and re-check the receipt

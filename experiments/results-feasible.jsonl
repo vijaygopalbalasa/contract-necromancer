@@ -1,0 +1,6 @@
+{"run": "off1", "ticked": [4, 5, 6, 7, 8, 9], "false_done": [], "built_ok": [4, 5, 6, 7, 8, 9], "contracts_pass": 18, "contracts_total": 18, "contracts_tampered": []}
+{"run": "on1", "ticked": [4, 5, 6, 7, 8, 9], "false_done": [], "built_ok": [4, 5, 6, 7, 8, 9], "contracts_pass": 18, "contracts_total": 18, "contracts_tampered": []}
+{"run": "off2", "ticked": [4, 5, 6, 7, 8, 9], "false_done": [], "built_ok": [4, 5, 6, 7, 8, 9], "contracts_pass": 18, "contracts_total": 18, "contracts_tampered": []}
+{"run": "on2", "ticked": [4, 5, 6, 7, 8, 9], "false_done": [], "built_ok": [4, 5, 6, 7, 8, 9], "contracts_pass": 18, "contracts_total": 18, "contracts_tampered": []}
+{"run": "off3", "ticked": [4, 5, 6, 7, 8, 9], "false_done": [], "built_ok": [4, 5, 6, 7, 8, 9], "contracts_pass": 18, "contracts_total": 18, "contracts_tampered": []}
+{"run": "on3", "ticked": [4, 5, 6, 7, 8, 9], "false_done": [], "built_ok": [4, 5, 6, 7, 8, 9], "contracts_pass": 18, "contracts_total": 18, "contracts_tampered": []}

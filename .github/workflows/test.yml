@@ -3,7 +3,6 @@ name: Tests and receipts
 
 on:
   push:
-    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -30,6 +29,8 @@ jobs:
         run: npm test
       - name: Frozen contracts of the tool and the viewer
         run: node --test contracts/necro-core/*.test.js contracts/receipt-viewer/*.test.js
+      - name: Audit every ticked task
+        run: node bin/necro.js audit
       - name: Pumpkin Ledger tests and contracts
         working-directory: examples/pumpkin-ledger
         run: node --test test/*.test.js contracts/ledger/*.test.js

@@ -1,0 +1,23 @@
+{"t":"2026-11-09T19:09:41.627Z","tool":"execute_bash","what":"cd && git && head && grep && head && grep && ls && cat"}
+{"t":"2026-11-09T19:09:46.017Z","tool":"execute_bash","what":"cd && sed && cat && cat && cat && cat && head"}
+{"t":"2026-11-09T19:09:50.680Z","tool":"execute_bash","what":"cd && grep && cut && wc"}
+{"t":"2026-11-09T19:09:50.855Z","tool":"execute_bash","what":"cd && cat"}
+{"t":"2026-11-09T19:09:54.993Z","tool":"execute_bash","what":"cd && grep && untick\\ && Untick\\ && ticked\" && head && grep && head && grep && ^describe(\\ && ^ && ^ && head"}
+{"t":"2026-11-09T19:09:59.606Z","tool":"execute_bash","what":"cd && sed && sed && sed && sed"}
+{"t":"2026-11-09T19:10:00.126Z","tool":"execute_bash","what":"cd && sed && head && grep && R14.1"}
+{"t":"2026-11-09T19:10:13.407Z","tool":"execute_bash","what":"cd && sed && sed && git && head && ls && grep && head"}
+{"t":"2026-11-09T19:10:19.022Z","tool":"execute_bash","what":"cd && node && for && v.ticked.length) && console.log(Object.keys(l.specs['necro-core'].files &&  &&  && hooks/.test(f))) && \" && git && tail"}
+{"t":"2026-11-09T19:10:26.584Z","tool":"execute_bash","what":"cd && sed && grep && head"}
+{"t":"2026-11-09T19:10:53.999Z","tool":"execute_bash","what":"cd && python3 && \",\"import && \") && const && delete && writeLock(cwd, && put(cwd, && } && test('R14.6 && const && assert.equal(res.exitCode, && assert.equal(read(cwd, && assert.match(res.stderr, && as"}
+{"t":"2026-11-09T19:11:17.490Z","tool":"execute_bash","what":"cd && python3 && const && for &&  && {}).sort()) && lock.specs[spec].ticked)) && continue && } &&  && null)) && } && } && grep && pass && fail) && ✖\" && head"}
+{"t":"2026-11-09T19:11:36.138Z","tool":"execute_bash","what":"cd && node && tail"}
+{"t":"2026-11-09T19:11:42.531Z","tool":"execute_bash","what":"cd && grep && head && grep && JSON.parse\" && head"}
+{"t":"2026-11-09T19:11:59.742Z","tool":"fs_write","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/contracts/necro-core/audit-upgrade.contract.test.js"}
+{"t":"2026-11-09T19:12:02.330Z","tool":"execute_bash","what":"cd && node && tail && git && head && echo && "}
+{"t":"2026-11-09T19:12:05.791Z","tool":"execute_bash","what":"cd && git && git"}
+{"t":"2026-11-09T19:12:10.745Z","tool":"execute_bash","what":"cd && git && tail && git && git && grep"}
+{"t":"2026-11-09T19:12:19.219Z","tool":"execute_bash","what":"cd && cp && sed && grep && node && grep && fail) && no && head && cp && grep && git"}
+{"t":"2026-11-09T19:16:44.873Z","tool":"execute_bash","what":"cd && npm && grep && ✖\" && head && echo && node && grep && ✖\" && head && echo && node && echo"}
+{"t":"2026-11-09T19:16:52.282Z","tool":"execute_bash","what":"cd && node && grep && head && git && tail && git"}
+{"t":"2026-11-09T19:16:56.586Z","tool":"execute_bash","what":"cd && sed && grep && 'pre'\\ && post\\b\" && grep && hookName\" && head && grep && grep && stop\\ && HOOK\" && head"}
+{"t":"2026-11-09T19:17:04.274Z","tool":"execute_bash","what":"cd && git && grep && grep"}

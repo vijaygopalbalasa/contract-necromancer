@@ -1,0 +1,174 @@
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 9 asks me to add `contracts/ledger/properties.contract.test.js`, which is a frozen contract file. I'll check the current state before going further.
+[tool] Inspect source, tests, contracts and run suite
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The suite passes for tasks 1–3. Task 9 has a conflict: `contracts/ledger/properties.contract.test.js` already exists, and its hash matches the frozen entry in `.necro/lock.json`. The Necromancer rule forbids editing it, so I won't overwrite it. I'll do the rest and flag that one file at the end.
+
+Starting with task 4: tests first.
+[tool] Write File
+[tool] status: Pending
+[tool] Confirm split tests fail before implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run split tests after implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run split tests after implementation
+[tool] Show split test results
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 4 passes. Marking it complete, then moving to task 5 (balances), tests first.
+[tool] Replace in File
+[tool] status: Failed: Replace in File
+[tool] Write File
+[tool] status: Pending
+[tool] Confirm balances tests fail before implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+The tasks.md update was blocked by a hook reporting that contract R2.1 failed. Task completion is gated on the frozen contracts, so I need to run them and see what fails.
+[tool] Run requirement 2 frozen contract and show output
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The R2.1 failure is only because `src/balances.js` doesn't exist yet. That module is task 5, so I'll write it now and then check the contracts again before marking task 4 done.
+[tool] Write File
+[tool] status: Pending
+[tool] Run unit tests and requirement 2 contract
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+Unit tests pass (18) and both R2 contracts pass. Marking tasks 4 and 5 done, then writing task 6 tests.
+[tool] Replace in File
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Confirm settle tests fail before implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Confirmed the settle tests fail. Writing `settle.js` next.
+[tool] Write File
+[tool] status: Pending
+[tool] Run settle unit tests and requirement 3 contract
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Show requirement 3 contract and its failure
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+R3.1 and R3.2 pass. R3.3 needs `report.js` and the CLI, so task 6 stays open until those land. Moving to task 7 with tests first.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Confirm report tests fail before implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] Run report unit tests
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+Task 7 passes. Marking it done, then writing the CLI tests for task 8.
+[tool] Replace in File
+[tool] status: Failed: Replace in File
+[tool] Write File
+[tool] status: Pending
+[tool] Confirm CLI tests fail before implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+The hook blocks the task 7 tick until the CLI exists, which matches the contract dependencies. Writing `bin/ledger.js` now.
+[tool] Write File
+[tool] status: Pending
+[tool] Run unit suite, all frozen contracts, and the CLI on party.txt
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Unit tests (34) pass, and every frozen contract passes except the properties contract, which is the one I can't edit. Checking why it fails.
+[tool] Inspect why the properties contract fails
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The properties contract imports `test/gen.js` and expects a specific API. I need to read the whole contract to match it.
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+The contract needs a `test/gen.js` exporting `createRng`, `caseSeedOf`, `generateParty`, `partyToText`, `peopleOf`, `keyOf`, `reorder` and `checkProperty`. Its replay check also requires `caseSeedOf(s, 0) === s`, so a replay with the reported case seed hits the same party. Writing that helper now.
+[tool] Write File
+[tool] Run the properties contract against the new generator
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+All five properties contract checks pass with the generator. Next, `test/properties.test.js` runs the same arithmetic properties through `npm test`.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run full unit suite and all contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Unit suite passes (38) and all 18 frozen contract checks pass. Next, planting the three bugs from the task in a scratch copy, so the real `src/` stays untouched.
+[tool] Plant three bugs in a scratch copy and check properties fail
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Plant three bugs in a scratch copy and check properties fail
+The planted bugs each make a property fail, and the restored code passes. Marking tasks 6 through 9 complete now that every frozen contract passes.
+[tool] Replace in File
+[tool] Replace in File
+[tool] Replace in File
+[tool] Replace in File
+[tool] Final check of tests, contracts, task marks and frozen hashes
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+All nine tasks in `tasks.md` are ticked. `npm test` passes (38 tests), and all 18 frozen contract checks pass. I did not edit any frozen contract file.
+
+**Task 9 conflict:** `contracts/ledger/properties.contract.test.js` already existed and is frozen in `.necro/lock.json`. The task said to add it, but the Necromancer rule forbids editing frozen files, so I left it alone. It passes against the code. The new helper `test/gen.js` is what it imports, and I built that helper to match the frozen contract's API.
+
+**Other changes:**
+- `src/split.js`, `src/balances.js`, `src/settle.js`, `src/report.js`, `bin/ledger.js`: the pure functions and CLI for tasks 4–8.
+- `test/split.test.js`, `balances.test.js`, `settle.test.js`, `report.test.js`, `cli.test.js`, `properties.test.js`, and `test/gen.js`.
+- I marked each task done in `tasks.md` once the contracts it covers passed.
+
+**Property check:** I planted three bugs in a scratch copy: round instead of floor, lost extra cents, and a dropped payment. Each made a property fail, and the restored code passed. I found no real bug in `src/`, so nothing there changed. The scratch copy is deleted.
+
+The `.necro/state/` directory was already untracked before I started, and I did not touch it.

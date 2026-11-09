@@ -3,6 +3,14 @@
     "necro-core": {
       "contracts": [
         {
+          "name": "audit-upgrade",
+          "names": [
+            "R14.6 a lock with no list of tasks ticked at freeze: stop and posttask untick nothing and say once that a person must freeze again, while necro audit still reports every verdict"
+          ],
+          "path": "contracts/necro-core/audit-upgrade.contract.test.js",
+          "sha256": "791041925e71df194ea573d2e9a1e3ee28b1440f538ba1294f095b4aad2599b1"
+        },
+        {
           "name": "audit",
           "names": [
             "R14.1 necro audit lists every ticked task as ok, no receipt or failing, and exits 0 only when all are ok",
@@ -123,7 +131,7 @@
             "R8.7 init says Kiro runs hooks only in a trusted workspace and that after trusting it Kiro must be quit and reopened"
           ],
           "path": "contracts/necro-core/init.contract.test.js",
-          "sha256": "200cb5591874a6ac952ede2e72e48ce274feb7ad1cd5e9ca98a64ddcfe4ad859"
+          "sha256": "b8a9d7e3d4b2ba720dffbba4a56995f245a8f17ab505622edd16b075cdd64b58"
         },
         {
           "name": "lock-restore",
@@ -290,7 +298,7 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-09T19:07:44.161Z",
+      "frozenAt": "2026-11-09T19:23:26.047Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
         "sha256": "bbf858f790f7cf64423b421f65a78fa440e45186e65d85bb45e85eee8fa1486f"
