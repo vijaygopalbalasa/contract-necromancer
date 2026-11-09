@@ -8,13 +8,14 @@ import { verify } from '../src/verify.js';
 import { checkSpec } from '../src/check.js';
 import { handlePreToolUse, handlePostToolUse, handleStop } from '../src/hooks.js';
 import { serve } from '../src/mcp.js';
+import { runDemo } from '../src/demo.js';
 
 const cwd = process.cwd();
 const args = process.argv.slice(2);
 
 if (args.length === 0) {
   console.error('Usage: necro <command> [args]');
-  console.error('Commands: freeze <spec>, check <spec>, verify <receiptFile>, init, mcp, hook pre|post|stop');
+  console.error('Commands: freeze <spec>, check <spec>, verify <receiptFile>, init, demo, mcp, hook pre|post|stop');
   process.exit(1);
 }
 
@@ -56,6 +57,12 @@ try {
 
     case 'init': {
       initProject(cwd);
+      break;
+    }
+
+    case 'demo': {
+      // Req 11: show the gate refuse a false "done", accept the fix and re-check the receipt.
+      process.exitCode = runDemo().exitCode;
       break;
     }
 

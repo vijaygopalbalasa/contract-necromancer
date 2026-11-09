@@ -9,6 +9,21 @@ for coding agents, where the question matters again.
 
 A coding agent can mark a task done when the work is not done. Kiro specs already have EARS acceptance criteria, but nothing checks them at the moment a task is ticked. Contract Necromancer gives each criterion an executable contract (the postcondition), a person freezes the contracts, Kiro hooks refuse the tick until the frozen contracts pass, and every passing task gets a receipt that anyone can re-run.
 
+## Try it in one command
+
+```
+npx -y github:vijaygopalbalasa/contract-necromancer demo
+```
+
+Requires Node.js 24 or newer, and git: npx needs git to fetch a `github:` package. No Kiro, no npm account, no setup. It takes
+under a minute, including the download. The command copies the
+Pumpkin Ledger example into a new folder under your temporary directory and prints that path. In the copy it plants a rounding
+bug, sends the gate the `task_update` call the Kiro IDE sends when task 4 completes, and shows the gate refusing the tick with
+the names of the contracts the bug breaks. It then restores the correct code, sends the call again, and shows the gate accepting
+it and writing a receipt. Last, it runs `necro verify` on the receipt (`CONFIRMED`), changes `src/split.js`, and verifies again
+(`MISMATCH`). It exits 0 only if all four things happened, and otherwise exits 1 and names the step that did not. From a clone,
+run `node bin/necro.js demo`.
+
 ## Try it in a minute
 
 Requires Node.js 24 or newer. There is no `npm install`.
@@ -43,25 +58,39 @@ CONFIRMED 2c6a247bf4ddaa3cdbedf06e5abf719cf6da88bdf12a86df1097c26264811f71.
 The older receipts print `SUPERSEDED`: they were written before task 9 added contracts and a person froze the spec again,
 so they describe an earlier freeze, not today's code.
 
-See the gate refuse a tick, with no Kiro install. Still in `examples/pumpkin-ledger`, plant the bug from the demo video
+See the gate refuse a tick, with no Kiro install. Work in a scratch copy of the example, so nothing in the repository
+changes. From the repository root (`cd ../..` if you are still in the example), copy `examples/pumpkin-ledger` to a temporary folder, plant the bug from the demo video
 (each share rounded, so cents are lost), reopen task 4, and send the gate the same `task_update` call the Kiro IDE sends
 when you press "Start task" and it finishes:
 
 ```
+repo=$PWD
+scratch=$(mktemp -d)
+cp -R examples/pumpkin-ledger "$scratch/ledger" && cd "$scratch/ledger"
 perl -pi -e 's/Math\.floor\(cents \/ n\)/Math.round(cents \/ n)/; s/const extra = cents % n;/const extra = 0;/' src/split.js
 perl -pi -e 's/^- \[x\] 4\./- [ ] 4./' .kiro/specs/ledger/tasks.md
-echo '{"hook_event_name":"preToolUse","tool_name":"task_update","tool_input":{"tasksFilePath":".kiro/specs/ledger/tasks.md","taskId":"4","status":"completed"}}' | node ../../bin/necro.js hook pre; echo "exit $?"
+echo '{"hook_event_name":"preToolUse","tool_name":"task_update","tool_input":{"tasksFilePath":".kiro/specs/ledger/tasks.md","taskId":"4. Split one expense to the cent (Req 2.1)","status":"completed"}}' | node "$repo/bin/necro.js" hook pre; echo "exit $?"
 ```
 
+`taskId` is the full text of the task line after the checkbox, as the Kiro IDE sends it and as `necro demo` sends it.
 The gate prints `Contracts failed:` and names the contracts the bug breaks (R2.1, R2.2, R3.1, R4.1, R4.2 and the
 property contracts R5.1 to R5.4), then exits 2, which is how a Kiro
-hook refuses a tool call. Undo the bug with `git checkout src/split.js` and run the `echo` line again: exit 0, and a new
-receipt appears in `.necro/receipts/ledger/`. Run `git checkout .` and remove the new receipt to clean up.
+hook refuses a tool call. Undo the bug and run the `echo` line again: exit 0, and a new receipt appears in
+`.necro/receipts/ledger/` of the copy.
+
+```
+cp "$repo/examples/pumpkin-ledger/src/split.js" src/split.js
+```
+
+Delete the scratch copy when you are done. The example in the repository was never touched.
+
+```
+cd "$repo" && rm -rf "$scratch"
+```
 
 Then run the unit tests of the tool itself from the repository root:
 
 ```
-cd ../..
 npm test
 ```
 
@@ -116,6 +145,7 @@ necro freeze <spec>     # lock requirements.md and the contracts of a spec
 necro check <spec>      # run every frozen contract now and write a receipt, without ticking a task
 necro verify <receipt>  # re-run a receipt: CONFIRMED, MISMATCH or SUPERSEDED
 necro mcp               # serve necro_status, necro_check and necro_verify over MCP (stdio)
+necro demo              # show the gate refuse a false "done", accept the fix and re-check the receipt
 ```
 
 `necro check <spec>` needs a frozen spec. It prints `pass` or `fail` for each contract, writes a receipt to
