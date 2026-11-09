@@ -3,7 +3,9 @@
 // document on stdout. Req 4.12: results come from run() events, never from text
 // the code under test prints. The contract file runs in its own subprocess
 // (isolation 'process'), so everything it prints reaches this process only as
-// test:stdout / test:stderr events, which are ignored here.
+// test:stdout / test:stderr events. The stdout events are ignored. The stderr text
+// is passed on, only to explain a file that did not load (Req 16.2); no result
+// is ever read from it.
 //
 // Usage: node contract-runner.js <absolute contract file> <cwd>
 import path from 'node:path';
@@ -31,11 +33,19 @@ function record(ok, d) {
   });
 }
 
+// Req 16.2: what the contract file wrote to stderr, kept only to explain a file that did not load or crashed. It
+// is never read as a result. At most 64 KB are kept.
+const STDERR_LIMIT = 64 * 1024;
+let stderr = '';
+
 const stream = run({ files: [file], cwd, isolation: 'process' });
 stream.on('test:pass', (d) => record(true, d));
 stream.on('test:fail', (d) => record(false, d));
+stream.on('test:stderr', (d) => {
+  if (stderr.length < STDERR_LIMIT) stderr += String(d.message);
+});
 // Drain the stream so the run completes.
 // eslint-disable-next-line no-unused-vars
 for await (const _event of stream);
 
-process.stdout.write(JSON.stringify({ file, events }));
+process.stdout.write(JSON.stringify({ file, events, stderr: stderr.slice(0, STDERR_LIMIT) }));

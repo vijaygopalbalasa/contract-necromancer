@@ -368,6 +368,41 @@ function readCases(report, file) {
   return { cases };
 }
 
+// Req 16.4: the last few non-empty lines of a text, each cut to a readable length.
+export function tailLines(text, count = 5) {
+  const lines = String(text || '')
+    .split(/\r?\n/)
+    .map((l) => l.trimEnd())
+    .filter((l) => l.trim() !== '');
+  return lines.slice(-count).map((l) => (l.length > 300 ? `${l.slice(0, 300)}...` : l));
+}
+
+// Req 16.4: what a command's standard error says is missing, as a short phrase, or null when it names nothing
+// missing. Python says "No module named pytest" when `python3 -m pytest` runs without pytest; Node says
+// "Cannot find module 'x'" or "Cannot find package 'x'" for a package, but a path (starting with "." or "/") is the
+// project's own file, not a tool that is missing.
+export function missingFromStderr(text) {
+  const py = /No module named ['"]?([A-Za-z0-9_.-]+)['"]?/.exec(text || '');
+  if (py) return `the Python module ${py[1]} is not installed`;
+  const node = /Cannot find (?:module|package) '([^'./][^']*)'/.exec(text || '');
+  if (node) return `the Node.js package ${node[1]} is not installed`;
+  return null;
+}
+
+// Req 16.5: a testcase name that carries a criterion ID in a form a test framework can spell is mapped to the
+// criterion, written as "R<n>.<m> <name as reported>", so the gate matches it by criterion exactly as it matches
+// "R1.1 ...". The forms: underscores (`R1_1`, `test_R1_1_rounds`) and a parametrize id (`test_x[R1.1 rounds]`).
+// A name that already starts with an ID, or has none of these forms, is returned unchanged.
+const NAME_STARTS_WITH_ID = /^R\d+\.\d+(?:\s|$)/;
+const ID_WITH_UNDERSCORE = /(?<![0-9A-Za-z])R(\d+)_(\d+)(?=_|[^0-9A-Za-z]|$)/;
+const ID_IN_PARAMETER = /\[R(\d+)\.(\d+)(?=[\s\]])/;
+
+export function mapCaseName(name) {
+  if (NAME_STARTS_WITH_ID.test(name)) return name;
+  const found = ID_WITH_UNDERSCORE.exec(name) || ID_IN_PARAMETER.exec(name);
+  return found ? `R${found[1]}.${found[2]} ${name}` : name;
+}
+
 // Run one contract file with its command and read the JUnit XML report.
 // Returns { cases: [{ name, outcome }] }, or { reason } (a plain sentence naming
 // the file) when the command cannot start, runs past the time limit, writes no
@@ -375,8 +410,11 @@ function readCases(report, file) {
 // Req 13.7: a command that exits with a non-zero status fails the file. The
 // result then holds { cases, reason } when the report could still be read, and the
 // caller counts every case as failing; otherwise only { reason }.
+// Req 16.4: the reason of a command that exited with a non-zero status ends with the last lines of its standard
+// error, and a result without a report also holds `cannotRun`, a short phrase, when the program could not start or
+// the standard error says a module is missing. The standard error explains a failure; it is never read as a result.
 // `env` is the environment of the command; the variables of Req 13.11 are removed
-// from it here too, so no caller can hand them to a command. Nothing the command prints is read.
+// from it here too, so no caller can hand them to a command. Nothing the command prints is read as a result.
 export function runReport(cwd, absPath, command, env) {
   const file = path.basename(absPath);
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'necro-report-'));
@@ -394,18 +432,37 @@ export function runReport(cwd, absPath, command, env) {
       cwd,
       env: { ...withoutRedirects(env), PYTHONDONTWRITEBYTECODE: '1', PYTHONPYCACHEPREFIX: pycache },
       shell: false,
-      stdio: ['ignore', 'ignore', 'ignore'],
+      encoding: 'utf8',
+      maxBuffer: 64 * 1024 * 1024,
+      stdio: ['ignore', 'ignore', 'pipe'],
       windowsHide: true,
     });
     if (timedOut) return { reason: timeoutReason(`The command for ${file}`, limitMs) };
     if (res.error) {
-      return { reason: `The command for ${file} could not start (${res.error.code || res.error.message}). Check the command in runners.json.` };
+      const code = res.error.code || res.error.message;
+      const out = { reason: `The command for ${file} could not start (${code}). Check the command in runners.json.` };
+      if (code !== 'ENOBUFS') {
+        out.cannotRun = code === 'ENOENT' ? `the program ${args[0]} was not found` : `the program ${args[0]} could not be started (${code})`;
+      }
+      return out;
     }
     if (res.status !== 0) {
       const how = res.status === null ? `was stopped by signal ${res.signal}` : `exited with status ${res.status}`;
-      const reason = `The command for ${file} ${how}, so the file counts as failing whatever its report says. Fix the failing contracts, or the command in runners.json.`;
+      const tail = tailLines(res.stderr);
+      const ended = tail.length > 0 ? ` The end of its standard error: ${tail.join(' | ')}.` : '';
       const read = readCases(report, file);
-      return read.cases ? { cases: read.cases, reason } : { reason };
+      if (read.cases) {
+        return {
+          cases: read.cases,
+          reason: `The command for ${file} ${how}, so the file counts as failing whatever its report says.${ended} Fix the failing contracts, or the command in runners.json.`,
+        };
+      }
+      // Req 16.4: no report, and the standard error names a missing module: the contracts did not run at all.
+      const missing = missingFromStderr(res.stderr);
+      if (missing !== null) {
+        return { reason: `The command for ${file} ${how}, because ${missing}.${ended} Install it, or fix the command in runners.json.`, cannotRun: missing };
+      }
+      return { reason: `The command for ${file} ${how}, so the file counts as failing whatever its report says.${ended} Fix the failing contracts, or the command in runners.json.` };
     }
     return readCases(report, file);
   } catch (e) {

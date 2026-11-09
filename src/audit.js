@@ -11,6 +11,9 @@ import { computeReceiptHash } from './receipts.js';
 export const OK = 'ok';
 export const NO_RECEIPT = 'no receipt';
 export const FAILING = 'failing';
+// Req 16.4: every required contract that fails could not run at all here (a program or module is missing), so the
+// work was not checked.
+export const CANNOT_RUN = 'cannot run';
 
 // The names of the failing contracts among those that are required, sorted. `required`
 // is a list of contract names. A contract file that holds a required contract and
@@ -116,6 +119,8 @@ export function planAudit(cwd, spec, lock = readLock(cwd)) {
 //               receipt for the task id (under any freeze of the spec) or the task was
 //               already ticked when a person last froze the spec
 //   failing     a contract the task requires fails now (names listed)
+//   cannot run  the contracts the task requires could not run here (a program or module is missing), which
+//               says nothing about the work (Req 16.4)
 //   no receipt  the required contracts pass but nothing shows the gate accepted the tick
 // Which contracts a task requires is decided as for the gate (Req 4.14, 4.15, 4.16),
 // except that being the last unticked task adds nothing here.
@@ -172,8 +177,18 @@ export function auditSpec(cwd, spec, lock = readLock(cwd), results = null, { onl
       accepted = true;
     }
 
-    const verdict = failing.length > 0 ? FAILING : accepted ? OK : NO_RECEIPT;
-    tasks.push({ index, id, text, verdict, failing: verdict === FAILING ? failing : [] });
+    // Req 16.4: when every failing required contract failed because its program or module is missing, say so.
+    const missing = failing.map((n) => ran.find((r) => r.name === n && r.result === 'fail' && r.cannotRun));
+    const cannotRun = failing.length > 0 && missing.every(Boolean) ? [...new Set(missing.map((r) => r.cannotRun))] : [];
+    const verdict = failing.length > 0 ? (cannotRun.length > 0 ? CANNOT_RUN : FAILING) : accepted ? OK : NO_RECEIPT;
+    tasks.push({
+      index,
+      id,
+      text,
+      verdict,
+      failing: verdict === FAILING ? failing : [],
+      ...(verdict === CANNOT_RUN ? { cannotRun } : {}),
+    });
   }
   return { spec, tasks };
 }
@@ -187,7 +202,9 @@ export function problems(audit) {
       reason:
         t.verdict === FAILING
           ? `required contracts fail now: ${t.failing.join(', ')}`
-          : 'no receipt shows the gate accepted it',
+          : t.verdict === CANNOT_RUN
+            ? `its contracts cannot run here (${t.cannotRun.join('; ')}), so it cannot be checked`
+            : 'no receipt shows the gate accepted it',
     }));
 }
 
@@ -209,6 +226,7 @@ export function runAudit(cwd, specName) {
 
   const out = [];
   let notOk = 0;
+  const missing = new Set();
   for (const spec of specs) {
     const audit = auditSpec(cwd, spec, lock);
     const okCount = audit.tasks.filter((t) => t.verdict === OK).length;
@@ -218,7 +236,13 @@ export function runAudit(cwd, specName) {
         : `Spec ${spec}: ${audit.tasks.length} ticked tasks, ${okCount} ok.`,
     );
     for (const t of audit.tasks) {
-      const detail = t.verdict === FAILING ? ` (failing: ${t.failing.join(', ')})` : '';
+      const detail =
+        t.verdict === FAILING
+          ? ` (failing: ${t.failing.join(', ')})`
+          : t.verdict === CANNOT_RUN
+            ? ` (cannot run here: ${t.cannotRun.join('; ')})`
+            : '';
+      for (const m of t.cannotRun || []) missing.add(m);
       out.push(`  ${t.verdict.padEnd(10)}  ${t.text}${detail}`);
     }
     notOk += audit.tasks.length - okCount;
@@ -227,6 +251,10 @@ export function runAudit(cwd, specName) {
     out.push(
       `${notOk} ticked ${notOk === 1 ? 'task is' : 'tasks are'} not ok. Fix the code and tick the task again through the gate, or ask a person to review and freeze the spec.`,
     );
+  }
+  // Req 16.4: contracts that could not run are not failing work. Say what is missing and what to do.
+  if (missing.size > 0) {
+    out.push(`The contracts cannot run here: ${[...missing].join('; ')}. Install or fix it, then run 'necro audit' again.`);
   }
   return { exitCode: notOk === 0 ? 0 : 1, stdout: out.join('\n'), stderr: '' };
 }

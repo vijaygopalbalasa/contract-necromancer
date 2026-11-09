@@ -1,1 +1,1 @@
-{"name": "contract-necromancer", "version": "0.1.0", "description": "Design by Contract for Kiro specs", "type": "module", "bin": {"necro": "bin/necro.js"}, "engines": {"node": ">=24"}, "scripts": {"test": "node --test test/*.test.js"}}
+{"name": "contract-necromancer", "version": "0.1.0", "description": "Design by Contract for Kiro specs", "type": "module", "bin": {"necro": "bin/necro.js"}, "files": ["bin", "src", "templates", "power", "examples/pumpkin-ledger", "README.md", "LICENSE"], "engines": {"node": ">=24"}, "scripts": {"test": "node --test test/*.test.js"}}

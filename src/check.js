@@ -38,11 +38,18 @@ export function checkSpec(cwd, spec) {
   if (results.length === 0 || failing.length > 0) {
     // Req 13.4: a contract file that could not run says why, naming the file.
     for (const reason of new Set(failing.filter((r) => r.reason).map((r) => r.reason))) lines.push(reason);
-    lines.push(
-      results.length === 0
-        ? 'No contracts ran. Check the contract files in the spec.'
-        : `${failing.length} of ${results.length} contracts failed. Fix the code, then run 'necro check ${spec}' again.`,
-    );
+    // Req 16.4: when every failure is a program that could not start or a module that is missing, the work was not
+    // checked, so the message says the contracts cannot run here and does not tell the person to fix the code.
+    const missing = [...new Set(failing.filter((r) => r.cannotRun).map((r) => r.cannotRun))];
+    if (failing.length > 0 && failing.every((r) => r.cannotRun)) {
+      lines.push(`The contracts cannot run here: ${missing.join('; ')}. Install or fix it, then run 'necro check ${spec}' again.`);
+    } else {
+      lines.push(
+        results.length === 0
+          ? 'No contracts ran. Check the contract files in the spec.'
+          : `${failing.length} of ${results.length} contracts failed. Fix the code, then run 'necro check ${spec}' again.`,
+      );
+    }
     lines.push(`Receipt: ${receiptPath}`);
     return { exitCode: 1, stdout: lines.join('\n'), stderr: '' };
   }

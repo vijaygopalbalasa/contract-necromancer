@@ -95,6 +95,102 @@ export function taskIdOf(text) {
   return id === '' ? null : id;
 }
 
+// ---------------------------------------------------------------------------
+// Criteria of a spec and the contracts that cover them (Req 16.1)
+// ---------------------------------------------------------------------------
+
+// The criterion IDs of a requirements.md, such as ["R1.1", "R1.2", "R2.1"], in document order. A criterion is a
+// numbered item (`1. WHEN ...`) below an "Acceptance criteria" heading or label of a "Requirement N" section; its ID is
+// "R<requirement number>.<item number>". A numbered list elsewhere is not a criterion.
+export function requirementCriteria(markdown) {
+  const ids = [];
+  let requirement = null;
+  let inCriteria = false;
+  for (const line of markdown.split(/\r?\n/)) {
+    const heading = /^#{1,6}\s*Requirement\s+(\d+)\b/i.exec(line);
+    if (heading) {
+      requirement = heading[1];
+      inCriteria = false;
+      continue;
+    }
+    if (requirement === null) continue;
+    if (/acceptance\s+criteria/i.test(line) && !/^\s{0,3}\d+[.)]\s/.test(line)) {
+      inCriteria = true;
+      continue;
+    }
+    const item = /^\s{0,3}(\d+)[.)]\s+\S/.exec(line);
+    if (item && inCriteria) ids.push(`R${requirement}.${item[1]}`);
+  }
+  return ids;
+}
+
+// The criterion ID a contract name starts with ("R4.14 ..." gives "R4.14"), or null. The ID has to be followed by a
+// space or the end of the name, the same rule the gate uses to match a task's criteria.
+export function criterionOfName(name) {
+  const m = /^(R\d+\.\d+)(?:\s|$)/.exec(name);
+  return m ? m[1] : null;
+}
+
+function compareCriteria(a, b) {
+  const num = (c) => c.slice(1).split('.').map(Number);
+  const [a1, a2] = num(a);
+  const [b1, b2] = num(b);
+  return a1 - b1 || a2 - b2;
+}
+
+// What a freeze tells the person (Req 16.1): for each contract file the criterion IDs its contracts cover, the
+// criteria of requirements.md that no contract covers, and the contract names that start with no criterion ID.
+// `contracts` are lock entries with `names`. Returns { files: [{ path, criteria }], uncovered: [id], unnamed:
+// [{ path, name }], noCriteria }, `noCriteria` being true when requirements.md has no numbered criteria to compare with.
+function describeContracts(contracts, requirementsText) {
+  const covered = new Set();
+  const files = [];
+  const unnamed = [];
+  for (const c of contracts) {
+    const ids = new Set();
+    for (const name of c.names || []) {
+      const id = criterionOfName(name);
+      if (id === null) unnamed.push({ path: c.path, name });
+      else ids.add(id);
+    }
+    for (const id of ids) covered.add(id);
+    files.push({ path: c.path, criteria: [...ids].sort(compareCriteria) });
+  }
+  const wanted = requirementCriteria(requirementsText);
+  return {
+    files,
+    uncovered: wanted.filter((id) => !covered.has(id)),
+    unnamed,
+    noCriteria: wanted.length === 0,
+  };
+}
+
+// The lines the freeze command prints for the summary of describeContracts: { lines, warnings }.
+export function freezeReport(summary) {
+  const lines = summary.files.map((f) => `  ${f.path}: ${f.criteria.length > 0 ? f.criteria.join(', ') : 'no criterion IDs'}`);
+  const warnings = [];
+  if (summary.noCriteria) {
+    warnings.push(
+      'Warning: requirements.md has no numbered acceptance criteria under a "Requirement N" heading, so criteria without a contract cannot be listed.',
+    );
+  }
+  for (const id of summary.uncovered) warnings.push(`Warning: no contract covers ${id}. Add a contract whose name starts with "${id} ".`);
+  // A contract file that was frozen but gave no result: it counts as one failing contract named after the file.
+  for (const u of summary.unusable || []) {
+    warnings.push(
+      `Warning: ${u.reason} It is recorded as one failing contract named "${u.name}". ` +
+        (u.cannotRun ? `The contracts cannot run here: ${u.cannotRun}. ` : '') +
+        `Fix that, then freeze the spec again.`,
+    );
+  }
+  for (const u of summary.unnamed) {
+    warnings.push(
+      `Warning: the contract "${u.name}" in ${u.path} does not start with a criterion ID such as "R1.1 ", so no task can require it.`,
+    );
+  }
+  return { lines, warnings };
+}
+
 // Every task in a tasks.md text: [{ id, text, criteria, checked }] in file order.
 // `text` is the line after the checkbox, trimmed. A line without an id is skipped.
 // `criteria` are those named on the task line and on the indented sub-lines under
@@ -261,6 +357,7 @@ function listedFiles(cwd, spec, key, globs) {
   return found;
 }
 
+// Returns the summary of describeContracts (Req 16.1), which the command line prints.
 export function freezeSpec(cwd, spec) {
   const reqRel = toRel(path.join('.kiro', 'specs', spec, 'requirements.md'));
   const reqAbs = path.join(cwd, reqRel);
@@ -336,6 +433,16 @@ export function freezeSpec(cwd, spec) {
     },
   };
   const results = runContracts(cwd, spec, partialLock);
+
+  // Req 16.2: a contract file that did not load is not frozen. Without this, the freeze would record a failing
+  // "contract" named after the file, and the person would learn of it only at the first tick. Nothing is written
+  // before this point. A file that loads and defines no test, and a runner file that gave no usable report, are
+  // still frozen, because the frozen contracts R4.8 and R13.4 freeze exactly such files and then check what the gate
+  // does with them; each of them is reported as a warning instead (see freezeReport).
+  const broken = results.filter((r) => r.loadFailure);
+  if (broken.length > 0) throw new Error(refusalMessage(spec, broken));
+  const unusable = results.filter((r) => r.fileFailure);
+
   const namesByPath = {};
   for (const r of results) {
     (namesByPath[r.path] ||= []).push(r.name);
@@ -365,6 +472,27 @@ export function freezeSpec(cwd, spec) {
   for (const c of contracts) copyFrozen(frozenDir, path.join(cwd, c.path), c.sha256);
   if (runnersEntry) copyFrozen(frozenDir, path.join(cwd, runnersEntry.path), runnersEntry.sha256);
   for (const f of frozenEntries) copyFrozen(frozenDir, path.join(cwd, f.path), f.sha256);
+
+  // The stand-in contract of a file that gave no result is explained by its own warning, not as a name with no ID.
+  const standIns = new Set(unusable.map((r) => `${r.path}\0${r.name}`));
+  const described = contracts.map((c) => ({ ...c, names: c.names.filter((n) => !standIns.has(`${c.path}\0${n}`)) }));
+  return {
+    ...describeContracts(described, fs.readFileSync(reqAbs, 'utf8')),
+    unusable: unusable.map((r) => ({ path: r.path, name: r.name, reason: r.reason, cannotRun: r.cannotRun })),
+  };
+}
+
+// Req 16.2: the message of a refused freeze: each file that did not run as a whole, with the first lines of its error.
+function refusalMessage(spec, broken) {
+  const cannotRun = [...new Set(broken.filter((r) => r.cannotRun).map((r) => r.cannotRun))];
+  const out = [`Cannot freeze '${spec}': a contract file did not load, so there is nothing to lock.`];
+  for (const r of broken) {
+    out.push(r.reason);
+    for (const line of r.errorLines || []) out.push(`    ${line}`);
+  }
+  if (cannotRun.length > 0) out.push(`The contracts cannot run here: ${cannotRun.join('; ')}. Install or fix it first.`);
+  out.push(`Nothing was frozen. Fix the file, then run 'necro freeze ${spec}' again.`);
+  return out.join('\n');
 }
 
 // True when a path names a file or a symbolic link (even a dangling one), and not a folder or nothing.

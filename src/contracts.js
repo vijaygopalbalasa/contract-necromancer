@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { hashFile } from './canon.js';
-import { lockedRunners, findRunner, runReport, spawnLimited, timeoutReason, withoutRedirects, frozenGlobDrift } from './runners.js';
+import { lockedRunners, findRunner, runReport, spawnLimited, timeoutReason, withoutRedirects, frozenGlobDrift, mapCaseName } from './runners.js';
 
 const RUNNER = fileURLToPath(new URL('./contract-runner.js', import.meta.url));
 
@@ -45,6 +45,18 @@ function runFile(cwd, absPath) {
   return null;
 }
 
+// Req 16.2: the lines of a contract file's standard error that explain why it did not load: empty lines and
+// Node's "use --trace-warnings" hint are dropped, the process id is cut from a warning, and at most eight lines of at
+// most 300 characters are kept.
+function errorLinesOf(stderr) {
+  return String(stderr || '')
+    .split(/\r?\n/)
+    .map((l) => l.replace(/^\(node:\d+\) /, '').trimEnd())
+    .filter((l) => l.trim() !== '' && !l.startsWith('(Use `node --trace-warnings'))
+    .slice(0, 8)
+    .map((l) => (l.length > 300 ? `${l.slice(0, 300)}...` : l));
+}
+
 // Turn the run() events of one contract file into [{ name, result }].
 // - Each named test is a contract. Names are kept exactly as reported (Req 4.11).
 // - A skipped or todo test, or suite, counts as failing (Req 4.7).
@@ -56,7 +68,11 @@ function runFile(cwd, absPath) {
 //   failed to load or exited badly, and the file counts as failing (Req 4.11).
 //   When it passed, the file had no tests.
 // - A file with no contracts is one failing contract named after the file (Req 4.8).
-function interpret(run, stem) {
+// Req 16.2: that one contract also carries `fileFailure: true`, a `reason` naming the file
+// (`rel`) and, for a file that did not load, `errorLines`, the first lines of its error. A file that reported no test
+// before it stopped carries `loadFailure: true` as well (it never loaded), and a file that loaded and defines no
+// test carries `noTests: true`. A file that reported tests and then exited badly is neither.
+function interpret(run, stem, rel) {
   const contracts = [];
   let fileFailed = run === null;
   for (const e of run ? run.events : []) {
@@ -74,7 +90,17 @@ function interpret(run, stem) {
     }
     contracts.push({ name: e.name, result: e.ok && !e.skip && !e.todo ? 'pass' : 'fail' });
   }
-  if (fileFailed || contracts.length === 0) contracts.push({ name: stem, result: 'fail' });
+  if (fileFailed) {
+    const errorLines = errorLinesOf(run ? run.stderr : '');
+    const why = (errorLines.find((l) => /Error\b/.test(l)) || errorLines[0] || '').replace(/\.$/, '');
+    const reason = run
+      ? `${rel} failed to load or stopped early${why ? `: ${why}` : ''}. Fix the file, then run the check again.`
+      : `${rel} could not be run, because the contract runner stopped. Run it again, and check that Node.js 24 or newer is installed.`;
+    contracts.push({ name: stem, result: 'fail', fileFailure: true, loadFailure: contracts.length === 0, reason, errorLines });
+  } else if (contracts.length === 0) {
+    const reason = `${rel} loads but defines no test. Add tests whose names start with a criterion ID, such as "R1.1 ...".`;
+    contracts.push({ name: stem, result: 'fail', fileFailure: true, noTests: true, reason, errorLines: [] });
+  }
   return contracts;
 }
 
@@ -84,10 +110,22 @@ function interpret(run, stem) {
 // failing contract named after the file, with a plain reason. A run that exited with a
 // non-zero status or ran too long fails the file: the names of its report are kept
 // when it has one, but none of them passes.
+// Req 16.5: a name with the criterion ID in underscores or in a parametrize id is mapped to "R<n>.<m> ...".
+// Req 16.2, 16.4: a file with no usable report is marked `fileFailure`, and `cannotRun` carries the short phrase when
+// its program could not start or a module is missing.
 function interpretReport(run, stem) {
-  if (run.cases === undefined) return [{ name: stem, result: 'fail', reason: run.reason }];
-  if (run.reason !== undefined) return run.cases.map((t) => ({ name: t.name, result: 'fail', reason: run.reason }));
-  return run.cases.map((t) => ({ name: t.name, result: t.outcome === 'passed' ? 'pass' : 'fail' }));
+  if (run.cases === undefined) {
+    const failure = { name: stem, result: 'fail', fileFailure: true, reason: run.reason, errorLines: [] };
+    if (run.cannotRun !== undefined) failure.cannotRun = run.cannotRun;
+    return [failure];
+  }
+  if (run.reason !== undefined) return run.cases.map((t) => ({ name: mapCaseName(t.name), result: 'fail', reason: run.reason }));
+  return run.cases.map((t) => ({ name: mapCaseName(t.name), result: t.outcome === 'passed' ? 'pass' : 'fail' }));
+}
+
+// Req 16.3: why a contract the lock records has no result in a run.
+function staleReason(name, rel) {
+  return `The lock records the contract "${name}" but ${rel} reported no result for it this time, so the lock may be stale. If it was renamed or removed on purpose, ask a person to freeze the spec again.`;
 }
 
 // A file that runs on node:test; every other contract file runs with a command from runners.json.
@@ -162,9 +200,14 @@ export function runContracts(cwd, spec, lock, only = null) {
     if (only !== null && !only.has(c.path)) continue;
     const absPath = path.resolve(cwd, c.path);
     const stem = contractName(c.path);
-    const push = (name, result, reason) => {
+    const push = (name, result, reason, extra = {}) => {
       const r = { name, path: c.path, sha256: c.sha256, result };
       if (reason !== undefined) r.reason = reason;
+      if (extra.fileFailure) r.fileFailure = true;
+      if (extra.loadFailure) r.loadFailure = true;
+      if (extra.noTests) r.noTests = true;
+      if (extra.errorLines !== undefined) r.errorLines = extra.errorLines;
+      if (extra.cannotRun !== undefined) r.cannotRun = extra.cannotRun;
       out.push(r);
     };
 
@@ -184,7 +227,10 @@ export function runContracts(cwd, spec, lock, only = null) {
     let contracts;
     if (isNodeContract(c.path)) {
       const ran = runFile(cwd, absPath);
-      contracts = ran && ran.reason !== undefined ? [{ name: stem, result: 'fail', reason: ran.reason }] : interpret(ran, stem);
+      contracts =
+        ran && ran.reason !== undefined
+          ? [{ name: stem, result: 'fail', reason: ran.reason, fileFailure: true, loadFailure: true, errorLines: [] }]
+          : interpret(ran, stem, c.path);
     } else {
       // Req 13.1, 13.5: a contract file of another language runs with the command of
       // the frozen runners.json. When that file moved, or no pattern matches, the
@@ -214,14 +260,18 @@ export function runContracts(cwd, spec, lock, only = null) {
       }
       contracts = interpretReport(runReport(cwd, absPath, command, runnerEnv()), stem);
     }
-    for (const r of contracts) push(r.name, r.result, r.reason);
+    for (const r of contracts) push(r.name, r.result, r.reason, r);
 
-    // Req 4.10, per file.
+    // Req 4.10, per file. A recorded contract with no result fails. When the file as a whole did not run, that is the
+    // reason it has no result, and it carries the file's reason (Req 16.4). Otherwise the file ran without it, so the
+    // lock may be stale (Req 16.3).
+    const failedWhole = contracts.find((r) => r.fileFailure);
     const seen = new Set(contracts.map((r) => r.name));
     for (const name of c.names) {
       if (!seen.has(name)) {
         seen.add(name);
-        push(name, 'fail');
+        if (failedWhole) push(name, 'fail', failedWhole.reason, { cannotRun: failedWhole.cannotRun });
+        else push(name, 'fail', staleReason(name, c.path));
       }
     }
   }

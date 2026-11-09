@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { freezeSpec } from '../src/lock.js';
+import { freezeSpec, freezeReport } from '../src/lock.js';
 import { verify } from '../src/verify.js';
 import { checkSpec } from '../src/check.js';
 import { handlePreToolUse, handlePostToolUse, handleStop, handlePostTaskExec } from '../src/hooks.js';
@@ -14,9 +14,24 @@ import { runDemo } from '../src/demo.js';
 const cwd = process.cwd();
 const args = process.argv.slice(2);
 
+// Req 16.6: each command with one line on what it does.
+const HELP = `Contract Necromancer: frozen contracts decide when a Kiro task is done.
+
+Usage: necro <command> [arguments]
+
+Commands:
+  necro init              Write the Kiro hooks, the steering file and a custom agent into this project.
+  necro freeze <spec>     Lock the requirements and contracts of a spec. A person does this, after reviewing them.
+  necro check <spec>      Run every frozen contract now and write a receipt, without ticking a task.
+  necro audit [spec]      List each ticked task as ok, no receipt, failing or cannot run. Exit 0 only if all are ok.
+  necro verify <receipt>  Re-run a receipt and print CONFIRMED, MISMATCH or SUPERSEDED.
+  necro mcp               Serve necro_status, necro_check and necro_verify to an agent over MCP (stdio).
+  necro demo              Show the gate refuse a false "done", accept the fix and check the receipt.
+  necro hook <name>       Run a Kiro hook handler: pre, post, stop or posttask. Kiro calls these.
+  necro help              Show this list of commands, with one line on each.`;
+
 if (args.length === 0) {
-  console.error('Usage: necro <command> [args]');
-  console.error('Commands: freeze <spec>, check <spec>, audit [spec], verify <receiptFile>, init, demo, mcp, hook pre|post|stop|posttask');
+  console.error(HELP);
   process.exit(1);
 }
 
@@ -24,14 +39,25 @@ const cmd = args[0];
 
 try {
   switch (cmd) {
+    case 'help':
+    case '--help':
+    case '-h': {
+      console.log(HELP);
+      break;
+    }
+
     case 'freeze': {
       if (args.length < 2) {
         console.error('Usage: necro freeze <spec>');
         process.exit(1);
       }
       const spec = args[1];
-      freezeSpec(cwd, spec);
+      const summary = freezeSpec(cwd, spec);
       console.log(`Spec '${spec}' frozen.`);
+      // Req 16.1: the contract files with the criteria they cover, then the warnings.
+      const report = freezeReport(summary);
+      for (const line of report.lines) console.log(line);
+      for (const warning of report.warnings) console.error(warning);
       break;
     }
 
@@ -92,7 +118,7 @@ try {
     }
 
     default:
-      console.error(`Unknown command: ${cmd}`);
+      console.error(`Unknown command: ${cmd}. Run 'necro help' to see the commands.`);
       process.exit(1);
   }
 } catch (e) {
@@ -165,6 +191,14 @@ function initProject(cwd) {
     console.log('Necromancer hook, steering and agent files already exist. Left unchanged.');
   } else if (kept.length > 0) {
     console.log(`Already exist, left unchanged: ${kept.join(', ')}`);
+  }
+  // Req 16.6: a temporary npx install lives in npm's cache, which npm may clear, so the hook paths would break.
+  if (/[\\/]_npx[\\/]/.test(root)) {
+    console.error(
+      `Warning: the hook paths written above point into the npx cache (${root}), which npm may clear at any time. ` +
+        'To install permanently, run: npm install -g github:vijaygopalbalasa/contract-necromancer. ' +
+        "Then delete .kiro/hooks/necromancer.json and .kiro/agents/necromancer.json and run 'necro init' again.",
+    );
   }
   // Req 8.7
   console.log('Kiro runs hooks only in a trusted workspace. Trust this workspace, then quit and reopen Kiro.');

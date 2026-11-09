@@ -1170,7 +1170,7 @@ test('R13.8 stale bytecode with a restored modified time cannot stand in for cha
   const cwd = pyProject('a + b');
   try {
     freezeSpec(cwd, 's');
-    assert.deepEqual(pyResults(cwd), { test_R1_1_add: 'pass' });
+    assert.deepEqual(pyResults(cwd), { 'R1.1 test_R1_1_add': 'pass' });
     // Compile the correct code the ordinary way, so a cached copy sits in app/__pycache__.
     const compiled = spawnSync('python3', ['-c', 'import sys; sys.path.insert(0, "app"); import calc'], { cwd });
     assert.equal(compiled.status, 0);
@@ -1179,7 +1179,7 @@ test('R13.8 stale bytecode with a restored modified time cannot stand in for cha
     const { atime, mtime } = fs.statSync(file);
     fs.writeFileSync(file, 'def add(a, b):\n    return a - b\n');
     fs.utimesSync(file, atime, mtime);
-    assert.deepEqual(pyResults(cwd), { test_R1_1_add: 'fail' });
+    assert.deepEqual(pyResults(cwd), { 'R1.1 test_R1_1_add': 'fail' });
   } finally {
     done(cwd);
   }
@@ -1192,15 +1192,15 @@ test('R13.9 a conftest.py or pytest.ini written after the freeze cannot turn a f
   try {
     // The person freezes wrong code on purpose here, so the contract fails before and after.
     freezeSpec(cwd, 's');
-    assert.deepEqual(pyResults(cwd), { test_R1_1_add: 'fail' });
+    assert.deepEqual(pyResults(cwd), { 'R1.1 test_R1_1_add': 'fail' });
     const plugin =
       "import pytest\n@pytest.hookimpl(hookwrapper=True)\ndef pytest_runtest_makereport(item, call):\n    outcome = yield\n    rep = outcome.get_result()\n    if rep.when == 'call':\n        rep.outcome = 'passed'\n";
     put(cwd, 'conftest.py', plugin);
-    assert.deepEqual(pyResults(cwd), { test_R1_1_add: 'fail' }, 'a planted conftest.py');
+    assert.deepEqual(pyResults(cwd), { 'R1.1 test_R1_1_add': 'fail' }, 'a planted conftest.py');
     put(cwd, 'conftest.py', '# nothing here\n');
     put(cwd, 'plug.py', plugin);
     put(cwd, 'pytest.ini', '[pytest]\naddopts = -p plug\n');
-    assert.deepEqual(pyResults(cwd), { test_R1_1_add: 'fail' }, 'a planted pytest.ini');
+    assert.deepEqual(pyResults(cwd), { 'R1.1 test_R1_1_add': 'fail' }, 'a planted pytest.ini');
   } finally {
     done(cwd);
   }
@@ -1230,7 +1230,7 @@ test('R13.1 a pytest.py planted in the project does not stand in for pytest when
       'pytest.py',
       "import sys\nfor a in sys.argv:\n    if a.startswith('--junitxml='):\n        open(a.split('=', 1)[1], 'w').write('<testsuite><testcase name=\"test_R1_1_add\"/></testsuite>')\n",
     );
-    assert.deepEqual(pyResults(cwd), { test_R1_1_add: 'fail' });
+    assert.deepEqual(pyResults(cwd), { 'R1.1 test_R1_1_add': 'fail' });
   } finally {
     done(cwd);
   }

@@ -2,6 +2,82 @@
 
 A coding agent can mark a task done in Kiro when the work does not meet the requirements. Contract Necromancer's Kiro hooks refuse the tick in `tasks.md` until the frozen contracts for that task pass, and each passing task leaves a receipt that anyone can re-run.
 
+## Use it in your project
+
+Needs Node.js 24 or newer. Install once, which puts `necro` on your PATH (`npx -y github:vijaygopalbalasa/contract-necromancer <command>` also runs any command except a lasting `init`):
+
+```
+npm install -g github:vijaygopalbalasa/contract-necromancer
+```
+
+The five commands, in order, run in your project's folder:
+
+```
+necro init                 # write the Kiro hooks, steering file and custom agent; trust the workspace in Kiro, then quit and reopen it
+necro freeze <spec>        # a person does this, after reading the contracts: lock requirements.md and the contracts
+necro check <spec>         # run every frozen contract now and write a receipt
+necro audit                # list each ticked task as ok, no receipt, failing or cannot run
+necro verify <receipt>     # re-run a receipt: CONFIRMED, MISMATCH or SUPERSEDED
+```
+
+Before `freeze`, write `.kiro/specs/<spec>/requirements.md` with numbered acceptance criteria under each
+`## Requirement N` heading, and one contract per criterion in `contracts/<spec>/`. A contract's name starts with its
+criterion ID: `R1.1` is criterion 1 of Requirement 1. `freeze` prints each contract file with the IDs it covers and warns
+about a criterion with no contract. It refuses a file that does not load and shows the first lines of the error, and it
+warns about a file that defines no test.
+
+A Node.js contract, `contracts/<spec>/slug.contract.test.js`:
+
+```js
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { slugify } from '../../src/slugify.js';
+
+test('R1.1 slugify lowercases the text', () => {
+  assert.equal(slugify('Hello'), 'hello');
+});
+```
+
+If your `package.json` says `"type": "commonjs"` (`npm init -y` writes that), use `require` for the first three lines
+and keep the rest:
+
+```js
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const { slugify } = require('../../src/slugify.js');
+```
+
+A Python contract needs pytest (`python3 -m pip install pytest`) and Python 3.11 or newer. First
+`.kiro/specs/<spec>/runners.json`, which tells necro how to run files that match a name. Each `"sources"` glob has to
+match at least one file:
+
+```json
+{
+  "test_*_contract.py": "python3 -P -m pytest {file} --junitxml={report} -q --noconftest -p no:cacheprovider",
+  "sources": ["slugs/*.py"]
+}
+```
+
+Then `contracts/<spec>/test_slug_contract.py`. A function named `test_R1_1_...` counts as `R1.1`, because a Python
+function name cannot hold a dot:
+
+```python
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # python3 -P keeps the project off the import path
+
+from slugs.slug import slugify
+
+
+def test_R1_1_slugify_lowercases_the_text():
+    assert slugify("Hello") == "hello"
+```
+
+How the gate works, what `init` writes and the other languages' details are further down.
+
+## Try it in one command
+
 ```
 npx -y github:vijaygopalbalasa/contract-necromancer demo
 ```
@@ -71,15 +147,15 @@ Dee pays Bob 4.21
 ```
 
 Kiro built this app under the gate. Each task it ticked left a receipt in `.necro/receipts/ledger/`. Re-run the newest
-one, from task 9 (run `necro verify` from the folder that holds the spec's `.necro/`, here `examples/pumpkin-ledger`):
+one, a `necro check` receipt written after the last freeze (run `necro verify` from the folder that holds the spec's `.necro/`, here `examples/pumpkin-ledger`):
 
 ```
-node ../../bin/necro.js verify .necro/receipts/ledger/2c6a247bf4ddaa3cdbedf06e5abf719cf6da88bdf12a86df1097c26264811f71.json
-CONFIRMED 2c6a247bf4ddaa3cdbedf06e5abf719cf6da88bdf12a86df1097c26264811f71.
+node ../../bin/necro.js verify .necro/receipts/ledger/9bef6f841d69c85d596cab31879790c59372d48f8e47dc5bf459d4afefb53097.json
+CONFIRMED 9bef6f841d69c85d596cab31879790c59372d48f8e47dc5bf459d4afefb53097.
 ```
 
-The older receipts print `SUPERSEDED`: they were written before task 9 added contracts and a person froze the spec again,
-so they describe an earlier freeze, not today's code.
+The older receipts print `SUPERSEDED`: they were written before a person froze the spec again (task 9 added contracts,
+task 36 added the runtime postconditions), so they describe an earlier freeze, not today's code.
 
 See the gate refuse a tick, with no Kiro install. Work in a scratch copy of the example, so nothing in the repository
 changes. From the repository root (`cd ../..` if you are still in the example), copy `examples/pumpkin-ledger` to a temporary folder, plant the bug from the demo video
@@ -131,7 +207,7 @@ npm test
 
 A tick needs the contracts for the criteria listed on the ticked task, such as `(Req 1.1, 1.4)`, as recorded when the spec was frozen. It needs every contract when the task is the last unticked one, when the lock does not know the task, when the task line was edited after the freeze, or when the task lists no criteria that have a contract. A spec that is not frozen refuses every tick.
 
-## Use it in your project
+## What `init` writes
 
 ```
 node <path>/bin/necro.js init
@@ -259,12 +335,17 @@ Add `.kiro/specs/<spec>/runners.json`, which maps a file-name pattern in `contra
 
 The command runs without a shell, in the project folder. `{file}` and `{report}` are replaced in one pass, `{report}` by
 a path in a new temporary folder. Results come only from that report, never from printed output. A testcase named
-`R<n>.<m> ...` is the contract for that criterion. pytest must be installed for the Python example.
+`R<n>.<m> ...` is the contract for that criterion. A name that carries the ID in another form is mapped to it, written
+`R<n>.<m> <name>`: underscores (`R1_1`, `test_R1_1_rounds`) and a pytest parameter id (`test_x[R1.1 rounds]`). pytest must be
+installed for the Python example.
 
 The command runs under these rules:
 
 - It must exit with status 0. A non-zero status fails the file, whatever the report says. That also means one failing
   test in a file fails the file: keep the contracts of different tasks in different files.
+  The reason shows the last lines of the command's standard error. When the program cannot start or the standard error
+  says a module is missing (pytest not installed), `necro check` and `necro audit` say the contracts cannot run here and
+  name what is missing, rather than calling the work failing; they still exit non-zero.
 - It may run for 240 seconds. Past that, the file fails and the command and its child processes are killed. The same
   limit applies to JavaScript contract files. `NECRO_RUNNER_TIMEOUT_MS` can lower it for one run, never raise it.
 - It gets a fresh, empty `PYTHONPYCACHEPREFIX` folder and `PYTHONDONTWRITEBYTECODE=1`, so compiled files written earlier
@@ -280,7 +361,7 @@ The command runs under these rules:
 
 Use `python3 -P` (Python 3.11 or newer) in the command. Without it, `python3 -m pytest` puts the project folder first on
 the import path, and a `pytest.py` written there stands in for pytest. With `-P`, a contract that imports the code under
-test needs the path set in the contract file or in `PYTHONPATH`.
+test needs the path set in the contract file, because `PYTHONPATH` is removed from the command's environment.
 
 ## Commands
 
@@ -290,6 +371,7 @@ necro freeze <spec>     # lock requirements.md and the contracts of a spec
 necro check <spec>      # run every frozen contract now and write a receipt, without ticking a task
 necro audit [spec]      # list every ticked task as ok, no receipt or failing; exit 0 only if all are ok
 necro verify <receipt>  # re-run a receipt: CONFIRMED, MISMATCH or SUPERSEDED
+necro help              # list every command with one line on what it does
 necro mcp               # serve necro_status, necro_check and necro_verify over MCP (stdio)
 necro demo              # show the gate refuse a false "done", accept the fix and re-check the receipt
 ```

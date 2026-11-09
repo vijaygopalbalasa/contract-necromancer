@@ -797,7 +797,12 @@ test('R6.9 a receipt outside any project with a lock is verified in the current 
 test('R6.9 the real pumpkin-ledger receipt is CONFIRMED from the repository root and from an unrelated folder', () => {
   const repo = path.resolve(import.meta.dirname, '..');
   const dir = path.join(repo, 'examples', 'pumpkin-ledger', '.necro', 'receipts', 'ledger');
-  const receipt = path.join(dir, '2c6a247bf4ddaa3cdbedf06e5abf719cf6da88bdf12a86df1097c26264811f71.json');
+  // The newest receipt, as CI picks it: older ones are SUPERSEDED once the example is frozen again.
+  const newest = fs
+    .readdirSync(dir)
+    .map((f) => ({ f, createdAt: JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')).createdAt }))
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))[0].f;
+  const receipt = path.join(dir, newest);
   const elsewhere = tmpCwd();
   try {
     const inExample = verifyFrom(path.join(repo, 'examples', 'pumpkin-ledger'), receipt);

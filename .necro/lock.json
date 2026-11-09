@@ -3,6 +3,20 @@
     "necro-core": {
       "contracts": [
         {
+          "name": "adoption",
+          "names": [
+            "R16.1 freeze prints each contract file with the criterion IDs it covers, and warns about each criterion with no contract and each contract name with no criterion ID",
+            "R16.2 a contract file that fails to load is refused at freeze, with the file and the first lines of the error",
+            "R16.3 a contract the lock records that a run no longer reports fails with a note that the lock may be stale and a person should freeze the spec again, in check and in the gate",
+            "R16.4 a failing runner command shows the last lines of its standard error, and a missing module or program is reported as contracts that cannot run here, by check and by audit, with a non-zero exit",
+            "R16.5 a runner testcase name with the criterion ID in underscores or in a parametrize id maps to that criterion as \"R1.1 ...\", and the gate requires it by criterion",
+            "R16.6 necro help, --help and -h print each command with one line on what it does, and init from an npx cache warns and shows how to install permanently",
+            "R16.7 package.json lists the published files so npm pack prints no .gitignore fallback warning, and the README opens with \"Use it in your project\": five commands and a minimal contract for Node.js and for Python"
+          ],
+          "path": "contracts/necro-core/adoption.contract.test.js",
+          "sha256": "84d373b56011f547ce14b3f6ed7f982d91d2c7f6fbfc21858fdf5bf55727c8f0"
+        },
+        {
           "name": "audit-fast",
           "names": [
             "R14.7 stop and posttask run only the contracts of the task ticked since the freeze and untick it; the others are left alone",
@@ -364,7 +378,7 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-09T22:47:45.195Z",
+      "frozenAt": "2026-11-09T23:25:16.389Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
         "sha256": "12e8520d1eb21da31c6db5eda5dec244e87d7663cb6e6fe7935be8213ddf9b00"
@@ -752,6 +766,7 @@
         "33. **A fast safety net, honest receipts, a steady CI** (Req 7.1, 14.7, 14.8, 14.9)",
         "34. **Symbolic links under frozen globs** (Req 13.13)",
         "35. **Fail closed on missing results and linked folders** (Req 13.14, 14.10)",
+        "36. **Runtime postconditions** (Req 15.1, 15.2, 15.3, 15.4, 15.5, 15.6)",
         "3b. **No vacuous passes** (Req 4.7, 4.8)",
         "3c. **Pin contract names and check files before running** (Req 2.5, 2.6, 4.9, 4.10)",
         "4. **Receipts** (Req 5.1, 5.2, 5.3)",
