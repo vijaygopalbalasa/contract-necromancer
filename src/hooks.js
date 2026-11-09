@@ -4,7 +4,7 @@ import { hashFile, sha256 } from './canon.js';
 import { readLock, isSpecFrozen, frozenFiles, TASK_LINE, taskIdOf, requiredNames } from './lock.js';
 import { runContracts } from './contracts.js';
 import { buildReceipt, writeReceipt } from './receipts.js';
-import { auditSpec, failingRequired, problems } from './audit.js';
+import { auditSpec, planAudit, failingRequired, problems } from './audit.js';
 
 const ALLOW = Object.freeze({ exitCode: 0, stdout: '', stderr: '' });
 
@@ -908,8 +908,8 @@ function undoUnsupportedTicks(cwd, audits) {
   return messages;
 }
 
-// Audit every frozen spec and undo the ticks that are not ok (Req 14.3). `resultsBySpec`
-// holds contract results the caller already has. A spec whose lock records no list of
+// Audit the tasks ticked since the freeze in every frozen spec and undo the ones that are not ok
+// (Req 14.3, 14.7). `resultsBySpec` holds contract results the caller already has. A spec whose lock records no list of
 // tasks ticked at freeze was frozen before Req 14: it is left alone, so an upgrade does
 // not untick a project's older work, and one message says a person must freeze it again
 // (Req 14.6). `necro audit` still reports every verdict for it.
@@ -923,7 +923,8 @@ function auditAndUndo(cwd, lock, resultsBySpec = {}) {
       );
       continue;
     }
-    audits.push(auditSpec(cwd, spec, lock, resultsBySpec[spec] || null));
+    // Req 14.7: only the tasks ticked since the freeze, so a large project finishes well inside the hooks' time limit.
+    audits.push(auditSpec(cwd, spec, lock, resultsBySpec[spec] || null, { onlyNew: true }));
   }
   return [...messages, ...undoUnsupportedTicks(cwd, audits)];
 }
@@ -975,20 +976,31 @@ export function handleStop(payload) {
       receiptCount = 0; // directory missing
     }
 
-    // Run contracts and collect failing names
-    const results = runContracts(cwd, spec, lock);
+    // Run contracts and collect failing names. Req 7.1, 14.7: only the contracts the tasks ticked
+    // since the freeze require, which is also all the audit below needs. With no such task (or a
+    // lock that records no ticked list), no contract runs; `necro audit` is the full check.
+    const entry = lock.specs[spec];
+    const plan = Array.isArray(entry && entry.ticked) ? planAudit(cwd, spec, lock) : null;
+    const fresh = plan !== null && plan.fresh.length > 0;
+    const partial = fresh && plan.paths !== null;
+    const results = fresh ? runContracts(cwd, spec, lock, plan.paths) : [];
     resultsBySpec[spec] = results;
     const failing = results
       .filter((r) => r.result === 'fail')
       .map((r) => r.name)
       .sort();
-    const contractStatus =
-      failing.length === 0
+    const contractStatus = !fresh
+      ? 'no contract ran. `necro audit` is the full check'
+      : failing.length === 0
         ? 'passing'
         : `failing: ${failing.join(', ')}`;
 
     const line = `Spec ${spec}: ${tasksDone} tasks done, ${receiptCount} receipts, ${contractStatus}.`;
     lines.push(line);
+    if (partial) {
+      const ran = new Set(results.map((r) => r.name)).size;
+      lines.push(`  Checked ${ran} of ${plan.names.length} contracts, the ones the newly ticked tasks require.`);
+    }
   }
 
   const output = lines.join('\n');

@@ -1485,3 +1485,100 @@ test('R13.12 verify catches a new matching file when the lock is gone, using the
     done(cwd);
   }
 });
+
+// --- 13.13: a symbolic link under a frozen glob counts as a matching file ------------------------
+
+// The three kinds of link a glob can match, made under plug/. Each name matches "plug/*.txt".
+function plantLinks(cwd) {
+  put(cwd, 'outside/target.txt', 'a file elsewhere\n');
+  fs.mkdirSync(path.join(cwd, 'outside/folder'), { recursive: true });
+  fs.symlinkSync(path.join(cwd, 'outside/target.txt'), path.join(cwd, 'plug/to-file.txt'));
+  fs.symlinkSync(path.join(cwd, 'outside/folder'), path.join(cwd, 'plug/to-folder.txt'));
+  fs.symlinkSync(path.join(cwd, 'outside/nothing-here'), path.join(cwd, 'plug/dangling.txt'));
+}
+
+const LINKS = ['plug/dangling.txt', 'plug/to-file.txt', 'plug/to-folder.txt'];
+
+test('R13.13 expandGlobs still skips symbolic links by default, and lists a link to a file, to a folder and a dangling one when asked', () => {
+  const cwd = globProject();
+  try {
+    plantLinks(cwd);
+    assert.deepEqual(expandGlobs(cwd, ['plug/*.txt']), ['plug/one.txt', 'plug/two.txt']);
+    assert.deepEqual(expandGlobs(cwd, ['plug/*.txt'], { links: true }), [...LINKS, 'plug/one.txt', 'plug/two.txt'].sort());
+    assert.deepEqual(expandGlobs(cwd, ['plug/**'], { links: true }), [...LINKS, 'plug/one.txt', 'plug/two.txt'].sort());
+    assert.deepEqual(expandGlobs(cwd, ['**/to-*.txt'], { links: true }), ['plug/to-file.txt', 'plug/to-folder.txt']);
+    assert.deepEqual(expandGlobs(cwd, ['plug/*.md'], { links: true }), []);
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.13 frozenGlobDrift counts a link to a file, to a folder and a dangling one as added, and a link that replaced a locked file', () => {
+  const cwd = globProject();
+  try {
+    const entry = readLock(cwd).specs[SPEC];
+    plantLinks(cwd);
+    assert.deepEqual(frozenGlobDrift(cwd, entry), { added: LINKS, removed: [] });
+
+    // A locked file swapped for a link to a copy with the same bytes: still added, not removed.
+    fs.rmSync(path.join(cwd, 'plug/one.txt'));
+    put(cwd, 'outside/copy.txt', 'one\n');
+    fs.symlinkSync(path.join(cwd, 'outside/copy.txt'), path.join(cwd, 'plug/one.txt'));
+    assert.deepEqual(frozenGlobDrift(cwd, entry), { added: [...LINKS, 'plug/one.txt'].sort(), removed: [] });
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.13 a link under a frozen glob makes every runner file fail with a reason naming it, without running the command, whatever it points to', () => {
+  for (const link of LINKS) {
+    const cwd = globProject();
+    try {
+      plantLinks(cwd);
+      for (const other of LINKS) if (other !== link) fs.rmSync(path.join(cwd, other));
+      withLog((log) => {
+        const results = runContracts(cwd, SPEC, readLock(cwd));
+        assert.deepEqual(byName(results), { 'R1.1 x': 'fail', 'R1.2 y': 'fail' }, link);
+        for (const r of results) assert.ok(r.reason.includes(link), `${link}: ${r.reason}`);
+        assert.equal(calls(log).length, 0, 'the command did not run');
+      });
+      fs.rmSync(path.join(cwd, link));
+      assert.deepEqual(byName(runContracts(cwd, SPEC, readLock(cwd))), { 'R1.1 x': 'pass', 'R1.2 y': 'pass' }, 'removed, all is well');
+    } finally {
+      done(cwd);
+    }
+  }
+});
+
+test('R13.13 a link that no frozen glob matches changes nothing', () => {
+  const cwd = globProject();
+  try {
+    put(cwd, 'outside/target.txt', 'a file elsewhere\n');
+    fs.symlinkSync(path.join(cwd, 'outside/target.txt'), path.join(cwd, 'other/link.txt'));
+    fs.symlinkSync(path.join(cwd, 'outside/target.txt'), path.join(cwd, 'plug/link.md'));
+    fs.symlinkSync(path.join(cwd, 'outside/nothing-here'), path.join(cwd, 'plug/deeper-dangling'));
+    assert.deepEqual(byName(runContracts(cwd, SPEC, readLock(cwd))), { 'R1.1 x': 'pass', 'R1.2 y': 'pass' });
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R13.13 verify prints MISMATCH naming a link under a frozen glob, to a file, to a folder or dangling', () => {
+  for (const link of LINKS) {
+    const cwd = globProject();
+    try {
+      const { receipt } = runCheck(cwd, SPEC);
+      assert.equal(captureStdout(() => verify(cwd, receipt)).code, 0);
+      plantLinks(cwd);
+      for (const other of LINKS) if (other !== link) fs.rmSync(path.join(cwd, other));
+      const out = captureStdout(() => verify(cwd, receipt));
+      assert.equal(out.code, 1, link);
+      assert.match(out.out, /MISMATCH/);
+      assert.ok(out.out.includes(link), `${link}: ${out.out}`);
+      fs.rmSync(path.join(cwd, link));
+      assert.equal(captureStdout(() => verify(cwd, receipt)).code, 0, 'removed, all is well');
+    } finally {
+      done(cwd);
+    }
+  }
+});

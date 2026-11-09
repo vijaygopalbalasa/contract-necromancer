@@ -457,3 +457,177 @@ test('R14.5 the README shows the one CI step a project adds to run necro audit',
   assert.match(block, /- name:/);
   assert.match(block, /run:\s*npx -y github:vijaygopalbalasa\/contract-necromancer audit/);
 });
+
+// ---------------------------------------------------------------------------
+// Req 14.7: Stop and PostTaskExec audit only the tasks ticked since the freeze
+// ---------------------------------------------------------------------------
+
+const BIG_TASKS = [
+  '1. One (Req 1.1)',
+  '2. Two (Req 2.1)',
+  '3. Three (Req 3.1)',
+  '4. Four (Req 4.1)',
+  '5. Five (Req 5.1)',
+];
+
+function bigTasksText(ticked) {
+  return BIG_TASKS.map((t, i) => `- [${ticked.includes(i + 1) ? 'x' : ' '}] ${t}`).join('\n') + '\n';
+}
+
+// Contract file number n: it appends "c<n>" to runs.log every time it is loaded, so a test can count the
+// runs, and its contract R<n>.1 fails while a file broken-<n> exists.
+function counting(n) {
+  return `import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+fs.appendFileSync(new URL('../../runs.log', import.meta.url), 'c${n}\\n');
+test('R${n}.1 holds', () => {
+  assert.ok(!fs.existsSync(new URL('../../broken-${n}', import.meta.url)));
+});
+`;
+}
+
+// A frozen spec "big" with four contract files and five tasks; tasks 1 to 3 are ticked when a person
+// freezes it. Task 4 is then ticked, and runs.log is cleared so only later runs are counted.
+function bigProject(cwd, { tickFour = true } = {}) {
+  put(cwd, '.kiro/specs/big/requirements.md', '# Requirements: big\n');
+  for (const n of [1, 2, 3, 4]) put(cwd, `contracts/big/c${n}.contract.test.js`, counting(n));
+  put(cwd, '.kiro/specs/big/tasks.md', bigTasksText([1, 2, 3]));
+  freezeSpec(cwd, 'big');
+  if (tickFour) put(cwd, '.kiro/specs/big/tasks.md', bigTasksText([1, 2, 3, 4]));
+  fs.rmSync(path.join(cwd, 'runs.log'), { force: true });
+}
+
+function runsLog(cwd) {
+  try {
+    return read(cwd, 'runs.log').split('\n').filter((l) => l !== '');
+  } catch {
+    return [];
+  }
+}
+
+const BIG_TASKS_REL = '.kiro/specs/big/tasks.md';
+
+test('R14.7 stop runs only the contracts of the task ticked since the freeze, and unticks it when they fail', () =>
+  temp((cwd) => {
+    bigProject(cwd);
+    put(cwd, 'broken-4', '');
+    put(cwd, 'broken-1', ''); // an old task whose contract fails now: not this audit's business
+    const res = necro(cwd, ['hook', 'stop'], '');
+    assert.equal(res.status, 0, res.stderr);
+    assert.deepEqual(runsLog(cwd), ['c4'], 'only the contract file of task 4 ran');
+    assert.equal(read(cwd, BIG_TASKS_REL), bigTasksText([1, 2, 3]), 'task 4 is unticked, 1 to 3 are left alone');
+    assert.match(res.stderr, /Unticked "4\. Four \(Req 4\.1\)"/);
+    assert.match(res.stderr, /R4\.1 holds/);
+    assert.match(res.stdout, /^Spec big: 4 tasks done, 0 receipts, failing: R4\.1 holds\.$/m);
+  }));
+
+test('R14.7 posttask runs only the contracts of the task ticked since the freeze, and unticks it when they fail', () =>
+  temp((cwd) => {
+    bigProject(cwd);
+    put(cwd, 'broken-4', '');
+    put(cwd, 'broken-2', '');
+    const res = hookPostTask(cwd, '');
+    assert.equal(res.status, 0, res.stderr);
+    assert.deepEqual(runsLog(cwd), ['c4']);
+    assert.equal(read(cwd, BIG_TASKS_REL), bigTasksText([1, 2, 3]));
+    assert.match(res.stderr, /Unticked "4\. Four \(Req 4\.1\)"/);
+    assert.doesNotMatch(res.stderr, /Two|One/);
+  }));
+
+test('R14.7 a task ticked since the freeze that the gate accepted costs only its own contracts and stays ticked', () =>
+  temp((cwd) => {
+    bigProject(cwd, { tickFour: false });
+    const res = handlePreToolUse({
+      hook_event_name: 'PreToolUse',
+      cwd,
+      tool_name: 'task_update',
+      tool_input: { tasksFilePath: BIG_TASKS_REL, taskId: BIG_TASKS[3], status: 'completed' },
+    });
+    assert.equal(res.exitCode, 0, res.stderr);
+    put(cwd, BIG_TASKS_REL, bigTasksText([1, 2, 3, 4]));
+    fs.rmSync(path.join(cwd, 'runs.log'), { force: true });
+    const stop = necro(cwd, ['hook', 'stop'], '');
+    assert.equal(stop.status, 0, stop.stderr);
+    assert.deepEqual(runsLog(cwd), ['c4']);
+    assert.equal(stop.stderr, '');
+    assert.equal(read(cwd, BIG_TASKS_REL), bigTasksText([1, 2, 3, 4]));
+    assert.match(stop.stdout, /^Spec big: 4 tasks done, 1 receipts, passing\.$/m);
+    assert.match(stop.stdout, /1 of 4 contracts/, 'says that the summary covers only the contracts it ran');
+  }));
+
+test('R14.7 posttask with no task ticked since the freeze runs no contract', () =>
+  temp((cwd) => {
+    bigProject(cwd, { tickFour: false });
+    put(cwd, 'broken-1', '');
+    const res = hookPostTask(cwd, '');
+    assert.equal(res.status, 0, res.stderr);
+    assert.deepEqual(runsLog(cwd), []);
+    assert.equal(res.stderr, '');
+    assert.equal(read(cwd, BIG_TASKS_REL), bigTasksText([1, 2, 3]));
+  }));
+
+test('R7.1 stop with no task ticked since the freeze runs no contract, says so and names necro audit as the full check', () =>
+  temp((cwd) => {
+    bigProject(cwd, { tickFour: false });
+    put(cwd, 'broken-1', ''); // an old task whose contract fails now: only necro audit looks at it
+    const res = necro(cwd, ['hook', 'stop'], '');
+    assert.equal(res.status, 0, res.stderr);
+    assert.deepEqual(runsLog(cwd), [], 'no contract file ran');
+    assert.match(res.stdout, /^Spec big: 3 tasks done, 0 receipts, no contract ran\. `necro audit` is the full check\.$/m);
+    assert.doesNotMatch(res.stdout, /passing|failing/);
+    assert.equal(read(cwd, BIG_TASKS_REL), bigTasksText([1, 2, 3]));
+  }));
+
+test('R14.7 a task ticked since the freeze that requires every contract (none matches its criteria) runs them all', () =>
+  temp((cwd) => {
+    bigProject(cwd);
+    put(cwd, BIG_TASKS_REL, bigTasksText([1, 2, 3, 4, 5]));
+    fs.rmSync(path.join(cwd, 'runs.log'), { force: true });
+    put(cwd, 'broken-1', '');
+    const res = hookPostTask(cwd, '');
+    assert.equal(res.status, 0, res.stderr);
+    assert.deepEqual(runsLog(cwd).sort(), ['c1', 'c2', 'c3', 'c4']);
+    assert.match(res.stderr, /Unticked "4\. Four/);
+    assert.match(res.stderr, /Unticked "5\. Five/);
+  }));
+
+test('R14.7 necro audit still checks every ticked task, old and new', () =>
+  temp((cwd) => {
+    bigProject(cwd);
+    put(cwd, 'broken-4', '');
+    put(cwd, 'broken-1', '');
+    const before = read(cwd, BIG_TASKS_REL);
+    const res = necro(cwd, ['audit']);
+    assert.equal(res.status, 1, res.stdout);
+    assert.deepEqual(runsLog(cwd).sort(), ['c1', 'c2', 'c3', 'c4']);
+    assert.match(res.stdout, /failing\s+1\. One.*R1\.1 holds/);
+    assert.match(res.stdout, /failing\s+4\. Four.*R4\.1 holds/);
+    assert.match(res.stdout, /Spec big: 4 ticked tasks, 2 ok\./);
+    assert.equal(read(cwd, BIG_TASKS_REL), before);
+  }));
+
+// ---------------------------------------------------------------------------
+// Req 14.8: the README on receipts as files
+// ---------------------------------------------------------------------------
+
+test('R14.8 the README says a receipt is a file an agent can add, and what a forged one can and cannot do', () => {
+  const readme = fs.readFileSync(path.join(REPO, 'README.md'), 'utf8').replace(/\s+/g, ' ');
+  assert.match(readme, /receipts are files in the project/i);
+  assert.match(readme, /an agent able to write files can add one/i);
+  assert.match(readme, /a forged receipt can only make `necro audit` accept a task whose required contracts pass now/i);
+  assert.match(readme, /it can fake where a tick came from, not whether the work holds/i);
+});
+
+// ---------------------------------------------------------------------------
+// Req 14.9: CI audits this repository and re-runs only the example receipts
+// ---------------------------------------------------------------------------
+
+test('R14.9 CI runs necro audit for this repository and verifies the newest receipt of each example spec only', () => {
+  const workflow = fs.readFileSync(path.join(REPO, '.github/workflows/test.yml'), 'utf8');
+  assert.match(workflow, /run:\s*node bin\/necro\.js audit\s*$/m);
+  const loops = [...workflow.matchAll(/for dir in ([^;\n]*);\s*do/g)];
+  assert.equal(loops.length, 1, 'one loop over project folders');
+  assert.deepEqual(loops[0][1].trim().split(/\s+/), ['examples/pumpkin-ledger', 'examples/night-shift']);
+  assert.match(workflow, /node bin\/necro\.js verify "\$newest"/);
+});

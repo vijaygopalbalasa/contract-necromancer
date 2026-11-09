@@ -104,7 +104,10 @@ function isNodeContract(filePath) {
 // differs from the lock, every contract in that file counts as failing.
 // Req 4.10: a contract name recorded in the lock that is missing from its file's
 // run counts as failing. Names are matched per contract file, never across files.
-export function runContracts(cwd, spec, lock) {
+//
+// `only` (Req 14.7) is an optional Set of contract file paths: only those files run, and the
+// result holds only their contracts. Without it every contract file runs.
+export function runContracts(cwd, spec, lock, only = null) {
   const entry = lock && lock.specs && lock.specs[spec];
   if (!entry || !entry.contracts) return [];
 
@@ -156,6 +159,7 @@ export function runContracts(cwd, spec, lock) {
 
   const out = [];
   for (const c of files.values()) {
+    if (only !== null && !only.has(c.path)) continue;
     const absPath = path.resolve(cwd, c.path);
     const stem = contractName(c.path);
     const push = (name, result, reason) => {

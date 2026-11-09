@@ -1,0 +1,45 @@
+{"t":"2026-11-09T20:32:58.413Z","tool":"execute_bash","what":"cd && git && head && grep && tail && ls && cat && head"}
+{"t":"2026-11-09T20:33:01.944Z","tool":"execute_bash","what":"cd && sed && grep && ^### && 13\\.1[0-9]\" && sed"}
+{"t":"2026-11-09T20:33:02.045Z","tool":"execute_bash","what":"cd && cat && cat"}
+{"t":"2026-11-09T20:33:08.336Z","tool":"execute_bash","what":"cd && grep && head && git && head && git && wc && grep && \\\"frozen\\\"\" && head"}
+{"t":"2026-11-09T20:33:16.124Z","tool":"execute_bash","what":"cd && git && cat && sed"}
+{"t":"2026-11-09T20:33:16.124Z","tool":"execute_bash","what":"cd && cat"}
+{"t":"2026-11-09T20:33:24.118Z","tool":"execute_bash","what":"cd && sed && grep && stop\" && head"}
+{"t":"2026-11-09T20:33:36.794Z","tool":"execute_bash","what":"cd && sed && git && head && grep"}
+{"t":"2026-11-09T20:33:54.141Z","tool":"execute_bash","what":"cd && grep && head && sed && grep && handleStop\\ && 'stop'\" && head"}
+{"t":"2026-11-09T20:33:59.407Z","tool":"execute_bash","what":"cd && grep && runsLog\\ && stop\" && head && grep && head && grep && handleStop\" && head"}
+{"t":"2026-11-09T20:34:09.349Z","tool":"execute_bash","what":"cd && python3 && put(cwd, && // && assert.equal(res.status, && assert.deepEqual(runsLog(cwd), && assert.match(res.stdout, && assert.doesNotMatch(res.stdout, && failing/) && assert.equal(read(cwd, && }"}
+{"t":"2026-11-09T20:34:12.221Z","tool":"execute_bash","what":"cd && sed && cat && head"}
+{"t":"2026-11-09T20:34:21.476Z","tool":"str_replace","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/test/hooks.test.js"}
+{"t":"2026-11-09T20:34:50.947Z","tool":"execute_bash","what":"cd && node && grep && pass && fail) && not && head"}
+{"t":"2026-11-09T20:35:23.088Z","tool":"execute_bash","what":"cd && node && grep && pass && fail) && ^✖ && ✖\" && head"}
+{"t":"2026-11-09T20:35:28.897Z","tool":"execute_bash","what":"cd && node && grep && error:\" && head"}
+{"t":"2026-11-09T20:35:33.080Z","tool":"execute_bash","what":"cd && node && head"}
+{"t":"2026-11-09T20:35:36.606Z","tool":"str_replace","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/test/hooks.test.js"}
+{"t":"2026-11-09T20:36:01.311Z","tool":"execute_bash","what":"cd && node && grep && pass && fail) && ✖\" && head"}
+{"t":"2026-11-09T20:36:07.721Z","tool":"str_replace","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/test/hooks.test.js"}
+{"t":"2026-11-09T20:36:11.259Z","tool":"execute_bash","what":"cd && sed"}
+{"t":"2026-11-09T20:36:14.369Z","tool":"str_replace","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/test/hooks.test.js"}
+{"t":"2026-11-09T20:36:40.632Z","tool":"execute_bash","what":"cd && node && grep && pass && fail) && ✖\" && head"}
+{"t":"2026-11-09T20:36:48.139Z","tool":"execute_bash","what":"cd && sed && node && grep && head"}
+{"t":"2026-11-09T20:36:56.496Z","tool":"str_replace","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/src/hooks.js"}
+{"t":"2026-11-09T20:37:21.802Z","tool":"execute_bash","what":"cd && node && grep && pass && fail) && ✖\" && head"}
+{"t":"2026-11-09T20:37:49.461Z","tool":"fs_write","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/contracts/necro-core/summary-v2.contract.test.js"}
+{"t":"2026-11-09T20:37:50.008Z","tool":"execute_bash","what":"cd && node && grep && pass && fail) && ✖ && Assertion && message\" && head"}
+{"t":"2026-11-09T20:37:56.364Z","tool":"execute_bash","what":"cd && cp && sed && /const && /' && node && grep && fail)\" && cp && node && grep && fail)\""}
+{"t":"2026-11-09T20:38:02.777Z","tool":"execute_bash","what":"cd && sed && /const && /' && node && grep && fail)\" && cp && git && node && grep && fail)\""}
+{"t":"2026-11-09T20:38:06.750Z","tool":"execute_bash","what":"cd && grep && glob\\ && walk\\ && isSymbolicLink\\ && readdirSync\\ && lstat\" && head && grep && 13\\.12\""}
+{"t":"2026-11-09T20:38:09.399Z","tool":"execute_bash","what":"cd && sed && grep && tail && cat && grep && expandGlobs\" && grep"}
+{"t":"2026-11-09T20:38:23.858Z","tool":"execute_bash","what":"cd && grep && expandGlobs\\ && frozenGlobDrift\\ && symbolic\\ && symlink\" && head"}
+{"t":"2026-11-09T20:38:29.118Z","tool":"execute_bash","what":"cd && sed"}
+{"t":"2026-11-09T20:38:44.048Z","tool":"execute_bash","what":"cd && sed && sed && grep && put\\ && runnersJson\\ && withLog\\ && calls\\ && byName\\ && captureStdout\\ && done\\)\""}
+{"t":"2026-11-09T20:38:49.227Z","tool":"execute_bash","what":"cd && sed && sed"}
+{"t":"2026-11-09T20:39:05.187Z","tool":"execute_bash","what":"cd && grep && head && cat && fs.mkdirSync(path.join(cwd, && fs.symlinkSync(path.join(cwd, && fs.symlinkSync(path.join(cwd, && fs.symlinkSync(path.join(cwd, && } && test('R13.13 && try && assert.deepEq"}
+{"t":"2026-11-09T20:39:32.711Z","tool":"execute_bash","what":"cd && python3 && for && !SKIPPED_FOLDERS.has(e.name)) && else && e.isFile()) && }\"\"\",\"\"\" && for && !SKIPPED_FOLDERS.has(e.name)) && else && (e.isFile() &&  && (links && e.isSymbolicLink()))) && }\"\"\") "}
+{"t":"2026-11-09T20:39:52.970Z","tool":"execute_bash","what":"cd && python3 && // && // && // && const && try && const && const && const && const && put(cwd, && put(cwd, && put( && put(cwd, && put(cwd, && put(cwd, && put(cwd, && put(cwd, && fs.mkdirSync(path.joi"}
+{"t":"2026-11-09T20:40:00.754Z","tool":"execute_bash","what":"cd && cp && git && node && grep && fail)\" && cp && git && grep && em\" && grep && head"}
+{"t":"2026-11-09T20:40:39.356Z","tool":"execute_bash","what":"cd && grep && symlink\" && head && (time && grep && pass && fail && skipped) && ^✖\") && tail"}
+{"t":"2026-11-09T20:41:10.681Z","tool":"execute_bash","what":"cd && (time && grep && pass && fail && skipped) && ^✖\") && tail"}
+{"t":"2026-11-09T20:44:06.600Z","tool":"execute_bash","what":"cd && (time && echo && tail && grep && not && grep && cat && head"}
+{"t":"2026-11-09T20:44:10.609Z","tool":"execute_bash","what":"cd && grep"}
+{"t":"2026-11-09T20:44:14.635Z","tool":"execute_bash","what":"cd && time && echo && git && grep && test\\ && README\\ && .github\\)\""}

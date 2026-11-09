@@ -54,6 +54,53 @@ function receiptEvidence(cwd, spec) {
   return { ids, lines };
 }
 
+// The contract names the lock records for a spec, sorted.
+export function lockedNames(entry) {
+  const names = new Set();
+  for (const c of (entry && entry.contracts) || []) for (const n of c.names || []) names.add(n);
+  return [...names].sort();
+}
+
+// Req 14.7: the ticked tasks of a frozen spec that were not ticked when a person last froze it,
+// and the contract files whose contracts those tasks require. A line ticked at the freeze is
+// matched by text, once per recorded occurrence, in file order, so a copy of such a line added
+// later is new. Which contracts a task requires is decided as in auditSpec. Reads files; runs
+// nothing and writes nothing.
+// Returns { fresh: [{ index, text }], names, paths }. `paths` is a Set of contract file paths,
+// or null when every contract file is needed (a task that requires every contract).
+export function planAudit(cwd, spec, lock = readLock(cwd)) {
+  const entry = lock.specs && lock.specs[spec];
+  const names = lockedNames(entry);
+  const none = { fresh: [], names, paths: new Set() };
+  if (!entry) return none;
+  let markdown = '';
+  try {
+    markdown = fs.readFileSync(path.join(cwd, '.kiro', 'specs', spec, 'tasks.md'), 'utf8');
+  } catch {
+    return none;
+  }
+  const credit = new Map();
+  for (const text of Array.isArray(entry.ticked) ? entry.ticked : []) credit.set(text, (credit.get(text) || 0) + 1);
+  const fresh = [];
+  for (const t of tickedLines(markdown)) {
+    if ((credit.get(t.text) || 0) > 0) credit.set(t.text, credit.get(t.text) - 1);
+    else fresh.push(t);
+  }
+
+  const table = entry.tasks || {};
+  const lines = parseTasks(markdown);
+  const required = new Set();
+  for (const { text } of fresh) {
+    const id = taskIdOf(text);
+    const matching = id !== null ? requiredForTask(table, lines, text, names) : null;
+    if (matching === null) return { fresh, names, paths: null };
+    for (const n of matching) required.add(n);
+  }
+  const paths = new Set();
+  for (const c of entry.contracts || []) if ((c.names || []).some((n) => required.has(n))) paths.add(c.path);
+  return { fresh, names, paths };
+}
+
 // Audit one frozen spec: every ticked task line of its tasks.md with one verdict (Req 14.1).
 //   ok          every contract the task requires passes now, and either the gate wrote a
 //               receipt for the task id (under any freeze of the spec) or the task was
@@ -63,9 +110,11 @@ function receiptEvidence(cwd, spec) {
 // Which contracts a task requires is decided as for the gate (Req 4.14, 4.15, 4.16),
 // except that being the last unticked task adds nothing here.
 // `results` are the spec's contract results, run now unless the caller has them.
+// With `onlyNew` (Req 14.7) only the tasks ticked since the last freeze are audited, and when
+// the contracts are run here, only the contract files those tasks require.
 // Returns { spec, tasks: [{ index, id, text, verdict, failing }] }, `index` being the
 // 0-based line of tasks.md. Runs the contracts and reads files; writes nothing.
-export function auditSpec(cwd, spec, lock = readLock(cwd), results = null) {
+export function auditSpec(cwd, spec, lock = readLock(cwd), results = null, { onlyNew = false } = {}) {
   const entry = lock.specs && lock.specs[spec];
   if (!entry) return { spec, tasks: [] };
   let markdown = '';
@@ -74,11 +123,13 @@ export function auditSpec(cwd, spec, lock = readLock(cwd), results = null) {
   } catch {
     return { spec, tasks: [] };
   }
-  const ticked = tickedLines(markdown);
+  const plan = onlyNew ? planAudit(cwd, spec, lock) : null;
+  const ticked = onlyNew ? plan.fresh : tickedLines(markdown);
   if (ticked.length === 0) return { spec, tasks: [] };
 
-  const ran = results || runContracts(cwd, spec, lock);
-  const names = [...new Set(ran.map((r) => r.name))].sort();
+  const ran = results || runContracts(cwd, spec, lock, plan ? plan.paths : null);
+  // A partial run knows only some names; the lock knows them all.
+  const names = onlyNew ? plan.names : [...new Set(ran.map((r) => r.name))].sort();
   const table = entry.tasks || {};
   const lines = parseTasks(markdown);
   const idCount = new Map();
@@ -86,7 +137,8 @@ export function auditSpec(cwd, spec, lock = readLock(cwd), results = null) {
   const evidence = receiptEvidence(cwd, spec);
 
   // The task lines that were ticked when the spec was last frozen, counted per text, so a
-  // copy of such a line added later gets no credit.
+  // copy of such a line added later gets no credit. (Not used with onlyNew, which has left
+  // the credited lines out already.)
   const credit = new Map();
   for (const text of Array.isArray(entry.ticked) ? entry.ticked : []) credit.set(text, (credit.get(text) || 0) + 1);
 
@@ -101,7 +153,7 @@ export function auditSpec(cwd, spec, lock = readLock(cwd), results = null) {
     // line, so the line text has to be one the receipt was written for.
     const receipted = id !== null && evidence.ids.has(id) && (idCount.get(id) === 1 || evidence.lines.has(text));
     let accepted = receipted;
-    if (!accepted && (credit.get(text) || 0) > 0) {
+    if (!accepted && !onlyNew && (credit.get(text) || 0) > 0) {
       credit.set(text, credit.get(text) - 1);
       accepted = true;
     }

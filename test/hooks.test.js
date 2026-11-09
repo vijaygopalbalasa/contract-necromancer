@@ -890,6 +890,57 @@ test('R7.1 handleStop prints each frozen spec: count of tasks done, count of rec
   }
 });
 
+// A contract that leaves a mark each time its file is loaded, and fails.
+const MARKING_FAILING_CONTRACT = `import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+fs.appendFileSync(new URL('../../runs.log', import.meta.url), 'ran\\n');
+test('R1.2 failing contract', () => {
+  assert.equal(1, 2);
+});
+`;
+
+test('R7.1 handleStop with no task ticked since the freeze runs no contract, says so and names necro audit', () => {
+  const cwd = tmpCwd();
+  try {
+    writeReq(cwd, 'demo', REQ);
+    writeContract(cwd, 'demo', 'failing.contract.test.js', MARKING_FAILING_CONTRACT);
+    writeTasks(cwd, 'demo', '- [x] 1. Done at the freeze (Req 1.2)\n- [ ] 2. Not done\n');
+    freezeSpec(cwd, 'demo');
+    fs.rmSync(path.join(cwd, 'runs.log'), { force: true }); // freezing ran the contract once
+    const receiptsDir = path.join(cwd, '.necro', 'receipts', 'demo');
+    fs.mkdirSync(receiptsDir, { recursive: true });
+    fs.writeFileSync(path.join(receiptsDir, 'aaaa.json'), '{}');
+
+    const result = handleStop(stopPayload(cwd));
+    assert.equal(result.exitCode, 0);
+    assert.equal(fs.existsSync(path.join(cwd, 'runs.log')), false, 'no contract file ran');
+    assert.match(result.stdout, /^Spec demo: 1 tasks done, 1 receipts, no contract ran\. `necro audit` is the full check\.$/m);
+    assert.doesNotMatch(result.stdout, /passing|failing/, 'it claims nothing about contracts it did not run');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R7.1 handleStop with a task ticked since the freeze names the contracts failing among those it ran', () => {
+  const cwd = tmpCwd();
+  try {
+    writeReq(cwd, 'demo', REQ);
+    writeContract(cwd, 'demo', 'failing.contract.test.js', MARKING_FAILING_CONTRACT);
+    writeTasks(cwd, 'demo', '- [ ] 1. Task (Req 1.2)\n');
+    freezeSpec(cwd, 'demo');
+    fs.rmSync(path.join(cwd, 'runs.log'), { force: true }); // freezing ran the contract once
+    writeTasks(cwd, 'demo', '- [x] 1. Task (Req 1.2)\n');
+
+    const result = handleStop(stopPayload(cwd));
+    assert.equal(fs.readFileSync(path.join(cwd, 'runs.log'), 'utf8'), 'ran\n');
+    assert.match(result.stdout, /^Spec demo: 1 tasks done, 0 receipts, failing: R1\.2 failing contract\.$/m);
+    assert.doesNotMatch(result.stdout, /full check/, 'it ran something, so it does not say it ran none');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Task 8d: fail closed on ticks (Req 4.13)
 // ---------------------------------------------------------------------------

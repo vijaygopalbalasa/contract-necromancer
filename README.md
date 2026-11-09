@@ -170,6 +170,16 @@ back to `[ ]` in `tasks.md`, and stderr says which task and why. Kiro documents 
 so `necro hook posttask` ignores its input and audits the project it runs in. `necro init` writes the hook into
 `.kiro/hooks/necromancer.json` and the custom agent.
 
+The two hooks audit only the tasks ticked now that were not ticked when a person last froze the spec, and run only the
+contract files those tasks require, so they stay inside the hooks' 300 second limit on a large project (a full
+`necro audit` of this repository takes about 250 seconds). When no task was ticked since the freeze, `PostTaskExec` runs
+no contract, and `Stop` still runs every contract once for its summary of the contracts failing now. When it ran only some,
+the summary says how many. `necro audit` still checks every ticked task, so run it in CI.
+
+Receipts are files in the project, so an agent able to write files can add one. A forged receipt can only make
+`necro audit` accept a task whose required contracts pass now: it can fake where a tick came from, not whether the work
+holds.
+
 To run the audit in CI, add this step to a workflow after the checkout step:
 
 ```yaml

@@ -1,4 +1,4 @@
-# Runs the unit tests and every frozen contract, then re-runs the newest receipt of each spec with necro verify.
+# Runs the unit tests and every frozen contract, audits this repository, then re-runs the newest receipt of each example spec with necro verify.
 name: Tests and receipts
 
 on:
@@ -37,9 +37,11 @@ jobs:
       - name: Night Shift tests and contracts
         working-directory: examples/night-shift
         run: node --test test/*.test.js contracts/planner/*.test.js
-      - name: Re-run the newest receipt of each spec
+      - name: Re-run the newest receipt of each example spec
         run: |
-          for dir in . examples/pumpkin-ledger examples/night-shift; do
+          # This repository's own receipts are snapshots: the source files they pin change with every later task.
+          # `necro audit` above covers this repository, so only the two examples are re-run here.
+          for dir in examples/pumpkin-ledger examples/night-shift; do
             for spec in "$dir"/.necro/receipts/*/; do
               newest=$(node -e 'const fs=require("fs"),p=require("path");const d=process.argv[1];const r=fs.readdirSync(d).map(f=>({f,t:JSON.parse(fs.readFileSync(p.join(d,f))).createdAt})).sort((a,b)=>a.t<b.t?1:-1)[0];console.log(p.join(d,r.f))' "$spec")
               echo "$newest"

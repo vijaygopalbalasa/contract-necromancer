@@ -195,7 +195,9 @@ export function findRunner(patterns, fileName) {
 // records, installed packages and compiled files. Naming one in full still reaches it.
 const SKIPPED_FOLDERS = new Set(['.git', '.necro', 'node_modules', '__pycache__']);
 
-function walkGlob(cwd, rel, segments, found) {
+// With `links`, a symbolic link whose path matches the last part of a glob counts as a match,
+// whatever it points to (a file, a folder or nothing). A link is never followed.
+function walkGlob(cwd, rel, segments, found, links) {
   const [segment, ...rest] = segments;
   let entries;
   try {
@@ -206,10 +208,10 @@ function walkGlob(cwd, rel, segments, found) {
   const at = (name) => (rel === '' ? name : `${rel}/${name}`);
   if (segment === '**') {
     // `**` is zero or more folders. With nothing after it, it also takes every file below.
-    if (rest.length > 0) walkGlob(cwd, rel, rest, found);
+    if (rest.length > 0) walkGlob(cwd, rel, rest, found, links);
     for (const e of entries) {
-      if (e.isDirectory() && !SKIPPED_FOLDERS.has(e.name)) walkGlob(cwd, at(e.name), segments, found);
-      else if (rest.length === 0 && e.isFile()) found.add(at(e.name));
+      if (e.isDirectory() && !SKIPPED_FOLDERS.has(e.name)) walkGlob(cwd, at(e.name), segments, found, links);
+      else if (rest.length === 0 && (e.isFile() || (links && e.isSymbolicLink()))) found.add(at(e.name));
     }
     return;
   }
@@ -217,19 +219,20 @@ function walkGlob(cwd, rel, segments, found) {
   for (const e of entries) {
     if (!matchesPattern(segment, e.name)) continue;
     if (rest.length === 0) {
-      if (e.isFile()) found.add(at(e.name));
+      if (e.isFile() || (links && e.isSymbolicLink())) found.add(at(e.name));
     } else if (e.isDirectory() && !(wild && SKIPPED_FOLDERS.has(e.name))) {
-      walkGlob(cwd, at(e.name), rest, found);
+      walkGlob(cwd, at(e.name), rest, found, links);
     }
   }
 }
 
 // The regular files of the project that match any of the globs, as sorted,
 // project-relative paths with forward slashes. `*` and `?` stay inside one name,
-// `**` stands for any number of folders. Symbolic links are not followed or listed.
-export function expandGlobs(cwd, globs) {
+// `**` stands for any number of folders. Symbolic links are never followed. They are not
+// listed either, unless `links` is set (Req 13.13), which lists a link that matches as well.
+export function expandGlobs(cwd, globs, { links = false } = {}) {
   const found = new Set();
-  for (const glob of globs) walkGlob(cwd, '', glob.split('/'), found);
+  for (const glob of globs) walkGlob(cwd, '', glob.split('/'), found, links);
   return [...found].sort();
 }
 
@@ -239,8 +242,10 @@ export function expandGlobs(cwd, globs) {
 // runners.json, and only when it still has its pinned hash; if it moved there is nothing
 // trustworthy to expand, and the moved file is reported by its own check. The files the
 // lock holds for the spec itself (requirements, runners.json, contracts) are not part of
-// the set, as at freeze. Returns sorted project-relative paths:
-// { added: [matching now, not locked], removed: [locked, no longer matching] }.
+// the set, as at freeze. A symbolic link that matches a glob always counts as added (Req 13.13):
+// the freeze locks regular files only, so a link is never a locked file, even one at the path of a
+// file that was locked. Returns sorted project-relative paths:
+// { added: [matching now, not locked, and every link], removed: [locked, no longer matching] }.
 export function frozenGlobDrift(cwd, entry) {
   const none = { added: [], removed: [] };
   const config = entry ? lockedRunnersConfig(cwd, entry.runners) : null;
@@ -248,10 +253,17 @@ export function frozenGlobDrift(cwd, entry) {
   const own = new Set([entry.runners.path]);
   if (entry.requirements && typeof entry.requirements.path === 'string') own.add(entry.requirements.path);
   for (const c of entry.contracts || []) own.add(c.path);
-  const now = new Set(expandGlobs(cwd, config.frozen).filter((p) => !own.has(p)));
+  const now = new Set(expandGlobs(cwd, config.frozen, { links: true }).filter((p) => !own.has(p)));
   const locked = new Set((entry.frozen || []).map((f) => f.path));
+  const isLink = (p) => {
+    try {
+      return fs.lstatSync(path.resolve(cwd, p)).isSymbolicLink();
+    } catch {
+      return false;
+    }
+  };
   return {
-    added: [...now].filter((p) => !locked.has(p)).sort(),
+    added: [...now].filter((p) => !locked.has(p) || isLink(p)).sort(),
     removed: [...locked].filter((p) => !now.has(p)).sort(),
   };
 }
