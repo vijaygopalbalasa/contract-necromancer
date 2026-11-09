@@ -1,0 +1,5 @@
+{
+  "test_*_contract.py": "python3 -P -m pytest {file} --junitxml={report} -q --noconftest -p no:cacheprovider",
+  "sources": ["leapage/*.py"],
+  "frozen": ["**/pytest.ini", "**/pyproject.toml"]
+}

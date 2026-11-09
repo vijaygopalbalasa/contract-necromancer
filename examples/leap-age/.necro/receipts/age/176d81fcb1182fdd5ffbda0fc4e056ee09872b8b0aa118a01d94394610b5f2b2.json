@@ -1,0 +1,129 @@
+{
+  "spec": "age",
+  "gitCommit": "de394a06e65a5f7429a6086a057c91a5265209c8",
+  "requirements": {
+    "path": ".kiro/specs/age/requirements.md",
+    "sha256": "20e614f9ba7dd72184866493b116ffc7ba69639fc7e9939a1c8d3a440de0dd7c"
+  },
+  "contracts": [
+    {
+      "name": "R2.1 the age counts the birthdays had up to and including the day, so it goes up on the birthday itself",
+      "path": "contracts/age/test_age_contract.py",
+      "sha256": "2eb7c02cb7f31cb305fd6d98c39b7799a2da4f4c595aa4ef556371cbc61deb42",
+      "result": "pass"
+    },
+    {
+      "name": "R2.2 a person born on 29 February has their birthday on 1 March in a year that is not a leap year",
+      "path": "contracts/age/test_age_contract.py",
+      "sha256": "2eb7c02cb7f31cb305fd6d98c39b7799a2da4f4c595aa4ef556371cbc61deb42",
+      "result": "pass"
+    },
+    {
+      "name": "R2.3 a day before the birth date raises AgeError with one plain sentence",
+      "path": "contracts/age/test_age_contract.py",
+      "sha256": "2eb7c02cb7f31cb305fd6d98c39b7799a2da4f4c595aa4ef556371cbc61deb42",
+      "result": "pass"
+    },
+    {
+      "name": "R3.1 two YYYY-MM-DD dates print the age as a whole number on a line of its own and exit with code 0",
+      "path": "contracts/age/test_cli_contract.py",
+      "sha256": "bc2d3a775bb8f54c9829834db170356f1e89c624ab26f708b5b9b1e92b7f2f7c",
+      "result": "pass"
+    },
+    {
+      "name": "R3.2 a bad date, a day before birth or a wrong number of arguments gives one line on stderr, nothing on stdout, exit code 1",
+      "path": "contracts/age/test_cli_contract.py",
+      "sha256": "bc2d3a775bb8f54c9829834db170356f1e89c624ab26f708b5b9b1e92b7f2f7c",
+      "result": "pass"
+    },
+    {
+      "name": "R1.1 a year is a leap year if divisible by 4, except century years not divisible by 400",
+      "path": "contracts/age/test_years_contract.py",
+      "sha256": "372ac3b299f634d35b292c59aa8d19cceaff7b9d38f31339b995c95f0b0b206d",
+      "result": "pass"
+    },
+    {
+      "name": "R1.2 months have 31, 30 or 28 days, and February has 29 in a leap year",
+      "path": "contracts/age/test_years_contract.py",
+      "sha256": "372ac3b299f634d35b292c59aa8d19cceaff7b9d38f31339b995c95f0b0b206d",
+      "result": "pass"
+    },
+    {
+      "name": "R1.3 a month that is not a whole number from 1 to 12 raises AgeError with one plain sentence",
+      "path": "contracts/age/test_years_contract.py",
+      "sha256": "372ac3b299f634d35b292c59aa8d19cceaff7b9d38f31339b995c95f0b0b206d",
+      "result": "pass"
+    }
+  ],
+  "sources": [
+    {
+      "path": "leapage/__init__.py",
+      "sha256": "7de007abd495c982ff03c06ce2ce8cdf7abf42ebc7689f1cdfe6132428e00533"
+    },
+    {
+      "path": "leapage/__main__.py",
+      "sha256": "a699776869e5964a7267c288e658d29f7e13ddce07817309a5b29ea284336710"
+    },
+    {
+      "path": "leapage/age.py",
+      "sha256": "4866b6db108529a3a175f62e6dff72e8161ec48c33b26c81545538edc15d69b3"
+    },
+    {
+      "path": "leapage/cli.py",
+      "sha256": "0c70043467f15e9c47d686bcdfd1fe0d7428c2bfa425af10ef22814cd55e4154"
+    },
+    {
+      "path": "leapage/dates.py",
+      "sha256": "e8c7daad9d96ebba551c386bc8afdf72c4fdb330deeb2aa6c4afd6ed31c3f382"
+    },
+    {
+      "path": "leapage/errors.py",
+      "sha256": "6007955eada54b79a7aa6ad6776e5de2e8b17d314739688a9127cb79a4faac75"
+    },
+    {
+      "path": "leapage/years.py",
+      "sha256": "0a35e057ab444d5069a546109c720e8ab82e77040b6a0b9b2ce05bbbd93ea6a5"
+    }
+  ],
+  "task": {
+    "id": "2",
+    "line": "2. Age in whole years (Req 2.1, 2.2, 2.3)"
+  },
+  "required": [
+    "R2.1 the age counts the birthdays had up to and including the day, so it goes up on the birthday itself",
+    "R2.2 a person born on 29 February has their birthday on 1 March in a year that is not a leap year",
+    "R2.3 a day before the birth date raises AgeError with one plain sentence"
+  ],
+  "runners": {
+    "path": ".kiro/specs/age/runners.json",
+    "sha256": "5d3f6a35797dd68f41c941bdce5b407771c281d8f45ce29bc9e1d407c8137bed"
+  },
+  "frozen": [
+    {
+      "path": "pyproject.toml",
+      "sha256": "df33be718ee60ed52c05c51849f3461c634449e5762ab8fb05278b6affae9077"
+    },
+    {
+      "path": "pytest.ini",
+      "sha256": "54cbb4a04dfefe168ab2e4f20f300760579952aee6445d1169a219ec1c22be21"
+    }
+  ],
+  "uncommitted": [
+    ".kiro/specs/age/requirements.md",
+    ".kiro/specs/age/runners.json",
+    "contracts/age/test_age_contract.py",
+    "contracts/age/test_cli_contract.py",
+    "contracts/age/test_years_contract.py",
+    "leapage/__init__.py",
+    "leapage/__main__.py",
+    "leapage/age.py",
+    "leapage/cli.py",
+    "leapage/dates.py",
+    "leapage/errors.py",
+    "leapage/years.py",
+    "pyproject.toml",
+    "pytest.ini"
+  ],
+  "receiptHash": "176d81fcb1182fdd5ffbda0fc4e056ee09872b8b0aa118a01d94394610b5f2b2",
+  "createdAt": "2026-11-09T21:11:32.491Z"
+}

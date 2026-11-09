@@ -1,4 +1,4 @@
-# Runs the unit tests and every frozen contract, audits this repository, then re-runs the newest receipt of each example spec with necro verify.
+# Runs the unit tests and every frozen contract (with Python and pytest installed, so R13.6 runs), audits this repository, then re-runs the newest receipt of each example spec with necro verify.
 name: Tests and receipts
 
 on:
@@ -21,6 +21,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pytest
+        run: python3 -m pip install pytest
       - name: Git identity for tests that make temporary repositories
         run: |
           git config --global user.name "ci"
@@ -48,3 +54,11 @@ jobs:
               node bin/necro.js verify "$newest"
             done
           done
+      - name: Leap Age contracts with pytest
+        working-directory: examples/leap-age
+        run: python3 -P -m pytest contracts/age -q --noconftest -p no:cacheprovider
+      - name: Re-run the newest receipt of the Leap Age example
+        run: |
+          newest=$(node -e 'const fs=require("fs"),p=require("path");const d=process.argv[1];const r=fs.readdirSync(d).map(f=>({f,t:JSON.parse(fs.readFileSync(p.join(d,f))).createdAt})).sort((a,b)=>a.t<b.t?1:-1)[0];console.log(p.join(d,r.f))' examples/leap-age/.necro/receipts/age)
+          echo "$newest"
+          node bin/necro.js verify "$newest"

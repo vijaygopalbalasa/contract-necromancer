@@ -1,0 +1,5 @@
+[project]
+name = "leapage"
+version = "0.1.0"
+description = "How old is a person on a given day, with the leap day done right."
+requires-python = ">=3.11"

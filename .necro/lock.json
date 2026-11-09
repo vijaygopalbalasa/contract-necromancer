@@ -207,6 +207,14 @@
           "sha256": "197233cfe4434ea9d11f9055e51e6117e4ae54afc51806bbad08049b9efbe88f"
         },
         {
+          "name": "python-example",
+          "names": [
+            "R13.6 a Python example has pytest contracts and a runners.json, and the gate refuses a planted bug, accepts the fix and writes a receipt"
+          ],
+          "path": "contracts/necro-core/python-example.contract.test.js",
+          "sha256": "c51d21ae8d9a925f4653a344dfce0def0c28c2140077b0855f7b01aa5cfbdfcf"
+        },
+        {
           "name": "receipts",
           "names": [
             "R5.1 a receipt records the spec, the git commit if available, and the hashes of the requirements, the contracts and the imported sources, with each result by name",
@@ -326,7 +334,7 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-09T20:46:03.512Z",
+      "frozenAt": "2026-11-09T21:15:41.204Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
         "sha256": "9e1fd159db292d0bdf8d4ffc493cdf814d3293c47e04537ccd37bfab6a5a9749"
@@ -680,6 +688,8 @@
         "30. **A clean environment for contracts** (Req 13.11)",
         "31. **Catch a tick however it got there** (Req 14.1, 14.2, 14.3, 14.4, 14.5, 14.6)",
         "32. **New files under frozen globs are caught** (Req 13.12)",
+        "33. **A fast safety net, honest receipts, a steady CI** (Req 7.1, 14.7, 14.8, 14.9)",
+        "34. **Symbolic links under frozen globs** (Req 13.13)",
         "3b. **No vacuous passes** (Req 4.7, 4.8)",
         "3c. **Pin contract names and check files before running** (Req 2.5, 2.6, 4.9, 4.10)",
         "4. **Receipts** (Req 5.1, 5.2, 5.3)",
