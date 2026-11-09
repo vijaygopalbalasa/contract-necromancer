@@ -129,3 +129,13 @@ receipts anyone can re-run.
 4. WHEN a tool takes a spec name or a receipt path THE SYSTEM SHALL refuse a name or path outside the project root.
 5. WHEN the repository is installed as a Kiro power THE SYSTEM SHALL provide a `power/` folder with `plugin.json` (the Agent Plugins 1.0.0 fields `$schema`, `name`, `version`, `description`, `author`, `keywords`), `mcp.json` that starts `necro mcp`, and `skills/contract-necromancer/SKILL.md` that teaches the workflow (EARS criteria, contracts drafted for a person to review, the person freezes, check status before ticking, verify receipts).
 
+
+## Requirement 11: One-command demo
+**User story:** As a judge or a developer who has never installed the tool, I want one command that shows the gate refuse a false "done", accept the real fix, and re-check the receipt, so that I can see what it does in under a minute without Kiro, npm accounts or setup.
+### Acceptance criteria
+1. WHEN a user runs `necro demo` THE SYSTEM SHALL copy the bundled `examples/pumpkin-ledger` project into a new folder under the operating system's temporary directory, run every step there, print that folder's path, and change nothing outside it.
+2. WHEN the demo runs THE SYSTEM SHALL reopen task 4 in the copy, plant the rounding bug from the README (each share rounded, so cents are lost), send the gate the same `task_update` call the Kiro IDE sends when a task completes, and print that the gate refused the tick together with the names of the failing contracts.
+3. WHEN the refusal has been shown THE SYSTEM SHALL restore the correct code, send the same call again, and print that the gate accepted the tick and the path of the receipt it wrote.
+4. WHEN the receipt has been written THE SYSTEM SHALL run `necro verify` on it and print `CONFIRMED`, then change the copy's `src/split.js`, verify the same receipt again and print `MISMATCH`.
+5. THE SYSTEM SHALL exit 0 only if the refusal, the acceptance, `CONFIRMED` and `MISMATCH` all happened as described, and otherwise exit 1 naming the step that did not.
+6. WHEN the package is run with `npx -y github:vijaygopalbalasa/contract-necromancer demo` on a machine with Node.js 24 and no global `necro` THE SYSTEM SHALL run the same demo, using only files that the package contains.
