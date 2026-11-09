@@ -1,0 +1,3 @@
+{
+  "frozen": ["bin/ledger.js", "src/runtime.js"]
+}

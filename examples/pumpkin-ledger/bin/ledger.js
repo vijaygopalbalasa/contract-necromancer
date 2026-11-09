@@ -2,13 +2,29 @@
 import { readFileSync } from 'node:fs';
 import { LedgerError } from '../src/errors.js';
 import { parseLedger } from '../src/parse.js';
-import { computeBalances } from '../src/balances.js';
-import { settle } from '../src/settle.js';
+import * as splitModule from '../src/split.js';
+import * as balancesModule from '../src/balances.js';
+import * as settleModule from '../src/settle.js';
 import { renderText, renderJson } from '../src/report.js';
+import { guard, ContractViolation } from '../src/runtime.js';
+import { splitPostconditions, balancesPostconditions, settlePostconditions } from '../contracts/ledger/postconditions.js';
+
+// Runtime postconditions (Req 15): the criteria of the frozen spec are checked on every real call, not only under test.
+// A result that breaks one stops the ledger with a ContractViolation, whatever the code does when it detects a test runner.
+const { splitExpense } = guard(splitModule, splitPostconditions);
+const { computeBalances } = guard(balancesModule, balancesPostconditions);
+const { settle } = guard(settleModule, settlePostconditions);
 
 function fail(message) {
   process.stderr.write(message + '\n');
   process.exit(1);
+}
+
+// balances.js calls its own splitExpense, which a guard on the export cannot see. So every expense is also split here,
+// through the guarded one, before the balances are computed.
+function checkSplits({ people, expenses }) {
+  const everyone = people.map((p) => p.key);
+  for (const expense of expenses) splitExpense(expense.cents, expense.sharerKeys ?? everyone);
 }
 
 function main(argv) {
@@ -34,11 +50,15 @@ function main(argv) {
   let output;
   try {
     const parsed = parseLedger(text);
+    checkSplits(parsed);
     const balances = computeBalances(parsed);
     const payments = settle(balances);
     output = json ? renderJson(balances, payments) : renderText(balances, payments);
   } catch (err) {
     if (err instanceof LedgerError) fail(err.message);
+    if (err instanceof ContractViolation) {
+      fail(`ContractViolation: ${err.message}. The ledger printed nothing because its own arithmetic broke a requirement. Fix the code in src/ and run it again.`);
+    }
     throw err;
   }
 

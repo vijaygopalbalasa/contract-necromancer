@@ -1674,3 +1674,197 @@ test('R13.14 a linked folder part way along a frozen glob, and a link under **, 
     }
   }
 });
+
+// ---------------------------------------------------------------------------
+// Req 15.3: contracts/<spec>/postconditions.js is locked with the spec, and a runners.json that
+// holds only "frozen" works for a spec whose contracts are all JavaScript
+// ---------------------------------------------------------------------------
+
+const POST_REL = 'contracts/demo/postconditions.js';
+const POST_TEXT = "export const table = { f: { criterion: 'R1.1', check: () => true } };\n";
+const HELLO = fs.readFileSync(path.join(import.meta.dirname, 'fixtures', 'hello.contract.test.js'), 'utf8');
+
+// Spec 'demo' with a fake-framework contract, a postconditions file, and (optionally) a runners.json with frozen globs.
+function postProject({ runners = runnersJson(), extra = {} } = {}) {
+  const cwd = project({ 'a_contract.fake': 'pass R1.1 x\n' }, { runners: runners === 'none' ? null : runners });
+  put(cwd, POST_REL, POST_TEXT);
+  for (const [rel, text] of Object.entries(extra)) put(cwd, rel, text);
+  return cwd;
+}
+
+// Spec 'demo' with a JavaScript contract and a runners.json that holds only "frozen".
+function frozenOnlyProject(frozen = ['bin/app.js']) {
+  const cwd = project({ 'hello.contract.test.js': HELLO }, { runners: JSON.stringify({ frozen }) + '\n' });
+  put(cwd, 'bin/app.js', "console.log('app');\n");
+  put(cwd, 'bin/other.js', "console.log('other');\n");
+  return cwd;
+}
+
+test('R15.3 freeze locks postconditions.js with the spec, stores a copy, and the hooks protect it, with or without a runners.json', () => {
+  for (const runners of [runnersJson(), 'none', JSON.stringify({ frozen: ['bin/app.js'] })]) {
+    const cwd = postProject({ runners, extra: { 'bin/app.js': 'x\n' } });
+    try {
+      if (runners === 'none') {
+        // No runner patterns at all: a JavaScript contract carries the spec.
+        fs.rmSync(path.join(cwd, 'contracts/demo/a_contract.fake'));
+        put(cwd, 'contracts/demo/hello.contract.test.js', HELLO);
+      } else if (runners !== runnersJson()) {
+        fs.rmSync(path.join(cwd, 'contracts/demo/a_contract.fake'));
+        put(cwd, 'contracts/demo/hello.contract.test.js', HELLO);
+      }
+      freezeSpec(cwd, SPEC);
+      const hash = hashFile(path.join(cwd, POST_REL));
+      const entry = readLock(cwd).specs[SPEC];
+      assert.ok(entry.frozen.some((f) => f.path === POST_REL && f.sha256 === hash), JSON.stringify(entry.frozen));
+      assert.equal(fs.readFileSync(path.join(cwd, '.necro/frozen', hash), 'utf8'), POST_TEXT);
+      assert.ok(isFrozenPath(cwd, POST_REL));
+      assert.equal(getExpectedHash(cwd, POST_REL), hash);
+      assert.ok(frozenFiles(cwd, SPEC).some((f) => f.path === POST_REL && f.sha256 === hash));
+      // PreToolUse refuses a write; PostToolUse puts the file back after a shell command or when it is deleted.
+      const refused = pre(cwd, 'fs_write', { path: path.join(cwd, POST_REL), text: 'export const table = {};\n' });
+      assert.equal(refused.exitCode, 2);
+      assert.match(refused.stderr, /postconditions\.js/);
+      fs.writeFileSync(path.join(cwd, POST_REL), 'export const table = {};\n');
+      let back = post(cwd, 'execute_bash', { command: 'x' });
+      assert.match(back.stderr, /Restored frozen file contracts\/demo\/postconditions\.js/);
+      assert.equal(fs.readFileSync(path.join(cwd, POST_REL), 'utf8'), POST_TEXT);
+      fs.rmSync(path.join(cwd, POST_REL));
+      back = post(cwd, 'execute_bash', { command: 'x' });
+      assert.match(back.stderr, /Restored frozen file contracts\/demo\/postconditions\.js/);
+      assert.equal(fs.readFileSync(path.join(cwd, POST_REL), 'utf8'), POST_TEXT);
+    } finally {
+      done(cwd);
+    }
+  }
+});
+
+test('R15.3 a spec without a postconditions.js has no frozen entry for it', () => {
+  const cwd = project({ 'a_contract.fake': 'pass R1.1 x\n' });
+  try {
+    freezeSpec(cwd, SPEC);
+    assert.equal(readLock(cwd).specs[SPEC].frozen, undefined);
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R15.3 the receipt pins postconditions.js, and verify prints MISMATCH when it changes, is gone, or the receipt leaves it out', () => {
+  const cwd = postProject();
+  try {
+    freezeSpec(cwd, SPEC);
+    const { receipt } = runCheck(cwd, SPEC);
+    const written = JSON.parse(fs.readFileSync(path.join(cwd, receipt), 'utf8'));
+    assert.deepEqual(written.frozen, [{ path: POST_REL, sha256: hashFile(path.join(cwd, POST_REL)) }]);
+    assert.equal(captureStdout(() => verify(cwd, receipt)).code, 0);
+
+    put(cwd, POST_REL, 'export const table = {};\n');
+    let out = captureStdout(() => verify(cwd, receipt));
+    assert.equal(out.code, 1);
+    assert.match(out.out, /MISMATCH/);
+    assert.match(out.out, /postconditions\.js/);
+
+    fs.rmSync(path.join(cwd, POST_REL));
+    out = captureStdout(() => verify(cwd, receipt));
+    assert.equal(out.code, 1);
+    assert.match(out.out, /MISMATCH.*postconditions\.js/);
+
+    put(cwd, POST_REL, POST_TEXT);
+    assert.equal(captureStdout(() => verify(cwd, receipt)).code, 0);
+    rewriteReceipt(cwd, receipt, (r) => delete r.frozen);
+    out = captureStdout(() => verify(cwd, receipt));
+    assert.equal(out.code, 1);
+    assert.match(out.out, /MISMATCH.*postconditions\.js/);
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R15.3 postconditions.js next to frozen globs is not reported as a file that no longer matches, and a changed one fails every runner file', () => {
+  const cwd = postProject({ runners: runnersJson(COMMAND, '*_contract.fake', { frozen: ['plug/*.txt'] }), extra: { 'plug/one.txt': 'one\n' } });
+  try {
+    withLog((log) => {
+      freezeSpec(cwd, SPEC);
+      const entry = readLock(cwd).specs[SPEC];
+      assert.deepEqual(entry.frozen.map((f) => f.path).sort(), [POST_REL, 'plug/one.txt']);
+      assert.deepEqual(frozenGlobDrift(cwd, entry), { added: [], removed: [] });
+      assert.deepEqual(byName(runContracts(cwd, SPEC, readLock(cwd))), { 'R1.1 x': 'pass' });
+      const { receipt } = runCheck(cwd, SPEC);
+      assert.equal(captureStdout(() => verify(cwd, receipt)).code, 0);
+
+      put(cwd, POST_REL, 'export const table = {};\n');
+      const before = calls(log).length;
+      const results = runContracts(cwd, SPEC, readLock(cwd));
+      assert.deepEqual(byName(results), { 'R1.1 x': 'fail' });
+      assert.match(results[0].reason, /postconditions\.js/);
+      assert.equal(calls(log).length, before, 'the command did not run');
+    });
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R15.3 a postconditions.js that resolves outside the project is refused when the spec is frozen', () => {
+  const cwd = postProject();
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'necro-post-outside-'));
+  try {
+    fs.writeFileSync(path.join(outside, 'post.js'), POST_TEXT);
+    fs.rmSync(path.join(cwd, POST_REL));
+    fs.symlinkSync(path.join(outside, 'post.js'), path.join(cwd, POST_REL));
+    assert.throws(() => freezeSpec(cwd, SPEC), /postconditions\.js.*outside the project/);
+  } finally {
+    done(cwd);
+    fs.rmSync(outside, { recursive: true, force: true });
+  }
+});
+
+test('R15.3 a runners.json with only "frozen" is valid, and its files are locked, restored and pinned for a spec with JavaScript contracts', () => {
+  const cwd = frozenOnlyProject();
+  try {
+    assert.deepEqual(readRunners(cwd, SPEC).patterns, []);
+    freezeSpec(cwd, SPEC);
+    const entry = readLock(cwd).specs[SPEC];
+    assert.deepEqual(entry.runners.path, RUNNERS_REL);
+    assert.deepEqual(entry.frozen, [{ path: 'bin/app.js', sha256: hashFile(path.join(cwd, 'bin/app.js')) }]);
+    assert.deepEqual(byName(runContracts(cwd, SPEC, readLock(cwd))), { 'demo contract': 'pass' });
+    for (const rel of ['bin/app.js', RUNNERS_REL]) {
+      assert.ok(isFrozenPath(cwd, rel), rel);
+      assert.equal(pre(cwd, 'fs_write', { path: path.join(cwd, rel), text: 'x' }).exitCode, 2, rel);
+    }
+    // Restored after a change or a delete.
+    fs.writeFileSync(path.join(cwd, 'bin/app.js'), "console.log('hacked');\n");
+    fs.rmSync(path.join(cwd, RUNNERS_REL));
+    const back = post(cwd, 'execute_bash', { command: 'x' });
+    assert.match(back.stderr, /Restored frozen file bin\/app\.js/);
+    assert.match(back.stderr, /Restored frozen file \.kiro\/specs\/demo\/runners\.json/);
+    assert.equal(fs.readFileSync(path.join(cwd, 'bin/app.js'), 'utf8'), "console.log('app');\n");
+    // Pinned in the receipt; verify says MISMATCH when the entry point changes or a new file matches the glob.
+    const { receipt } = runCheck(cwd, SPEC);
+    const written = JSON.parse(fs.readFileSync(path.join(cwd, receipt), 'utf8'));
+    assert.deepEqual(written.frozen, [{ path: 'bin/app.js', sha256: hashFile(path.join(cwd, 'bin/app.js')) }]);
+    assert.equal(written.runners.path, RUNNERS_REL);
+    assert.equal(captureStdout(() => verify(cwd, receipt)).code, 0);
+    put(cwd, 'bin/app.js', "console.log('hacked');\n");
+    let out = captureStdout(() => verify(cwd, receipt));
+    assert.equal(out.code, 1);
+    assert.match(out.out, /MISMATCH.*bin\/app\.js/);
+    put(cwd, 'bin/app.js', "console.log('app');\n");
+    assert.equal(captureStdout(() => verify(cwd, receipt)).code, 0);
+  } finally {
+    done(cwd);
+  }
+});
+
+test('R15.3 with only "frozen" in runners.json, a new file that matches a glob is caught by verify as added', () => {
+  const cwd = frozenOnlyProject(['bin/*.js']);
+  try {
+    freezeSpec(cwd, SPEC);
+    const { receipt } = runCheck(cwd, SPEC);
+    assert.equal(captureStdout(() => verify(cwd, receipt)).code, 0);
+    put(cwd, 'bin/planted.js', 'x\n');
+    const out = captureStdout(() => verify(cwd, receipt));
+    assert.equal(out.code, 1);
+    assert.match(out.out, /MISMATCH.*bin\/planted\.js/);
+  } finally {
+    done(cwd);
+  }
+});

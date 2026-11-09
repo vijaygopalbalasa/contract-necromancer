@@ -56,10 +56,28 @@
           "sha256": "bc4534920291653be3afd12e1dba823e52cf3be583edd8472f9d1068dc17d06d"
         }
       ],
-      "frozenAt": "2026-11-07T19:26:21.648Z",
+      "frozen": [
+        {
+          "path": "bin/ledger.js",
+          "sha256": "11f1c50024acfa7c8995a36433e32d184d17becf4de58314d3605be838c4cdbe"
+        },
+        {
+          "path": "contracts/ledger/postconditions.js",
+          "sha256": "37e88a302ae4317cef03ee7c06a76d6f1ada2b2b2715b1d38d29d7255644766d"
+        },
+        {
+          "path": "src/runtime.js",
+          "sha256": "b0d965762f73fab5b1c8ba3139257bdbe875c1a6d4e58b486291dea0c597b4ea"
+        }
+      ],
+      "frozenAt": "2026-11-09T22:39:19.461Z",
       "requirements": {
         "path": ".kiro/specs/ledger/requirements.md",
         "sha256": "2471c3d12bd1e3b553f630224bc09a9833bc715958f02af8f130219e7cd1eb35"
+      },
+      "runners": {
+        "path": ".kiro/specs/ledger/runners.json",
+        "sha256": "345431388ce5ec7ac54e0bf9c4c9e5ade05a3aeae07bd9f609a2f57dd0736e88"
       },
       "tasks": {
         "1": {
@@ -132,7 +150,18 @@
           ],
           "text": "9. Property-based contracts for the arithmetic (Req 5.1, 5.2, 5.3, 5.4, 5.5)"
         }
-      }
+      },
+      "ticked": [
+        "1. Amount parsing and formatting (Req 1.1, 1.4)",
+        "2. Parse expense lines (Req 1.1, 1.4, 1.5)",
+        "3. Split lists and person identity (Req 1.2, 1.3)",
+        "4. Split one expense to the cent (Req 2.1)",
+        "5. Compute balances (Req 1.2, 2.2)",
+        "6. Settle balances (Req 3.1, 3.2, 3.3)",
+        "7. Text and JSON reports (Req 4.1, 4.2, 3.3)",
+        "8. Command line (Req 4.1, 4.2, 4.3, 1.4)",
+        "9. Property-based contracts for the arithmetic (Req 5.1, 5.2, 5.3, 5.4, 5.5)"
+      ]
     }
   }
 }

@@ -172,6 +172,68 @@ test('R11.5 a demo whose bug is not planted exits 1 and names the refusal step',
   }
 });
 
+// Req 15.5: one more step after MISMATCH. The copy's split.js is right only under the test runner, the contracts pass, and the
+// ledger refuses to print on a party.
+test('R15.5 after MISMATCH the demo shows a step where the contracts pass and the ledger prints a ContractViolation', () => {
+  for (const run of [runs.root, runs.far]) {
+    const out = run.stdout;
+    assert.equal(run.status, 0, `${out}${run.stderr}`);
+    const mismatch = out.indexOf('MISMATCH');
+    const step = out.indexOf('Step 6.');
+    const passed = out.search(/^The contracts pass \(\d+ of \d+\)/m);
+    const violation = out.search(/^ContractViolation: R(?:2\.1|5\.1) /m);
+    const closing = out.indexOf('The gate refused the false "done"');
+    assert.ok(mismatch > 0 && step > mismatch, out);
+    assert.ok(passed > step && violation > passed, out);
+    assert.ok(closing > violation, 'the closing lines come after the new step');
+    assert.match(out.slice(step, violation), /NODE_TEST_CONTEXT/);
+    assert.match(out, /^The ledger stopped with a ContractViolation \(exit 1\)\.$/m);
+    // The step runs in the copy and leaves it as the earlier steps did (R11.3, R11.4): the bundled code plus the demo's line.
+    const folder = folderOf(out);
+    const bundled = fs.readFileSync(path.join(EXAMPLE, 'src', 'split.js'), 'utf8');
+    assert.equal(fs.readFileSync(path.join(folder, 'src', 'split.js'), 'utf8'), `${bundled}// edited by the demo\n`);
+  }
+});
+
+test('R15.5 a demo whose split.js is not changed to depend on the test runner exits 1 and names the runtime step', async () => {
+  const { runDemo, STEPS } = await import('../src/demo.js');
+  assert.equal(STEPS[STEPS.length - 1], 'runtime');
+  const out = [];
+  const err = [];
+  const result = runDemo({ out: (s) => out.push(s), err: (s) => err.push(s), switchOnRunner: () => {} });
+  try {
+    assert.equal(result.exitCode, 1);
+    assert.equal(result.failedStep, 'runtime');
+    assert.match(err.join('\n'), /Demo failed at step 'runtime' \(6 of 6\)/);
+    // The earlier steps happened; the closing lines and the viewer line did not.
+    assert.match(out.join('\n'), /MISMATCH/);
+    assert.doesNotMatch(out.join('\n'), /github\.io|ContractViolation/);
+  } finally {
+    removeDemoFolder(result.folder);
+  }
+});
+
+test('R15.5 a demo whose contracts fail in the new step exits 1 and names the runtime step', async () => {
+  const { runDemo } = await import('../src/demo.js');
+  const err = [];
+  // This change breaks the code under the test runner too, so the contracts fail.
+  const result = runDemo({
+    out: () => {},
+    err: (s) => err.push(s),
+    switchOnRunner: (dir) => {
+      const file = path.join(dir, 'src', 'split.js');
+      fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace('const extra = cents % n;', 'const extra = 0;'));
+    },
+  });
+  try {
+    assert.equal(result.exitCode, 1);
+    assert.equal(result.failedStep, 'runtime');
+    assert.match(err.join('\n'), /runtime/);
+  } finally {
+    removeDemoFolder(result.folder);
+  }
+});
+
 test('R11.6 npm pack lists every file the demo reads', () => {
   const res = spawnSync('npm', ['pack', '--dry-run', '--json'], { cwd: REPO, encoding: 'utf8', env: cleanEnv() });
   assert.equal(res.status, 0, res.stderr);

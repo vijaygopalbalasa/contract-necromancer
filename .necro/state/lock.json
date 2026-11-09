@@ -343,10 +343,10 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-09T22:03:33.859Z",
+      "frozenAt": "2026-11-09T22:18:54.990Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
-        "sha256": "35cc11d694d08995fd31508c7cd969f97018893d2e102e0a417f1c03b9d45869"
+        "sha256": "12e8520d1eb21da31c6db5eda5dec244e87d7663cb6e6fe7935be8213ddf9b00"
       },
       "tasks": {
         "1": {
@@ -624,6 +624,29 @@
           ],
           "text": "35. **Fail closed on missing results and linked folders** (Req 13.14, 14.10)"
         },
+        "36": {
+          "criteria": [
+            "15.1",
+            "15.2",
+            "15.3",
+            "15.4",
+            "15.5",
+            "15.6"
+          ],
+          "text": "36. **Runtime postconditions** (Req 15.1, 15.2, 15.3, 15.4, 15.5, 15.6)"
+        },
+        "37": {
+          "criteria": [
+            "16.1",
+            "16.2",
+            "16.3",
+            "16.4",
+            "16.5",
+            "16.6",
+            "16.7"
+          ],
+          "text": "37. **Adopting it in your own project** (Req 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7)"
+        },
         "3b": {
           "criteria": [
             "4.7",
@@ -707,6 +730,7 @@
         "32. **New files under frozen globs are caught** (Req 13.12)",
         "33. **A fast safety net, honest receipts, a steady CI** (Req 7.1, 14.7, 14.8, 14.9)",
         "34. **Symbolic links under frozen globs** (Req 13.13)",
+        "35. **Fail closed on missing results and linked folders** (Req 13.14, 14.10)",
         "3b. **No vacuous passes** (Req 4.7, 4.8)",
         "3c. **Pin contract names and check files before running** (Req 2.5, 2.6, 4.9, 4.10)",
         "4. **Receipts** (Req 5.1, 5.2, 5.3)",

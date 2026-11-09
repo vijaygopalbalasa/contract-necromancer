@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { hashFile } from './canon.js';
 import { runContracts } from './contracts.js';
-import { readRunners, findRunner, expandGlobs, runnersRel } from './runners.js';
+import { readRunners, findRunner, expandGlobs, runnersRel, postconditionsRel } from './runners.js';
 
 const LOCK_FILE = path.join('.necro', 'lock.json');
 const FROZEN_DIR = path.join('.necro', 'frozen');
@@ -297,11 +297,21 @@ export function freezeSpec(cwd, spec) {
   if (runners) {
     listedFiles(cwd, spec, 'sources', runners.sources);
     const own = new Set([reqRel, runners.path, ...contractPaths]);
-    frozen = [...new Set(listedFiles(cwd, spec, 'frozen', runners.frozen))].filter((p) => !own.has(p)).sort();
-    for (const p of frozen) {
-      if (!insideRoot(realCwd, fs.realpathSync(path.join(cwd, p)))) {
-        throw new Error(`Frozen file '${p}' resolves outside the project root. Move it inside the project.`);
-      }
+    frozen = [...new Set(listedFiles(cwd, spec, 'frozen', runners.frozen))].filter((p) => !own.has(p));
+  }
+  // Req 15.3: the spec's runtime postconditions, when it has them, are locked like a file listed under "frozen".
+  const postRel = postconditionsRel(spec);
+  if (hasFileOrLink(path.join(cwd, postRel)) && !frozen.includes(postRel) && !contractPaths.includes(postRel)) frozen.push(postRel);
+  frozen.sort();
+  for (const p of frozen) {
+    let real;
+    try {
+      real = fs.realpathSync(path.join(cwd, p));
+    } catch {
+      throw new Error(`Frozen file '${p}' cannot be read. Fix or remove it, then freeze the spec again.`);
+    }
+    if (!insideRoot(realCwd, real)) {
+      throw new Error(`Frozen file '${p}' resolves outside the project root. Move it inside the project.`);
     }
   }
   const frozenEntries = frozen.map((p) => ({ path: p, sha256: hashFile(path.join(cwd, p)) }));
@@ -355,6 +365,16 @@ export function freezeSpec(cwd, spec) {
   for (const c of contracts) copyFrozen(frozenDir, path.join(cwd, c.path), c.sha256);
   if (runnersEntry) copyFrozen(frozenDir, path.join(cwd, runnersEntry.path), runnersEntry.sha256);
   for (const f of frozenEntries) copyFrozen(frozenDir, path.join(cwd, f.path), f.sha256);
+}
+
+// True when a path names a file or a symbolic link (even a dangling one), and not a folder or nothing.
+function hasFileOrLink(abs) {
+  try {
+    const st = fs.lstatSync(abs);
+    return st.isFile() || st.isSymbolicLink();
+  } catch {
+    return false;
+  }
 }
 
 // True when `target` is `root` or somewhere beneath it (both resolved to real paths).

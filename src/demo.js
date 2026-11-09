@@ -7,8 +7,9 @@ import { TASK_LINE } from './lock.js';
 
 // `necro demo` (Req 11): copy the bundled Pumpkin Ledger example into a new folder
 // under the temporary directory, plant a rounding bug, let the gate refuse the tick
-// of task 4, restore the code, let the gate accept it, and verify the receipt.
-// Every step runs in the copy. The gate and `verify` run through the same
+// of task 4, restore the code, let the gate accept it, and verify the receipt. A last step (Req 15.5) shows what tests
+// cannot see: code that is right only under the test runner passes the contracts, and the ledger's runtime postconditions
+// stop it. Every step runs in the copy. The gate and `verify` run through the same
 // `bin/necro.js` the user started, with the payload the Kiro IDE sends.
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -19,10 +20,11 @@ const SPEC = 'ledger';
 const TASKS_REL = '.kiro/specs/ledger/tasks.md';
 const SPLIT_REL = 'src/split.js';
 const TASK_ID = '4';
+const PARTY_REL = 'party.txt';
 const CHILD_TIMEOUT_MS = 240_000;
 
 // The steps, in order. A failed run names one of them (Req 11.5).
-export const STEPS = ['setup', 'refusal', 'acceptance', 'confirmed', 'mismatch'];
+export const STEPS = ['setup', 'refusal', 'acceptance', 'confirmed', 'mismatch', 'runtime'];
 
 // Where a receipt file can be opened in a browser (Req 12.3).
 export const VIEWER_URL = 'https://vijaygopalbalasa.github.io/contract-necromancer/';
@@ -140,6 +142,7 @@ function newReceipt(folder, since) {
 //   out, err   functions that print a line (default console.log, console.error)
 //   plant      (folder) => void, replaces the step that plants the bug
 //   restore    (folder) => void, replaces the step that restores the correct code
+//   switchOnRunner  (folder) => void, replaces the step that makes src/split.js right only under the test runner (Req 15.5)
 //   colour     true or false, replaces the terminal and NO_COLOR check (Req 12)
 // Returns { exitCode, failedStep, folder }; failedStep is null when every step
 // happened as described (Req 11.5).
@@ -212,8 +215,43 @@ export function runDemo(options = {}) {
     }
     out(verdict(on, false, mismatch.stdout.trim()));
 
+    // Req 15.5: code that is right only under the test runner. The contracts run under it and pass; the ledger runs without
+    // it and its runtime postconditions stop it. The file is put back afterwards, as the steps before leave it. The lines of
+    // this step are plain text: Req 12.1 colours the four verdicts above and nothing else.
+    out('');
+    out(`Step 6. Change ${SPLIT_REL} so it is right only under the test runner (it keeps the extra cents only when NODE_TEST_CONTEXT is set).`);
+    out(`Run the contracts, then run the ledger on ${PARTY_REL} outside the test runner.`);
+    step = 'runtime';
+    const beforeSwitch = fs.readFileSync(split, 'utf8');
+    try {
+      (options.switchOnRunner || ((dir) => replaceInFile(path.join(dir, SPLIT_REL), [
+        ['const extra = cents % n;', 'const extra = process.env.NODE_TEST_CONTEXT ? cents % n : 0;'],
+      ], 'runtime')))(folder);
+      const checked = necro(folder, ['check', SPEC]);
+      const passes = /^All (\d+) contracts pass\.$/m.exec(checked.stdout);
+      if (checked.error || checked.status !== 0 || !passes) {
+        throw new StepFailed(step, `The contracts should pass with the code that is right only under the test runner, but necro check exited ${checked.status}. ${(checked.stdout + checked.stderr).trim()}`.trim());
+      }
+      out(`The contracts pass (${passes[1]} of ${passes[1]}), because they run under the test runner.`);
+      const ran = spawnSync(process.execPath, [path.join(folder, 'bin', 'ledger.js'), PARTY_REL], {
+        cwd: folder,
+        encoding: 'utf8',
+        env: childEnv(),
+        timeout: CHILD_TIMEOUT_MS,
+      });
+      const violation = /^ContractViolation: R\d+\.\d+ .+$/m.exec(ran.stderr || '');
+      if (ran.error || ran.status !== 1 || !violation) {
+        throw new StepFailed(step, `The ledger should have stopped with a ContractViolation (exit 1) but exited ${ran.status}. ${((ran.stdout || '') + (ran.stderr || '')).trim()}`.trim());
+      }
+      out(`The ledger stopped with a ContractViolation (exit ${ran.status}).`);
+      out(violation[0]);
+    } finally {
+      fs.writeFileSync(split, beforeSwitch);
+    }
+
     out('');
     out('The gate refused the false "done", accepted the real fix, and the receipt caught the later change.');
+    out('Runtime postconditions then stopped code that only behaves while a test runner is watching.');
     out(`The copy stays at ${folder}. Delete it when you are done.`);
     // Req 12.3: the last line. The viewer opens a receipt file that is pasted or chosen; it has no link to the temporary file.
     out(`To see a receipt in your browser, open ${VIEWER_URL} and paste or choose the receipt file there.`);

@@ -27,6 +27,17 @@ export function runnersRel(spec) {
   return `.kiro/specs/${spec}/runners.json`;
 }
 
+// Req 15.3: the runtime postconditions of a spec, `contracts/<spec>/postconditions.js`, project-relative with forward
+// slashes. When it exists the freeze locks it with the spec, like a file listed under "frozen".
+export function postconditionsRel(spec) {
+  return `contracts/${spec}/postconditions.js`;
+}
+
+// True for the path of any spec's postconditions file (see postconditionsRel).
+function isPostconditionsPath(p) {
+  return /^contracts\/[^/]+\/postconditions\.js$/.test(p);
+}
+
 // Split a command line into arguments the way a shell would for plain words and
 // quotes, and nothing more: words are separated by spaces or tabs, a quoted part
 // ("..." or '...') is kept whole, and every other character, including `;`, `&`,
@@ -270,7 +281,8 @@ export function frozenGlobDrift(cwd, entry) {
   };
   return {
     added: [...now].filter((p) => !locked.has(p) || isLink(p)).sort(),
-    removed: [...locked].filter((p) => !now.has(p)).sort(),
+    // Req 15.3: a spec's postconditions file is locked next to the globbed files and need not match a glob.
+    removed: [...locked].filter((p) => !now.has(p) && !isPostconditionsPath(p)).sort(),
   };
 }
 

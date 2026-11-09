@@ -21,6 +21,12 @@ Step 4. Re-run the receipt with necro verify.
 CONFIRMED 769459d7d21a8c77e857ba8d7823ddf7cb954dd08bc3d52958e5744a908db20d.
 Step 5. Change src/split.js in the copy and verify the same receipt again.
 MISMATCH. Files changed: src/split.js.
+
+Step 6. Change src/split.js so it is right only under the test runner (it keeps the extra cents only when NODE_TEST_CONTEXT is set).
+Run the contracts, then run the ledger on party.txt outside the test runner.
+The contracts pass (18 of 18), because they run under the test runner.
+The ledger stopped with a ContractViolation (exit 1).
+ContractViolation: R5.1 splitExpense: the shares of 3225 cents add up to 3224 cents. The ledger printed nothing because ...
 ```
 
 - Live receipt viewer: https://vijaygopalbalasa.github.io/contract-necromancer/
@@ -36,9 +42,10 @@ under a minute, including the download. The command copies the
 Pumpkin Ledger example into a new folder under your temporary directory and prints that path. In the copy it plants a rounding
 bug, sends the gate the `task_update` call the Kiro IDE sends when task 4 completes, and shows the gate refusing the tick with
 the names of the contracts the bug breaks. It then restores the correct code, sends the call again, and shows the gate accepting
-it and writing a receipt. Last, it runs `necro verify` on the receipt (`CONFIRMED`), changes `src/split.js`, and verifies again
-(`MISMATCH`). It exits 0 only if all four things happened, and otherwise exits 1 and names the step that did not. From a clone,
-run `node bin/necro.js demo`.
+it and writing a receipt. It then runs `necro verify` on the receipt (`CONFIRMED`), changes `src/split.js`, and verifies again
+(`MISMATCH`). A last step makes `src/split.js` right only under the test runner: the contracts pass, and the ledger run on a
+party stops with a `ContractViolation` (see [Runtime postconditions](#runtime-postconditions)). It exits 0 only if all five
+things happened, and otherwise exits 1 and names the step that did not. From a clone, run `node bin/necro.js demo`.
 
 ## Try it in a minute
 
@@ -186,6 +193,44 @@ To run the audit in CI, add this step to a workflow after the checkout step:
 - name: Audit ticked tasks
   run: npx -y github:vijaygopalbalasa/contract-necromancer audit
 ```
+
+## Runtime postconditions
+
+A contract that runs under a test runner only proves the code right while the test runner is watching. Eiffel's `ensure`
+clause did more: a routine's postcondition was checked on every call, in production too. `src/runtime.js` brings that to a
+frozen spec. An independent review got a `CONFIRMED` receipt for code that looked for the test runner
+(`process.env.NODE_TEST_CONTEXT`) and kept the extra cents of a split only there. Every contract passed, and
+`splitExpense(100, ['a', 'b', 'c'])` returned 99 cents outside tests.
+
+You write `contracts/<spec>/postconditions.js`: for each function, a criterion ID and a check. The check gets `(args, result)`
+and passes by returning `true`; a string it returns is the reason it failed. Your entry point wraps the module with
+`guard(exports, postconditions)`, which returns the exports with those functions wrapped:
+
+```js
+import * as splitModule from '../src/split.js';
+import { guard } from '../src/runtime.js';
+import { splitPostconditions } from '../contracts/ledger/postconditions.js';
+
+const { splitExpense } = guard(splitModule, splitPostconditions);
+// splitExpense(100, ['a', 'b', 'c']) now throws:
+// ContractViolation: R5.1 splitExpense: the shares of 100 cents add up to 99 cents
+```
+
+`guard` reads no environment variable and never looks for a test runner, so code under test cannot switch it off.
+`src/runtime.js` has no dependencies and no imports: copy it into your project, as `examples/pumpkin-ledger/src/runtime.js`
+does. Freezing the spec locks `postconditions.js` with it, like a contract file. To lock the entry point that applies the guard
+(and your copy of `runtime.js`), list them under `"frozen"` in `.kiro/specs/<spec>/runners.json`. A file that holds only
+`{ "frozen": ["bin/ledger.js", "src/runtime.js"] }` is enough, with no runner patterns.
+
+The cost is a check on every call of a guarded function, in production and not only in tests. Keep each check cheap (the
+ledger's checks walk the result once) and guard the functions where a wrong answer costs something. A check runs after the
+function returns, so it can stop a wrong result from being used but cannot undo what the function already did.
+
+What this catches that tests cannot: code that behaves one way under a test runner and another way outside it, and real
+inputs that no contract tried. What it does not: a wrong or missing criterion, and calls inside a module to its own functions,
+which skip the wrapper. `bin/ledger.js` therefore also splits every expense through the guarded `splitExpense` before it
+computes balances. `necro demo` ends with this case: it changes `src/split.js` to keep the extra cents only when
+`NODE_TEST_CONTEXT` is set, the contracts pass, and the ledger run on `party.txt` stops with the `ContractViolation`.
 
 ## MCP server and Kiro power
 
