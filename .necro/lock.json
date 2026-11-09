@@ -548,6 +548,14 @@
           "sha256": "c29dcfc72f48023905c2d6f2bfbd804b854397b3a31effc70b23bbecce0caf38"
         },
         {
+          "name": "jump",
+          "names": [
+            "R10.5 a short plain link above the verdict banner jumps to the How it works section, and the page still passes the frozen R9.5 contract"
+          ],
+          "path": "contracts/receipt-viewer/jump.contract.test.js",
+          "sha256": "a3dd0817e65657bb8cc9799299575ed4c90a8184f8b32592f992271fb79142fe"
+        },
+        {
           "name": "look",
           "names": [
             "R8.1 a verdict banner comes first: \"Risen\" with the count of living contracts, or \"Still buried\" with the count of failing required contracts",
@@ -596,6 +604,17 @@
           "sha256": "87ce1e690ac80e4c32994f8b5592ff4978974e41cdf599c361c0d6c58d893d78"
         },
         {
+          "name": "story",
+          "names": [
+            "R10.1 the page heading is one sentence naming the idea, above the sample bar",
+            "R10.2 a \"How it works\" section follows the receipt card with three steps, the demo command, a copy button and what the demo needs",
+            "R10.3 plain links to the demo video and the repository, with the Content Security Policy unchanged and nothing embedded",
+            "R10.4 the title starts with \"Contract Necromancer\", the page reads in the order it is drawn, and it wraps at phone width"
+          ],
+          "path": "contracts/receipt-viewer/story.contract.test.js",
+          "sha256": "5331d14fe7e70b8ef100e91c76be216e9e89f76319346a9a92d8a74fe758e0f1"
+        },
+        {
           "name": "style",
           "names": [
             "R6.1 dark theme with AA contrast, alive and gravestone contract styles, and a layout that can wrap at phone width"
@@ -604,10 +623,10 @@
           "sha256": "47e17273eef50b96c039f01d4ab62d0c907bffe8f911b03d90a5dc1d4c19a08f"
         }
       ],
-      "frozenAt": "2026-11-09T14:15:53.587Z",
+      "frozenAt": "2026-11-09T14:33:17.838Z",
       "requirements": {
         "path": ".kiro/specs/receipt-viewer/requirements.md",
-        "sha256": "2d3ad7c9815ef217c001c163d485b135de6ac331fa9c687ba336fc1233c8a2d3"
+        "sha256": "f5ca1062ff50d2f9a1bac75a2ed99e9edb0098fc2f09619ee6b399a521fbd885"
       },
       "tasks": {
         "1": {
@@ -752,9 +771,10 @@
             "10.1",
             "10.2",
             "10.3",
-            "10.4"
+            "10.4",
+            "10.5"
           ],
-          "text": "21. The story in one glance (Req 10.1, 10.2, 10.3, 10.4)"
+          "text": "21. The story in one glance (Req 10.1, 10.2, 10.3, 10.4, 10.5)"
         }
       }
     }

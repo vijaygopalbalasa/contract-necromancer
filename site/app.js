@@ -45,6 +45,7 @@ export function start({ document, location, fetch, navigator, matchMedia }) {
     'paste', 'show', 'file', 'error', 'receipt', 'spec', 'commit', 'receipt-hash', 'created', 'task', 'summary', 'groups',
     'hash-check', 'hash-badge', 'hash-detail', 'repo', 'run', 'command', 'copy', 'copy-note', 'command-note', 'file-check',
     'check', 'repo-error', 'file-notice', 'file-summary', 'files', 'sample', 'sample-buried', 'sample-note', 'verdict',
+    'demo-command', 'demo-copy', 'demo-copy-note',
   ]) {
     els[id] = $(id);
   }
@@ -214,12 +215,12 @@ export function start({ document, location, fetch, navigator, matchMedia }) {
     for (const f of result.files) els.files.appendChild(fileRow(f));
   }
 
-  async function copyCommand() {
+  async function copyText(source, note) {
     try {
-      await navigator.clipboard.writeText(els.command.textContent);
-      els['copy-note'].textContent = 'Copied.';
+      await navigator.clipboard.writeText(source.textContent);
+      note.textContent = 'Copied.';
     } catch {
-      els['copy-note'].textContent = COPY_FAILED;
+      note.textContent = COPY_FAILED;
     }
   }
 
@@ -315,7 +316,8 @@ export function start({ document, location, fetch, navigator, matchMedia }) {
   els['sample-buried'].addEventListener('click', () => loadSample(SAMPLES[1], true));
   els.repo.addEventListener('input', updateCommand);
   els.check.addEventListener('click', runFileCheck);
-  els.copy.addEventListener('click', copyCommand);
+  els.copy.addEventListener('click', () => copyText(els.command, els['copy-note']));
+  els['demo-copy'].addEventListener('click', () => copyText(els['demo-command'], els['demo-copy-note']));
 
   els.file.addEventListener('change', async () => {
     const file = els.file.files && els.file.files[0];

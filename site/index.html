@@ -18,7 +18,7 @@
       </svg>
       <div>
         <p class="eyebrow">Contract Necromancer</p>
-        <h1>Receipt viewer</h1>
+        <h1>Kiro cannot call a task done until its frozen contracts pass.</h1>
       </div>
     </header>
 
@@ -39,6 +39,7 @@
           <input type="file" id="file" accept=".json,application/json">
         </div>
       </details>
+      <p class="jump"><a id="jump-how" href="#how">How it works, and try it</a></p>
     </section>
 
     <section class="verdict" id="verdict" aria-live="polite" hidden></section>
@@ -54,6 +55,25 @@
         <dt>Created</dt><dd id="created"></dd>
         <dt>Task</dt><dd id="task"></dd>
       </dl>
+    </section>
+
+    <section class="card how" id="how" aria-labelledby="how-title">
+      <h2 id="how-title">How it works</h2>
+      <ol class="steps">
+        <li>A person freezes the spec's contracts.</li>
+        <li>The gate refuses to tick a task until they pass.</li>
+        <li>Every passing task leaves a receipt anyone can re-run.</li>
+      </ol>
+      <pre class="demo"><code id="demo-command">npx -y github:vijaygopalbalasa/contract-necromancer demo</code></pre>
+      <div class="row">
+        <button type="button" id="demo-copy">Copy demo command</button>
+        <span id="demo-copy-note" aria-live="polite"></span>
+      </div>
+      <p class="muted">Needs Node.js 24 and git, and shows the gate refuse a planted bug, accept the fix and re-check the receipt.</p>
+      <p class="links">
+        <a href="https://youtu.be/TYrSyhIYqlk">Watch the demo video</a>
+        <a href="https://github.com/vijaygopalbalasa/contract-necromancer">See the repository</a>
+      </p>
     </section>
 
     <section class="card" id="hash-check" aria-labelledby="hash-title" hidden>
