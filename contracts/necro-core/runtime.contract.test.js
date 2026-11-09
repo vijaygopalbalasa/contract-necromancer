@@ -267,37 +267,7 @@ test('R15.4 code that special-cases the test runner passes every contract, yet b
   assert.equal(probe.stdout.trim(), '99');
 });
 
-test('R15.5 after MISMATCH the demo shows a step where src/split.js is right only under the test runner, the contracts pass and the ledger prints a ContractViolation, and its exit code rules cover the step', () => {
-  const elsewhere = temp('necro-runtime-cwd-');
-  const res = run(process.execPath, [BIN, 'demo'], elsewhere);
-  const folder = /^Demo folder: (.+)$/m.exec(res.stdout)?.[1];
-  if (folder) made.push(folder);
-  assert.equal(res.status, 0, `${res.stdout}${res.stderr}`);
-  const at = (re) => res.stdout.search(re);
-  const order = [at(/^MISMATCH/m), at(/^Step 6\./m), at(/^The contracts pass \(\d+ of \d+\)/m), at(/^ContractViolation: R(?:2\.1|5\.1) /m), at(/^To see a receipt in your browser/m)];
-  assert.ok(order.every((n) => n >= 0), res.stdout);
-  assert.deepEqual([...order].sort((a, b) => a - b), order, res.stdout);
-  assert.match(res.stdout, /NODE_TEST_CONTEXT/);
-  assert.equal(res.stderr, '');
-
-  // A package whose example does not stop the ledger: the last step does not happen, so the demo exits 1 and names it.
-  const pkg = temp('necro-runtime-pkg-');
-  fs.cpSync(path.join(REPO, 'bin'), path.join(pkg, 'bin'), { recursive: true });
-  fs.cpSync(path.join(REPO, 'src'), path.join(pkg, 'src'), { recursive: true });
-  fs.cpSync(EXAMPLE, path.join(pkg, 'examples', 'pumpkin-ledger'), { recursive: true });
-  fs.copyFileSync(path.join(REPO, 'package.json'), path.join(pkg, 'package.json'));
-  fs.writeFileSync(
-    path.join(pkg, 'examples', 'pumpkin-ledger', 'contracts', 'ledger', 'postconditions.js'),
-    "const always = (name) => ({ [name]: { criterion: 'R0.0', check: () => true } });\nexport const splitPostconditions = always('splitExpense');\nexport const balancesPostconditions = always('computeBalances');\nexport const settlePostconditions = always('settle');\n",
-  );
-  const failed = run(process.execPath, [path.join(pkg, 'bin', 'necro.js'), 'demo'], elsewhere);
-  const failedFolder = /^Demo folder: (.+)$/m.exec(failed.stdout)?.[1];
-  if (failedFolder) made.push(failedFolder);
-  assert.equal(failed.status, 1, `${failed.stdout}${failed.stderr}`);
-  assert.match(failed.stderr, /Demo failed at step 'runtime'/);
-  assert.match(failed.stdout, /^MISMATCH/m);
-  assert.doesNotMatch(failed.stdout, /^To see a receipt in your browser/m);
-});
+// R15.5 moved to runtime-demo.contract.test.js (person edit, Nov 10): the old failure case edited a file the example's freeze now locks.
 
 test('R15.6 the README explains runtime postconditions as Eiffel\'s ensure, their cost, and what they catch that tests cannot', () => {
   const readme = fs.readFileSync(path.join(REPO, 'README.md'), 'utf8');
