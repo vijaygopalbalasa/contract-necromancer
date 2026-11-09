@@ -37,6 +37,8 @@
       </div>
     </section>
 
+    <p class="evidence" id="evidence">On a task that cannot be finished, Kiro marked it done in <strong>11 of 11</strong> runs without the gate and <strong>0 of 19</strong> with it, across two models. <a href="https://github.com/vijaygopalbalasa/contract-necromancer/blob/main/experiments/README.md">See the experiment</a>.</p>
+
     <section class="bar" id="start" aria-label="Choose a receipt">
       <p class="muted" id="sample-note" aria-live="polite"></p>
       <div class="row" id="sample-row">
@@ -143,7 +145,7 @@
         Open one here to read it and check it yourself.
       </p>
       <p class="limit" id="limit">
-        Contracts re-run in Node with <code>necro verify</code>. The browser checks hashes, not test runs.
+        <code>necro verify</code> re-runs JavaScript contracts and runner contracts (for example pytest) alike. The browser checks hashes, not test runs.
       </p>
       <p class="legend" id="legend">
         <span class="legend-item"><span class="swatch swatch-alive" aria-hidden="true"></span> <strong class="legend-alive">PASS</strong> the contract is alive.</span>

@@ -812,6 +812,16 @@
           "sha256": "d74228af5c2284836da87154b3e68f03c728878df99df492a9fcf290a3a8b252"
         },
         {
+          "name": "evidence",
+          "names": [
+            "R12.1 one short plain line between the story strip and the verdict banner states 11 of 11 without the gate and 0 of 19 with it, across two models, and links to the experiment write-up",
+            "R12.1 the line is in the first screen at 1280x800 and 390x844 with scripts on and off, and the verdict banner, with no sideways scroll, still is (Requirement 9.5)",
+            "R12.2 no sentence on the page says that contracts re-run only in Node, and one says that necro verify re-runs JavaScript contracts and runner contracts such as pytest alike"
+          ],
+          "path": "contracts/receipt-viewer/evidence.contract.test.js",
+          "sha256": "7be22fa9bbfbca666f9f5c228fba9d52752931ef52fad5f6f6b6fdd04ec66a3d"
+        },
+        {
           "name": "files",
           "names": [
             "R4.1 each pinned file is fetched at the commit, hashed, and marked matching or different",
@@ -928,7 +938,7 @@
           "sha256": "47e17273eef50b96c039f01d4ab62d0c907bffe8f911b03d90a5dc1d4c19a08f"
         }
       ],
-      "frozenAt": "2026-11-09T23:47:19.722Z",
+      "frozenAt": "2026-11-09T23:54:21.476Z",
       "requirements": {
         "path": ".kiro/specs/receipt-viewer/requirements.md",
         "sha256": "267f05bb581ac1ab8ccebc140b1c226077c2dd366571265447a3755b5c858a24"

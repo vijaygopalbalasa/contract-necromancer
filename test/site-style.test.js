@@ -81,9 +81,10 @@ test('index.html has no inline script, no inline style and one module script mai
   assert.match(html, /<link[^>]*rel="stylesheet"[^>]*href="style\.css"/);
 });
 
-test('index.html says contracts re-run in Node with necro verify and the browser checks hashes, not test runs', () => {
+test('index.html says necro verify re-runs the contracts (Requirement 12.2) and the browser checks hashes, not test runs', () => {
   const text = html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ');
-  assert.match(text, /Contracts re-run in Node with necro verify\./);
+  assert.match(text, /necro verify re-runs JavaScript contracts and runner contracts \(for example pytest\) alike\./);
+  assert.doesNotMatch(text, /re-run in Node/);
   assert.match(text, /The browser checks hashes, not test runs\./);
 });
 
