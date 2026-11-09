@@ -164,13 +164,33 @@ function commands(line) {
   return out;
 }
 
-test('verifyCommand clones, checks out the commit, then runs necro verify, in that order', () => {
+// Task 19: the command defines `necro` itself, so a machine with Git and Node.js but no global necro can run it.
+const DEFINE_NECRO = 'necro() { node bin/necro.js "$@"; }';
+
+// The command without the fixed function definition, so the tokenizer sees only what shQuote produces.
+function withoutDefinition(command) {
+  assert.ok(command.includes(` && ${DEFINE_NECRO} && `), 'the command must define necro between the other steps and necro verify');
+  return command.replace(` ${DEFINE_NECRO} &&`, '');
+}
+
+test('verifyCommand clones, checks out the commit, brings in the receipt, defines necro, then runs necro verify, in that order', () => {
   const command = verifyCommand({ repo: 'octo/spec-repo', receipt: receiptOf() });
+  const file = `.necro/receipts/receipt-viewer/${HASH}.json`;
   assert.equal(
     command,
-    `git clone https://github.com/octo/spec-repo.git necro-check && cd necro-check && git checkout ${COMMIT} && necro verify .necro/receipts/receipt-viewer/${HASH}.json`,
+    `git clone https://github.com/octo/spec-repo.git necro-check && cd necro-check && git checkout ${COMMIT} && git checkout origin/HEAD -- ${file} && ${DEFINE_NECRO} && necro verify ${file}`,
   );
   assert.ok(!/[\r\n]/.test(command));
+});
+
+test('verifyCommand defines necro as node bin/necro.js before it is used, and uses no global necro', () => {
+  for (const gitCommit of [COMMIT, null]) {
+    const command = verifyCommand({ repo: 'octo/spec-repo', receipt: receiptOf({ gitCommit }) });
+    const definition = command.indexOf(DEFINE_NECRO);
+    const use = command.indexOf('necro verify ');
+    assert.ok(definition > 0 && use > definition, 'the definition must come before necro verify');
+    assert.equal(command.split('necro verify').length, 2, 'necro verify appears once');
+  }
 });
 
 test('verifyCommand shows OWNER/NAME and no angle brackets for an empty or invalid repository', () => {
@@ -188,7 +208,7 @@ test('verifyCommand drops the checkout step when the commit is missing or malfor
     const command = verifyCommand({ repo: 'octo/spec-repo', receipt: receiptOf({ gitCommit }) });
     assert.doesNotMatch(command, /git checkout/, String(gitCommit));
     assert.ok(command.includes('git clone'));
-    assert.ok(command.includes('cd necro-check && necro verify'));
+    assert.ok(command.includes(`cd necro-check && ${DEFINE_NECRO} && necro verify`));
     assert.ok(!command.includes('rm -rf'));
   }
 });
@@ -197,14 +217,18 @@ test('verifyCommand keeps hostile receipt fields inside one quoted argument', ()
   const hostile = ['x; rm -rf ~', 'a$(id)b', 'a`id`b', "it's", 'line\nbreak', '-rf', 'a b', 'a && b', '$HOME', 'a|b', 'a>b', '"q"', 'a\\b', "''", ''];
   for (const spec of hostile) {
     const command = verifyCommand({ repo: 'octo/spec-repo', receipt: receiptOf({ spec }) });
-    const parts = commands(command);
-    assert.equal(parts.length, 4, JSON.stringify(spec));
-    assert.deepEqual(parts[3].slice(0, 2), ['necro', 'verify'], JSON.stringify(spec));
-    assert.equal(parts[3].length, 3, `exactly one argument for ${JSON.stringify(spec)}`);
-    assert.equal(parts[3][2], `.necro/receipts/${spec}/${HASH}.json`, JSON.stringify(spec));
+    const parts = commands(withoutDefinition(command));
+    assert.equal(parts.length, 5, JSON.stringify(spec));
+    const file = `.necro/receipts/${spec}/${HASH}.json`;
+    assert.deepEqual(parts[3], ['git', 'checkout', 'origin/HEAD', '--', file], JSON.stringify(spec));
+    assert.deepEqual(parts[4].slice(0, 2), ['necro', 'verify'], JSON.stringify(spec));
+    assert.equal(parts[4].length, 3, `exactly one argument for ${JSON.stringify(spec)}`);
+    assert.equal(parts[4][2], file, JSON.stringify(spec));
   }
   const hostileHash = verifyCommand({ repo: 'octo/spec-repo', receipt: receiptOf({ receiptHash: 'x; echo hi' }) });
-  assert.equal(commands(hostileHash)[3].length, 3);
+  const hostileParts = commands(withoutDefinition(hostileHash));
+  assert.equal(hostileParts[3].length, 5);
+  assert.equal(hostileParts[4].length, 3);
 });
 
 test('verifyCommand leaves safe values unquoted', () => {

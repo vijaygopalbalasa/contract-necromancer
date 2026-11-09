@@ -516,6 +516,14 @@
           "sha256": "28c9b27ddb47bd4480aed046ee0129ee2f5f9523a0012467abd31c9e2c61980f"
         },
         {
+          "name": "fresh-clone",
+          "names": [
+            "R5.2 the command for the risen sample, pasted into sh with git and node but no necro, runs to CONFIRMED and changes nothing outside the folder it clones"
+          ],
+          "path": "contracts/receipt-viewer/fresh-clone.contract.test.js",
+          "sha256": "c29dcfc72f48023905c2d6f2bfbd804b854397b3a31effc70b23bbecce0caf38"
+        },
+        {
           "name": "look",
           "names": [
             "R8.1 a verdict banner comes first: \"Risen\" with the count of living contracts, or \"Still buried\" with the count of failing required contracts",
@@ -562,7 +570,7 @@
           "sha256": "47e17273eef50b96c039f01d4ab62d0c907bffe8f911b03d90a5dc1d4c19a08f"
         }
       ],
-      "frozenAt": "2026-11-07T20:04:45.585Z",
+      "frozenAt": "2026-11-09T10:53:21.293Z",
       "requirements": {
         "path": ".kiro/specs/receipt-viewer/requirements.md",
         "sha256": "afe59aeb0b931a4c920759aa0ed623917417b042f1eac317584dfb32a32351e5"
@@ -692,6 +700,12 @@
             "9.5"
           ],
           "text": "18. The result above the fold (Req 9.5)"
+        },
+        "19": {
+          "criteria": [
+            "5.2"
+          ],
+          "text": "19. The re-run command works in a fresh clone (Req 5.2)"
         }
       }
     }

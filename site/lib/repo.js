@@ -78,15 +78,27 @@ function shQuote(value) {
   return `'${s.replace(/'/g, `'\\''`)}'`;
 }
 
-// verifyCommand({ repo, receipt }) → one line a reviewer can paste into a shell:
-//   git clone <url> necro-check && cd necro-check && git checkout <commit> && necro verify <receipt file>
+// The command defines `necro` itself, so a machine with Git and Node.js but no global necro can run it. The function
+// lives only in the shell that runs the command and runs the clone's own bin/necro.js.
+const DEFINE_NECRO = 'necro() { node bin/necro.js "$@"; }';
+
+// verifyCommand({ repo, receipt }) → one line a reviewer can paste into a POSIX shell (sh, bash or zsh):
+//   git clone <url> necro-check && cd necro-check && git checkout <commit> && git checkout origin/HEAD -- <receipt file>
+//     && necro() { node bin/necro.js "$@"; } && necro verify <receipt file>
 // repo is "owner/name"; anything else shows the placeholder OWNER/NAME (no angle brackets, which are shell redirection).
-// Without a valid commit the checkout step is left out.
+// Without a valid commit the checkout steps are left out.
+// The receipt is written after the commit it names, so the checkout of that commit does not hold it. The second checkout
+// takes the receipt file from the default branch, inside the clone, and leaves the code at the commit.
 export function verifyCommand({ repo, receipt }) {
   const parsed = parseRepo(repo);
   const name = parsed.ok ? parsed.repo : 'OWNER/NAME';
+  const file = shQuote(`.necro/receipts/${receipt.spec}/${receipt.receiptHash}.json`);
   const steps = [`git clone ${shQuote(`https://github.com/${name}.git`)} necro-check`, 'cd necro-check'];
-  if (isCommitId(receipt.gitCommit)) steps.push(`git checkout ${receipt.gitCommit}`);
-  steps.push(`necro verify ${shQuote(`.necro/receipts/${receipt.spec}/${receipt.receiptHash}.json`)}`);
+  if (isCommitId(receipt.gitCommit)) {
+    steps.push(`git checkout ${receipt.gitCommit}`);
+    steps.push(`git checkout origin/HEAD -- ${file}`);
+  }
+  steps.push(DEFINE_NECRO);
+  steps.push(`necro verify ${file}`);
   return steps.join(' && ');
 }

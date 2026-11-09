@@ -65,8 +65,10 @@
     <section class="card" id="run" aria-labelledby="run-title" hidden>
       <h2 id="run-title">Re-run it yourself</h2>
       <p>
-        This command clones the repository at the commit and runs <code>necro verify</code> on the receipt.
-        It assumes the receipt is in the default place, <code>.necro/receipts/</code>.
+        This command clones the repository at the commit, takes the receipt from the default branch, and runs
+        <code>necro verify</code> on it. It needs Git and Node.js 24 and no install: it defines <code>necro</code> as
+        <code>node bin/necro.js</code> in your shell and changes nothing outside the folder it clones. It assumes the
+        receipt is in the default place, <code>.necro/receipts/</code>.
       </p>
       <pre id="command"></pre>
       <div class="row">
