@@ -306,10 +306,10 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-09T20:02:21.169Z",
+      "frozenAt": "2026-11-09T20:11:46.159Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
-        "sha256": "bbf858f790f7cf64423b421f65a78fa440e45186e65d85bb45e85eee8fa1486f"
+        "sha256": "45159c39edf2cd115a6501ed0fb18d049f9de656ebb2e9335f9a80cf8c91434d"
       },
       "tasks": {
         "1": {
@@ -565,6 +565,14 @@
           ],
           "text": "32. **New files under frozen globs are caught** (Req 13.12)"
         },
+        "33": {
+          "criteria": [
+            "14.7",
+            "14.8",
+            "14.9"
+          ],
+          "text": "33. **A fast safety net, honest receipts, a steady CI** (Req 14.7, 14.8, 14.9)"
+        },
         "3b": {
           "criteria": [
             "4.7",
@@ -644,6 +652,7 @@
         "3. **Contracts runner** (supports Req 4.4, 4.5, 6.1, 6.3)",
         "30. **A clean environment for contracts** (Req 13.11)",
         "31. **Catch a tick however it got there** (Req 14.1, 14.2, 14.3, 14.4, 14.5, 14.6)",
+        "32. **New files under frozen globs are caught** (Req 13.12)",
         "3b. **No vacuous passes** (Req 4.7, 4.8)",
         "3c. **Pin contract names and check files before running** (Req 2.5, 2.6, 4.9, 4.10)",
         "4. **Receipts** (Req 5.1, 5.2, 5.3)",

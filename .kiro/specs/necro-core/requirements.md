@@ -172,3 +172,7 @@ receipts anyone can re-run.
 4. WHEN a user runs `necro init` THE SYSTEM SHALL also write a PostTaskExec hook that runs `necro hook posttask`, in the hooks file and the custom agent, with the same timeout as the others.
 5. THE repository's CI SHALL run `necro audit` on every push, and the README SHALL show the one CI step a project adds to do the same.
 6. IF a spec's lock records no list of tasks ticked at freeze (a lock written before this requirement) THEN the Stop and PostTaskExec handlers SHALL untick nothing for that spec and SHALL print once that a person must freeze the spec again to turn the check on, while `necro audit` still reports every verdict.
+7. WHEN the Stop or PostTaskExec handler runs THE SYSTEM SHALL audit only the tasks that are ticked now and were not ticked when a person last froze the spec, so the handler finishes well inside the hooks' time limit on a large project; `necro audit` SHALL still check every ticked task.
+8. THE README SHALL say that receipts are files in the project, so an agent able to write files can add one; a forged receipt can only make `necro audit` accept a task whose required contracts pass now, so it can fake where a tick came from, not whether the work holds.
+9. THE repository's CI SHALL run `necro audit` for this repository and SHALL re-run with `necro verify` the newest receipt of each spec of the two examples, instead of the newest receipt of this repository's own specs (whose shared source files change with every later task, so their receipts are snapshots).
+
