@@ -604,10 +604,10 @@
           "sha256": "47e17273eef50b96c039f01d4ab62d0c907bffe8f911b03d90a5dc1d4c19a08f"
         }
       ],
-      "frozenAt": "2026-11-09T11:19:06.201Z",
+      "frozenAt": "2026-11-09T14:10:47.966Z",
       "requirements": {
         "path": ".kiro/specs/receipt-viewer/requirements.md",
-        "sha256": "60f30e101f2fcc9d02ea9c2d82f6a94795068173ba4e4f0a5dcc800abb0b2161"
+        "sha256": "2334d700fad16c40a1203c58fdb9ba9149278bc9e6a775dba02c8880bd6399a4"
       },
       "tasks": {
         "1": {
@@ -746,6 +746,15 @@
             "5.3"
           ],
           "text": "20. The verifier in the re-run command is the official one, pinned (Req 5.3)"
+        },
+        "21": {
+          "criteria": [
+            "10.1",
+            "10.2",
+            "10.3",
+            "10.4"
+          ],
+          "text": "21. The story in one glance (Req 10.1, 10.2, 10.3, 10.4)"
         }
       }
     }

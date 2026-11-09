@@ -604,10 +604,10 @@
           "sha256": "47e17273eef50b96c039f01d4ab62d0c907bffe8f911b03d90a5dc1d4c19a08f"
         }
       ],
-      "frozenAt": "2026-11-09T14:10:47.966Z",
+      "frozenAt": "2026-11-09T14:15:53.587Z",
       "requirements": {
         "path": ".kiro/specs/receipt-viewer/requirements.md",
-        "sha256": "2334d700fad16c40a1203c58fdb9ba9149278bc9e6a775dba02c8880bd6399a4"
+        "sha256": "2d3ad7c9815ef217c001c163d485b135de6ac331fa9c687ba336fc1233c8a2d3"
       },
       "tasks": {
         "1": {
