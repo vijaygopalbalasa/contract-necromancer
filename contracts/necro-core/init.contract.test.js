@@ -74,7 +74,7 @@ test('R8.1 init writes .kiro/hooks/necromancer.json with PreToolUse, PostToolUse
     const { config } = initialized(project);
     assert.equal(config.version, 'v1');
     assert.ok(Array.isArray(config.hooks));
-    assert.equal(config.hooks.length, 3);
+    assert.equal(config.hooks.length, 4); // PostTaskExec added by Req 14.4 (person edit, Nov 10)
     for (const [trigger, sub] of [['PreToolUse', 'pre'], ['PostToolUse', 'post'], ['Stop', 'stop']]) {
       const hook = hooksFor(config, trigger);
       assert.equal(hook.action.type, 'command', trigger);
@@ -173,8 +173,8 @@ test('R8.6 init writes hook commands with the absolute, quoted path of the Node.
     const res = init(project, path.join(root, 'bin', 'necro.js'));
     assert.equal(res.status, 0, res.stderr);
     const config = JSON.parse(fs.readFileSync(path.join(project, HOOKS_REL), 'utf8'));
-    const subs = { PreToolUse: 'pre', PostToolUse: 'post', Stop: 'stop' };
-    assert.equal(config.hooks.length, 3);
+    const subs = { PreToolUse: 'pre', PostToolUse: 'post', Stop: 'stop', PostTaskExec: 'posttask' };
+    assert.equal(config.hooks.length, 4); // PostTaskExec added by Req 14.4 (person edit, Nov 10)
 
     for (const hook of config.hooks) {
       const { node, script, sub } = parseCommand(hook.action.command);

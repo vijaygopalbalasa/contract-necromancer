@@ -79,7 +79,7 @@ test('R8.9 init writes .kiro/agents/necromancer.json with the steering resource,
     // The three hooks of 8.1: same commands, matchers and timeouts as the hook file.
     const hooksFile = JSON.parse(fs.readFileSync(path.join(project, HOOKS_REL), 'utf8'));
     assert.deepEqual(agent.hooks, hooksFile.hooks);
-    assert.deepEqual(agent.hooks.map((h) => h.trigger), ['PreToolUse', 'PostToolUse', 'Stop']);
+    assert.deepEqual(agent.hooks.map((h) => h.trigger), ['PreToolUse', 'PostToolUse', 'Stop', 'PostTaskExec']); // PostTaskExec added by Req 14.4 (person edit, Nov 10)
     for (const hook of agent.hooks) assert.equal(hook.timeout, 300);
 
     // Shell commands that run `necro freeze` are denied; other necro commands are not.

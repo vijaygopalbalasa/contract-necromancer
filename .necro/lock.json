@@ -3,6 +3,18 @@
     "necro-core": {
       "contracts": [
         {
+          "name": "audit",
+          "names": [
+            "R14.1 necro audit lists every ticked task as ok, no receipt or failing, and exits 0 only when all are ok",
+            "R14.2 necro audit changes no file",
+            "R14.3 necro hook stop and necro hook posttask, given any or empty input, untick every task that is not ok, say why on stderr and leave ok tasks alone",
+            "R14.4 necro init writes a PostTaskExec hook that runs necro hook posttask in the hooks file and the custom agent, with the same timeout as the others",
+            "R14.5 the repository CI runs necro audit on every push, and the README shows the one CI step a project adds"
+          ],
+          "path": "contracts/necro-core/audit.contract.test.js",
+          "sha256": "230209bb43df5c96f449dfb54e8dfd177c666ecef1b668cbf22a98a0318e2608"
+        },
+        {
           "name": "block",
           "names": [
             "R3.1 a write tool call to a frozen file exits 2 with a reason on stderr",
@@ -58,7 +70,7 @@
             "R8.9 init writes .kiro/agents/necromancer.json with the steering resource, the three hooks, and deny rules for necro freeze and writes under .necro/; a second init leaves it unchanged and says so"
           ],
           "path": "contracts/necro-core/custom-agent.contract.test.js",
-          "sha256": "c403183f7dc16004d2855600e8265a7f37e64c5380bc910feede12eb23f6b334"
+          "sha256": "9aba1732852121613afe3126eadf3f8597da18ede4740106b996348f8d656376"
         },
         {
           "name": "demo-look",
@@ -111,7 +123,7 @@
             "R8.7 init says Kiro runs hooks only in a trusted workspace and that after trusting it Kiro must be quit and reopened"
           ],
           "path": "contracts/necro-core/init.contract.test.js",
-          "sha256": "91bf25bb40c73741edc8f5a6a7bda4ccf3e7b7a5d20fd2b49c8563778c3b4504"
+          "sha256": "200cb5591874a6ac952ede2e72e48ce274feb7ad1cd5e9ca98a64ddcfe4ad859"
         },
         {
           "name": "lock-restore",
@@ -278,10 +290,10 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-09T18:48:08.137Z",
+      "frozenAt": "2026-11-09T19:07:44.161Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
-        "sha256": "7ee66a43f09eae84a14649d84f0d07a07f0236a0396513e282fd448e78b1b720"
+        "sha256": "bbf858f790f7cf64423b421f65a78fa440e45186e65d85bb45e85eee8fa1486f"
       },
       "tasks": {
         "1": {
@@ -526,9 +538,10 @@
             "14.2",
             "14.3",
             "14.4",
-            "14.5"
+            "14.5",
+            "14.6"
           ],
-          "text": "31. **Catch a tick however it got there** (Req 14.1, 14.2, 14.3, 14.4, 14.5)"
+          "text": "31. **Catch a tick however it got there** (Req 14.1, 14.2, 14.3, 14.4, 14.5, 14.6)"
         },
         "32": {
           "criteria": [
@@ -589,7 +602,44 @@
           ],
           "text": "8e. **State the shell cannot forge, fail closed on odd input, honest limits** (Req 3.8, 3.9, 3.10, 3.11)"
         }
-      }
+      },
+      "ticked": [
+        "1. **Project scaffold and canonical hashing** (Req 1.1, 1.2, 1.3)",
+        "10. **CLI entry and init command** (Req 8.1, 8.2, 8.3)",
+        "11. **Receipts say what is not committed yet** (Req 5.4)",
+        "12. **Gate on the ticked task's own criteria** (Req 2.7, 4.5, 4.14, 4.15, 5.5)",
+        "13. **Bind ticks to the frozen task text** (Req 2.8, 4.16, 4.17)",
+        "14. **Kiro's real tool names, in the IDE too** (Req 3.6, 3.12, 3.13, 8.5)",
+        "15. **Decoy lines cannot keep a task open** (Req 4.18)",
+        "16. **Gate the Kiro IDE's task tool** (Req 4.19, 4.20)",
+        "17. **Hooks that work from the Dock, and check on demand** (Req 8.6, 8.7, 9.1, 9.2, 9.3, 9.4)",
+        "18. **Read criteria the way Kiro writes them** (Req 2.9)",
+        "19. **Freezing is a person's step, and a re-frozen spec's old receipts say so** (Req 3.14, 6.8, 8.8)",
+        "2. **Lock file: freeze a spec** (Req 2.1, 2.2, 2.3, 2.4)",
+        "20. **An agent's shell cannot move the lock** (Req 3.15)",
+        "21. **A custom Kiro agent that brings the gate with it** (Req 8.9)",
+        "22. **Verify from any folder** (Req 6.9)",
+        "23. **Say whose contracts run** (Req 6.10)",
+        "24. **MCP server and Kiro power** (Req 10.1, 10.2, 10.3, 10.4, 10.5)",
+        "25. **One-command demo** (Req 11.1, 11.2, 11.3, 11.4, 11.5, 11.6)",
+        "26. **A demo that reads at a glance** (Req 12.1, 12.2, 12.3)",
+        "27. **Contracts in any language** (Req 13.1, 13.2, 13.3, 13.4, 13.5)",
+        "29. **Harden runner contracts** (Req 13.7, 13.8, 13.9, 13.10)",
+        "3. **Contracts runner** (supports Req 4.4, 4.5, 6.1, 6.3)",
+        "30. **A clean environment for contracts** (Req 13.11)",
+        "3b. **No vacuous passes** (Req 4.7, 4.8)",
+        "3c. **Pin contract names and check files before running** (Req 2.5, 2.6, 4.9, 4.10)",
+        "4. **Receipts** (Req 5.1, 5.2, 5.3)",
+        "5. **Verify** (Req 6.1, 6.2, 6.3)",
+        "6. **PreToolUse: block edits to frozen files** (Req 3.1, 3.2, 3.4)",
+        "7. **Gate on marking a task done** (Req 4.1, 4.2, 4.3, 4.4, 4.5, 4.6)",
+        "8. **PostToolUse: restore frozen files** (Req 3.3)",
+        "8b. **Hardening from review** (Req 4.11, 6.4, 6.5, 6.6)",
+        "8c. **Close the bypasses found in review** (Req 3.5, 3.6, 3.7, 4.1, 4.2, 4.12)",
+        "8d. **Fail closed on ticks, strict verify, hooks on every tool** (Req 4.13, 6.7, 8.4)",
+        "8e. **State the shell cannot forge, fail closed on odd input, honest limits** (Req 3.8, 3.9, 3.10, 3.11)",
+        "9. **Stop: session summary** (Req 7.1)"
+      ]
     },
     "receipt-viewer": {
       "contracts": [

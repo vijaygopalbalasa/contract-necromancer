@@ -278,10 +278,10 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-09T18:34:48.571Z",
+      "frozenAt": "2026-11-09T18:48:08.137Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
-        "sha256": "376b8c5d9abab398b3cbc8dd28cf5f0718571b2a70693dd7aed697b0e1420050"
+        "sha256": "7ee66a43f09eae84a14649d84f0d07a07f0236a0396513e282fd448e78b1b720"
       },
       "tasks": {
         "1": {
@@ -529,6 +529,12 @@
             "14.5"
           ],
           "text": "31. **Catch a tick however it got there** (Req 14.1, 14.2, 14.3, 14.4, 14.5)"
+        },
+        "32": {
+          "criteria": [
+            "13.12"
+          ],
+          "text": "32. **New files under frozen globs are caught** (Req 13.12)"
         },
         "3b": {
           "criteria": [

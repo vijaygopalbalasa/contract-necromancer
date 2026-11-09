@@ -171,3 +171,4 @@ receipts anyone can re-run.
 3. WHEN the Stop handler runs, and WHEN a PostTaskExec handler (`necro hook posttask`) runs, THE SYSTEM SHALL find every ticked task that is not `ok` under 14.1, put its line back to `[ ]` in `tasks.md`, and print to stderr each task undone and why, without relying on any field of the hook's input.
 4. WHEN a user runs `necro init` THE SYSTEM SHALL also write a PostTaskExec hook that runs `necro hook posttask`, in the hooks file and the custom agent, with the same timeout as the others.
 5. THE repository's CI SHALL run `necro audit` on every push, and the README SHALL show the one CI step a project adds to do the same.
+6. IF a spec's lock records no list of tasks ticked at freeze (a lock written before this requirement) THEN the Stop and PostTaskExec handlers SHALL untick nothing for that spec and SHALL print once that a person must freeze the spec again to turn the check on, while `necro audit` still reports every verdict.
