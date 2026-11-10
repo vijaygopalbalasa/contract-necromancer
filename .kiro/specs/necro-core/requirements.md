@@ -166,6 +166,8 @@ receipts anyone can re-run.
 14. WHEN `"frozen"` globs are expanded THE SYSTEM SHALL also count a symbolic link met part way along a glob (a linked folder at an intermediate segment, or any link under `**`) whose path the glob could match, so a linked folder cannot hide a file from the check.
 15. WHEN a JavaScript contract file runs THE SYSTEM SHALL run it in a Node.js process started with `--frozen-intrinsics`, so code under test cannot patch built-in prototypes (for example `String.prototype.split`) to change what a contract's own assertions see; a patch attempt SHALL make the contract fail, not pass.
 16. THE SYSTEM SHALL provide `plain(value)` in `src/plain.js`, which returns plain data (primitive strings and numbers, plain arrays and objects, Maps as plain copies) from a result, so a contract that compares `plain(result)` is not fooled by a subclass of `String` or `Array` with doctored methods; the README SHALL tell contract authors to compare plain values.
+17. WHEN a JavaScript contract file runs THE SYSTEM SHALL, before any contract or source module loads, freeze the exports of `node:assert`, `node:assert/strict` and `node:test` (the module objects and their function properties), so code under test cannot replace an assertion to make a contract pass; an attempt SHALL make the contract fail.
+18. WHEN `plain()` meets an `Error` or a `RegExp` THE SYSTEM SHALL return a fresh built-in copy (message and name, or source and flags, read through built-in getters), never the caller's object.
 
 ## Requirement 14: Catch a tick however it got there
 **User story:** As a developer who runs Kiro's "Run all tasks" or lets sub-agents work unattended, I want a tick that did not go through the gate to be caught and undone, so that a task Kiro marks done after a failed or killed run (as in kirodotdev/Kiro#11786) never stays done.
@@ -194,6 +196,7 @@ receipts anyone can re-run.
 8. THE README and `docs/limits.md` SHALL say that runtime postconditions protect only the outputs they check, so a project should guard every function whose result reaches a user, and that the demo's step 6 shows one cheat among many.
 9. WHEN `guard` wraps a function THE SYSTEM SHALL give its check a deep copy of the arguments taken before the call (via `structuredClone`, falling back to the original only for values that cannot be cloned), so a function that changes its own arguments cannot make its check agree with a wrong result.
 10. THE Pumpkin Ledger postconditions SHALL also guard `parseLedger`, recomputing from the input text each line's payer, amount in cents and split list, so a parser that changes amounts is stopped at runtime.
+11. WHEN a guarded function returns THE SYSTEM SHALL take one copy of the result (`structuredClone`), run every check on that copy and return that same copy to the caller, so a result with accessors or a Proxy cannot show the check one value and the caller another; a result that cannot be copied SHALL fail the check with a plain reason.
 
 ## Requirement 16: Adopting it in your own project
 **User story:** As a developer trying the tool on my own project for the first time, I want clear feedback at each step, so that I am not stuck reading the source.
