@@ -1,0 +1,451 @@
+[tool] status: Completed
+[tool] Sub-agent: context-gatherer
+[tool] status: InProgress
+[tool] List Directory
+[tool] status: InProgress
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] List Directory
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] File Search
+[tool] status: InProgress
+[tool] File Search
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] File Search
+[tool] status: InProgress
+[tool] File Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] File Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] List Directory
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Failed
+[tool] status: Completed
+[tool] Run existing test suite
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run existing test suite
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Failed: Read File
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+The frozen-contract hook blocks `necro freeze` because it would rewrite the lock; I’m leaving the already frozen contract set untouched and will validate against it directly. The implementation gaps are the missing split, balance, settlement, report, and property-generator modules, plus the task-required tests.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] Write File
+[tool] Write File
+[tool] Write File
+[tool] Write File
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run unit and postcondition tests
+[tool] Run all frozen ledger contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] Exercise ledger text output
+[tool] status: Completed
+[tool] Exercise ledger JSON output
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Failed: Run all frozen ledger contracts
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run property contract suite
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run property contract suite
+[tool] Run read split and CLI contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] Run settlement contract suite
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run settlement contract suite
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Verify property contracts after shrink fix
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run complete unit test suite
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run complete unit test suite
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] Replace in File
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+[tool] Re-run complete unit test suite
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Re-run complete unit test suite
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Completed
+[tool] Verify all passing frozen contract groups
+[tool] Run necro contract verification
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run necro contract verification
+[tool] status: Completed
+[tool] Confirm frozen files remain unchanged
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Confirm all project tests pass
+[tool] Verify frozen ledger task contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] Review changed and new files
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Failed: Verify frozen ledger task contracts
+[tool] status: Failed: Confirm all project tests pass
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run final unit test suite
+[tool] Run frozen spec verification
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] Inspect contract verifier usage
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run frozen spec verification
+[tool] status: Completed
+[tool] status: Failed: Run final unit test suite
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Verify all unit tests pass
+[tool] Run frozen contracts and record receipt
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run frozen contracts and record receipt
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run every frozen ledger contract
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run every frozen ledger contract
+[tool] Replace in File
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run complete final unit suite
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] Run all non-contradictory frozen contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] Recheck the frozen ledger receipt
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Audit gated task completion status
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Failed: Recheck the frozen ledger receipt
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+The implementation and all new unit tests now pass. The frozen receipt has 17/18 contracts passing; the sole failure is the frozen R3.3 assertion, which requires `All square.` to be present and simultaneously requires no output line to contain `square`, so it cannot be satisfied by any normal `renderText` string. I’m keeping frozen files unchanged and will only tick tasks whose frozen criteria actually pass.
+[tool] Replace in File
+[tool] Replace in File
+[tool] Replace in File
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Confirm task gate status
+[tool] Reproduce the remaining frozen contract failure
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Reproduce the remaining frozen contract failure
+[tool] Review final workspace changes
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Inspect final tracked implementation changes
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+Implemented the missing ledger functionality:
+
+- Added `src/split.js`, `src/balances.js`, `src/settle.js`, and `src/report.js`.
+- Reworked amount parsing to use `BigInt` string conversion.
+- Added seeded property generation and shrinking in `test/gen.js`.
+- Added unit tests for splitting, balances, settlement, reports, CLI behavior, and properties.
+- `npm test`: **29 passing**.
+- Frozen contracts: **17 passing, 1 failing**.
+- Marked tasks **4, 5, 8, and 9** complete. The necromancer audit reports **7 ticked tasks, all valid**.
+
+The remaining frozen R3.3 contract is impossible as written. It requires the report to contain `All square.` and then asserts that no line contains the word `square`. I did not modify the frozen contract or bypass the gate, so tasks 6 and 7 remain unchecked.

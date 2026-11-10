@@ -1,0 +1,183 @@
+I'll start by reading the spec, the contracts, and the current source.
+[tool] Read spec tasks, package config, and necro lock
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run contract and unit tests to see current state
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The test runner needs glob patterns, not directories. Before changing anything, I'll read the frozen files, the source, and the design, and check that the frozen hashes still match.
+[tool] Read File
+[tool] status: InProgress
+[tool] Check frozen file hashes and git state
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+Frozen hashes match the lock file. Next I'll read the contracts, the frozen helpers, and the current source.
+[tool] Print frozen helpers and current source files
+[tool] Print all frozen contract test files
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+The contract output was too long to show in one go, so I'll read the contract files individually.
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+I have the full picture now. Summary of what I found:
+
+- The frozen files (`bin/ledger.js`, `src/runtime.js`, `contracts/ledger/postconditions.js`, and the five contract tests) all match their lock hashes. I won't edit any of them.
+- `bin/ledger.js` already imports `src/split.js`, `src/balances.js`, `src/settle.js`, and `src/report.js`. Those files don't exist yet, so the CLI and most contracts fail on import.
+- The property contract needs `test/gen.js` (`checkProperty`, `generateParty`, `createRng`, `caseSeedOf`, `partyToText`, `peopleOf`, `keyOf`, `reorder`). That file is missing too.
+- `settle` must not mutate its input, because the frozen runtime postcondition reads the balances after `settle` returns.
+
+Tasks 4 to 8 say to write the tests first, so I'll write those now and confirm they fail before writing the code.
+[tool] Write File
+[tool] Write File
+[tool] Write File
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+Next I'll confirm these new tests fail for the expected reason, which is the missing modules.
+[tool] Confirm new tests fail before implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The tests fail because the modules are missing, which is the expected red state. Now I'll write the four source modules.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+The comment above `largest` in `settle.js` describes a helper that doesn't exist. I'll correct it, then run the unit and CLI tests.
+[tool] Replace in File
+[tool] status: Pending
+[tool] Run new unit and CLI tests against implementation
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Show test summaries for new tests and requirement contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Show test summaries for new tests and requirement contracts
+All 26 unit and CLI tests pass. The separator I used in the shell chain broke zsh, so I'll run the requirement contracts in a separate call.
+[tool] Run requirement 1 to 4 frozen contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The R3.3 contract cannot pass as written. Its first assertion requires a line exactly equal to `All square.`, and its second requires that no line contains the word "square". The first assertion guarantees the second one fails, so no correct implementation can satisfy both. I checked the `renderText` output directly to confirm this before deciding what to do.
+
+Editing that contract is blocked by the freeze, so I'll leave it alone and report it at the end. Everything else in R1, R2 and R4 is green. Next, the property generator (task 9), which the R5 contract needs.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run new property tests and the property contract
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The property contract passes all five checks, and the new property tests pass. Next I'll run the full `npm test` suite and every contract file together.
+[tool] Run npm test and all frozen contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+`npm test` passes 46 of 46. The only failing contract is the R3.3 one I already identified.
+
+Task 9 also asks me to plant the three bugs the properties exist for, in a scratch copy, and confirm a property fails. I'll do that in `/tmp` so the workspace `src/` stays untouched.
+[tool] Plant three bugs in scratch copies and confirm properties fail
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+All three planted bugs make a property fail, and each report prints the seed and the smallest failing party. The reason line is weak, though. It shows only "Expected values to be strictly equal:" and drops the actual values, because `assert` puts them on later lines. I'll join the message lines so the report includes the values.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Check failure report text and rerun npm test
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The failure report now names the seed, the reason with actual values, and a two-line smallest party. The planted-bug checks used the real code path, and `npm test` still passes 46 of 46.
+
+Now I'll tick the tasks whose criteria are green. Tasks 6 and 7 cite Req 3.3, whose contract is still red, and the necro rule gates ticking on passing contracts. So I'll leave those two open. Then I'll confirm the frozen files are unchanged.
+[tool] Replace in File
+[tool] Replace in File
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Tick green tasks and verify frozen hashes and results
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Not everything is green. One frozen contract cannot pass, so tasks 6 and 7 stay unticked.
+
+**Blocked: R3.3 contract is self-contradictory.** In `requirement-3-settle.contract.test.js`, the test requires a line exactly equal to `All square.` and also requires that no line contains the word "square". The first assertion guarantees the second one fails, so no implementation can pass both. Req 3.3 asks for `All square.`, so the contract's second assertion is the faulty one. Fixing it means editing a frozen file, which I did not do. You can either unfreeze and remove that assertion, or tell me a different rule to test.
+
+**Status**
+- `npm test`: 46 of 46 pass.
+- Frozen contracts: 17 of 18 pass. The only failure is R3.3, described above.
+- Tasks ticked: 1 to 5, 8, and 9.
+- Tasks 6 and 7 are open. Both cite Req 3.3, and ticking them while its contract fails would break the necro gate.
+- Frozen file hashes match the lock. I did not edit `bin/ledger.js`, `src/runtime.js`, `postconditions.js`, or any contract file.
+
+**What I built**
+- `src/split.js`, `src/balances.js`, `src/settle.js`, `src/report.js`, all integer cents. `settle` works on copies, because the frozen runtime postcondition reads the balances after `settle` returns.
+- Unit and CLI tests: `test/split`, `balances`, `settle`, `report`, `cli`.
+- `test/gen.js`: a seeded generator and a property runner with shrinking. On failure it prints the seed, a replay seed, the reason, and the smallest failing party.
+- `test/properties.test.js`: the R5.1 to R5.3 properties over 300 parties each.
+
+**Property results**
+- The properties found no bugs in `src/`, so I changed no existing code to fix one.
+- I planted three bugs in a scratch copy under `/tmp`: round instead of floor, dropped extra cents, and a dropped payment. Each made a property fail and printed the seed and smallest failing party. The workspace code is unchanged.
+
+**Things to know**
+- `npm test` only runs `test/*.test.js`, so the frozen contracts run separately:
+  `node --test contracts/ledger/*.contract.test.js`
+- The `necro` CLI is not installed here, so I could not update `.necro/lock.json`. Its `ticked` list still shows only tasks 1 to 3.

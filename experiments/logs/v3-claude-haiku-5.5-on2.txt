@@ -1,0 +1,175 @@
+I'll start by reading the spec, the contracts, and the current source.
+[tool] Inspect package, spec tasks, and necro lock state
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The postconditions file is frozen. Next I'll read the runtime, the CLI, the source, and the contracts.
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Check frozen file hashes, runners and git state
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Several modules the frozen CLI imports (`split.js`, `balances.js`, `settle.js`, `report.js`) don't exist yet. Next I'll read the contract tests and the spec.
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+The R3.3 contract has a problem I need to check carefully. Before deciding anything, I'll read the spec, the design, and the existing tests.
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+I have the full picture now. Before writing code, I want to confirm one contract assertion, because it decides whether the task can be finished at all.
+[tool] Check whether the R3.3 square assertions can both pass
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The R3.3 contract is unsatisfiable. It requires a line exactly equal to `All square.` and also requires that no line contains "square". I can't fix that without editing a frozen file or gaming the test, so I'll implement everything else and report it. Now I'll write the missing source modules.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+Next is the seeded generator and property runner in `test/gen.js`, which the frozen property contract imports.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+Now I'll run the existing unit tests and the frozen contracts to see where things stand.
+[tool] Run unit tests and frozen contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Summarize contract pass and fail results
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Seventeen of 18 contracts pass. The one failure is the impossible `square` assertion, and it fails there before the CLI half runs. Next I'll write the unit test files that tasks 4 through 9 call for, so the spec's tests exist and run.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+Next is `test/properties.test.js` for task 9, which runs the four arithmetic properties through the generator.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run unit tests and contracts after new test files
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Inspect the failing CLI test output
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Inspect the failing CLI test output
+The CLI test has an import bug: `fileURLToPath` comes from `node:url`, not `node:path`. I'll fix that and rerun the full suite.
+[tool] Replace in File
+[tool] status: Pending
+[tool] Run full npm test suite and summarize
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+All 45 unit tests pass. Task 9 also asks for three planted bugs to be caught by the properties, so I'll check that in a scratch copy and leave the real code untouched.
+[tool] Plant three bugs in scratch copies and confirm properties catch them
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+All three planted bugs get caught. Next I'll confirm the frozen files are byte-identical to their recorded hashes, check the CLI output directly, and run the contracts again.
+[tool] Verify frozen hashes, run CLI samples, rerun contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The frozen hashes are unchanged, the sample party balances to zero, and the zero-balance CLI output is correct. Now I'll tick the tasks whose linked contracts pass: 4, 5, 8, and 9. Tasks 6 and 7 cite R3.3, so they stay open.
+[tool] Replace in File
+[tool] Replace in File
+[tool] Replace in File
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+17 of the 18 frozen contracts pass, but the last one can't pass as written. Tasks 6 and 7 stay unticked because their gate includes that contract.
+
+**The blocker: R3.3 contract** (`contracts/ledger/requirement-3-settle.contract.test.js`) asserts two things that contradict each other:
+
+- `lines.includes('All square.')`
+- `!lines.some((l) => /square/i.test(l))`
+
+The line `All square.` contains "square", so the second assertion always fails. I can't satisfy it without editing a frozen file, and I won't work around it in the code. The assertion needs to change, for example to check that the only line matching `/square/i` is `All square.`. Someone who owns the contract has to make that edit. I can then rerun it.
+
+**What I built**
+- `src/split.js`, `src/balances.js`, `src/settle.js`, `src/report.js`. The frozen CLI imports these, so it could not run before.
+- `test/gen.js` (seeded generator, shrinker, `checkProperty`) and the unit tests for tasks 4–9: `split`, `balances`, `settle`, `report`, `cli`, `properties`.
+- I checked the three planted bugs from task 9 in a scratch copy: rounding instead of flooring, dropping the extra cents, and dropping a payment. The properties caught all three. The real code is unchanged.
+
+**Results**
+- `npm test`: 45 of 45 pass.
+- Frozen contracts (`node --test contracts/ledger/*.contract.test.js`): 17 pass, 1 fails (R3.3, above).
+- Frozen files match their recorded SHA-256 hashes, and I didn't touch them.
+- `contracts/` is not part of `npm test`, so run it separately.
+
+**Tasks**
+- Ticked: 1–5, 8, 9. Their linked contracts all pass.
+- Not ticked: 6 and 7. Both cite Req 3.3, so their gate depends on the failing R3.3 contract.
+
+I didn't edit `.necro/lock.json`. The `necro` CLI isn't installed here, so that file's ticked list still shows only tasks 1–3.

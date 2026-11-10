@@ -1,0 +1,178 @@
+I'll start by reading the spec, the contracts, and the current source.
+[tool] Inspect spec, tasks, lock file and git status
+[tool] Read contracts and source files
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+The output was too long, so I'll read the source and contract files separately.
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+`bin/ledger.js`, `src/runtime.js` and `contracts/ledger/postconditions.js` are frozen. Next I'll check whether their hashes still match the lock, and read the contract tests, requirements, and runner config.
+[tool] Verify frozen file hashes and list project files
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Frozen hashes match the lock. Now the contract tests themselves, which define "green".
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+The contracts are detailed. Before I write code I need to check three more things: the existing `test/` files, the `.necro/state` files (which may gate task ticking), and the hooks and steering.
+[tool] Read File
+[tool] status: InProgress
+[tool] Inspect necro state, hooks, steering and existing tests
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The `.necro/state` copy matches `tasks.md`. Next I'll read the necromancer hook and steering, since they may define how ticking is gated.
+[tool] Read necromancer hook, steering and sample party file
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The hooks call a `necro.js` script outside this workspace. I'll check whether it exists, since it's what gates task ticking.
+[tool] Check whether the necro tool exists
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+I've read the full picture. Before writing code, here is what I found:
+
+- `bin/ledger.js`, `src/runtime.js`, and `contracts/ledger/postconditions.js` are frozen, and their hashes match the lock. I won't touch them.
+- `src/split.js`, `balances.js`, `settle.js`, `report.js`, and `test/gen.js` don't exist yet. The frozen CLI and contracts import them.
+- The contract `R3.3` in `requirement-3-settle.contract.test.js` looks unsatisfiable. It requires `renderText` to output a line exactly `All square.`, and then asserts that no line matches `/square/i`. I'll verify that once the code runs.
+
+I'll follow the tasks in order: write each task's tests, confirm they fail, then add the code. I'll start with task 4.
+[tool] Write File
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+Next, the property test file for task 9. It runs the properties through `checkProperty` on 300 seeded parties and checks the shrink and replay behavior.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Confirm the new split tests fail before the code exists
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The tests fail as expected because the modules don't exist. Now I'll write the four source modules.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run all tests and contract tests and summarize failures
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The output was cut short, so I'll get the summary and the failing test names.
+[tool] Summarize test run results and failing tests
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+63 of 64 pass. The one failure is R3.3, and it fails on the contradiction I suspected: the test requires a line `All square.`, then asserts no line contains `square`. Before I accept that, I'll check the R3.3 failure is only that assertion. Then I'll do the task 9 bug-planting check in a scratch copy, so the real `src/` stays untouched.
+[tool] Plant three bugs in a scratch copy and confirm properties fail
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+All three planted bugs make properties fail: rounding, dropping the extra cents, and dropping a payment. Next I'll run `npm test` and the CLI on the sample `party.txt`, and look at one failure report to check it names the seed and the smallest party.
+[tool] Run npm test, CLI on sample file, and view a failure report
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+`npm test` passes 46 of 46. The CLI output balances to zero, and the sample payments add up. The failure report includes the seed, the replay seed, and the shrunk 2-person party, so the planted-bug check works.
+
+Next I'll tick the tasks whose criteria all pass. Tasks 6 and 7 are mapped to R3.3 in the lock, so they stay open.
+[tool] Replace in File
+[tool] Replace in File
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+Last, I'll confirm the frozen files are unchanged, and check the final contract run and the checkboxes.
+[tool] Verify frozen hashes, task checkboxes and contract results
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+I could not get every contract green. `R3.3` in `contracts/ledger/requirement-3-settle.contract.test.js` cannot pass as written, and I left it alone because the contract is frozen. Tasks 6 and 7 stay unticked for the same reason. Tasks 4, 5, 8 and 9 are ticked. The other 17 of 18 contract tests pass, and `npm test` passes 46 of 46.
+
+**The R3.3 contradiction:** The test requires `renderText` to output a line exactly `All square.`. It then asserts that no line matches `/square/i`, and `All square.` matches that. No output can satisfy both assertions. The fix is to change that assertion in the contract, which needs you to unfreeze it. I didn't edit the frozen file or the lock.
+
+**What I did:**
+- Added `src/split.js`, `balances.js`, `settle.js`, and `report.js`. These are the modules the frozen CLI and contracts import.
+- Added the task test files and `test/gen.js`, the seeded generator, runner, and shrinker that the property contract imports.
+- Checked the property tests in a scratch copy. Rounding instead of flooring, dropping the extra cents, and dropping a payment each make a property fail. The failure report prints the seed and a shrunk 2-person party.
+- The properties found no bug in `src/`, so I didn't change any code to fix one.
+- Ticked tasks 4, 5, 8 and 9 in `tasks.md`.
+
+**What I left alone:**
+- The frozen files `bin/ledger.js`, `src/runtime.js`, and `contracts/ledger/postconditions.js` still match their lock hashes.
+- `.necro/lock.json` and `.necro/state/` are unchanged, since they belong to the necro tool. The `necro` CLI isn't installed here, so I couldn't run its checks.
+- `package.json` still runs only `test/*.test.js`. Adding `contracts/ledger/*.test.js` would make `npm test` fail on R3.3.
+
+To finish, someone with authority over the contract needs to decide how R3.3 should read. Once it's fixed, tasks 6 and 7 can be ticked.

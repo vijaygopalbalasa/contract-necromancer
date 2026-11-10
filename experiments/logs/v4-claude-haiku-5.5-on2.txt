@@ -1,0 +1,94 @@
+[tool] Read File
+[tool] status: InProgress
+[tool] Run Command
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Tasks 3, 4 and 5 are unticked. Tasks 6 to 9 are already ticked. Next I'll read the existing source, tests, and the frozen contracts that the new code has to satisfy.
+[tool] Run Command
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+The existing `src/` files and frozen contracts matter for the next three tasks. I'll read them one at a time to keep output manageable.
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+The design doc has the algorithms I need. Next I'll read the frozen contracts for requirements 1 to 3, since the new modules must match them exactly.
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+I have what I need. Requirements 1 to 3 pin the exact result shapes: `resolveLocal` returns `{ok, ms}` or `{ok:false, reason, error, options}`, `planGuests(startMs, hostZone, guestZones)` returns rows, and `suggestKinderTime` returns a `choice` for repeated hours. I'll write the tests for task 3 first, then the code.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+The tests for tasks 3 to 5 are written. Next I'll implement the four modules they cover.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+All 54 tests in `npm test` pass. That script doesn't cover the frozen contracts in `contracts/`, so I'll run those separately to confirm the requirements behind tasks 3 to 5.
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+All 9 frozen contract checks for requirements 1 to 3 pass. I'll tick tasks 3, 4 and 5 in `tasks.md`.
+[tool] Replace in File
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+Tasks 3, 4 and 5 are done and ticked in `tasks.md`. `npm test` passes 54 of 54, and the frozen contracts for requirements 1 to 3 pass (9 of 9).
+
+- **Task 3 (`src/resolve.js`):** `resolveLocal` returns the UTC instant, a gap sentence with the skipped range, or an ambiguous result with the earlier and later instants. The `pick` choice is handled by passing `'earlier'` or `'later'`. `findTransition` locates the change for the gap sentence.
+- **Task 4 (`src/guests.js`, `src/night.js`):** `planGuests` builds rows with local date, time, offset, day label, and the dead-of-night flag. Rows sort by local date and time, then zone name. A bad guest zone refuses the whole plan with a sentence that names it.
+- **Task 5 (`src/kinder.js`):** `suggestKinderTime` checks each on-the-hour start on the host date. It skips hours that fall in a gap and returns `choice` for a repeated hour when that hour wins.
+
+I also wrote `test/resolve.test.js`, `test/guests.test.js` and `test/kinder.test.js` before the code, as the task asked.
+
+Tasks 6 to 9 were already ticked, so I didn't touch them. Tasks 6 and 8 still need the manual browser check at 320px and with reduced motion, which I haven't done.

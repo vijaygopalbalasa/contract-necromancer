@@ -1,0 +1,135 @@
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+Tasks 3, 4, 5, 8 and 9 are unticked. I'll read the existing code before starting.
+[tool] Inspect existing source, package config and git state
+[tool] Read site files and contract tests
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+Several files are already present (`site/main.js`, `src/form.js`, `src/page.js`) but `resolve.js`, `guests.js`, `night.js` and `kinder.js` are missing. I'll read the design, requirements and the remaining contracts and tests.
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+Next I'll check the current test state and the existing test files.
+[tool] Run test suite and read existing page and site tests
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The suite fails on the missing `resolve.js`. Task 3 comes first, so I'll write its tests before the module.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+Now the implementation for task 3.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+The module-level `zoneRef` is a hidden global, which is poor design. I'll pass the zone explicitly instead.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run resolve unit tests
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+All five resolve tests pass. I'll mark task 3 done and move to task 4, writing its tests first.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+Now the `night.js` and `guests.js` implementations.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+I used `localeCompare` for the date-time key, which is locale-dependent. Plain comparison is what the spec asks for, so I'll switch to that.
+[tool] Replace in File
+[tool] Run guests unit tests
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+Task 4 passes. Next is task 5, the kinder time.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+Now `kinder.js`, which brute-forces the 24 hours and resolves each one, so skipped hours drop out and repeated hours yield two candidates.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run kinder and page unit tests
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Kinder and page tests pass. Task 5 is done. For task 8 the site checks and the site files already exist, so I'll run the full suite to see what remains.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run full test suite and read form test
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+All 51 tests pass. Next I'll run the planner contract tests, since task 9 requires the form contract to pass.
+[tool] Run planner contract tests
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+All 13 planner contracts pass, including `R4.4` for the form. Last, a smoke check that the static server serves every asset the page needs. This is not a browser check.
+[tool] Start a static server and check served assets
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+The server returns all assets with the right types. I'll mark tasks 8 and 9 complete. Task 8 includes browser checks that I could not run here, so I'm noting that in the report.
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Failed: Replace in File
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Failed: Replace in File
+Task 8 was already ticked in the original file, so only task 9 needs changing. I'll check the file state first.
+[tool] List task checkbox states in tasks file
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Tasks 3, 4 and 5 were the only unticked items, and they are done. Tasks 8 and 9 were already ticked, so I left them alone.
+
+**What I built**
+- **Task 3 (`src/resolve.js`):** `resolveLocal` turns a local date, time and zone into a UTC instant. It refuses skipped times with a sentence naming the range (for example `02:00 to 03:00`). For repeated times it returns an `ambiguous` result with both instants, and returns one instant when `earlier` or `later` is passed.
+- **Task 4 (`src/guests.js`, `src/night.js`):** `planGuests` builds one row per guest with local date, `HH:MM`, offset, day label (including "2 days before/after"), and dead-of-night flag. Rows sort by local date and time, then zone name. A bad guest zone fails the whole plan with a sentence naming it.
+- **Task 5 (`src/kinder.js`):** `suggestKinderTime` checks each hour of the host date. Skipped hours are never offered, repeated hours offer both instants, and ties go to the earliest hour.
+
+**Verification**
+- `npm test`: 51 of 51 pass.
+- `contracts/planner`: all 13 contracts pass, including `R4.4` for the form.
+- The static server returns `index.html`, `style.css`, `main.js` and all `src/` modules with correct types.
+
+**Not verified:** I did not check the page in a browser. The 320px layout, the ghost rendering and the reduced-motion behaviour still need a manual check. Serve the folder with `python3 -m http.server` from the project root and open `/site/?date=2026-10-31&time=20:00&zone=America/New_York&guests=Europe/London,Asia/Kolkata`.
