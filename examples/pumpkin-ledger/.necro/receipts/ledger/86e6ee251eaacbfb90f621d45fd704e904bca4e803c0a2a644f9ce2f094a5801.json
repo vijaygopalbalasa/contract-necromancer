@@ -1,0 +1,196 @@
+{
+  "spec": "ledger",
+  "gitCommit": "580de04f33734a05224e821f61a4cb690b4b3dbf",
+  "requirements": {
+    "path": ".kiro/specs/ledger/requirements.md",
+    "sha256": "2471c3d12bd1e3b553f630224bc09a9833bc715958f02af8f130219e7cd1eb35"
+  },
+  "contracts": [
+    {
+      "name": "R5.1 shares of every expense sum to its amount and differ by at most one cent",
+      "path": "contracts/ledger/properties.contract.test.js",
+      "sha256": "cbc9c4d4a6a4b19b73db1855b3cc7b888c9a8cfcba462658e83032ffcf5e6f34",
+      "result": "pass"
+    },
+    {
+      "name": "R5.2 balances are paid minus shares and sum to exactly zero",
+      "path": "contracts/ledger/properties.contract.test.js",
+      "sha256": "cbc9c4d4a6a4b19b73db1855b3cc7b888c9a8cfcba462658e83032ffcf5e6f34",
+      "result": "pass"
+    },
+    {
+      "name": "R5.3 settling zeroes every balance with positive whole-cent payments, at most one fewer than people owing or owed",
+      "path": "contracts/ledger/properties.contract.test.js",
+      "sha256": "cbc9c4d4a6a4b19b73db1855b3cc7b888c9a8cfcba462658e83032ffcf5e6f34",
+      "result": "pass"
+    },
+    {
+      "name": "R5.4 reading the same file twice, or its lines in another order, gives the same balances",
+      "path": "contracts/ledger/properties.contract.test.js",
+      "sha256": "cbc9c4d4a6a4b19b73db1855b3cc7b888c9a8cfcba462658e83032ffcf5e6f34",
+      "result": "pass"
+    },
+    {
+      "name": "R5.5 a failing property reports the seed and the smallest failing party so it can be replayed",
+      "path": "contracts/ledger/properties.contract.test.js",
+      "sha256": "cbc9c4d4a6a4b19b73db1855b3cc7b888c9a8cfcba462658e83032ffcf5e6f34",
+      "result": "pass"
+    },
+    {
+      "name": "R1.1 records payer, whole-cent amount and what for each line",
+      "path": "contracts/ledger/requirement-1-read.contract.test.js",
+      "sha256": "fa40b9161bfc89df294310d3e3f262c862f7fad346a08f7cf4bc8b289f8c123a",
+      "result": "pass"
+    },
+    {
+      "name": "R1.2 shares a split line among the listed names and other lines among everyone",
+      "path": "contracts/ledger/requirement-1-read.contract.test.js",
+      "sha256": "fa40b9161bfc89df294310d3e3f262c862f7fad346a08f7cf4bc8b289f8c123a",
+      "result": "pass"
+    },
+    {
+      "name": "R1.3 treats names that differ in case or spaces as one person with the first spelling",
+      "path": "contracts/ledger/requirement-1-read.contract.test.js",
+      "sha256": "fa40b9161bfc89df294310d3e3f262c862f7fad346a08f7cf4bc8b289f8c123a",
+      "result": "pass"
+    },
+    {
+      "name": "R1.4 stops with the line number and one plain sentence for a bad line",
+      "path": "contracts/ledger/requirement-1-read.contract.test.js",
+      "sha256": "fa40b9161bfc89df294310d3e3f262c862f7fad346a08f7cf4bc8b289f8c123a",
+      "result": "pass"
+    },
+    {
+      "name": "R1.5 skips empty lines and lines that start with #",
+      "path": "contracts/ledger/requirement-1-read.contract.test.js",
+      "sha256": "fa40b9161bfc89df294310d3e3f262c862f7fad346a08f7cf4bc8b289f8c123a",
+      "result": "pass"
+    },
+    {
+      "name": "R2.1 gives each sharer the floor and the extra cents to the first names alphabetically",
+      "path": "contracts/ledger/requirement-2-split.contract.test.js",
+      "sha256": "e2a8c57ec22359e045060107e1f0b8f3603fb1680e3c7100adf1374ec32b7a21",
+      "result": "pass"
+    },
+    {
+      "name": "R2.2 makes balances paid minus shares and sums them to exactly zero",
+      "path": "contracts/ledger/requirement-2-split.contract.test.js",
+      "sha256": "e2a8c57ec22359e045060107e1f0b8f3603fb1680e3c7100adf1374ec32b7a21",
+      "result": "pass"
+    },
+    {
+      "name": "R3.1 produces positive whole-cent payments that bring every balance to zero",
+      "path": "contracts/ledger/requirement-3-settle.contract.test.js",
+      "sha256": "adced29c85d531d0c81a2cb18bec7b817ca15fc03635853a9450e69291882b1c",
+      "result": "pass"
+    },
+    {
+      "name": "R3.2 pays from the biggest debtor to the biggest creditor, ties by name, same every run",
+      "path": "contracts/ledger/requirement-3-settle.contract.test.js",
+      "sha256": "adced29c85d531d0c81a2cb18bec7b817ca15fc03635853a9450e69291882b1c",
+      "result": "pass"
+    },
+    {
+      "name": "R3.3 prints All square. and no payments when every balance is zero",
+      "path": "contracts/ledger/requirement-3-settle.contract.test.js",
+      "sha256": "adced29c85d531d0c81a2cb18bec7b817ca15fc03635853a9450e69291882b1c",
+      "result": "pass"
+    },
+    {
+      "name": "R4.1 prints the balances table then one pays line per payment with two decimals",
+      "path": "contracts/ledger/requirement-4-cli.contract.test.js",
+      "sha256": "bc4534920291653be3afd12e1dba823e52cf3be583edd8472f9d1068dc17d06d",
+      "result": "pass"
+    },
+    {
+      "name": "R4.2 prints balances and payments as JSON with amounts in integer cents",
+      "path": "contracts/ledger/requirement-4-cli.contract.test.js",
+      "sha256": "bc4534920291653be3afd12e1dba823e52cf3be583edd8472f9d1068dc17d06d",
+      "result": "pass"
+    },
+    {
+      "name": "R4.3 exits 1 with one plain sentence when the file is missing or unreadable",
+      "path": "contracts/ledger/requirement-4-cli.contract.test.js",
+      "sha256": "bc4534920291653be3afd12e1dba823e52cf3be583edd8472f9d1068dc17d06d",
+      "result": "pass"
+    }
+  ],
+  "sources": [
+    {
+      "path": "src/balances.js",
+      "sha256": "97bacbfaf55cd21196639c6eadc1b0ed4fb61efedb76c1457a683b9c6ec39e7d"
+    },
+    {
+      "path": "src/errors.js",
+      "sha256": "435a1208a1d29c90c35d5d581b339c1b4ba0ab50b94eaf975bbf653e0a7b234a"
+    },
+    {
+      "path": "src/money.js",
+      "sha256": "37e201e59c0301246b34fc6295b552e788a96be591fead899efb4d94b32481eb"
+    },
+    {
+      "path": "src/parse.js",
+      "sha256": "d6d097c13497474127ed7541dfcfb5096cba732236cb46f96f281ea0f58c9073"
+    },
+    {
+      "path": "src/report.js",
+      "sha256": "7f3f0a967cd05a5ec0a1508fe977af3acbab2221fa5fb0b1507aa2a792e47423"
+    },
+    {
+      "path": "src/settle.js",
+      "sha256": "e929b48010f8d55622da397df772856224b4028865659b3981583aed8e6ad68d"
+    },
+    {
+      "path": "src/split.js",
+      "sha256": "d5ff72ff1f2c30436240936c149528ba052fa5aae7026358a744f2d801f8f5f8"
+    },
+    {
+      "path": "test/gen.js",
+      "sha256": "bf3b0fc3431bcd64b82a5dcfaa0170c4f216f181ee5aee23a87baa5ea64449a5"
+    }
+  ],
+  "task": null,
+  "required": [
+    "R1.1 records payer, whole-cent amount and what for each line",
+    "R1.2 shares a split line among the listed names and other lines among everyone",
+    "R1.3 treats names that differ in case or spaces as one person with the first spelling",
+    "R1.4 stops with the line number and one plain sentence for a bad line",
+    "R1.5 skips empty lines and lines that start with #",
+    "R2.1 gives each sharer the floor and the extra cents to the first names alphabetically",
+    "R2.2 makes balances paid minus shares and sums them to exactly zero",
+    "R3.1 produces positive whole-cent payments that bring every balance to zero",
+    "R3.2 pays from the biggest debtor to the biggest creditor, ties by name, same every run",
+    "R3.3 prints All square. and no payments when every balance is zero",
+    "R4.1 prints the balances table then one pays line per payment with two decimals",
+    "R4.2 prints balances and payments as JSON with amounts in integer cents",
+    "R4.3 exits 1 with one plain sentence when the file is missing or unreadable",
+    "R5.1 shares of every expense sum to its amount and differ by at most one cent",
+    "R5.2 balances are paid minus shares and sum to exactly zero",
+    "R5.3 settling zeroes every balance with positive whole-cent payments, at most one fewer than people owing or owed",
+    "R5.4 reading the same file twice, or its lines in another order, gives the same balances",
+    "R5.5 a failing property reports the seed and the smallest failing party so it can be replayed"
+  ],
+  "runners": {
+    "path": ".kiro/specs/ledger/runners.json",
+    "sha256": "345431388ce5ec7ac54e0bf9c4c9e5ade05a3aeae07bd9f609a2f57dd0736e88"
+  },
+  "frozen": [
+    {
+      "path": "bin/ledger.js",
+      "sha256": "a067eb1106c2866e5e015d52070bea75dbcc26eff550629c2f731b8180b3f14b"
+    },
+    {
+      "path": "contracts/ledger/postconditions.js",
+      "sha256": "1e1768d30b816b1e32453bd025a5169c335c00b26e5897ad6e650a939e4cc1ee"
+    },
+    {
+      "path": "src/runtime.js",
+      "sha256": "862f90aea23e035112d5ee9d352940bbf052696e48130c50f4b4babf6063c38e"
+    }
+  ],
+  "uncommitted": [
+    "src/runtime.js"
+  ],
+  "receiptHash": "86e6ee251eaacbfb90f621d45fd704e904bca4e803c0a2a644f9ce2f094a5801",
+  "createdAt": "2026-11-10T01:57:21.497Z"
+}

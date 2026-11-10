@@ -11,6 +11,9 @@
 // built-in prototype (String.prototype.split, Array.prototype.map) to change what the contract's own assertions see. A patch
 // attempt throws in the code under test, which makes the contract fail instead of pass.
 //
+// Req 13.17: a second preload freezes the exports of node:assert, node:assert/strict and node:test before the contract file or
+// any source module loads, so code under test cannot replace an assertion either (see FREEZE_ASSERTIONS below).
+//
 // Usage: node contract-runner.js <absolute contract file> <cwd>
 import path from 'node:path';
 import { run } from 'node:test';
@@ -29,7 +32,37 @@ for (const key of Reflect.ownKeys(real)) {
 }
 globalThis.console = copy;
 `;
-const EXEC_ARGV = ['--frozen-intrinsics', '--import', `data:text/javascript,${encodeURIComponent(UNFREEZE_CONSOLE)}`];
+
+// Req 13.17: --frozen-intrinsics freezes the language's built-in prototypes, but node:assert, node:assert/strict and node:test
+// are modules, and their exports are ordinary objects that code under test could change (`assert.ok = () => {}`). This module
+// runs before the contract file and before any source module it imports. It freezes the module objects and the functions they
+// hold (and the functions those hold, so `assert.strict.ok` is covered), so an attempt to replace, redefine or delete an
+// assertion throws in code under test, which makes the contract fail instead of pass. In sloppy-mode code the write fails
+// without an error and the real assertion stays in place. Accessors are not called; only values that are functions are
+// followed, so a prototype, a mock tracker or other state of these modules is left as it is.
+const FREEZE_ASSERTIONS = `
+import assert from 'node:assert';
+import strict from 'node:assert/strict';
+import test from 'node:test';
+const seen = new Set();
+function freeze(value, depth) {
+  if (typeof value !== 'function' && (typeof value !== 'object' || value === null)) return;
+  if (seen.has(value)) return;
+  seen.add(value);
+  Object.freeze(value);
+  if (depth === 0) return;
+  for (const key of Reflect.ownKeys(value)) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (descriptor && typeof descriptor.value === 'function') freeze(descriptor.value, depth - 1);
+  }
+}
+for (const module of [assert, strict, test]) freeze(module, 2);
+`;
+const EXEC_ARGV = [
+  '--frozen-intrinsics',
+  '--import', `data:text/javascript,${encodeURIComponent(UNFREEZE_CONSOLE)}`,
+  '--import', `data:text/javascript,${encodeURIComponent(FREEZE_ASSERTIONS)}`,
+];
 
 const file = path.resolve(process.argv[2]);
 const cwd = path.resolve(process.argv[3] || process.cwd());

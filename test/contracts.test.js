@@ -624,3 +624,191 @@ test('R1.1 console.log is assignable', () => {
     fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
+
+// ---------------------------------------------------------------------------
+// 13.17 the assertion modules are frozen before any contract or source module loads
+// ---------------------------------------------------------------------------
+
+test('R13.17 node:assert, node:assert/strict and node:test are frozen, with their function properties', () => {
+  const cwd = tmpCwd();
+  try {
+    const results = runFrozen(cwd, 'frozen', 'assertions.contract.test.js', `import { test } from 'node:test';
+import testDefault from 'node:test';
+import assertDefault from 'node:assert';
+import strictDefault from 'node:assert/strict';
+import assert from 'node:assert/strict';
+
+test('R1.1 the module objects are frozen', () => {
+  assert.ok(Object.isFrozen(assertDefault));
+  assert.ok(Object.isFrozen(strictDefault));
+  assert.ok(Object.isFrozen(testDefault));
+});
+
+test('R1.2 the assertion functions are frozen', () => {
+  for (const mod of [assertDefault, strictDefault]) {
+    for (const name of ['ok', 'equal', 'strictEqual', 'deepEqual', 'deepStrictEqual', 'notEqual', 'throws', 'rejects', 'match', 'fail']) {
+      assert.equal(typeof mod[name], 'function', name);
+      assert.ok(Object.isFrozen(mod[name]), name);
+    }
+  }
+  for (const name of ['test', 'describe', 'it', 'before', 'after', 'beforeEach', 'afterEach']) assert.ok(Object.isFrozen(testDefault[name]), name);
+});
+
+test('R1.3 an assertion cannot be replaced, redefined or removed', () => {
+  for (const mod of [assertDefault, strictDefault]) {
+    assert.throws(() => { mod.ok = () => {}; }, TypeError);
+    assert.throws(() => { mod.equal = () => {}; }, TypeError);
+    assert.throws(() => { mod.strictEqual = () => {}; }, TypeError);
+    assert.throws(() => Object.defineProperty(mod, 'ok', { value: () => {} }), TypeError);
+    assert.throws(() => { delete mod.ok; }, TypeError);
+    assert.throws(() => { mod.added = 1; }, TypeError);
+  }
+  assert.throws(() => { testDefault.it = () => {}; }, TypeError);
+});
+`);
+    assert.deepEqual(results.map((r) => [r.name, r.result]), [
+      ['R1.1 the module objects are frozen', 'pass'],
+      ['R1.2 the assertion functions are frozen', 'pass'],
+      ['R1.3 an assertion cannot be replaced, redefined or removed', 'pass'],
+    ]);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+const NO_OP_CONTRACT = `import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import legacy from 'node:assert';
+import '../../src/patch.PATCH_EXT';
+
+test('R1.1 one equals two', () => {
+  assert.equal(1, 2);
+  assert.strictEqual(1, 2);
+  assert.ok(false);
+  legacy.equal(1, 2);
+  legacy.ok(false);
+});
+`;
+
+const NO_OP_PATCHES = {
+  'a plain assignment on node:assert and node:assert/strict': ['js', `import assert from 'node:assert';
+import strict from 'node:assert/strict';
+for (const a of [assert, strict]) {
+  a.ok = () => {};
+  a.equal = () => {};
+  a.strictEqual = () => {};
+}
+export const x = 1;
+`],
+  'Object.defineProperty on both modules': ['js', `import assert from 'node:assert';
+import strict from 'node:assert/strict';
+for (const a of [assert, strict]) {
+  for (const name of ['ok', 'equal', 'strictEqual']) Object.defineProperty(a, name, { value: () => {}, configurable: true, writable: true });
+}
+export const x = 1;
+`],
+  'Object.assign through a require of the built-in': ['js', `import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+Object.assign(require('assert'), { ok() {}, equal() {}, strictEqual() {} });
+Object.assign(require('node:assert/strict'), { ok() {}, equal() {}, strictEqual() {} });
+export const x = 1;
+`],
+  'a sloppy-mode CommonJS file that sets them, which fails silently and must leave every assertion working': ['cjs', `const assert = require('node:assert');
+const strict = require('node:assert/strict');
+for (const a of [assert, strict]) {
+  a.ok = function () {};
+  a.equal = function () {};
+  a.strictEqual = function () {};
+}
+module.exports = { x: 1 };
+`],
+};
+
+for (const [label, [ext, source]] of Object.entries(NO_OP_PATCHES)) {
+  test(`R13.17 source code that sets assert.ok, assert.equal and assert.strictEqual to a no-op makes its contract fail, not pass: ${label}`, () => {
+    const cwd = tmpCwd();
+    try {
+      fs.mkdirSync(path.join(cwd, 'src'), { recursive: true });
+      fs.writeFileSync(path.join(cwd, 'src', `patch.${ext}`), source);
+      const results = runFrozen(cwd, 'frozen', 'noop.contract.test.js', NO_OP_CONTRACT.replace('PATCH_EXT', ext));
+      assert.ok(results.length > 0);
+      assert.ok(results.every((r) => r.result === 'fail'), JSON.stringify(results));
+    } finally {
+      fs.rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+}
+
+test('R13.17 source code that replaces a node:test function makes its contract fail', () => {
+  const cwd = tmpCwd();
+  try {
+    fs.mkdirSync(path.join(cwd, 'src'), { recursive: true });
+    fs.writeFileSync(path.join(cwd, 'src', 'patch.js'), "import t from 'node:test';\nt.it = () => {};\nt.describe = () => {};\nexport const x = 1;\n");
+    const results = runFrozen(cwd, 'frozen', 'noop.contract.test.js', `import { test } from 'node:test';
+import '../../src/patch.js';
+test('R1.1 fine', () => {});
+`);
+    assert.equal(results.length, 1);
+    assert.equal(results[0].result, 'fail');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R13.17 freezing the assertion modules leaves test, describe, it, hooks, t.mock, assert.rejects and deepStrictEqual working', () => {
+  const cwd = tmpCwd();
+  try {
+    const results = runFrozen(cwd, 'frozen', 'works.contract.test.js', `import { test, describe, it, before, after, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import legacy from 'node:assert';
+
+describe('R1.1 a suite', () => {
+  const log = [];
+  before(() => log.push('before'));
+  after(() => {});
+  beforeEach(() => log.push('each'));
+  afterEach(() => {});
+  it('R1.1 first', () => { assert.deepStrictEqual(log, ['before', 'each']); });
+  it('R1.1 second', () => { assert.equal(log.length, 3); });
+});
+
+test('R1.2 rejects, throws and match still work', async () => {
+  await assert.rejects(Promise.reject(new Error('x')), /x/);
+  assert.throws(() => { throw new RangeError('y'); }, RangeError);
+  assert.match('abc', /b/);
+  legacy.ok(true);
+  legacy.equal(1, 1);
+  await assert.doesNotReject(Promise.resolve(1));
+});
+
+test('R1.3 mock still works', (t) => {
+  const fn = t.mock.fn(() => 2);
+  assert.equal(fn(), 2);
+  assert.equal(fn.mock.callCount(), 1);
+  const obj = { f: () => 1 };
+  t.mock.method(obj, 'f', () => 9);
+  assert.equal(obj.f(), 9);
+  const g = mock.fn(() => 3);
+  assert.equal(g(), 3);
+});
+
+test('R1.4 a failing assertion still fails', () => {
+  assert.throws(() => assert.equal(1, 2), assert.AssertionError);
+});
+`);
+    assert.equal(results.length, 5, JSON.stringify(results));
+    assert.ok(results.every((r) => r.result === 'pass'), JSON.stringify(results));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R13.17 a failing assertion in an honest contract is still reported as a failure', () => {
+  const cwd = tmpCwd();
+  try {
+    const results = runFrozen(cwd, 'frozen', 'honest.contract.test.js', FAILING);
+    assert.deepEqual(results.map((r) => [r.name, r.result]), [['R2.1 failing contract', 'fail']]);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});

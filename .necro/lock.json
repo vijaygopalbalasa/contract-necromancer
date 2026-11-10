@@ -72,6 +72,27 @@
           "sha256": "bcb844f8b5b2e280dfa02b7cf18ccb629925be55e58c90f51a09ecc7a3535bb6"
         },
         {
+          "name": "cheats-2",
+          "names": [
+            "R13.17 the exports of node:assert, node:assert/strict and node:test are frozen, with their function properties, when a contract file runs",
+            "R13.17 source code that sets assert.ok, assert.equal and assert.strictEqual to a no-op makes its contract fail, not pass (a plain assignment)",
+            "R13.17 source code that sets assert.ok, assert.equal and assert.strictEqual to a no-op makes its contract fail, not pass (Object.defineProperty)",
+            "R13.17 source code that sets assert.ok, assert.equal and assert.strictEqual to a no-op makes its contract fail, not pass (Object.assign on the module a require returns)",
+            "R13.17 source code that sets assert.ok, assert.equal and assert.strictEqual to a no-op makes its contract fail, not pass (a CommonJS file in sloppy mode, where the write fails without an error)",
+            "R13.17 source code that replaces a function of node:test makes its contract fail, not pass",
+            "R13.17 an honest contract that uses describe, it, hooks, mock and the assertions still passes, and a wrong value still fails",
+            "R13.18 plain() returns a new built-in Error with the message and name of the one given, never that object",
+            "R13.18 plain() returns a new built-in RegExp with the source and flags of the one given, never that object",
+            "R13.18 a contract that asks a lying RegExp or Error to describe itself passes; one that compares plain(result) fails",
+            "R15.11 a result with a getter cannot show the check one value and the caller another",
+            "R15.11 every check and the caller get the same copy of the result, which is not the object the function returned",
+            "R15.11 a Proxy result or a result that cannot be copied fails the check with a plain reason, and no check runs on it",
+            "R15.11 a computeBalances whose rows show the check the true balance and the caller a false one is stopped: bin/ledger.js exits 1 with a ContractViolation"
+          ],
+          "path": "contracts/necro-core/cheats-2.contract.test.js",
+          "sha256": "2b53e01e89fb811e18b8e8862a5a568bbbe588a91e042ff1ccd8b2976ba22941"
+        },
+        {
           "name": "cheats",
           "names": [
             "R13.15 a contract file runs in a process started with --frozen-intrinsics, so the built-in prototypes cannot be changed",
@@ -408,7 +429,7 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-10T01:30:14.084Z",
+      "frozenAt": "2026-11-10T02:00:10.991Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
         "sha256": "eae01a10bc30a5b7db3a4bc3971918cecbdc24c119a0c5bac886560596b0524b"

@@ -1,0 +1,327 @@
+[tool] status: Completed
+[tool] Sub-agent: context-gatherer
+[tool] status: InProgress
+[tool] List Directory
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Failed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Check existing workspace changes
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run unit and runtime tests
+[tool] Run all frozen ledger contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Failed: Run all frozen ledger contracts
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Verify property contract replay behavior
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Verify property contract replay behavior
+[tool] Verify the ledger CLI output
+[tool] Verify the ledger JSON output
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Recheck property contract replay
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run the complete project test suite
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run the complete project test suite
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Re-run the complete project test suite
+[tool] Re-run every frozen ledger contract
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Re-run every frozen ledger contract
+[tool] status: Failed: Re-run the complete project test suite
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Verify CLI regression tests
+[tool] Check frozen contract and task gating
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Check frozen contract and task gating
+[tool] status: Completed
+[tool] Review changed implementation files
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Confirm all project tests pass
+[tool] Confirm frozen contract status
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Failed: Confirm frozen contract status
+[tool] status: Completed
+[tool] Replace in File
+[tool] Replace in File
+[tool] Replace in File
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Summarize final workspace changes
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+Implemented the ledger functionality and added tests:
+
+- Added `src/split.js`, `src/balances.js`, `src/settle.js`, and `src/report.js`.
+- Added deterministic property generation in `test/gen.js`.
+- Added split, balance, settlement, report, CLI, and property tests.
+- Marked tasks 4, 5, 8, and 9 complete.
+- `npm test` passes: **37/37 tests**.
+- Frozen contracts pass: **17/18 tests**.
+
+The remaining frozen contract is impossible as written in `contracts/ledger/requirement-3-settle.contract.test.js`:
+
+```js
+assert.ok(lines.includes('All square.'));
+assert.ok(!lines.some((l) => /square/i.test(l)));
+```
+
+A line equal to `All square.` necessarily matches `/square/i`, so R3.3 cannot pass without changing the frozen contract. Tasks 6 and 7 remain unchecked because completion is gated on all frozen contracts passing.

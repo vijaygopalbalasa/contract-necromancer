@@ -1,0 +1,367 @@
+[tool] status: Completed
+[tool] Sub-agent: context-gatherer
+[tool] status: InProgress
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] File Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Failed: Read File
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Grep Search
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run the current test suite to capture baseline failures
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run the current test suite to capture baseline failures
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Discover the available frozen-contract validation command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Discover the available frozen-contract validation command
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Check for workspace changes before editing
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Write File
+[tool] Write File
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Completed
+[tool] Write File
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Run all unit, property and postcondition tests
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run all unit, property and postcondition tests
+[tool] Replace in File
+[tool] Replace in File
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Failed: Replace in File
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Verify the complete project test suite
+[tool] Run every frozen ledger contract directly
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Verify the complete project test suite
+[tool] status: Failed: Run every frozen ledger contract directly
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Verify all frozen arithmetic property contracts
+[tool] Verify frozen parsing, split and CLI contracts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Recheck the project test suite after fixes
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Confirm the remaining frozen settlement contract result
+[tool] Code Intelligence
+[tool] Code Intelligence
+[tool] status: Completed
+[tool] Code Intelligence
+[tool] status: Completed
+[tool] status: Completed
+[tool] Code Intelligence
+[tool] status: Completed
+[tool] Review implementation changes and unrelated artifacts
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] Code Intelligence
+[tool] status: Completed
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Failed: Confirm the remaining frozen settlement contract result
+[tool] status: Failed
+[tool] status: Failed
+[tool] status: Failed
+[tool] Run the complete frozen contract suite for final verification
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run the complete frozen contract suite for final verification
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] Replace in File
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Pending
+[tool] status: Completed
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Verify task states, changed files and frozen file integrity
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Implemented the missing ledger functionality:
+
+- Added `src/split.js`, `src/balances.js`, `src/settle.js`, and `src/report.js`.
+- Added seeded property generation and shrinking in `test/gen.js`.
+- Added tests for splitting, balances, settlement, reports, CLI behavior, and properties.
+- `npm test`: **37 passed, 0 failed**.
+- Frozen contracts: **17 passed, 1 failed**.
+- Frozen files remain unchanged and their hashes still match `.necro/lock.json`.
+
+The remaining failure is an impossible assertion in frozen `requirement-3-settle.contract.test.js`:
+
+```js
+assert.ok(lines.includes('All square.'));
+assert.ok(!lines.some((l) => /square/i.test(l)));
+```
+
+The first assertion requires a line containing `square`; the second rejects every line containing `square`. I did not alter the frozen contract or add test-specific runtime hacks.
+
+Tasks 4, 5, 8, and 9 are marked complete. Tasks 6 and 7 remain unchecked because their frozen R3.3 requirement cannot pass while that contradiction remains.

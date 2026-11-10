@@ -104,15 +104,140 @@ test('a structure that holds itself does not loop', () => {
   assert.notEqual(out, a);
 });
 
-test('functions, symbols, errors and regular expressions are not data and come back unchanged', () => {
+test('functions and symbols are not data and come back unchanged', () => {
   const f = () => 1;
   const s = Symbol('s');
-  const e = new RangeError('x');
-  const r = /x/g;
   assert.equal(plain(f), f);
   assert.equal(plain(s), s);
-  assert.equal(plain(e), e);
-  assert.equal(plain(r), r);
+});
+
+// ---------------------------------------------------------------------------
+// 13.18 an Error or a RegExp comes back as a fresh built-in copy
+// ---------------------------------------------------------------------------
+
+test('R13.18 an Error comes back as a new built-in error with the same message and name, never the object given', () => {
+  const e = new RangeError('out of range');
+  const copy = plain(e);
+  assert.notEqual(copy, e);
+  assert.ok(copy instanceof RangeError);
+  assert.equal(Object.getPrototypeOf(copy), RangeError.prototype);
+  assert.equal(copy.message, 'out of range');
+  assert.equal(copy.name, 'RangeError');
+  assert.equal(String(copy), 'RangeError: out of range');
+
+  for (const Kind of [Error, TypeError, SyntaxError, ReferenceError, EvalError, URIError]) {
+    const c = plain(new Kind('m'));
+    assert.equal(Object.getPrototypeOf(c), Kind.prototype, Kind.name);
+    assert.equal(c.message, 'm');
+  }
+});
+
+test('R13.18 the copy of an Error does not carry the methods or properties the error was given', () => {
+  const e = new Error('disk full');
+  e.toString = trap;
+  e.stack = 'doctored';
+  e.extra = trap;
+  const copy = plain(e);
+  assert.equal(copy.extra, undefined);
+  assert.notEqual(copy.toString, trap);
+  assert.equal(String(copy), 'Error: disk full');
+  assert.notEqual(copy.stack, 'doctored');
+});
+
+test('R13.18 an Error with a subclass name comes back as an Error that keeps the name', () => {
+  class ContractLike extends Error {}
+  ContractLike.prototype.name = 'ContractLike';
+  const copy = plain(new ContractLike('broken'));
+  assert.equal(Object.getPrototypeOf(copy), Error.prototype);
+  assert.equal(copy.name, 'ContractLike');
+  assert.equal(copy.message, 'broken');
+  assert.equal(String(copy), 'ContractLike: broken');
+});
+
+test('R13.18 the message and the name of an Error are read once, so a getter cannot show a second value later', () => {
+  let reads = 0;
+  const e = new Error('first');
+  Object.defineProperty(e, 'message', { get() { return reads++ === 0 ? 'first' : 'later'; } });
+  let nameReads = 0;
+  Object.defineProperty(e, 'name', { get() { return nameReads++ === 0 ? 'Error' : 'Other'; } });
+  const copy = plain(e);
+  assert.equal(copy.message, 'first');
+  assert.equal(copy.message, 'first');
+  assert.equal(copy.name, 'Error');
+  assert.equal(copy.name, 'Error');
+  assert.equal(reads, 1);
+  assert.equal(nameReads, 1);
+  assert.equal(typeof Object.getOwnPropertyDescriptor(copy, 'message').value, 'string');
+});
+
+test('R13.18 a message that is a String object comes back as a primitive string', () => {
+  const e = new Error('x');
+  e.message = new LyingString('boxed');
+  const copy = plain(e);
+  assert.equal(typeof copy.message, 'string');
+  assert.equal(copy.message, 'boxed');
+});
+
+test('R13.18 an Error inside an array or an object is copied too, and a self-referencing structure does not loop', () => {
+  const e = new TypeError('inner');
+  const out = plain({ list: [e], error: e });
+  assert.notEqual(out.error, e);
+  assert.notEqual(out.list[0], e);
+  assert.equal(out.error, out.list[0], 'the same error is copied once');
+  assert.equal(out.error.message, 'inner');
+});
+
+test('R13.18 an object that only looks like an Error (prototype set by hand, no error inside) still comes back as plain data', () => {
+  const fake = Object.create(null);
+  fake.message = 'm';
+  fake.code = 7;
+  const copy = plain(fake);
+  assert.equal(Object.getPrototypeOf(copy), Object.prototype);
+  assert.deepEqual(copy, { message: 'm', code: 7 });
+});
+
+test('R13.18 a RegExp comes back as a new built-in RegExp with the same source and flags, never the object given', () => {
+  const r = /a+b/gi;
+  const copy = plain(r);
+  assert.notEqual(copy, r);
+  assert.equal(Object.getPrototypeOf(copy), RegExp.prototype);
+  assert.equal(copy.source, 'a+b');
+  assert.equal(copy.flags, 'gi');
+  assert.equal(copy.test('AAB'), true);
+  const every = plain(new RegExp('x', 'dgimsuy'));
+  assert.equal(every.flags, 'dgimsuy');
+  assert.equal(plain(new RegExp('y', 'v')).flags, 'v');
+});
+
+test('R13.18 a RegExp whose methods and properties lie comes back with the real ones', () => {
+  class LyingRegExp extends RegExp {
+    test() { return true; }
+    exec() { return ['x']; }
+    get source() { return 'evil'; }
+    get flags() { return 'm'; }
+    get global() { return false; }
+  }
+  const lying = new LyingRegExp('^safe$', 'i');
+  Object.defineProperty(lying, 'ignoreCase', { value: false });
+  const copy = plain(lying);
+  assert.equal(Object.getPrototypeOf(copy), RegExp.prototype);
+  assert.equal(copy.source, '^safe$');
+  assert.equal(copy.flags, 'i');
+  assert.equal(copy.test('SAFE'), true);
+  assert.equal(copy.test('danger'), false);
+  assert.notEqual(copy.test, lying.test);
+
+  const own = /^ok$/;
+  own.test = () => true;
+  Object.defineProperty(own, 'source', { value: '.*' });
+  const copied = plain(own);
+  assert.equal(copied.source, '^ok$');
+  assert.equal(copied.test('nope'), false);
+});
+
+test('R13.18 the prototype objects of Error and RegExp do not crash plain()', () => {
+  assert.doesNotThrow(() => plain(Error.prototype));
+  assert.doesNotThrow(() => plain(RegExp.prototype));
 });
 
 test('src/plain.js imports nothing', () => {

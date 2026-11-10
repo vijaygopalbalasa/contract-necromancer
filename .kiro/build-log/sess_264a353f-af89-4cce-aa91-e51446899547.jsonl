@@ -1,0 +1,10 @@
+{"t":"2026-11-10T02:00:16.798Z","tool":"grep_search","what":""}
+{"t":"2026-11-10T02:00:19.122Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-10T02:00:19.236Z","tool":"list_directory","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/hooks"}
+{"t":"2026-11-10T02:02:31.142Z","tool":"str_replace","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-10T02:02:35.403Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/hooks/necromancer.json"}
+{"t":"2026-11-10T02:02:35.415Z","tool":"grep_search","what":""}
+{"t":"2026-11-10T02:02:39.335Z","tool":"execute_bash","what":"ls && head && git && head"}
+{"t":"2026-11-10T02:02:42.834Z","tool":"execute_bash","what":"date && node && console.log(Object.keys(r)) && console.log(JSON.stringify({task:r.task,taskId:r.taskId,spec:r.spec,passed:r.passed,summary:r.summary,verdict:r.verdict,receiptHash:r.receiptHash},null,1"}
+{"t":"2026-11-10T02:02:44.548Z","tool":"execute_bash","what":"node && tail"}
+{"t":"2026-11-10T02:04:46.934Z","tool":"execute_bash","what":"node && tail"}

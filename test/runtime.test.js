@@ -275,3 +275,110 @@ test('R15.9 runtime.js reads structuredClone once, when it loads, and still read
   assert.doesNotMatch(code, /\bprocess\b/);
   assert.doesNotMatch(code, /\bimport\b/);
 });
+
+// ---------------------------------------------------------------------------
+// 15.11 the check and the caller get the same copy of the result
+// ---------------------------------------------------------------------------
+
+test('R15.11 a result with a getter cannot show the check one value and the caller another', async () => {
+  const { guard } = await load();
+  let reads = 0;
+  const guarded = guard(
+    { f: () => ({ get n() { return reads++ === 0 ? 1 : 2; } }) },
+    { f: { criterion: 'R11.1', check: (args, result) => result.n === 1 || `n is ${result.n}` } },
+  );
+  const out = guarded.f();
+  assert.equal(out.n, 1);
+  assert.equal(out.n, 1, 'a second read gives the value the check saw');
+  assert.equal(typeof Object.getOwnPropertyDescriptor(out, 'n').value, 'number', 'the caller gets data, not the getter');
+});
+
+test('R15.11 every check and the caller get one and the same copy, which is not the object the function returned', async () => {
+  const { guard } = await load();
+  const original = { list: [1, [2]], map: new Map([['k', { v: 1 }]]), when: new Date(5) };
+  const seen = [];
+  const guarded = guard(
+    { f: () => original },
+    {
+      f: [
+        { criterion: 'R11.2', check: (args, result) => { seen.push(result); return true; } },
+        { criterion: 'R11.3', check: (args, result) => { seen.push(result); return true; } },
+      ],
+    },
+  );
+  const out = guarded.f();
+  assert.equal(seen.length, 2);
+  assert.equal(seen[0], out);
+  assert.equal(seen[1], out);
+  assert.notEqual(out, original);
+  assert.deepEqual(out, original);
+  assert.notEqual(out.list[1], original.list[1], 'the copy is deep');
+  assert.ok(out.map instanceof Map);
+  assert.equal(out.when.getTime(), 5);
+});
+
+test('R15.11 a change made to the original after the call does not reach the copy the check approved', async () => {
+  const { guard } = await load();
+  const original = { n: 1 };
+  const guarded = guard({ f: () => original }, { f: { criterion: 'R11.4', check: (args, r) => r.n === 1 } });
+  const out = guarded.f();
+  original.n = 2;
+  assert.equal(out.n, 1);
+});
+
+test('R15.11 a check that changes its copy changes what the caller gets, since it is the same copy, and not the original', async () => {
+  const { guard } = await load();
+  const original = { n: 1 };
+  const guarded = guard({ f: () => original }, { f: { criterion: 'R11.5', check: (args, r) => { r.n = 5; return true; } } });
+  const out = guarded.f();
+  assert.equal(out.n, 5);
+  assert.equal(original.n, 1);
+});
+
+test('R15.11 a Proxy result cannot be copied, so the call throws a ContractViolation with a plain reason and the check does not run', async () => {
+  const { guard, ContractViolation } = await load();
+  let ran = false;
+  let reads = 0;
+  const guarded = guard(
+    { f: () => new Proxy({ n: 1 }, { get(target, key) { return key === 'n' ? (reads++ === 0 ? 1 : 2) : target[key]; } }) },
+    { f: { criterion: 'R11.6', check: () => { ran = true; return true; } } },
+  );
+  assert.throws(
+    () => guarded.f(),
+    (e) => e instanceof ContractViolation && e.criterion === 'R11.6' && /R11\.6 f:/.test(e.message) && /cannot be copied/.test(e.reason) && !/DataCloneError/.test(e.message),
+  );
+  assert.equal(ran, false);
+});
+
+test('R15.11 a result that holds a function cannot be copied and fails the first check named, with a plain reason', async () => {
+  const { guard, ContractViolation } = await load();
+  const guarded = guard(
+    { f: () => ({ run() { return 1; } }) },
+    { f: [{ criterion: 'R11.7', check: () => true }, { criterion: 'R11.8', check: () => true }] },
+  );
+  assert.throws(() => guarded.f(), (e) => e instanceof ContractViolation && e.criterion === 'R11.7' && /cannot be copied/.test(e.reason));
+});
+
+test('R15.11 data results of every kind still pass through: primitives, undefined, arrays, Maps, Sets, Dates and errors', async () => {
+  const { guard } = await load();
+  const make = (value) => guard({ f: () => value }, { f: { criterion: 'R11.9', check: () => true } }).f();
+  for (const v of [0, 'text', true, null, undefined, 10n, [1, 2], { a: { b: 1 } }]) assert.deepEqual(make(v), v);
+  assert.deepEqual([...make(new Set([1, 2]))], [1, 2]);
+  assert.equal(make(new Date(7)).getTime(), 7);
+  assert.equal(make(new RangeError('x')).message, 'x');
+  assert.equal(make(new Map([[1, 2]])).get(1), 2);
+});
+
+test('R15.11 a function that throws still passes its own error through, with no copy taken', async () => {
+  const { guard } = await load();
+  const own = new RangeError('mine');
+  const guarded = guard({ f: () => { throw own; } }, { f: { criterion: 'R11.10', check: () => true } });
+  assert.throws(() => guarded.f(), (e) => e === own);
+});
+
+test('R15.11 runtime.js still reads structuredClone once, at the top of the file', () => {
+  const code = fs.readFileSync(RUNTIME, 'utf8').replace(/\/\/.*$/gm, '');
+  assert.equal(code.match(/structuredClone/g).length, 1);
+  assert.doesNotMatch(code, /\bprocess\b/);
+  assert.doesNotMatch(code, /\bimport\b/);
+});

@@ -67,10 +67,10 @@
         },
         {
           "path": "src/runtime.js",
-          "sha256": "649e56ec9fcfbdb777dbe2d1749650d9f8a7192113b7db7f3f09586ae5d8e23c"
+          "sha256": "862f90aea23e035112d5ee9d352940bbf052696e48130c50f4b4babf6063c38e"
         }
       ],
-      "frozenAt": "2026-11-10T01:15:04.294Z",
+      "frozenAt": "2026-11-10T01:57:20.721Z",
       "requirements": {
         "path": ".kiro/specs/ledger/requirements.md",
         "sha256": "2471c3d12bd1e3b553f630224bc09a9833bc715958f02af8f130219e7cd1eb35"

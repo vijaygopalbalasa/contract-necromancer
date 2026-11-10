@@ -14,6 +14,12 @@
 // object holding one) is passed on as the original, and the check sees whatever the call did to it. A copy made by
 // structuredClone holds the data and not the prototypes: a class instance is a plain object in it. Checks compare data.
 //
+// The result is copied once too (Req 15.11). Every check runs on that one copy, and the caller gets that same copy and not the
+// object the function returned, so a result with getters or a Proxy cannot show a check one value and the caller another. A
+// result that structuredClone cannot copy (a Proxy, a function, an object holding one, a Promise) fails the check with a plain
+// reason, because nothing can vouch for it. Guard functions that return data. Like the arguments, the copy holds the data and
+// not the prototypes.
+//
 // This file asks nothing of the world around it: it does not look at the process, an environment variable or a test runner,
 // and it imports nothing. It behaves the same under a test runner and without one, so neither the code under test nor its
 // surroundings can switch it off. Keep it that way: a test (Req 15.2) reads this file and fails if that changes.
@@ -73,6 +79,16 @@ function snapshot(args) {
   }
 }
 
+// The result of a call as one copy, or UNCOPYABLE when it cannot be copied. Taken once: the checks and the caller share it.
+const UNCOPYABLE = Symbol('uncopyable');
+function copyOf(value) {
+  try {
+    return clone(value);
+  } catch {
+    return UNCOPYABLE;
+  }
+}
+
 export function guard(exports, postconditions) {
   const out = { ...exports };
   for (const name of Object.keys(postconditions)) {
@@ -83,7 +99,11 @@ export function guard(exports, postconditions) {
     const checks = checksOf(name, postconditions[name]);
     out[name] = function guarded(...args) {
       const before = snapshot(args);
-      const result = original.apply(this, args);
+      const returned = original.apply(this, args);
+      const result = copyOf(returned);
+      if (result === UNCOPYABLE) {
+        throw new ContractViolation(checks[0].criterion, name, 'the result cannot be copied, so it cannot be checked. Return plain data from this function.');
+      }
       for (const c of checks) {
         const reason = failure(c, before, result);
         if (reason !== null) throw new ContractViolation(c.criterion, name, reason);
