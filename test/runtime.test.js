@@ -220,13 +220,58 @@ test('R15.4 code that special-cases the test runner passes every contract, yet b
   }
 });
 
-test('R15.4 the example has postconditions for splitExpense, computeBalances and settle, applied by bin/ledger.js; R15.7 adds the two reports', async () => {
+test('R15.4 the example has postconditions for splitExpense, computeBalances and settle, applied by bin/ledger.js; R15.7 adds the two reports and R15.10 parseLedger', async () => {
   const post = await import('../examples/pumpkin-ledger/contracts/ledger/postconditions.js');
   const names = Object.values(post).flatMap((table) => Object.keys(table));
-  assert.deepEqual([...names].sort(), ['computeBalances', 'renderJson', 'renderText', 'settle', 'splitExpense']);
+  assert.deepEqual([...names].sort(), ['computeBalances', 'parseLedger', 'renderJson', 'renderText', 'settle', 'splitExpense']);
   const bin = fs.readFileSync(path.join(EXAMPLE, 'bin', 'ledger.js'), 'utf8');
   assert.match(bin, /postconditions\.js/);
   assert.match(bin, /guard\(/);
   const runners = JSON.parse(fs.readFileSync(path.join(EXAMPLE, '.kiro', 'specs', 'ledger', 'runners.json'), 'utf8'));
   assert.ok(runners.frozen.includes('bin/ledger.js'));
+});
+
+// ---------------------------------------------------------------------------
+// 15.9 the check gets a deep copy of the arguments taken before the call
+// ---------------------------------------------------------------------------
+
+test('R15.9 the check gets the arguments as they were before the call, and the function gets the originals', async () => {
+  const { guard } = await load();
+  const seen = [];
+  const shrink = guard(
+    { shrink: (list) => { list.length = 0; return 0; } },
+    { shrink: { criterion: 'R9.9', check: (args, result) => { seen.push(args[0]); return result === args[0].length - args[0].length; } } },
+  );
+  const list = [1, 2, 3];
+  shrink.shrink(list);
+  assert.deepEqual(list, []);
+  assert.deepEqual(seen[0], [1, 2, 3]);
+});
+
+test('R15.9 a function that changes its argument to agree with a wrong result is caught', async () => {
+  const { guard, ContractViolation } = await load();
+  const guarded = guard(
+    { double: (box) => { box.value = 1; return 2; } },
+    { double: { criterion: 'R9.8', check: ([box], result) => result === box.value * 2 || `${result} is not twice ${box.value}` } },
+  );
+  assert.throws(() => guarded.double({ value: 5 }), (e) => e instanceof ContractViolation && /R9\.8/.test(e.message) && /not twice 5/.test(e.message));
+});
+
+test('R15.9 arguments that cannot be cloned are passed on as the original, one by one', async () => {
+  const { guard } = await load();
+  let seen;
+  const fn = () => 1;
+  const guarded = guard({ f: (a, b) => { a.n = 2; return b(); } }, { f: { criterion: 'R9.7', check: (args) => { seen = args; return true; } } });
+  const a = { n: 1 };
+  assert.equal(guarded.f(a, fn), 1);
+  assert.deepEqual(seen[0], { n: 1 });
+  assert.notEqual(seen[0], a);
+  assert.equal(seen[1], fn);
+});
+
+test('R15.9 runtime.js reads structuredClone once, when it loads, and still reads no environment variable', () => {
+  const code = fs.readFileSync(RUNTIME, 'utf8').replace(/\/\/.*$/gm, '');
+  assert.equal(code.match(/structuredClone/g).length, 1, 'one mention, at the top of the file');
+  assert.doesNotMatch(code, /\bprocess\b/);
+  assert.doesNotMatch(code, /\bimport\b/);
 });

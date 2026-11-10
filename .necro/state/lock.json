@@ -72,6 +72,25 @@
           "sha256": "bcb844f8b5b2e280dfa02b7cf18ccb629925be55e58c90f51a09ecc7a3535bb6"
         },
         {
+          "name": "cheats",
+          "names": [
+            "R13.15 a contract file runs in a process started with --frozen-intrinsics, so the built-in prototypes cannot be changed",
+            "R13.15 the prototype patch that passed an impossible contract (String.prototype.split and Array.prototype.map) makes the contract fail under necro, and an honest contract still passes",
+            "R13.15 necro check and its receipt agree: the prototype patch is not a pass, the honest report is",
+            "R13.16 plain() returns primitive strings, plain arrays, plain objects and Map copies, and ignores every method a subclass doctors",
+            "R13.16 a contract that compares plain(result) is not fooled by the String subclass that passed an impossible contract",
+            "R13.16 the README tells contract authors to compare plain values",
+            "R15.9 a function that changes its own argument cannot make its check agree with a wrong result",
+            "R15.9 the check gets a deep copy: nested values, Maps, Sets and Dates are copied, and a check that changes its copy changes nothing else",
+            "R15.9 a value that cannot be cloned falls back to the original, and the other arguments are still copied",
+            "R15.9 a computeBalances that drops an expense from the list it is given passes every contract, yet bin/ledger.js exits 1 with a ContractViolation that names the criterion, in text and in JSON",
+            "R15.10 the example guards parseLedger in bin/ledger.js, with a table in postconditions.js that recomputes each line from the text",
+            "R15.10 a parser that halves amounts when no test runner is present passes every contract, yet bin/ledger.js exits 1 with a ContractViolation that names the criterion, in text and in JSON"
+          ],
+          "path": "contracts/necro-core/cheats.contract.test.js",
+          "sha256": "45957ccd286cd75413cc0ccb3f162a3f35ff51f6d8d4895da9521f77c2f424bc"
+        },
+        {
           "name": "check",
           "names": [
             "R9.1 check on a frozen spec runs every frozen contract, prints each result by name, and writes a receipt with task null and every contract required",
@@ -389,10 +408,10 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-10T00:38:25.153Z",
+      "frozenAt": "2026-11-10T01:17:53.019Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
-        "sha256": "a6b2a279d87c6e59207dae074b8819a53f25fc9c405b7ce476f35652b803787d"
+        "sha256": "a51b0f9310d71e85575d681ecd7db4ae4d6b6bdd1305a828a1ed5ab92088d2d7"
       },
       "tasks": {
         "1": {
@@ -700,6 +719,15 @@
           ],
           "text": "38. **Guard every output the ledger prints** (Req 15.7, 15.8)"
         },
+        "39": {
+          "criteria": [
+            "13.15",
+            "13.16",
+            "15.9",
+            "15.10"
+          ],
+          "text": "39. **Close the cheats real agents found** (Req 13.15, 13.16, 15.9, 15.10)"
+        },
         "3b": {
           "criteria": [
             "4.7",
@@ -786,6 +814,7 @@
         "35. **Fail closed on missing results and linked folders** (Req 13.14, 14.10)",
         "36. **Runtime postconditions** (Req 15.1, 15.2, 15.3, 15.4, 15.5, 15.6)",
         "37. **Adopting it in your own project** (Req 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7)",
+        "38. **Guard every output the ledger prints** (Req 15.7, 15.8)",
         "3b. **No vacuous passes** (Req 4.7, 4.8)",
         "3c. **Pin contract names and check files before running** (Req 2.5, 2.6, 4.9, 4.10)",
         "4. **Receipts** (Req 5.1, 5.2, 5.3)",

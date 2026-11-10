@@ -9,9 +9,17 @@
 // that throws, makes the call throw a ContractViolation whose message names the criterion and the reason. A string returned by
 // the check is the reason.
 //
+// The check gets a deep copy of the arguments, taken before the call (Req 15.9), so a function that changes its own arguments
+// cannot make its check agree with a wrong result. A value that structuredClone cannot copy (a function, for example, or an
+// object holding one) is passed on as the original, and the check sees whatever the call did to it. A copy made by
+// structuredClone holds the data and not the prototypes: a class instance is a plain object in it. Checks compare data.
+//
 // This file asks nothing of the world around it: it does not look at the process, an environment variable or a test runner,
 // and it imports nothing. It behaves the same under a test runner and without one, so neither the code under test nor its
 // surroundings can switch it off. Keep it that way: a test (Req 15.2) reads this file and fails if that changes.
+
+// structuredClone is read once, when this file loads, so code that runs later cannot swap it.
+const clone = structuredClone;
 
 export class ContractViolation extends Error {
   constructor(criterion, name, reason) {
@@ -47,6 +55,24 @@ function failure(c, args, result) {
   return 'the result breaks the postcondition';
 }
 
+// The arguments of a call as they are before it, deep copied. All of them are copied together when they can be; if that fails,
+// each is copied on its own and the ones that cannot be copied stay the originals.
+function snapshot(args) {
+  try {
+    return clone(args);
+  } catch {
+    const out = [];
+    for (let i = 0; i < args.length; i++) {
+      try {
+        out[i] = clone(args[i]);
+      } catch {
+        out[i] = args[i];
+      }
+    }
+    return out;
+  }
+}
+
 export function guard(exports, postconditions) {
   const out = { ...exports };
   for (const name of Object.keys(postconditions)) {
@@ -56,9 +82,10 @@ export function guard(exports, postconditions) {
     }
     const checks = checksOf(name, postconditions[name]);
     out[name] = function guarded(...args) {
+      const before = snapshot(args);
       const result = original.apply(this, args);
       for (const c of checks) {
-        const reason = failure(c, args, result);
+        const reason = failure(c, before, result);
         if (reason !== null) throw new ContractViolation(c.criterion, name, reason);
       }
       return result;

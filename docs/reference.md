@@ -271,7 +271,10 @@ does. Freezing the spec locks `postconditions.js` with it, like a contract file.
 
 The cost is a check on every call of a guarded function, in production and not only in tests. Keep each check cheap (the
 ledger's checks walk the result once) and guard the functions where a wrong answer costs something. A check runs after the
-function returns, so it can stop a wrong result from being used but cannot undo what the function already did.
+function returns, so it can stop a wrong result from being used but cannot undo what the function already did. The check
+gets a deep copy of the arguments taken before the call (`structuredClone`; a value that cannot be cloned is passed on as the
+original), so a function that changes its own arguments cannot make its check agree with a wrong result. The copy holds data,
+not prototypes, so checks compare data.
 
 What this catches that tests cannot: code that behaves one way under a test runner and another way outside it, and real
 inputs that no contract tried. What it does not: a wrong or missing criterion, and calls inside a module to its own functions,
@@ -282,7 +285,9 @@ computes balances. `necro demo` ends with this case: it changes `src/split.js` t
 Runtime postconditions protect only the outputs they check, so guard every function whose result reaches a user. The demo's
 step 6 shows one cheat among many. The ledger's table of postconditions covers `splitExpense`, `computeBalances`
 (including each person's paid amount and share, recomputed by the check from the expenses), `settle`, and the text and
-JSON reports: every balance and payment printed must equal the guarded results.
+JSON reports: every balance and payment printed must equal the guarded results. It also covers `parseLedger`: every later
+check takes the parsed expenses as the truth, so a parser that halved every amount would move all the numbers and still agree
+with itself. The parser's check reads the input text again and compares each line's payer, amount in cents and split list.
 
 ## Contracts in other languages
 

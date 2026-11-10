@@ -45,14 +45,14 @@ function runFile(cwd, absPath) {
   return null;
 }
 
-// Req 16.2: the lines of a contract file's standard error that explain why it did not load: empty lines and
-// Node's "use --trace-warnings" hint are dropped, the process id is cut from a warning, and at most eight lines of at
-// most 300 characters are kept.
+// Req 16.2: the lines of a contract file's standard error that explain why it did not load: empty lines, Node's
+// "use --trace-warnings" hint and its warning that --frozen-intrinsics is experimental (Req 13.15) are dropped, the
+// process id is cut from a warning, and at most eight lines of at most 300 characters are kept.
 function errorLinesOf(stderr) {
   return String(stderr || '')
     .split(/\r?\n/)
     .map((l) => l.replace(/^\(node:\d+\) /, '').trimEnd())
-    .filter((l) => l.trim() !== '' && !l.startsWith('(Use `node --trace-warnings'))
+    .filter((l) => l.trim() !== '' && !l.startsWith('(Use `node --trace-warnings') && !/ExperimentalWarning: Frozen intri\w+ is an experimental feature/.test(l))
     .slice(0, 8)
     .map((l) => (l.length > 300 ? `${l.slice(0, 300)}...` : l));
 }
@@ -92,7 +92,7 @@ function interpret(run, stem, rel) {
   }
   if (fileFailed) {
     const errorLines = errorLinesOf(run ? run.stderr : '');
-    const why = (errorLines.find((l) => /Error\b/.test(l)) || errorLines[0] || '').replace(/\.$/, '');
+    const why = (errorLines.find((l) => /^\w*Error\b/.test(l)) || errorLines.find((l) => /Error\b/.test(l)) || errorLines[0] || '').replace(/\.$/, '');
     const reason = run
       ? `${rel} failed to load or stopped early${why ? `: ${why}` : ''}. Fix the file, then run the check again.`
       : `${rel} could not be run, because the contract runner stopped. Run it again, and check that Node.js 24 or newer is installed.`;

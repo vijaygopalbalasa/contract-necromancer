@@ -1,7 +1,7 @@
 // Runtime postconditions for Pumpkin Ledger (Req 15 of the necro-core spec): Eiffel's `ensure`, checked on every real call.
-// bin/ledger.js wraps splitExpense, computeBalances, settle, renderText and renderJson with these through guard() from
-// src/runtime.js, so a result that breaks a requirement stops the ledger with a ContractViolation instead of printing wrong
-// numbers. Every function whose result reaches a user is guarded; a function with no entry here is not protected.
+// bin/ledger.js wraps parseLedger, splitExpense, computeBalances, settle, renderText and renderJson with these through guard()
+// from src/runtime.js, so a result that breaks a requirement stops the ledger with a ContractViolation instead of printing
+// wrong numbers. Every function whose result reaches a user is guarded; a function with no entry here is not protected.
 //
 // Each entry is { criterion, check } or a list of them. The check gets (args, result) and passes by returning true; a string it returns is the
 // reason it failed. The criterion is the one of requirements.md that the check keeps.
@@ -25,8 +25,134 @@ export const splitPostconditions = {
   },
 };
 
-// The checks below recompute their own numbers from the parsed expenses they are given. They import nothing from src/, so code
-// under test cannot change what a check expects.
+// The checks below recompute their own numbers, from the text or from the parsed expenses they are given. They import nothing
+// from src/, so code under test cannot change what a check expects.
+
+// The ledger text read again, by the check itself: one entry per expense line with its payer, its amount in cents and its
+// split list, and the people in order of first appearance. A line that cannot be read comes back as `unreadable`.
+function centsOf(text) {
+  const match = /^(\d+)(?:\.(\d{1,2}))?$/.exec(text);
+  if (!match) return null;
+  const cents = Number(match[1]) * 100 + Number((match[2] ?? '').padEnd(2, '0'));
+  return cents > 0 && Number.isSafeInteger(cents) ? cents : null;
+}
+
+function readAgain(text) {
+  const people = [];
+  const known = new Set();
+  const register = (name) => {
+    const key = name.trim().toLowerCase();
+    if (!known.has(key)) {
+      known.add(key);
+      people.push({ key, name: name.trim() });
+    }
+    return key;
+  };
+  const expenses = [];
+  const lines = String(text).split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line === '' || line.startsWith('#')) continue;
+    const match = /^(.+?)\s+paid\s+(\S+)\s+for\s+(.+)$/.exec(line);
+    const cents = match ? centsOf(match[2]) : null;
+    if (cents === null) return { people, expenses, unreadable: i + 1 };
+    const payerKey = register(match[1]);
+    let sharerKeys = null;
+    const split = /^(.*)\s+split\s+(.+)$/.exec(match[3]);
+    if (split) {
+      sharerKeys = [];
+      for (const raw of split[2].split(',')) {
+        if (raw.trim() === '') return { people, expenses, unreadable: i + 1 };
+        const key = register(raw);
+        if (!sharerKeys.includes(key)) sharerKeys.push(key);
+      }
+    }
+    expenses.push({ line: i + 1, payerKey, cents, sharerKeys });
+  }
+  return { people, expenses, unreadable: null };
+}
+
+// Why a result cannot be the parsed ledger { people, expenses }, or null when it has that shape.
+function shapeProblem(result) {
+  if (result === null || typeof result !== 'object' || !Array.isArray(result.people) || !Array.isArray(result.expenses)) {
+    return 'the parsed ledger is not an object with a list of people and a list of expenses';
+  }
+  return null;
+}
+
+// The parser (Req 15.10). Every later check takes the parsed expenses as the truth, so a parser that changes an amount would
+// move every number after it and still agree with itself. These checks read the input text again and compare.
+// R1.1 and R1.4: every line of the text is read as one expense with its payer and its amount in cents, and a line that
+//                cannot be read is not accepted.
+// R1.2: each expense is shared among the names after `split`, or among everyone when it has no list.
+// R1.3: people are one per name, ignoring case and surrounding spaces, in order of first appearance, with the first spelling.
+// R1.5: empty lines and lines that start with # are skipped (an expense is one per other line).
+export const parsePostconditions = {
+  parseLedger: [
+    {
+      criterion: 'R1.4',
+      check([text]) {
+        const again = readAgain(text);
+        return again.unreadable === null || `line ${again.unreadable} cannot be read, but the parser accepted it`;
+      },
+    },
+    {
+      criterion: 'R1.1',
+      check([text], result) {
+        const bad = shapeProblem(result);
+        if (bad !== null) return bad;
+        const again = readAgain(text);
+        if (result.expenses.length !== again.expenses.length) {
+          return `the text has ${again.expenses.length} expenses, but the parser returned ${result.expenses.length}`;
+        }
+        for (let i = 0; i < again.expenses.length; i++) {
+          const want = again.expenses[i];
+          const got = result.expenses[i];
+          if (got === null || typeof got !== 'object') return `expense ${i + 1} is not an object`;
+          if (got.payerKey !== want.payerKey) return `line ${want.line} was paid by ${want.payerKey}, but the parser says ${got.payerKey}`;
+          if (got.cents !== want.cents) return `line ${want.line} is ${want.cents} cents, but the parser says ${got.cents} cents`;
+        }
+        return true;
+      },
+    },
+    {
+      criterion: 'R1.2',
+      check([text], result) {
+        const bad = shapeProblem(result);
+        if (bad !== null) return bad;
+        const again = readAgain(text);
+        if (result.expenses.length !== again.expenses.length) return 'the parser returned another number of expenses than the text has';
+        for (let i = 0; i < again.expenses.length; i++) {
+          const want = again.expenses[i].sharerKeys;
+          const got = result.expenses[i] && result.expenses[i].sharerKeys;
+          const same = want === null ? got === null : Array.isArray(got) && got.length === want.length && want.every((k, j) => got[j] === k);
+          if (!same) {
+            const show = (keys) => (keys === null ? 'everyone' : Array.isArray(keys) ? keys.join(', ') : String(keys));
+            return `line ${again.expenses[i].line} is shared by ${show(want)}, but the parser says ${show(got)}`;
+          }
+        }
+        return true;
+      },
+    },
+    {
+      criterion: 'R1.3',
+      check([text], result) {
+        const bad = shapeProblem(result);
+        if (bad !== null) return bad;
+        const again = readAgain(text);
+        if (result.people.length !== again.people.length) return `the text names ${again.people.length} people, but the parser returned ${result.people.length}`;
+        for (let i = 0; i < again.people.length; i++) {
+          const want = again.people[i];
+          const got = result.people[i];
+          if (got === null || typeof got !== 'object' || got.key !== want.key || got.name !== want.name) {
+            return `person ${i + 1} should be ${want.name}, but the parser says ${got && got.name}`;
+          }
+        }
+        return true;
+      },
+    },
+  ],
+};
 
 // What each person paid, in cents: the sum of the expenses they paid, read from the expenses given.
 function expectedPaid({ people, expenses }) {

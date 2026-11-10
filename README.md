@@ -40,6 +40,21 @@ test('R1.1 slugify lowercases the text', () => {
 });
 ```
 
+Contracts run in a Node.js process started with `--frozen-intrinsics`, so code under test cannot patch `String.prototype.split`
+or `Array.prototype.map` to change what your assertions see; the attempt makes the contract fail. A result can still lie
+through its own methods, for example a subclass of `String` with a `split` that hides a line. So compare plain values: wrap
+the result in `plain()` from `src/plain.js` (it has no imports; copy it, or import it from the installed package) before you
+call a method on it, and `plain(result)` gives back primitive strings, plain arrays and objects, and Maps as plain copies.
+
+```js
+import { plain } from '../../src/plain.js';
+
+test('R3.3 a square party says All square.', () => {
+  const lines = plain(renderText(balances, [])).split('\n');
+  assert.equal(lines.at(-1), 'All square.');
+});
+```
+
 A Python contract needs pytest, Python 3.11 or newer, and `.kiro/specs/<spec>/runners.json`:
 
 ```json
@@ -110,7 +125,10 @@ ContractViolation: R5.1 splitExpense: the shares of 3225 cents add up to 3224 ce
 A contract proves the code right only while the test runner watches. Eiffel's `ensure` checked a postcondition on every
 call. Write `contracts/<spec>/postconditions.js`; `guard(exports, postconditions)` from `src/runtime.js` wraps the
 functions so a wrong result throws a `ContractViolation`. It reads no environment variable such as `NODE_TEST_CONTEXT`, so
-code under test cannot switch it off. The cost is a check on every call, and it cannot undo what a function already did.
+code under test cannot switch it off. The cost is a check on every call, and it cannot undo what a function already did. The check gets a deep copy of the arguments
+taken before the call, so a function that changes its own arguments cannot make its check agree with a wrong result. The
+ledger also guards `parseLedger`: its check reads the input text again and compares each line's payer, amount in cents and
+split list, because every later check takes the parsed amounts as the truth.
 Runtime postconditions protect only the outputs they check, so guard every function whose result reaches a user. The
 ledger guards the balances, the payments and both reports it prints. The demo's step 6 shows one cheat among many: a
 function with no postcondition can still lie. [More](docs/reference.md#runtime-postconditions).
@@ -128,6 +146,7 @@ function with no postcondition can still lie. [More](docs/reference.md#runtime-p
 
 - Guard rails, not a sandbox: a shell command or the contract code can change any file, including `.necro/`. The guarantee is `necro verify`, which trusts `.necro/lock.json`; commit it, check `git diff` before you trust a receipt, and run `necro verify` in CI.
 - Receipts are files in the project, so an agent able to write files can add one. A forged receipt can only make `necro audit` accept a task whose required contracts pass now: it can fake where a tick came from, not whether the work holds.
+- `--frozen-intrinsics` freezes the language's built-in prototypes (`String`, `Array`, `Object`, `Map` and the rest), not `JSON`, `Buffer`, the global names or Node's modules, and `plain()` cannot help against code that changes what a test framework does. Contracts that check `console` output get a writable copy of `console`.
 - The viewer page checks hashes, not test runs.
 - The experiment is small: 3 to 5 runs per cell, two small models, one project, one planted contradiction.
 

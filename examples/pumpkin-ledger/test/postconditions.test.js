@@ -6,8 +6,10 @@ import * as splitModule from '../src/split.js';
 import * as balancesModule from '../src/balances.js';
 import * as settleModule from '../src/settle.js';
 import { parseLedger } from '../src/parse.js';
-import { splitPostconditions, balancesPostconditions, settlePostconditions, reportPostconditions } from '../contracts/ledger/postconditions.js';
+import { parsePostconditions, splitPostconditions, balancesPostconditions, settlePostconditions, reportPostconditions } from '../contracts/ledger/postconditions.js';
+import * as parseModule from '../src/parse.js';
 import { renderText, renderJson } from '../src/report.js';
+import { createRng, caseSeedOf, generateParty, partyToText, DEFAULT_SEED } from './gen.js';
 
 // The runtime postconditions of the ledger (contracts/ledger/postconditions.js), checked on their own and on the real code.
 
@@ -164,4 +166,82 @@ test('a splitExpense that loses a cent throws a ContractViolation naming R5.1 wh
     (e) => e instanceof ContractViolation && e.criterion === 'R5.1' && /R5\.1 splitExpense/.test(e.message) && /99/.test(e.message),
   );
   assert.equal(splitExpense(99, ['a', 'b', 'c']).get('a'), 33);
+});
+
+// ---------------------------------------------------------------------------------------------------------------------
+// parseLedger (Req 15.10): the check reads the text again
+// ---------------------------------------------------------------------------------------------------------------------
+
+const checkParse = (text, result) => checkAll(parsePostconditions.parseLedger, [text], result);
+const copyOf = (value) => structuredClone(value);
+const TEXT = ['# party', 'Ann paid 12.50 for chips', '', 'bob paid 7 for soda split Ann , Bob,ann', '  Cy paid 0.05 for a pen  '].join('\n');
+
+test('each parseLedger postcondition is tied to a criterion of requirements.md', () => {
+  assert.deepEqual(listOf(parsePostconditions.parseLedger).map((c) => c.criterion), ['R1.4', 'R1.1', 'R1.2', 'R1.3']);
+});
+
+test('R1.1 to R1.5 parseLedger: the real parser passes its postconditions on the sample party and on 300 generated parties', () => {
+  assert.equal(checkParse(TEXT, parseModule.parseLedger(TEXT)), true);
+  const sample = readFileSync(new URL('../party.txt', import.meta.url), 'utf8');
+  assert.equal(checkParse(sample, parseModule.parseLedger(sample)), true);
+  assert.equal(checkParse('', parseModule.parseLedger('')), true);
+  for (let i = 0; i < 300; i++) {
+    const text = partyToText(generateParty(createRng(caseSeedOf(DEFAULT_SEED, i))));
+    assert.equal(checkParse(text, parseModule.parseLedger(text)), true, `party ${i}`);
+  }
+});
+
+test('R1.1 parseLedger: a changed amount or payer is named with its line number', () => {
+  const halved = copyOf(parseModule.parseLedger(TEXT));
+  halved.expenses[0].cents = 625;
+  const verdict = checkParse(TEXT, halved);
+  assert.equal(verdict.criterion, 'R1.1');
+  assert.match(verdict.reason, /line 2 is 1250 cents, but the parser says 625 cents/);
+
+  const swapped = copyOf(parseModule.parseLedger(TEXT));
+  swapped.expenses[1].payerKey = 'cy';
+  assert.match(checkParse(TEXT, swapped).reason, /line 4 was paid by bob, but the parser says cy/);
+
+  const dropped = copyOf(parseModule.parseLedger(TEXT));
+  dropped.expenses.pop();
+  assert.match(checkParse(TEXT, dropped).reason, /3 expenses, but the parser returned 2/);
+});
+
+test('R1.2 parseLedger: a changed split list is named', () => {
+  const wrong = copyOf(parseModule.parseLedger(TEXT));
+  wrong.expenses[1].sharerKeys = ['ann'];
+  const verdict = checkParse(TEXT, wrong);
+  assert.equal(verdict.criterion, 'R1.2');
+  assert.match(verdict.reason, /line 4 is shared by ann, bob, but the parser says ann/);
+
+  const everyone = copyOf(parseModule.parseLedger(TEXT));
+  everyone.expenses[1].sharerKeys = null;
+  assert.match(checkParse(TEXT, everyone).reason, /line 4 is shared by ann, bob, but the parser says everyone/);
+});
+
+test('R1.3 parseLedger: the people are one per name in order of first appearance with the first spelling', () => {
+  const wrong = copyOf(parseModule.parseLedger(TEXT));
+  wrong.people[1].name = 'BOB';
+  const verdict = checkParse(TEXT, wrong);
+  assert.equal(verdict.criterion, 'R1.3');
+  assert.match(verdict.reason, /person 2 should be bob, but the parser says BOB/);
+});
+
+test('R1.4 parseLedger: a result that is not a parsed ledger fails, and so does a line the parser should have refused', () => {
+  assert.match(checkParse(TEXT, null).reason, /not an object/);
+  assert.match(checkParse(TEXT, { people: [], expenses: 'x' }).reason, /list of people and a list of expenses/);
+  const verdict = checkParse('Ann paid 5 for tea\nAnn paid 0 for pie', { people: [], expenses: [] });
+  assert.equal(verdict.criterion, 'R1.4');
+  assert.match(verdict.reason, /line 2 cannot be read/);
+});
+
+test('a parseLedger that halves every amount throws a ContractViolation naming R1.1 when it is called through the guard', () => {
+  const halving = { parseLedger: (text) => { const parsed = parseModule.parseLedger(text); for (const e of parsed.expenses) e.cents = Math.floor(e.cents / 2); return parsed; } };
+  const { parseLedger } = guard(halving, parsePostconditions);
+  assert.throws(
+    () => parseLedger(TEXT),
+    (e) => e instanceof ContractViolation && e.criterion === 'R1.1' && /R1\.1 parseLedger/.test(e.message),
+  );
+  const honest = guard(parseModule, parsePostconditions);
+  assert.equal(honest.parseLedger(TEXT).expenses.length, 3);
 });

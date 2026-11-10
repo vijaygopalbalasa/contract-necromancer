@@ -38,6 +38,16 @@ installed packages and the interpreter. An agent that can install a package that
 replace the interpreter, can make a failing run look like a pass. Run `necro verify` on a machine you control, from a
 clean checkout and a clean environment, before you trust a receipt for code in another language.
 
+## Contracts run with frozen intrinsics
+
+A JavaScript contract file runs in a Node.js process started with `--frozen-intrinsics`, so code under test cannot patch
+`String.prototype.split` or `Array.prototype.map` to change what a contract's assertions see; the patch throws and the
+contract fails. This freezes the language's built-in prototypes (`String`, `Array`, `Object`, `Map`, `Set` and the rest).
+It does not freeze `JSON`, `Buffer`, the global names or Node's own modules, so code that changes those can still change
+what a contract sees. A result can also be an object with its own methods, such as a subclass of `String` with a `split`
+that hides a line: compare `plain(result)` from `src/plain.js` instead. The flag also freezes `console`, and some contracts
+assign to `console.log` to capture output, so the contract's process gets a writable copy of `console` and nothing else.
+
 ## Runtime postconditions
 
 A check runs on every call of a guarded function, in production and not only in tests, so keep checks cheap. A check runs

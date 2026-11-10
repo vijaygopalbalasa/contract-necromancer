@@ -556,3 +556,71 @@ test('R1.1 hangs', async () => {
     fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
+
+// ---------------------------------------------------------------------------
+// 13.15 a contract file runs in a process started with --frozen-intrinsics
+// ---------------------------------------------------------------------------
+
+function runFrozen(cwd, spec, name, source, extra = {}) {
+  writeReq(cwd, spec, '# Demo requirements\n');
+  writeContract(cwd, spec, name, source);
+  const lock = buildLock(cwd, spec, [contractEntry(cwd, `contracts/${spec}/${name}`)]);
+  Object.assign(lock.specs[spec], extra);
+  return runContracts(cwd, spec, lock);
+}
+
+test('R13.15 a contract file runs with the built-in prototypes frozen, so a patch of String.prototype.split throws', () => {
+  const cwd = tmpCwd();
+  try {
+    const results = runFrozen(cwd, 'frozen', 'proto.contract.test.js', `import { test } from 'node:test';
+import assert from 'node:assert/strict';
+test('R1.1 prototypes are frozen', () => {
+  assert.ok(Object.isFrozen(String.prototype));
+  assert.ok(Object.isFrozen(Array.prototype));
+  assert.throws(() => { String.prototype.split = () => []; }, TypeError);
+});
+`);
+    assert.deepEqual(results.map((r) => [r.name, r.result]), [['R1.1 prototypes are frozen', 'pass']]);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R13.15 a module under test that patches a built-in prototype when it loads makes the contract file fail, naming the error', () => {
+  const cwd = tmpCwd();
+  try {
+    fs.mkdirSync(path.join(cwd, 'src'), { recursive: true });
+    fs.writeFileSync(path.join(cwd, 'src', 'cheat.js'), "const native = String.prototype.split;\nString.prototype.split = function split(...a) { return native.apply(this, a); };\nexport const x = 1;\n");
+    const results = runFrozen(cwd, 'frozen', 'cheat.contract.test.js', `import { test } from 'node:test';
+import { x } from '../../src/cheat.js';
+test('R1.1 uses the cheat', () => { if (x !== 1) throw new Error('x'); });
+`);
+    assert.equal(results.length, 1);
+    assert.equal(results[0].result, 'fail');
+    assert.equal(results[0].fileFailure, true);
+    assert.match(results[0].errorLines.join('\n'), /read only property 'split'/);
+    assert.doesNotMatch(results[0].errorLines.join('\n'), /Frozen intri/, 'the warning that the flag is experimental is not an explanation');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R13.15 console.log can still be assigned in a contract, since several contracts capture the output of a command', () => {
+  const cwd = tmpCwd();
+  try {
+    const results = runFrozen(cwd, 'frozen', 'console.contract.test.js', `import { test } from 'node:test';
+import assert from 'node:assert/strict';
+test('R1.1 console.log is assignable', () => {
+  const original = console.log;
+  const lines = [];
+  console.log = (...args) => lines.push(args.join(' '));
+  console.log('a', 'b');
+  console.log = original;
+  assert.deepEqual(lines, ['a b']);
+});
+`);
+    assert.deepEqual(results.map((r) => r.result), ['pass']);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});

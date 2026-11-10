@@ -1,19 +1,22 @@
 #!/usr/bin/env node
+// runtime.js comes first so that it loads before any module under test and reads its built-ins before they can be changed.
+import { guard, ContractViolation } from '../src/runtime.js';
 import { readFileSync } from 'node:fs';
 import { LedgerError } from '../src/errors.js';
-import { parseLedger } from '../src/parse.js';
+import * as parseModule from '../src/parse.js';
 import * as splitModule from '../src/split.js';
 import * as balancesModule from '../src/balances.js';
 import * as settleModule from '../src/settle.js';
 import * as reportModule from '../src/report.js';
-import { guard, ContractViolation } from '../src/runtime.js';
 import * as postconditions from '../contracts/ledger/postconditions.js';
 
 // Runtime postconditions (Req 15): the criteria of the frozen spec are checked on every real call, not only under test.
 // A result that breaks one stops the ledger with a ContractViolation, whatever the code does when it detects a test runner.
-// Every number the ledger prints is guarded: the balances and payments, and the text and JSON reports that show them.
+// Every number the ledger prints is guarded: the amounts the parser read, the balances and payments, and the text and JSON
+// reports that show them.
 // A table that postconditions.js does not define guards nothing: the file is locked with the spec, so a person decides what it holds.
-const { splitPostconditions, balancesPostconditions, settlePostconditions, reportPostconditions = {} } = postconditions;
+const { parsePostconditions = {}, splitPostconditions, balancesPostconditions, settlePostconditions, reportPostconditions = {} } = postconditions;
+const { parseLedger } = guard(parseModule, parsePostconditions);
 const { splitExpense } = guard(splitModule, splitPostconditions);
 const { computeBalances } = guard(balancesModule, balancesPostconditions);
 const { settle } = guard(settleModule, settlePostconditions);
