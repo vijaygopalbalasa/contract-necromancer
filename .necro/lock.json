@@ -305,6 +305,17 @@
           "sha256": "535de17b86c764252c263f168aa42430a8593af950593c0f4c619a5f6ba736e6"
         },
         {
+          "name": "runtime-coverage",
+          "names": [
+            "R15.7 the example checks each person's paid amount and share in computeBalances and guards the text and JSON reports, applied by bin/ledger.js",
+            "R15.7 two shares swapped in src/balances.js when no test runner is present pass every contract, yet bin/ledger.js exits 1 with a ContractViolation that names the criterion, in text and in JSON",
+            "R15.7 every printed payment halved in src/report.js when no test runner is present passes every contract, yet bin/ledger.js exits 1 with a ContractViolation that names the criterion, in text and in JSON",
+            "R15.8 the README and docs/limits.md say runtime postconditions protect only the outputs they check, that a project should guard every function whose result reaches a user, and that the demo's step 6 shows one cheat among many"
+          ],
+          "path": "contracts/necro-core/runtime-coverage.contract.test.js",
+          "sha256": "60b07c5adc1c040e6cf3724fd47771e29fa9232aa7ca68f572167b8e6278b9bb"
+        },
+        {
           "name": "runtime-demo",
           "names": [
             "R15.5 after MISMATCH the demo shows a step where src/split.js is right only under the test runner, the contracts pass and the ledger prints a ContractViolation, and its exit code rules cover the step"
@@ -378,7 +389,7 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-10T00:12:01.097Z",
+      "frozenAt": "2026-11-10T00:38:25.153Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
         "sha256": "a6b2a279d87c6e59207dae074b8819a53f25fc9c405b7ce476f35652b803787d"

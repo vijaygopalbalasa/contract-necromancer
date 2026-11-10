@@ -42,8 +42,15 @@ clean checkout and a clean environment, before you trust a receipt for code in a
 
 A check runs on every call of a guarded function, in production and not only in tests, so keep checks cheap. A check runs
 after the function returns: it can stop a wrong result from being used but cannot undo what the function already did. It
-does not catch a wrong or missing criterion, or calls inside a module to its own functions, which skip the wrapper. See
-[Runtime postconditions](reference.md#runtime-postconditions).
+does not catch a wrong or missing criterion, or calls inside a module to its own functions, which skip the wrapper.
+
+Runtime postconditions protect only the outputs they check. A function with no postcondition can return a wrong result
+and nothing stops it, so guard every function whose result reaches a user: the numbers, the text and the files, and not
+only the arithmetic behind them. The demo's step 6 shows one cheat among many. An independent review beat the first
+version of the ledger's guard twice: one cheat swapped two people's shares in `src/balances.js` (the balances still summed
+to zero), and one halved every printed payment in `src/report.js` (nothing checked the report). The ledger now checks each
+person's paid amount and share, and guards the text and JSON reports. A cheat in anything else it prints, such as the
+error sentences, is still not caught. See [Runtime postconditions](reference.md#runtime-postconditions).
 
 ## The receipt viewer
 

@@ -220,10 +220,10 @@ test('R15.4 code that special-cases the test runner passes every contract, yet b
   }
 });
 
-test('R15.4 the example has postconditions for splitExpense, computeBalances and settle, applied by bin/ledger.js', async () => {
+test('R15.4 the example has postconditions for splitExpense, computeBalances and settle, applied by bin/ledger.js; R15.7 adds the two reports', async () => {
   const post = await import('../examples/pumpkin-ledger/contracts/ledger/postconditions.js');
   const names = Object.values(post).flatMap((table) => Object.keys(table));
-  assert.deepEqual([...names].sort(), ['computeBalances', 'settle', 'splitExpense']);
+  assert.deepEqual([...names].sort(), ['computeBalances', 'renderJson', 'renderText', 'settle', 'splitExpense']);
   const bin = fs.readFileSync(path.join(EXAMPLE, 'bin', 'ledger.js'), 'utf8');
   assert.match(bin, /postconditions\.js/);
   assert.match(bin, /guard\(/);

@@ -305,6 +305,17 @@
           "sha256": "535de17b86c764252c263f168aa42430a8593af950593c0f4c619a5f6ba736e6"
         },
         {
+          "name": "runtime-coverage",
+          "names": [
+            "R15.7 the example checks each person's paid amount and share in computeBalances and guards the text and JSON reports, applied by bin/ledger.js",
+            "R15.7 two shares swapped in src/balances.js when no test runner is present pass every contract, yet bin/ledger.js exits 1 with a ContractViolation that names the criterion, in text and in JSON",
+            "R15.7 every printed payment halved in src/report.js when no test runner is present passes every contract, yet bin/ledger.js exits 1 with a ContractViolation that names the criterion, in text and in JSON",
+            "R15.8 the README and docs/limits.md say runtime postconditions protect only the outputs they check, that a project should guard every function whose result reaches a user, and that the demo's step 6 shows one cheat among many"
+          ],
+          "path": "contracts/necro-core/runtime-coverage.contract.test.js",
+          "sha256": "60b07c5adc1c040e6cf3724fd47771e29fa9232aa7ca68f572167b8e6278b9bb"
+        },
+        {
           "name": "runtime-demo",
           "names": [
             "R15.5 after MISMATCH the demo shows a step where src/split.js is right only under the test runner, the contracts pass and the ledger prints a ContractViolation, and its exit code rules cover the step"
@@ -378,10 +389,10 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-09T23:25:16.389Z",
+      "frozenAt": "2026-11-10T00:38:25.153Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
-        "sha256": "12e8520d1eb21da31c6db5eda5dec244e87d7663cb6e6fe7935be8213ddf9b00"
+        "sha256": "a6b2a279d87c6e59207dae074b8819a53f25fc9c405b7ce476f35652b803787d"
       },
       "tasks": {
         "1": {
@@ -682,6 +693,13 @@
           ],
           "text": "37. **Adopting it in your own project** (Req 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7)"
         },
+        "38": {
+          "criteria": [
+            "15.7",
+            "15.8"
+          ],
+          "text": "38. **Guard every output the ledger prints** (Req 15.7, 15.8)"
+        },
         "3b": {
           "criteria": [
             "4.7",
@@ -767,6 +785,7 @@
         "34. **Symbolic links under frozen globs** (Req 13.13)",
         "35. **Fail closed on missing results and linked folders** (Req 13.14, 14.10)",
         "36. **Runtime postconditions** (Req 15.1, 15.2, 15.3, 15.4, 15.5, 15.6)",
+        "37. **Adopting it in your own project** (Req 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7)",
         "3b. **No vacuous passes** (Req 4.7, 4.8)",
         "3c. **Pin contract names and check files before running** (Req 2.5, 2.6, 4.9, 4.10)",
         "4. **Receipts** (Req 5.1, 5.2, 5.3)",

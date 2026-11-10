@@ -59,18 +59,18 @@
       "frozen": [
         {
           "path": "bin/ledger.js",
-          "sha256": "11f1c50024acfa7c8995a36433e32d184d17becf4de58314d3605be838c4cdbe"
+          "sha256": "cf55e51683ea616205e435e991a1819dac055ab593bb0bb7b2abab493c8919dc"
         },
         {
           "path": "contracts/ledger/postconditions.js",
-          "sha256": "37e88a302ae4317cef03ee7c06a76d6f1ada2b2b2715b1d38d29d7255644766d"
+          "sha256": "6dfa104b6886db91ba5b43cf549be57f351322c8e7fec07a15cd8c8a6a406e37"
         },
         {
           "path": "src/runtime.js",
           "sha256": "b0d965762f73fab5b1c8ba3139257bdbe875c1a6d4e58b486291dea0c597b4ea"
         }
       ],
-      "frozenAt": "2026-11-09T22:39:19.461Z",
+      "frozenAt": "2026-11-10T00:35:21.897Z",
       "requirements": {
         "path": ".kiro/specs/ledger/requirements.md",
         "sha256": "2471c3d12bd1e3b553f630224bc09a9833bc715958f02af8f130219e7cd1eb35"

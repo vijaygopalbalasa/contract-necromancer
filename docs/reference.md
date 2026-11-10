@@ -279,6 +279,11 @@ which skip the wrapper. `bin/ledger.js` therefore also splits every expense thro
 computes balances. `necro demo` ends with this case: it changes `src/split.js` to keep the extra cents only when
 `NODE_TEST_CONTEXT` is set, the contracts pass, and the ledger run on `party.txt` stops with the `ContractViolation`.
 
+Runtime postconditions protect only the outputs they check, so guard every function whose result reaches a user. The demo's
+step 6 shows one cheat among many. The ledger's table of postconditions covers `splitExpense`, `computeBalances`
+(including each person's paid amount and share, recomputed by the check from the expenses), `settle`, and the text and
+JSON reports: every balance and payment printed must equal the guarded results.
+
 ## Contracts in other languages
 
 Contracts are JavaScript by default. A spec can hold contracts in any test framework that writes a JUnit XML report.

@@ -83,7 +83,12 @@ and 7 although a frozen contract for their criteria fails; gated (hook only or f
 
 - 3 to 5 runs per cell, two small models, one small project, one planted contradiction. It shows a large, consistent
   effect on this setup, not a general rate for every project or model.
-- The gate-on condition includes the steering file, so it measures the tool as installed, not the hook alone.
+- Round 1's gate-on arm includes the steering file; round 2's hook-only arm measures the hook alone.
+- Round 1 ran against a working tree mid-build (commit `2ed8ee7` plus uncommitted changes), so it cannot be reproduced
+  exactly; round 2 is pinned to a commit and can.
+- The gated arms count a tick that the hook exists to refuse, so 0 is what the hook should give; the result shows it
+  holds against real agents in real sessions. The other measures (contracts edited, what the agent did instead) are in
+  the logs.
 - The impossible spec is synthetic. Real cases (kirodotdev/Kiro#11786: a task marked `[x]` after a killed run with a
   failing last test) are messier.
 - One gated run took 986 s. We did not break down where that time went; every tick attempt under the gate runs the

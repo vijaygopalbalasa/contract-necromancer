@@ -111,7 +111,9 @@ A contract proves the code right only while the test runner watches. Eiffel's `e
 call. Write `contracts/<spec>/postconditions.js`; `guard(exports, postconditions)` from `src/runtime.js` wraps the
 functions so a wrong result throws a `ContractViolation`. It reads no environment variable such as `NODE_TEST_CONTEXT`, so
 code under test cannot switch it off. The cost is a check on every call, and it cannot undo what a function already did.
-[More](docs/reference.md#runtime-postconditions).
+Runtime postconditions protect only the outputs they check, so guard every function whose result reaches a user. The
+ledger guards the balances, the payments and both reports it prints. The demo's step 6 shows one cheat among many: a
+function with no postcondition can still lie. [More](docs/reference.md#runtime-postconditions).
 
 ### Audit in CI
 
