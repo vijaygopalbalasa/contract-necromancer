@@ -1016,10 +1016,10 @@
           "sha256": "47e17273eef50b96c039f01d4ab62d0c907bffe8f911b03d90a5dc1d4c19a08f"
         }
       ],
-      "frozenAt": "2026-11-09T23:54:21.476Z",
+      "frozenAt": "2026-11-11T16:36:54.909Z",
       "requirements": {
         "path": ".kiro/specs/receipt-viewer/requirements.md",
-        "sha256": "267f05bb581ac1ab8ccebc140b1c226077c2dd366571265447a3755b5c858a24"
+        "sha256": "f23bfe03fde39f7cdbf27974a72eb3cc2c0f3365fa9188e2f3cdb79c0713f0de"
       },
       "tasks": {
         "1": {
@@ -1186,6 +1186,35 @@
             "12.2"
           ],
           "text": "23. The evidence on the first screen (Req 12.1, 12.2)"
+        },
+        "24": {
+          "criteria": [
+            "13.1",
+            "13.4"
+          ],
+          "text": "24. The play's files and receipts (Req 13.1, 13.4)"
+        },
+        "25": {
+          "criteria": [
+            "13.2",
+            "13.3",
+            "13.6",
+            "13.7",
+            "13.8"
+          ],
+          "text": "25. Run the seven contracts in the browser (Req 13.2, 13.3, 13.6, 13.7, 13.8)"
+        },
+        "26": {
+          "criteria": [
+            "13.2",
+            "13.3",
+            "13.4",
+            "13.5",
+            "13.8",
+            "13.9",
+            "13.10"
+          ],
+          "text": "26. The play on the page (Req 13.2, 13.3, 13.4, 13.5, 13.8, 13.9, 13.10)"
         }
       },
       "ticked": [
@@ -1204,6 +1233,7 @@
         "20. The verifier in the re-run command is the official one, pinned (Req 5.3)",
         "21. The story in one glance (Req 10.1, 10.2, 10.3, 10.4, 10.5)",
         "22. The first screen tells the story (Req 9.5 revised, 11.1, 11.2, 11.3, 11.4, 11.5)",
+        "23. The evidence on the first screen (Req 12.1, 12.2)",
         "3. **Receipt parsing and validation** (Req 1.3)",
         "4. **Summary and grouping by requirement** (Req 2.1, 2.2)",
         "5. **Repository and URL parsing** (Req 1.2)",

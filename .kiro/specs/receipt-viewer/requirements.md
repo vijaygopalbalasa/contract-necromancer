@@ -3,7 +3,9 @@
 ## Introduction
 A static web page (no server, no build step, no dependencies) in `site/`, published on GitHub Pages, where anyone can open a
 Contract Necromancer receipt, see which acceptance criteria passed, and check the receipt themselves in the browser.
-Honest limit shown on the page: contracts re-run in Node with `necro verify`; the browser checks hashes, not test runs.
+Honest limits shown on the page: the gate and `necro verify` run every contract in Node.js. The browser checks hashes, and
+in the play (Requirement 13) it also runs the example's seven contracts that need nothing but JavaScript, with small
+stand-ins for `node:test` and `node:assert`. (Revised Nov 11 for Requirement 13.)
 
 ## Requirement 1: Open a receipt
 **User story:** As a reviewer, I want to open a receipt quickly, so that I can check a task someone claims is done.
@@ -93,3 +95,17 @@ Honest limit shown on the page: contracts re-run in Node with `necro verify`; th
 ### Acceptance criteria
 1. WHEN the page loads THE SYSTEM SHALL show, between the story strip and the verdict banner, one line stating the experiment result (on a task that cannot honestly be finished, Kiro marked it done in 11 of 11 runs without the gate and 0 of 19 with it, across two models) with a plain link to `https://github.com/vijaygopalbalasa/contract-necromancer/blob/main/experiments/README.md`, while Requirement 9.5 still holds at 1280x800 and 390x844.
 2. THE page SHALL not say that contracts re-run only in Node; it SHALL say that `necro verify` re-runs JavaScript contracts and runner contracts (for example pytest) alike.
+
+## Requirement 13: Play the gate on the page
+**User story:** As a judge who will not install anything, I want to send the gate a false "done" and then the real fix from this page, so that I see the gate refuse and accept with my own clicks.
+### Acceptance criteria
+1. THE site SHALL include, under `site/play/`, copies of every file that the risen and buried ledger receipts pin (the ledger's `requirements.md`, its five contract files and its source files), byte for byte the same as `examples/pumpkin-ledger`, and a risen receipt that the gate wrote when it accepted task 4 in a copy of that example. Every pin in that receipt SHALL match the copies, and every pin in the buried sample (`site/sample-buried.json`) SHALL match the copies except `src/split.js`, which SHALL match the copy with the planted change applied.
+2. WHEN the user sends the tick with the planted change (the change `necro demo` plants: `Math.round(cents / n)` and `const extra = 0;`) THE SYSTEM SHALL run, in a Web Worker in the browser, the ledger's two contract files that need nothing but JavaScript (`requirement-2-split` and `properties`, contracts R2.1, R2.2 and R5.1 to R5.5) against the copied sources with the planted change, show that the tick is refused, and list each failing contract with its assertion message. The results SHALL be R2.1, R2.2, R5.1, R5.2, R5.3 and R5.4 failing and R5.5 passing.
+3. WHEN the user applies the fix THE SYSTEM SHALL run the same seven contracts against the copied sources as they are, show all seven passing, and show the risen receipt with its receipt hash recomputed in the browser (MATCH) and its pinned files re-hashed from the copies.
+4. WHEN the user changes one byte of `src/split.js` in the play THE SYSTEM SHALL re-hash the copy with that byte changed and show `MISMATCH. Files changed: src/split.js.`, the words `necro verify` prints for that change.
+5. WHEN the play shows a browser run THE SYSTEM SHALL say in plain words that the browser ran 7 of the ledger's 18 contracts and that the other 11 start the ledger's command line, which a browser cannot do, and SHALL show next to it the result of the gate's full run on the same code: 9 failing for the planted change (from the buried sample) and 18 passing for the fix (from the risen receipt). The seven SHALL be a fixed list in the code, never inferred from an error.
+6. THE worker SHALL run a copied file only after its SHA-256 matches the pin in the receipt for that run (the buried sample for the planted change, the risen receipt for the fix), SHALL build modules only from those files and the two stand-ins it ships, and SHALL take no code from the URL, the paste box or any other input.
+7. THE play SHALL say in one sentence that the browser runs the contracts with small stand-ins for `node:test` and `node:assert`, while the gate runs them in Node.js. For the planted change and for the fix, each of the seven contracts SHALL have the same result in the browser as in a run of `necro check ledger` in Node.js on the same code.
+8. IF the worker cannot start, a file fails its hash check, or a run takes longer than 10 seconds THEN THE SYSTEM SHALL stop the run, say what happened in one plain sentence, and show the gate's full-run result for that step from the receipts, and SHALL never leave a step showing "running".
+9. WHEN the page loads with scripts on THE SYSTEM SHALL offer a control that starts the play, visible in the first screen at 1280x800 and at 390x844, SHALL open the play directly below the story strip when it is used, and SHALL keep the frozen contracts for Requirements 9, 10, 11 and 12 passing as written.
+10. THE play SHALL work with the keyboard alone (focus moves to each step's result, and results are announced in a polite live region), show results without animation under `prefers-reduced-motion: reduce`, fit a 390 px wide window with no sideways page scroll, keep the Content Security Policy in `index.html` unchanged, and fetch nothing but files from the page's own origin. No sentence it adds SHALL break the frozen Requirement 12.2 contract.
