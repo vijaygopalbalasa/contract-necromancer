@@ -1063,10 +1063,10 @@
           "sha256": "47e17273eef50b96c039f01d4ab62d0c907bffe8f911b03d90a5dc1d4c19a08f"
         }
       ],
-      "frozenAt": "2026-11-11T18:54:17.221Z",
+      "frozenAt": "2026-11-11T21:20:46.278Z",
       "requirements": {
         "path": ".kiro/specs/receipt-viewer/requirements.md",
-        "sha256": "f23bfe03fde39f7cdbf27974a72eb3cc2c0f3365fa9188e2f3cdb79c0713f0de"
+        "sha256": "8a01c48e313ff0a8bfd19f358debfd447c126b154d38e7089075f0aae03fa44d"
       },
       "tasks": {
         "1": {
@@ -1262,6 +1262,15 @@
             "13.10"
           ],
           "text": "26. The play on the page (Req 13.2, 13.3, 13.4, 13.5, 13.8, 13.9, 13.10)"
+        },
+        "27": {
+          "criteria": [
+            "9.5",
+            "12.1",
+            "14.1",
+            "14.5"
+          ],
+          "text": "27. The first screen names Design by Contract and leads with the result (Req 9.5 revised, 12.1 revised, 14.1 to 14.5)"
         }
       },
       "ticked": [
