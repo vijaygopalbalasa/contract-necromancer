@@ -33,8 +33,46 @@
         <span class="try-label">See it happen for real:</span>
         <code id="strip-command">npx -y github:vijaygopalbalasa/contract-necromancer demo</code>
         <button type="button" id="strip-copy" aria-label="Copy the demo command">Copy</button>
+        <button type="button" id="strip-play" class="needs-script" aria-controls="play" aria-expanded="false">Try it here</button>
         <span id="strip-copy-note" aria-live="polite"></span>
       </div>
+    </section>
+
+    <section class="play" id="play" aria-labelledby="play-title" hidden>
+      <h3 id="play-title" tabindex="-1">Try the gate on this page</h3>
+      <p class="play-intro" id="play-intro">Send the gate a false "done" for task 4, watch it refuse, then send the fix and watch it accept.</p>
+      <div class="diff" role="group" aria-labelledby="diff-title">
+        <p class="diff-title" id="diff-title">The change that loses cents, in <code>src/split.js</code></p>
+        <p class="diff-line diff-del"><span class="diff-mark" aria-hidden="true">-</span><span class="sr-only">Removed:</span><code>const base = Math.floor(cents / n);</code></p>
+        <p class="diff-line diff-add"><span class="diff-mark" aria-hidden="true">+</span><span class="sr-only">Added:</span><code>const base = Math.round(cents / n);</code></p>
+        <p class="diff-line diff-del"><span class="diff-mark" aria-hidden="true">-</span><span class="sr-only">Removed:</span><code>const extra = cents % n;</code></p>
+        <p class="diff-line diff-add"><span class="diff-mark" aria-hidden="true">+</span><span class="sr-only">Added:</span><code>const extra = 0;</code></p>
+      </div>
+      <ol class="play-steps">
+        <li class="play-step">
+          <div class="play-step-head">
+            <p class="play-step-text">Kiro says task 4 is done, with that change in the code.</p>
+            <button type="button" id="play-send">Send the tick</button>
+          </div>
+          <div class="play-result" id="play-result-planted" role="group" aria-label="Result of sending the tick with the change" tabindex="-1" hidden></div>
+        </li>
+        <li class="play-step">
+          <div class="play-step-head">
+            <p class="play-step-text">Put the two lines back as they were, then send the tick again.</p>
+            <button type="button" id="play-fix">Apply the fix and send the tick</button>
+          </div>
+          <div class="play-result" id="play-result-fixed" role="group" aria-label="Result of applying the fix" tabindex="-1" hidden></div>
+        </li>
+        <li class="play-step">
+          <div class="play-step-head">
+            <p class="play-step-text">Change one byte of <code>src/split.js</code> and check the receipt's pinned files again.</p>
+            <button type="button" id="play-byte">Change one byte</button>
+          </div>
+          <div class="play-result" id="play-result-byte" role="group" aria-label="Result of changing one byte" tabindex="-1" hidden></div>
+        </li>
+      </ol>
+      <p class="play-status sr-only" id="play-status" role="status" aria-live="polite"></p>
+      <p class="play-note" id="play-note">The browser runs the contracts with small stand-ins for <code>node:test</code> and <code>node:assert</code>, while the gate runs them in Node.js.</p>
     </section>
 
     <p class="evidence" id="evidence">On a task that cannot be finished, Kiro marked it done in <strong>11 of 11</strong> runs without the gate and <strong>0 of 19</strong> with it, across two models. <a href="https://github.com/vijaygopalbalasa/contract-necromancer/blob/main/experiments/README.md">See the experiment</a>.</p>

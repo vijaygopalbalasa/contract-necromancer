@@ -7,6 +7,8 @@ import { parseReceipt, summarize, groupContracts, sortByCriterion, plainTaskLine
 import { parseReceiptUrl, parseRepo, isCommitId, verifyCommand } from './lib/repo.js';
 import { checkFiles } from './lib/files.js';
 import { SAMPLES, chooseInitialView, scrollOptions } from './lib/samples.js';
+import { runPlay, fullRunFor } from './lib/play-loader.js';
+import { PLAY_DIR, RISEN_RECEIPT, checkPlayFiles, changeOneByte, mismatchLine } from './lib/play.js';
 
 const LOAD_FAILED = 'Could not load that receipt. Check the link and try again.';
 const FILE_TOO_BIG = 'This receipt is larger than 1 MB. Open a receipt file written by necro.';
@@ -21,6 +23,21 @@ const COPY_FAILED = 'Select the command and copy it.';
 const UNCOMMITTED_NOTICE = 'Some files are not in the commit yet. Commit the work and re-run the gate for a fully public check.';
 const NO_COMMIT_NOTE = 'This receipt names no commit, so the command does not check one out.';
 const TIMEOUT_MS = 15000;
+
+// The play (Req 13). The folder it reads its copies from is the site folder, as an absolute address, so the same code works
+// from any path the page is served under.
+const PLAY_BASE = new URL('./', import.meta.url).href;
+const PLAY_STEPS = { planted: 1, fixed: 2, byte: 3 };
+const PLAY_ERROR = 'The run stopped with an error.';
+const RISEN_FAILED = "The page could not load the risen receipt, so it could not check it.";
+const FULL_RUN_FAILED = "The receipt that holds the gate's full run could not be loaded.";
+const MAX_MESSAGE = 300;
+// A failing row shows the first lines of its assertion message, and the whole message (up to this many characters) behind a
+// details element.
+const PREVIEW_LINES = 3;
+const PREVIEW_CHARS = 120;
+const MAX_FULL_MESSAGE = 2000;
+const FULL_RUN_WAIT_MS = 3000;
 
 // The word shown for each file status. The word, not the color, carries the meaning.
 const STATUS_WORDS = {
@@ -38,7 +55,8 @@ function requestOptions() {
   return options;
 }
 
-export function start({ document, location, fetch, navigator, matchMedia }) {
+// `play` may replace the pieces that run and check the play (tests do this); a page never passes it.
+export function start({ document, location, fetch, navigator, matchMedia, play = {} }) {
   const $ = (id) => document.getElementById(id);
   const els = {};
   for (const id of [
@@ -46,6 +64,8 @@ export function start({ document, location, fetch, navigator, matchMedia }) {
     'hash-check', 'hash-badge', 'hash-detail', 'repo', 'run', 'command', 'copy', 'copy-note', 'command-note', 'file-check',
     'check', 'repo-error', 'file-notice', 'file-summary', 'files', 'sample', 'sample-buried', 'sample-note', 'verdict',
     'demo-command', 'demo-copy', 'demo-copy-note', 'strip-command', 'strip-copy', 'strip-copy-note',
+    'strip-play', 'play', 'play-title', 'play-send', 'play-fix', 'play-byte', 'play-status',
+    'play-result-planted', 'play-result-fixed', 'play-result-byte',
   ]) {
     els[id] = $(id);
   }
@@ -308,6 +328,294 @@ export function start({ document, location, fetch, navigator, matchMedia }) {
     await showReceipt(text, { sample, scroll: byVisitor });
   }
 
+  // ---- The play (Req 13): three steps, each with one button and one place for its result. ----
+
+  const runner = typeof play.runPlay === 'function' ? play.runPlay : runPlay;
+  const fullRun = typeof play.fullRunFor === 'function' ? play.fullRunFor : fullRunFor;
+  const checkCopies = typeof play.checkPlayFiles === 'function' ? play.checkPlayFiles : checkPlayFiles;
+  const playFetch = (url, options) => fetch(url, options);
+  let playBusy = false;
+
+  // A message from a run, as text that is safe to show: no control characters, at most `max` characters. Line breaks stay.
+  function cleanText(text, max) {
+    const clean = String(text)
+      .replace(/\r/g, '')
+      .replace(/[\u0000-\u0009\u000b-\u001f\u007f]+/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+    return clean.length > max ? `${clean.slice(0, max).trimEnd()}...` : clean;
+  }
+
+  // One clean block, not too long: the form a sentence from a run takes.
+  function clipMessage(text) {
+    return cleanText(text, MAX_MESSAGE);
+  }
+
+  // An assertion message as { preview, full }. The preview is its first three lines (blank lines do not count, each line is
+  // cut at 120 characters), and `full` is the whole message when the preview leaves something out, else null.
+  function messageParts(text) {
+    const full = cleanText(text, MAX_FULL_MESSAGE);
+    const lines = full.split('\n').filter((l) => l.trim() !== '');
+    const shown = lines.slice(0, PREVIEW_LINES).map((l) => (l.length > PREVIEW_CHARS ? `${l.slice(0, PREVIEW_CHARS).trimEnd()}...` : l));
+    const cut = lines.length > PREVIEW_LINES || shown.some((l, i) => l !== lines[i]);
+    return { preview: shown.join('\n'), full: cut ? full : null };
+  }
+
+  function takeFocus(node) {
+    if (node && typeof node.focus === 'function') node.focus();
+  }
+
+  function setPlayButtons(off) {
+    for (const id of ['play-send', 'play-fix', 'play-byte']) els[id].disabled = off;
+  }
+
+  // One line that opens a result: a bold word, then what it means. The word is Refused, Accepted or Stopped.
+  function verdictLine(kind, word, rest) {
+    const p = make('p', `play-verdict ${kind}`);
+    p.appendChild(make('strong', '', word));
+    p.append(` ${rest}`);
+    return p;
+  }
+
+  // A contract row for the browser's result, drawn with the same classes as a receipt row. A passing row is one line. A
+  // failing row adds the first lines of the assertion message that failed, and the whole message behind a details element
+  // when those lines leave something out.
+  function playRow(r) {
+    const li = contractRow({ name: r.name, result: r.result, required: null });
+    const parts = r.result === 'fail' ? messageParts(r.message) : { preview: '', full: null };
+    if (parts.preview) {
+      li.append(' ');
+      li.appendChild(make('span', 'note', parts.preview));
+    }
+    if (parts.full !== null) {
+      const more = make('details', 'play-more');
+      more.appendChild(make('summary', '', 'Full message'));
+      more.appendChild(make('p', 'play-message', parts.full));
+      li.appendChild(more);
+    }
+    return li;
+  }
+
+  // "R2.1, R2.2 and R3.1": ids in a list, with "and" before the last.
+  function idList(ids) {
+    return ids.length < 2 ? ids.join('') : `${ids.slice(0, -1).join(', ')} and ${ids[ids.length - 1]}`;
+  }
+
+  // The criterion ids of the contracts that failed in a receipt, in criterion order, or null when the receipt cannot be read.
+  // The planted change stands on the buried sample and the fix on the risen receipt, the same receipts the run is checked
+  // against.
+  async function failingIds(kind) {
+    try {
+      const url = kind === 'planted' ? `${PLAY_BASE}sample-buried.json` : `${PLAY_BASE}${PLAY_DIR}/${RISEN_RECEIPT}`;
+      const options = { credentials: 'omit', referrerPolicy: 'no-referrer' };
+      if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') options.signal = AbortSignal.timeout(FULL_RUN_WAIT_MS);
+      const response = await fetch(url, options);
+      if (!response.ok) return null;
+      const parsed = parseReceipt(await response.text());
+      if (!parsed.ok) return null;
+      const failed = sortByCriterion(parsed.receipt.contracts.filter((c) => c.result === 'fail'));
+      return failed.map((c) => (/^R\d+(?:\.\d+)?/.exec(c.name) || [clipMessage(c.name)])[0]);
+    } catch {
+      return null;
+    }
+  }
+
+  // The gate's full run on the same code, from the receipts, next to every browser run (Req 13.5). It names what failed:
+  // "9 of 18 failing: R2.1, R2.2 and R3.1", or "18 of 18 passing" when nothing failed. When the ids cannot be read the line
+  // keeps its numbers and drops the list.
+  async function fullRunLine(kind, full) {
+    if (!full) return make('p', 'play-full', FULL_RUN_FAILED);
+    const lead = "The gate's full run on the same code gave";
+    if (full.failed === 0) return make('p', 'play-full', `${lead} ${full.passed} of ${full.total} passing.`);
+    const ids = Array.isArray(full.failing) ? full.failing : await failingIds(kind);
+    const named = ids && ids.length > 0 ? `: ${idList(ids)}` : '';
+    return make('p', 'play-full', `${lead} ${full.failed} of ${full.total} failing${named}.`);
+  }
+
+  function scopeLine(ran, full) {
+    const text = full
+      ? `The browser ran ${ran} of the ledger's ${full.total} contracts. The other ${full.total - ran} start the ledger's command line, which a browser cannot do.`
+      : `The browser ran ${ran} of the ledger's contracts. The rest start the ledger's command line, which a browser cannot do.`;
+    return make('p', 'play-scope', text);
+  }
+
+  function playFileRow(f) {
+    const li = make('li', `file status-${f.status}`);
+    li.appendChild(make('span', 'state', STATUS_WORDS[f.status]));
+    li.append(' ');
+    li.appendChild(make('span', 'path', f.path));
+    if (f.detail) li.appendChild(make('span', 'detail', f.detail));
+    return li;
+  }
+
+  function pinCount(files) {
+    const matched = files.filter((f) => f.status === 'match').length;
+    const lost = files.filter((f) => f.status === 'unavailable').length;
+    const head = matched === files.length ? `All ${files.length} pinned files match their copies.` : `${matched} of ${files.length} pinned files match their copies.`;
+    return lost > 0 ? `${head} ${lost} could not be loaded.` : head;
+  }
+
+  // The risen receipt, read from the page's own folder. It comes with the result of recomputing its hash.
+  async function loadRisen() {
+    const response = await fetch(`${PLAY_BASE}${PLAY_DIR}/${RISEN_RECEIPT}`, requestOptions());
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const parsed = parseReceipt(await response.text());
+    if (!parsed.ok) throw new Error('not a receipt');
+    return { receipt: parsed.receipt, matches: (await computeReceiptHash(parsed.receipt)) === parsed.receipt.receiptHash };
+  }
+
+  // Under the accepted run: the receipt the gate wrote for task 4, its hash recomputed here, its pinned files hashed again
+  // from the copies (Req 13.3). Paths in it are the example's, which is why this lives in the play and not in the receipt card.
+  async function appendRisenReceipt(box) {
+    const wrap = make('div', 'play-receipt');
+    wrap.appendChild(make('p', '', 'The receipt the gate wrote when it accepted task 4, checked here:'));
+    try {
+      const { receipt, matches } = await loadRisen();
+      const badge = make('p', matches ? 'badge hash-match' : 'badge hash-altered', matches ? 'MATCH' : 'ALTERED');
+      wrap.appendChild(badge);
+      wrap.append(matches ? 'Its receipt hash, recomputed in your browser, matches.' : 'Its receipt hash, recomputed in your browser, does not match.');
+      const checked = await checkCopies({ receipt, fetchFn: playFetch, base: PLAY_BASE });
+      // The list starts closed. Its summary line says how many files match.
+      const details = make('details', 'play-pins');
+      details.appendChild(make('summary', '', pinCount(checked.files)));
+      const list = make('ul', 'files');
+      for (const f of checked.files) list.appendChild(playFileRow(f));
+      details.appendChild(list);
+      wrap.appendChild(details);
+    } catch {
+      wrap.appendChild(make('p', '', RISEN_FAILED));
+    }
+    box.appendChild(wrap);
+  }
+
+  // Steps 1 and 2: send the tick to the contracts, with the planted change or without it. Fills `box`, returns the words for
+  // the live region.
+  async function contractStep(kind, box) {
+    const n = PLAY_STEPS[kind];
+    let out;
+    try {
+      out = await runner({ run: kind, base: PLAY_BASE, fetchFn: playFetch });
+    } catch {
+      out = { ok: false, kind: 'run', message: PLAY_ERROR };
+    }
+    if (!out || typeof out !== 'object') out = { ok: false, kind: 'run', message: PLAY_ERROR };
+    let full = out.ok ? undefined : out.full;
+    if (full === undefined) {
+      try {
+        full = await fullRun(kind, PLAY_BASE, playFetch);
+      } catch {
+        full = null;
+      }
+    }
+    // The verdict comes first, then the browser's share of the ledger and the gate's full run on the same code, and only
+    // then the contract rows.
+    const fullLine = await fullRunLine(kind, full);
+    let words;
+    box.textContent = '';
+    if (out.ok) {
+      const failed = out.results.filter((r) => r.result === 'fail').length;
+      const total = out.results.length;
+      if (failed > 0) {
+        box.appendChild(verdictLine('refused', 'Refused.', `${failed} of the ${total} contracts the browser ran ${failed === 1 ? 'fails' : 'fail'}, so the tick is refused.`));
+        words = `Step ${n} done: the gate refuses the tick. ${failed} of ${total} contracts fail.`;
+      } else {
+        box.appendChild(verdictLine('accepted', 'Accepted.', `All ${total} contracts the browser ran pass, so the tick is accepted.`));
+        words = `Step ${n} done: the gate accepts the tick. All ${total} contracts pass.`;
+      }
+      box.appendChild(scopeLine(total, full));
+      box.appendChild(fullLine);
+      const list = make('ul', 'contracts');
+      for (const r of out.results) list.appendChild(playRow(r));
+      box.appendChild(list);
+    } else {
+      const message = clipMessage(out.message || PLAY_ERROR);
+      box.appendChild(verdictLine('stopped', 'Stopped.', message));
+      words = `Step ${n} stopped. ${message}`;
+      box.appendChild(fullLine);
+    }
+    if (kind === 'fixed') await appendRisenReceipt(box);
+    return words;
+  }
+
+  // Step 3: change one byte of the copy of src/split.js in memory and hash the pinned files again (Req 13.4). The browser
+  // worker is not needed: this is a hash check.
+  async function byteStep(box) {
+    box.textContent = '';
+    let receipt;
+    try {
+      ({ receipt } = await loadRisen());
+    } catch {
+      box.appendChild(verdictLine('stopped', 'Stopped.', RISEN_FAILED));
+      return `Step 3 stopped. ${RISEN_FAILED}`;
+    }
+    const checked = await checkCopies({ receipt, fetchFn: playFetch, base: PLAY_BASE, change: { 'src/split.js': changeOneByte } });
+    const line = mismatchLine(checked);
+    const lost = checked.files.filter((f) => f.status === 'unavailable');
+    if (line === null) {
+      const message =
+        lost.length > 0
+          ? `The page could not load its copy of ${lost[0].path}${lost.length > 1 ? ` and ${lost.length - 1} more` : ''}, so it could not check.`
+          : 'No pinned file changed.';
+      box.appendChild(verdictLine('stopped', 'Stopped.', message));
+      return `Step 3 stopped. ${message}`;
+    }
+    box.appendChild(make('p', 'play-verdict refused', line));
+    box.appendChild(
+      make(
+        'p',
+        '',
+        'That is the line necro verify prints when a file a receipt pins has changed. The page changed one byte of its copy of src/split.js in memory, hashed it again and compared it with the pin. Nothing was stored.',
+      ),
+    );
+    box.appendChild(make('p', 'summary', pinCount(checked.files)));
+    const list = make('ul', 'files');
+    for (const f of checked.files) if (f.status !== 'match') list.appendChild(playFileRow(f));
+    box.appendChild(list);
+    return `Step 3 done: ${line}`;
+  }
+
+  async function runStep(kind) {
+    if (playBusy) return;
+    playBusy = true;
+    setPlayButtons(true);
+    const box = els[`play-result-${kind}`];
+    box.hidden = true;
+    box.textContent = '';
+    box.setAttribute('aria-busy', 'true');
+    els['play-status'].textContent = `Running step ${PLAY_STEPS[kind]}...`;
+    let words;
+    try {
+      words = await (kind === 'byte' ? byteStep(box) : contractStep(kind, box));
+    } catch {
+      box.textContent = '';
+      box.appendChild(verdictLine('stopped', 'Stopped.', PLAY_ERROR));
+      words = `Step ${PLAY_STEPS[kind]} stopped. ${PLAY_ERROR}`;
+    } finally {
+      playBusy = false;
+      setPlayButtons(false);
+    }
+    box.setAttribute('aria-busy', 'false');
+    box.hidden = false;
+    els['play-status'].textContent = words;
+    takeFocus(box);
+  }
+
+  // The start control is drawn only when scripts run. Using it opens the play below the story strip and moves focus to its
+  // heading. It does not call the code that brings the verdict banner into view.
+  function setUpPlay() {
+    if (!els['strip-play'] || !els.play) return;
+    els['strip-play'].className = els['strip-play'].className.split(/\s+/).filter((c) => c && c !== 'needs-script').join(' ');
+    els['strip-play'].addEventListener('click', () => {
+      els.play.hidden = false;
+      els['strip-play'].setAttribute('aria-expanded', 'true');
+      if (typeof els.play.scrollIntoView === 'function') els.play.scrollIntoView(scrollOptions({ reducedMotion: reducedMotion() }));
+      takeFocus(els['play-title']);
+    });
+    els['play-send'].addEventListener('click', () => runStep('planted'));
+    els['play-fix'].addEventListener('click', () => runStep('fixed'));
+    els['play-byte'].addEventListener('click', () => runStep('byte'));
+  }
+
   els.show.addEventListener('click', () => {
     latest += 1;
     return showReceipt(els.paste.value, { scroll: true });
@@ -319,6 +627,7 @@ export function start({ document, location, fetch, navigator, matchMedia }) {
   els.copy.addEventListener('click', () => copyText(els.command, els['copy-note']));
   els['demo-copy'].addEventListener('click', () => copyText(els['demo-command'], els['demo-copy-note']));
   els['strip-copy'].addEventListener('click', () => copyText(els['strip-command'], els['strip-copy-note']));
+  setUpPlay();
 
   els.file.addEventListener('change', async () => {
     const file = els.file.files && els.file.files[0];
