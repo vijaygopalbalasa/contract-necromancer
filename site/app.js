@@ -21,6 +21,7 @@ const SAMPLE_URLS = { risen: './sample-receipt.json', buried: './sample-buried.j
 const SAMPLE_FAILED = 'Could not load the sample. Reload the page and try again.';
 const COPY_FAILED = 'Select the command and copy it.';
 const UNCOMMITTED_NOTICE = 'Some files are not in the commit yet. Commit the work and re-run the gate for a fully public check.';
+const NO_TASK_LINE = 'No task. This receipt was written by necro check, not by a tick.';
 const NO_COMMIT_NOTE = 'This receipt names no commit, so the command does not check one out.';
 const TIMEOUT_MS = 15000;
 
@@ -279,7 +280,7 @@ export function start({ document, location, fetch, navigator, matchMedia, play =
     els.commit.textContent = s.gitCommit === null ? 'none' : s.gitCommit;
     els['receipt-hash'].textContent = s.receiptHash;
     els.created.textContent = s.createdAt === null ? 'not recorded' : s.createdAt;
-    els.task.textContent = s.task === null ? 'none recorded' : plainTaskLine(s.task);
+    els.task.textContent = s.task === null ? NO_TASK_LINE : plainTaskLine(s.task);
     els.summary.textContent = `${s.passed} of ${s.total} contracts pass`;
     renderVerdict(s.contracts);
     renderGroups(s.contracts);

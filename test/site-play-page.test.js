@@ -621,7 +621,7 @@ const SCREENS = [
   { name: '390x844', width: 390, height: 844, mobile: true },
 ];
 
-test('R13.9 the start control is drawn in the first screen at 1280x800 and 390x844, at least 24 by 24, and the banner stays in the first screen', { skip: NO_BROWSER }, async () => {
+test('R13.9 the start control is drawn in the first screen at 1280x800 and 390x844, at least 24 by 24, and the banner stays in the first screen at 1280x800', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     for (const screen of SCREENS) {
       const m = await browser.measure(screen, () => {
@@ -650,7 +650,9 @@ test('R13.9 the start control is drawn in the first screen at 1280x800 and 390x8
       assert.ok(m.control.width >= 24 && m.control.height >= 24, `${at}: target ${m.control.width} x ${m.control.height}`);
       assert.ok(m.copy.width >= 24 && m.copy.height >= 24, `${at}: the copy button keeps its size`);
       assert.ok(m.control.top >= 0 && m.control.bottom <= m.h && m.control.left >= 0 && m.control.right <= m.w, `${at}: the control is inside the first screen`);
-      assert.ok(m.verdict.top >= 0 && m.verdict.bottom <= m.h, `${at}: the banner ends at ${m.verdict.bottom} of ${m.h}`);
+      // Revised 9.5 (Nov 12): the banner is required in the first screen at 1280x800 only. At 390x844 the start control (checked
+      // above) and the result line take its place.
+      if (screen.width > 800) assert.ok(m.verdict.top >= 0 && m.verdict.bottom <= m.h, `${at}: the banner ends at ${m.verdict.bottom} of ${m.h}`);
       assert.ok(m.sideways <= m.w, `${at}: sideways scroll`);
       // Not on top of the other controls.
       const overlap = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;

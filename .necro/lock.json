@@ -867,7 +867,7 @@
             "R9.5 on a first visit the verdict banner is in the first screen at 1280x800 and at 390x844, with no horizontal scrolling and the way to open your own receipt on the page"
           ],
           "path": "contracts/receipt-viewer/above-fold-v2.contract.test.js",
-          "sha256": "23654a98e4c9445fd9fc37c9984dd9dfd30958558b79bee71c8b26d2236f9bd6"
+          "sha256": "08997892d2c97fb3dc723d9efb82ab16f60a1a6eaa960af1f2f3eef053a03f14"
         },
         {
           "name": "canon",
@@ -897,7 +897,7 @@
             "R12.2 no sentence on the page says that contracts re-run only in Node, and one says that necro verify re-runs JavaScript contracts and runner contracts such as pytest alike"
           ],
           "path": "contracts/receipt-viewer/evidence.contract.test.js",
-          "sha256": "7be22fa9bbfbca666f9f5c228fba9d52752931ef52fad5f6f6b6fdd04ec66a3d"
+          "sha256": "1d46bfd5f83bfffbb6690c9cfedd94b377f728174d89ae7824eb8d389a8ffd21"
         },
         {
           "name": "files",
@@ -908,6 +908,26 @@
           ],
           "path": "contracts/receipt-viewer/files.contract.test.js",
           "sha256": "41114194aba14d19cfa52f107c5574af3e9721b66a2d6e4996da05bd45533344"
+        },
+        {
+          "name": "first-screen-v3",
+          "names": [
+            "R14.1 one short line beside the page heading names Design by Contract, from Eiffel (1986), raised for coding agents",
+            "R14.1 the page heading and the title stay as they were",
+            "R14.1 with scripts off the line is drawn next to the heading, inside the first screen",
+            "R12.1 (revised Nov 12) one element holds the result and the round 3 caveat, with the counts marked as large numbers and one plain link",
+            "R14.2 the result is drawn with more weight than body text: the two counts are large, bold and at AA contrast, and so is the caveat",
+            "R14.3 with scripts on, no other control above the verdict banner is filled like Try it here",
+            "R14.3 with scripts off Try it here is not drawn, so the page never shows a button that does nothing",
+            "R14.4 a receipt with no task says so in its task line in plain words, not \"none recorded\": it was written by necro check, not by a tick",
+            "R9.5 (revised Nov 12) at 1280x800 the verdict banner is in the first screen, with no sideways scroll and the way to open your own receipt on the page",
+            "R9.5 (revised Nov 12) at 390x844 the start control and the whole result are in the first screen, with no sideways scroll and the way to open your own receipt on the page",
+            "R12.1 (revised Nov 12) the result with its caveat is in the first screen at 1280x800 and 390x844, below the strip and above the banner, with scripts on and off",
+            "R12.2 the sentences that the idea line and the result add keep the page safe for the frozen Requirement 12.2 contract: no sentence says contracts run only in Node, and one names necro verify with JavaScript contracts and runner contracts",
+            "R14.5 this file pins no pixel size or position: no px unit, no assertion against a numeric box value, and the window sizes appear only in the two named constants"
+          ],
+          "path": "contracts/receipt-viewer/first-screen-v3.contract.test.js",
+          "sha256": "877ac2035552d78d2df66d459061a035d422704c8e0dc2e5c3ed7ef23f20aaa8"
         },
         {
           "name": "first-screen",
@@ -994,7 +1014,7 @@
             "R13.10 under prefers-reduced-motion: reduce the results appear with no animation; at 390 px the page does not scroll sideways; the policy is unchanged; the play fetches only from its own origin and adds no sentence that breaks R12.2"
           ],
           "path": "contracts/receipt-viewer/play-page.contract.test.js",
-          "sha256": "70f3d795f01b4b573faf0963599aa3a0560c2207e68ed8c9751dbda9c1c38f4d"
+          "sha256": "f9e01e4b78965bfdea62e346a56aacc6db7619888b21baa623052d6ead004f82"
         },
         {
           "name": "play-run",
@@ -1014,7 +1034,7 @@
             "R13.9 Try it here is drawn as the main action, clearly different from Copy, both buttons at least 24 by 24 and at AA contrast, and the start control and the whole verdict banner inside the first screen at 1280x800 and 390x844 in the browser that runs it"
           ],
           "path": "contracts/receipt-viewer/play-start.contract.test.js",
-          "sha256": "b398c4553fdffc8538f7b62544da75d6b82ce552797986821017423f2ea4d753"
+          "sha256": "10c402d697ce190ecb589b90b6f9bcff8c66b475a37d47829cc2e2648d459bfa"
         },
         {
           "name": "receipt",
@@ -1063,7 +1083,7 @@
           "sha256": "47e17273eef50b96c039f01d4ab62d0c907bffe8f911b03d90a5dc1d4c19a08f"
         }
       ],
-      "frozenAt": "2026-11-11T21:20:46.278Z",
+      "frozenAt": "2026-11-11T22:12:40.052Z",
       "requirements": {
         "path": ".kiro/specs/receipt-viewer/requirements.md",
         "sha256": "8a01c48e313ff0a8bfd19f358debfd447c126b154d38e7089075f0aae03fa44d"

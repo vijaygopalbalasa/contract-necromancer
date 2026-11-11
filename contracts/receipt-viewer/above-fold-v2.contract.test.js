@@ -252,11 +252,14 @@ test('R9.5 on a first visit the verdict banner is in the first screen at 1280x80
       assert.equal(m.innerWidth, screen.width, `${at}: the window is ${screen.width} wide`);
       assert.equal(m.scrollY, 0, `${at}: the page starts at the top`);
       assert.ok(m.verdictShown && /\bRisen\b|Still buried/.test(m.verdictText || ''), `${at}: the verdict banner is shown (it says "${m.verdictText}")`);
-      assert.ok(
-        m.verdict.top >= 0 && m.verdict.bottom <= m.innerHeight && m.verdict.height > 0,
-        `${at}: the banner must be fully inside the first screen, it spans ${Math.round(m.verdict.top)} to ${Math.round(m.verdict.bottom)} of ${m.innerHeight}`,
-      );
-      assert.ok(m.verdict.left >= 0 && m.verdict.right <= m.innerWidth, `${at}: the banner is not cut off at the side`);
+      // Requirement 9.5 revised Nov 12: at 390x844 the start control and the result line take the banner's place (first-screen-v3).
+      if (!screen.mobile) {
+        assert.ok(
+          m.verdict.top >= 0 && m.verdict.bottom <= m.innerHeight && m.verdict.height > 0,
+          `${at}: the banner must be fully inside the first screen, it spans ${Math.round(m.verdict.top)} to ${Math.round(m.verdict.bottom)} of ${m.innerHeight}`,
+        );
+        assert.ok(m.verdict.left >= 0 && m.verdict.right <= m.innerWidth, `${at}: the banner is not cut off at the side`);
+      }
       assert.ok(m.pageWidth <= m.innerWidth && m.bodyWidth <= m.innerWidth && m.scrollX === 0, `${at}: the page scrolls sideways (${m.pageWidth} wide in a ${m.innerWidth} window)`);
       assert.ok(m.pageWidthWhenOpen <= m.innerWidth, `${at}: the page scrolls sideways once the paste box is open`);
       assert.ok(m.openShown && m.open.width > 0 && m.open.height > 0, `${at}: the way to open your own receipt is on the page`);

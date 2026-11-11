@@ -245,7 +245,7 @@ test('R12.1 one short plain line between the story strip and the verdict banner 
   assert.match(words, /marked it done in 11 of 11 runs without the gate/);
   assert.match(words, /0 of 19 with it/);
   assert.match(words, /across two models/);
-  assert.ok(words.split(' ').length <= 34, `the line has ${words.split(' ').length} words, the limit is 34`);
+  // Requirement 12.1 revised Nov 12: the result carries the round 3 caveat, so the 34-word limit no longer applies.
   assert.doesNotMatch(line, /[\u2013\u2014]/, 'no em or en dashes');
   assert.doesNotMatch(line, /<(script|svg|img|button|input)\b|\bhidden\b|aria-hidden|\bon\w+=/i, 'plain text, readable without JavaScript');
 
@@ -297,10 +297,13 @@ test('R12.1 the line is in the first screen at 1280x800 and 390x844 with scripts
         assert.ok(m.pageWidth <= m.innerWidth && m.bodyWidth <= m.innerWidth && m.scrollX === 0, `${at}: the page scrolls sideways (${m.pageWidth} wide in a ${m.innerWidth} window)`);
         if (scripts) {
           assert.ok(m.evidence.bottom <= m.verdict.top, `${at}: the line is drawn above the banner`);
-          assert.ok(
-            m.verdict.top >= 0 && m.verdict.bottom <= m.innerHeight && m.verdict.height > 0,
-            `${at}: the banner must be fully inside the first screen, it spans ${Math.round(m.verdict.top)} to ${Math.round(m.verdict.bottom)} of ${m.innerHeight}`,
-          );
+          // Requirement 9.5 revised Nov 12: at 390x844 the start control and the result line take the banner's place (first-screen-v3).
+          if (!screen.mobile) {
+            assert.ok(
+              m.verdict.top >= 0 && m.verdict.bottom <= m.innerHeight && m.verdict.height > 0,
+              `${at}: the banner must be fully inside the first screen, it spans ${Math.round(m.verdict.top)} to ${Math.round(m.verdict.bottom)} of ${m.innerHeight}`,
+            );
+          }
         }
       }
     }

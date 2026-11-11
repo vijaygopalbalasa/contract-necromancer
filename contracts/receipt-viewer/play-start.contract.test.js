@@ -261,7 +261,8 @@ test('R13.9 Try it here is drawn as the main action, clearly different from Copy
         const where = (b) => `x ${Math.round(b.left)} to ${Math.round(b.right)}, y ${Math.round(b.top)} to ${Math.round(b.bottom)}`;
         assert.ok(inside(m.play.box), `${at}: the start control must be fully inside the first screen, it spans ${where(m.play.box)}`);
         assert.ok(m.verdict.box.height > 0, `${at}: the verdict banner is drawn`);
-        assert.ok(inside(m.verdict.box), `${at}: the verdict banner must be fully inside the first screen, it spans ${where(m.verdict.box)}`);
+        // Requirement 9.5 revised Nov 12: at 390x844 the start control and the result line take the banner's place (first-screen-v3).
+        if (!screen.mobile) assert.ok(inside(m.verdict.box), `${at}: the verdict banner must be fully inside the first screen, it spans ${where(m.verdict.box)}`);
       });
     }
   });

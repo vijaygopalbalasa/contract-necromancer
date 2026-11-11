@@ -111,8 +111,8 @@ one, a `necro check` receipt written after the last freeze (run `necro verify` f
 `.necro/`, here `examples/pumpkin-ledger`):
 
 ```
-node ../../bin/necro.js verify .necro/receipts/ledger/9bef6f841d69c85d596cab31879790c59372d48f8e47dc5bf459d4afefb53097.json
-CONFIRMED 9bef6f841d69c85d596cab31879790c59372d48f8e47dc5bf459d4afefb53097.
+node ../../bin/necro.js verify .necro/receipts/ledger/86e6ee251eaacbfb90f621d45fd704e904bca4e803c0a2a644f9ce2f094a5801.json
+CONFIRMED 86e6ee251eaacbfb90f621d45fd704e904bca4e803c0a2a644f9ce2f094a5801.
 ```
 
 The older receipts print `SUPERSEDED`: they were written before a person froze the spec again (task 9 added contracts,

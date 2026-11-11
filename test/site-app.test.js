@@ -252,7 +252,7 @@ test('a receipt without task and required has no required marks', async () => {
   delete r.task;
   delete r.required;
   await paste(p, JSON.stringify(r));
-  assert.equal(p.text('task'), 'none recorded');
+  assert.equal(p.text('task'), 'No task. This receipt was written by necro check, not by a tick.');
   for (const row of rows(p)) assert.doesNotMatch(row.textContent, /required/);
 });
 

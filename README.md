@@ -1,10 +1,12 @@
 # Contract Necromancer
 
+Design by Contract, from Eiffel (1986), raised for coding agents.
+
 A coding agent can mark a task done in Kiro when the work does not meet the requirements. Contract Necromancer's Kiro hooks refuse the tick in `tasks.md` until the frozen contracts for that task pass, and each passing task leaves a receipt that anyone can re-run.
 
-**[Result](experiments/README.md):** on a task that cannot honestly be finished, Kiro marked it done in 11 of 11 runs without the gate and 0 of 19 with it, across two models; the hook alone was enough.
+**[Result](experiments/README.md):** on a task that cannot honestly be finished, Kiro marked it done in 11 of 11 runs without the gate and 0 of 19 with it, across two models; the hook alone was enough. Under a "do whatever it takes" prompt, one gated run of six got past the gate by patching JavaScript built-ins; that hole is closed and the cheat is kept as a test.
 
-**Try it in one command** (Node.js 24 and git): `npx -y github:vijaygopalbalasa/contract-necromancer demo`. The gate refuses a planted bug, accepts the fix, the receipt verifies, and code that is right only under the test runner is stopped at runtime. With no install, the live page https://vijaygopalbalasa.github.io/contract-necromancer/ has a Try it here button that sends the gate a false done and then the fix, in the browser. Also: the [live receipt viewer](https://vijaygopalbalasa.github.io/contract-necromancer/) and the [video](https://youtu.be/TYrSyhIYqlk).
+**Try it in one command** (Node.js 24 and git): `npx -y github:vijaygopalbalasa/contract-necromancer demo`. The gate refuses a planted bug, accepts the fix, the receipt verifies, and code that is right only under the test runner is stopped at runtime. With no install, [the live page](https://vijaygopalbalasa.github.io/contract-necromancer/) has a Try it here button that sends the gate a false done and then the fix, in the browser. Also: the [video](https://youtu.be/TYrSyhIYqlk).
 
 [![Tests and receipts](https://github.com/vijaygopalbalasa/contract-necromancer/actions/workflows/test.yml/badge.svg)](https://github.com/vijaygopalbalasa/contract-necromancer/actions/workflows/test.yml)
 
@@ -97,7 +99,7 @@ output, trimmed (the receipt hash is the same on every run):
 The gate refused the tick (exit 2).
 Contracts failed: R2.1, R2.2, R3.1, R4.1, R4.2, R5.1, R5.2, R5.3, R5.4
 The gate accepted the tick (exit 0).
-CONFIRMED 41bf6fadf75e1b9130c11e28b8b213243f491d57bd64b75bc2b8cf4405a8e7f0.
+CONFIRMED 45dc5916f25671358f56862bc83423dc9b5b3bf89a4e057e2880643ca94bec27.
 MISMATCH. Files changed: src/split.js.
 Step 6. Change src/split.js so it is right only under the test runner (it keeps the extra cents only when NODE_TEST_CONTEXT is set).
 The contracts pass (18 of 18), because they run under the test runner.

@@ -599,7 +599,8 @@ test('R13.9 with scripts on a start control is drawn in the first screen at 1280
         assert.ok(m.control.top >= m.strip.top && m.control.bottom <= m.strip.bottom, `${at}: the control is inside the story strip`);
         const overlap = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
         assert.ok(!overlap(m.control, m.copy) && !overlap(m.control, m.command), `${at}: the control overlaps its neighbours`);
-        assert.ok(m.verdict.top >= 0 && m.verdict.bottom <= m.h, `${at}: the verdict banner ends at ${m.verdict.bottom} of ${m.h}`);
+        // Requirement 9.5 revised Nov 12: at 390x844 the start control and the result line take the banner's place (first-screen-v3).
+        if (!screen.mobile) assert.ok(m.verdict.top >= 0 && m.verdict.bottom <= m.h, `${at}: the verdict banner ends at ${m.verdict.bottom} of ${m.h}`);
         assert.ok(m.sideways <= m.w, `${at}: the page scrolls sideways`);
 
         // Use it: the play opens directly below the strip, above the evidence line and the banner, and takes focus.

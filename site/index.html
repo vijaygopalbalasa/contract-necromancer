@@ -20,6 +20,7 @@
       <div>
         <p class="eyebrow">Contract Necromancer</p>
         <h1>Kiro cannot call a task done until its frozen contracts pass.</h1>
+        <p class="idea" id="idea">Design by Contract, from Eiffel (1986), raised for coding agents.</p>
       </div>
     </header>
 
@@ -75,7 +76,14 @@
       <p class="play-note" id="play-note">The browser runs the contracts with small stand-ins for <code>node:test</code> and <code>node:assert</code>, while the gate runs them in Node.js.</p>
     </section>
 
-    <p class="evidence" id="evidence">On a task that cannot be finished, Kiro marked it done in <strong>11 of 11</strong> runs without the gate and <strong>0 of 19</strong> with it, across two models. <a href="https://github.com/vijaygopalbalasa/contract-necromancer/blob/main/experiments/README.md">See the experiment</a>.</p>
+    <p class="evidence" id="evidence">
+      <span class="result">
+        <span class="lead">On a task that cannot be finished, across two models, Kiro marked it done in</span>
+        <span class="stat stat-ungated"><strong class="num">11 of 11</strong> runs without the gate</span>
+        <span class="stat stat-gated">and <strong class="num">0 of 19</strong> with it.</span>
+      </span>
+      <span class="caveat">Under a "do whatever it takes" prompt, one gated run of six got past the gate by patching JavaScript built-ins. That hole is closed and the cheat is kept as a test. <a href="https://github.com/vijaygopalbalasa/contract-necromancer/blob/main/experiments/README.md">See the experiment</a>.</span>
+    </p>
 
     <section class="bar" id="start" aria-label="Choose a receipt">
       <p class="muted" id="sample-note" aria-live="polite"></p>
