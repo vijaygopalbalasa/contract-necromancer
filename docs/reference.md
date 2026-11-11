@@ -417,9 +417,10 @@ browser, and shows the command to re-run the receipt. It has no server, no build
   inside the `necro-check` folder it clones. The receipt must be on the default branch of the repository.
   Verifying runs the project's own contracts, which is code from that repository: run it only for a repository you are
   willing to run.
-- Honest limit: the page checks hashes, not test runs. The contracts re-run with `necro verify` on your machine, in
-  Node.js, or with the runner command from `runners.json` for Python and other languages (pytest and Python must be
-  installed for those). MATCH means the receipt was not edited. It does not mean the contracts pass today.
+- Honest limit: the receipt card checks hashes, not test runs. The play runs the example's seven JavaScript-only
+  contracts in the browser, with small stand-ins for `node:test` and `node:assert`. The gate and `necro verify` run every
+  contract in Node.js. For Python and other languages, Node.js starts the runner command from `runners.json` (pytest and
+  Python must be installed for those). MATCH means the receipt was not edited. It does not mean the contracts pass today.
 - Run it locally: browsers do not load ES modules from `file://`, so serve the folder, for example
   `python3 -m http.server -d site`, then open http://localhost:8000/.
 - The file check fetches pinned files from raw.githubusercontent.com, which serves the stored blob. A file kept in Git

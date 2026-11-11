@@ -168,9 +168,9 @@ test('R12.2 the page says that necro verify re-runs JavaScript contracts and run
   assert.doesNotMatch(found[0], /[\u2013\u2014]/);
 });
 
-test('R12.2 the honest limit stays: the browser checks hashes, not test runs, after the receipt', () => {
+test('R12.2 the honest limit stays: the receipt card checks hashes, not test runs, and the play runs seven contracts in the browser, after the receipt', () => {
   const at = html.indexOf('id="about"');
   const about = html.slice(html.lastIndexOf('<section', at), html.indexOf('</section>', at));
-  assert.match(textOf(about), /The browser checks hashes, not test runs\./);
+  assert.match(textOf(about), /The receipt card checks hashes, not test runs, and the play above runs seven of the example's contracts in your browser\./);
   assert.ok(at > idAt('receipt'));
 });

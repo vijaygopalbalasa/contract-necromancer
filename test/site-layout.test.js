@@ -61,7 +61,7 @@ test('the sample switch is visible from the start, above the banner, and the err
 test('the honest limit and the PASS and FAIL legend are still on the page, after the result', () => {
   const about = element('section', 'about');
   assert.match(about, /necro verify/);
-  assert.match(about, /hashes, not test runs/);
+  assert.match(about, /The receipt card checks hashes, not test runs, and the play above runs seven of the example's contracts in your browser\./);
   assert.match(about, /<strong class="legend-alive">PASS<\/strong>/);
   assert.match(about, /<strong class="legend-grave">FAIL<\/strong>/);
   assert.ok(idAt('about') > idAt('receipt'));

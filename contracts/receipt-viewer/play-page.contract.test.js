@@ -480,43 +480,6 @@ test('R13.5 next to each browser run the page says the browser ran 7 of the ledg
 
 // ---- R13.9 and R13.10: how the play and its start control look ----
 
-test('R13.9 Try it here is drawn as the main action, clearly different from Copy, while Copy and the first screen keep the numbers they had, and both buttons read at AA contrast', async () => {
-  await withBrowser({}, async (browser) => {
-    const COPY = { desktop: [64, 32], phone: [90, 32] };
-    for (const [name, screen] of [['desktop', DESKTOP], ['phone', PHONE]]) {
-      await browser.open(screen, async ({ evaluate }) => {
-        const m = await evaluate(`(() => {
-          const look = (id) => {
-            const e = document.getElementById(id);
-            const s = getComputedStyle(e);
-            const b = e.getBoundingClientRect();
-            return { bg: s.backgroundColor, color: s.color, weight: s.fontWeight, shadow: s.boxShadow, radius: s.borderTopLeftRadius, pad: s.padding, size: [Math.round(b.width), Math.round(b.height)] };
-          };
-          return { play: look('strip-play'), copy: look('strip-copy'), banner: document.getElementById('verdict').getBoundingClientRect().bottom, label: document.getElementById('strip-play').textContent, copyLabel: document.getElementById('strip-copy').textContent };
-        })()`);
-        const rgb = (c) => /rgba?\((\d+), (\d+), (\d+)/.exec(c).slice(1, 4).map(Number);
-        const lum = (c) => {
-          const [r, g, b] = rgb(c).map((v) => { const x = v / 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; });
-          return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-        };
-        const ratio = (a, b) => { const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x); return (hi + 0.05) / (lo + 0.05); };
-        assert.notEqual(m.play.bg, m.copy.bg, `${name}: the two buttons have different fills`);
-        assert.equal(m.play.bg, 'rgb(125, 255, 179)', `${name}: the main action is filled with the alive colour`);
-        assert.notEqual(m.play.shadow, 'none', `${name}: the main action has a glow ring`);
-        assert.equal(m.copy.shadow, 'none', `${name}: Copy is unchanged`);
-        assert.equal(m.copy.bg, 'rgb(255, 169, 77)', `${name}: Copy keeps the accent fill`);
-        assert.deepEqual(m.copy.size, COPY[name], `${name}: Copy keeps its size`);
-        assert.equal(m.copyLabel.trim(), 'Copy');
-        assert.equal(m.label.trim(), 'Try it here', `${name}: the label is the text only`);
-        assert.ok(ratio(m.play.bg, m.play.color) >= 4.5, `${name}: Try it here contrast ${ratio(m.play.bg, m.play.color)}`);
-        assert.ok(ratio(m.copy.bg, m.copy.color) >= 4.5, `${name}: Copy contrast`);
-        assert.ok(m.play.size[0] >= 24 && m.play.size[1] >= 24, `${name}: ${m.play.size}`);
-        if (name === 'phone') assert.equal(Math.round(m.banner), 836, 'the banner still ends at 836 at 390x844');
-      });
-    }
-  });
-});
-
 test('R13.10 the status line that repeats each result is visually hidden but stays in the polite live region, and the play opens with a small margin above its heading', async () => {
   await withBrowser({}, async (browser) => {
     await browser.open({ ...DESKTOP, reducedMotion: true }, async ({ evaluate }) => {

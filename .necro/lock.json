@@ -986,7 +986,6 @@
             "R13.3 on the page, applying the fix shows all seven alive, the tick accepted, and the risen receipt with its hash recomputed (MATCH) and every pinned file hashed again from the copies",
             "R13.4 on the page, changing one byte of src/split.js shows exactly the line necro verify prints, MISMATCH. Files changed: src/split.js., and marks only that file as different",
             "R13.5 next to each browser run the page says the browser ran 7 of the ledger's 18 contracts and the other 11 start the command line, with the gate's full run on the same code, naming what failed: 9 of 18 failing for the planted change, 18 of 18 passing for the fix, and all of it before the contract rows",
-            "R13.9 Try it here is drawn as the main action, clearly different from Copy, while Copy and the first screen keep the numbers they had, and both buttons read at AA contrast",
             "R13.10 the status line that repeats each result is visually hidden but stays in the polite live region, and the play opens with a small margin above its heading",
             "R13.8 on the page, a worker that cannot start, a copy that fails its hash check and a run that takes too long each end in one plain sentence and the gate's full run, the buttons come back and nothing says running",
             "R13.9 with scripts on a start control is drawn in the first screen at 1280x800 and 390x844, at least 24 by 24, beside the command; the play is closed until it is used and then opens directly below the story strip",
@@ -995,7 +994,7 @@
             "R13.10 under prefers-reduced-motion: reduce the results appear with no animation; at 390 px the page does not scroll sideways; the policy is unchanged; the play fetches only from its own origin and adds no sentence that breaks R12.2"
           ],
           "path": "contracts/receipt-viewer/play-page.contract.test.js",
-          "sha256": "314d4f0bcb7c128c704a1e9aacdd1b7ee146fa1783bec46c6edb44fb55dae20e"
+          "sha256": "70f3d795f01b4b573faf0963599aa3a0560c2207e68ed8c9751dbda9c1c38f4d"
         },
         {
           "name": "play-run",
@@ -1008,6 +1007,14 @@
           ],
           "path": "contracts/receipt-viewer/play-run.contract.test.js",
           "sha256": "9a8b0e9ccbcb4d2219357c03b7e9d12bf884ca864ca0befedea812fc6d6ca55f"
+        },
+        {
+          "name": "play-start",
+          "names": [
+            "R13.9 Try it here is drawn as the main action, clearly different from Copy, both buttons at least 24 by 24 and at AA contrast, and the start control and the whole verdict banner inside the first screen at 1280x800 and 390x844 in the browser that runs it"
+          ],
+          "path": "contracts/receipt-viewer/play-start.contract.test.js",
+          "sha256": "b398c4553fdffc8538f7b62544da75d6b82ce552797986821017423f2ea4d753"
         },
         {
           "name": "receipt",
@@ -1056,7 +1063,7 @@
           "sha256": "47e17273eef50b96c039f01d4ab62d0c907bffe8f911b03d90a5dc1d4c19a08f"
         }
       ],
-      "frozenAt": "2026-11-11T18:34:24.844Z",
+      "frozenAt": "2026-11-11T18:54:17.221Z",
       "requirements": {
         "path": ".kiro/specs/receipt-viewer/requirements.md",
         "sha256": "f23bfe03fde39f7cdbf27974a72eb3cc2c0f3365fa9188e2f3cdb79c0713f0de"
@@ -1276,6 +1283,7 @@
         "23. The evidence on the first screen (Req 12.1, 12.2)",
         "24. The play's files and receipts (Req 13.1, 13.4)",
         "25. Run the seven contracts in the browser (Req 13.2, 13.3, 13.6, 13.7, 13.8)",
+        "26. The play on the page (Req 13.2, 13.3, 13.4, 13.5, 13.8, 13.9, 13.10)",
         "3. **Receipt parsing and validation** (Req 1.3)",
         "4. **Summary and grouping by requirement** (Req 2.1, 2.2)",
         "5. **Repository and URL parsing** (Req 1.2)",

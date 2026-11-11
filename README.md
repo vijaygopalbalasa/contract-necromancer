@@ -4,7 +4,7 @@ A coding agent can mark a task done in Kiro when the work does not meet the requ
 
 **[Result](experiments/README.md):** on a task that cannot honestly be finished, Kiro marked it done in 11 of 11 runs without the gate and 0 of 19 with it, across two models; the hook alone was enough.
 
-**Try it in one command** (Node.js 24 and git): `npx -y github:vijaygopalbalasa/contract-necromancer demo`. The gate refuses a planted bug, accepts the fix, the receipt verifies, and code that is right only under the test runner is stopped at runtime. Also: the [live receipt viewer](https://vijaygopalbalasa.github.io/contract-necromancer/) and the [video](https://youtu.be/TYrSyhIYqlk).
+**Try it in one command** (Node.js 24 and git): `npx -y github:vijaygopalbalasa/contract-necromancer demo`. The gate refuses a planted bug, accepts the fix, the receipt verifies, and code that is right only under the test runner is stopped at runtime. With no install, the live page https://vijaygopalbalasa.github.io/contract-necromancer/ has a Try it here button that sends the gate a false done and then the fix, in the browser. Also: the [live receipt viewer](https://vijaygopalbalasa.github.io/contract-necromancer/) and the [video](https://youtu.be/TYrSyhIYqlk).
 
 [![Tests and receipts](https://github.com/vijaygopalbalasa/contract-necromancer/actions/workflows/test.yml/badge.svg)](https://github.com/vijaygopalbalasa/contract-necromancer/actions/workflows/test.yml)
 
@@ -105,6 +105,8 @@ The ledger stopped with a ContractViolation (exit 1).
 ContractViolation: R5.1 splitExpense: the shares of 3225 cents add up to 3224 cents. ...
 ```
 
+To try it with no install, open the live page https://vijaygopalbalasa.github.io/contract-necromancer/ and press the Try it here button. It sends the gate a false done and then the fix, in the browser.
+
 ## See it
 
 - [Live receipt viewer](https://vijaygopalbalasa.github.io/contract-necromancer/), which opens a receipt from a Raw link on `https://raw.githubusercontent.com/vijaygopalbalasa/contract-necromancer/` with `?receipt=`.
@@ -147,7 +149,7 @@ function with no postcondition can still lie. [More](docs/reference.md#runtime-p
 - Guard rails, not a sandbox: a shell command or the contract code can change any file, including `.necro/`. The guarantee is `necro verify`, which trusts `.necro/lock.json`; commit it, check `git diff` before you trust a receipt, and run `necro verify` in CI.
 - Receipts are files in the project, so an agent able to write files can add one. A forged receipt can only make `necro audit` accept a task whose required contracts pass now: it can fake where a tick came from, not whether the work holds.
 - `--frozen-intrinsics` freezes the language's built-in prototypes (`String`, `Array`, `Object`, `Map` and the rest), not `JSON`, `Buffer`, the global names or Node's modules, and `plain()` cannot help against code that changes what a test framework does. Contracts that check `console` output get a writable copy of `console`.
-- The viewer page checks hashes, not test runs.
+- The receipt card on the viewer page checks hashes, not test runs. The play runs the example's seven JavaScript-only contracts in the browser, with small stand-ins for `node:test` and `node:assert`. The gate and `necro verify` run every contract in Node.js.
 - The experiment is small: 3 to 5 runs per cell, two small models, one project, one planted contradiction.
 
 ### What runner contracts cannot defend against

@@ -64,7 +64,8 @@ error sentences, is still not caught. See [Runtime postconditions](reference.md#
 
 ## The receipt viewer
 
-The page checks hashes, not test runs. MATCH means the receipt was not edited. It does not mean the contracts pass today.
+The receipt card checks hashes, not test runs. The play runs the example's seven JavaScript-only contracts in the browser,
+with small stand-ins for `node:test` and `node:assert`. The gate and `necro verify` run every contract in Node.js. MATCH means the receipt was not edited. It does not mean the contracts pass today.
 Verifying a receipt runs the project's own contracts, which is code from that repository: run it only for a repository you
 are willing to run. A file kept in Git LFS comes back as a pointer file and shows as different. Layout at phone width and
 the clipboard cannot be tested in Node; they are checked by hand.
