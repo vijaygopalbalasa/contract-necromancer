@@ -346,3 +346,173 @@ shows this project's own receipts.
   the behavior the gate enforces.
 - Receipts can only be fetched from raw.githubusercontent.com in this version. GitHub `blob` links are refused with a
   message that says to use the Raw button.
+
+## Play (Req 13)
+
+The play lets a visitor send the gate a false "done", see it refused, apply the fix, see it accepted, and change one byte
+to see the receipt fail. Tasks 24 to 26 build it in three parts: the files and the pure checks (task 24), the worker that
+runs the contracts (task 25), and the page (task 26). This section is written with task 24 and says what the later tasks
+will do, so they do not have to decide it again.
+
+### Where the files live, and why (Req 13.1)
+
+`site/play/` holds byte copies of every file that the risen receipt and `site/sample-buried.json` pin, taken from
+`examples/pumpkin-ledger`. `site/` is the only folder GitHub Pages publishes, so the page cannot read the example in
+place, and it must not fetch code from anywhere but its own origin (Req 13.10). The copies are the evidence that the
+receipts describe real code, and the worker runs them, so they must be exactly the example's bytes. A contract
+(`play-files.contract.test.js`, R13.1) compares them with the example, so a copy cannot drift.
+
+```
+site/play/
+  risen-receipt.json                      written by the gate, never by hand
+  kiro/specs/ledger/requirements.md       copy of .kiro/specs/ledger/requirements.md
+  kiro/specs/ledger/runners.json          copy of .kiro/specs/ledger/runners.json
+  bin/ledger.js
+  contracts/ledger/postconditions.js
+  contracts/ledger/{properties,requirement-1-read,requirement-2-split,requirement-3-settle,requirement-4-cli}.contract.test.js
+  src/{balances,errors,money,parse,report,runtime,settle,split}.js
+  test/gen.js
+```
+
+That is 18 copies and the receipt. The risen receipt pins more than the buried sample does: it also pins `runners.json`
+and three locked files (`bin/ledger.js`, `contracts/ledger/postconditions.js`, `src/runtime.js`), because the gate of today
+pins them. The buried sample is older and does not. The union is copied, so both receipts check against the same folder.
+`site/lib/receipt.js` `pinnedFiles` lists requirements, contracts and sources only, so `site/lib/play.js` has its own
+`playPins`, which lists the same files `necro verify` re-hashes (including `runners` and `frozen`).
+
+### The risen receipt
+
+`site/play/risen-receipt.json` is the receipt that `node bin/necro.js demo` printed when the gate accepted task 4 in a copy
+of the example: spec `ledger`, task `4`, 18 contracts, all passing, `gitCommit` null (the demo copy is not a git
+repository). It was copied from the path the demo printed. It is not edited, and its hash recomputes. Because it has no
+commit, the page's file check against GitHub (Req 4.2) does not apply to it, which is why the play checks it against the
+copies instead.
+
+The buried side is `site/sample-buried.json`, which `necro check` wrote on a copy with the planted change. Every pin in it
+matches the copies except `src/split.js`, whose pin is the hash of the planted version. The planted change is the one
+`necro demo` makes (`Math.floor(cents / n)` becomes `Math.round(cents / n)`, and `const extra = cents % n;` becomes
+`const extra = 0;`). `PLANTED_CHANGE` in `site/lib/play.js` holds those two pairs, and `applyPlanted` throws when the text it
+is given does not hold them, so a wrong file is never passed off as the planted one.
+
+### The path map
+
+GitHub Pages may leave out folders whose names start with a dot, so `.kiro/specs/ledger/requirements.md` is stored as
+`kiro/specs/ledger/requirements.md`. `copyPath` in `site/lib/play.js` is the one place that maps a pinned path to a copy
+path: it drops a leading dot from each segment. `copyUrl(path, base)` adds the base, the `play/` folder and
+`encodeURIComponent` for each segment. Pins keep their real paths everywhere else, because a hash check compares what the
+receipt says, and `necro verify` prints the real path in its `MISMATCH` line. A test checks that no pin of either receipt
+maps to a copy path with a dotted segment and that no two pins map to one copy.
+
+### The pure module `site/lib/play.js`
+
+| Export | Purpose |
+|---|---|
+| `PLAY_DIR`, `RISEN_RECEIPT` | Folder and file name of the copies and of the risen receipt. |
+| `PLANTED_CHANGE`, `applyPlanted(text)` | The planted change, and a function that applies it or throws. |
+| `copyPath`, `copyUrl` | The path map above. |
+| `playPins(receipt)` | Every pinned file, once per (path, sha256). |
+| `checkPlayFiles({ receipt, fetchFn, base, change })` | Fetch each copy from the page's own folder, apply `change[path](bytes)` when given, hash the bytes, compare with the pin. Status `match`, `different` or `unavailable`. |
+| `changeOneByte(bytes)` | A copy with one byte changed (the low bit of the first byte), the same length. |
+| `mismatchLine(result)` | `MISMATCH. Files changed: <sorted paths, comma and space>.`, the words `necro verify` prints, or `null`. |
+
+`checkPlayFiles` follows the rules of `files.js`: fetch is injected, bytes are hashed (never text), an unsafe path is never
+requested, and a copy that cannot be fetched is `unavailable`, never `different`. An unavailable copy gives no `MISMATCH`
+line, because the page did not look. The module imports only `canon.js` and `repo.js`, so the rule that nothing in `site/`
+imports `node:` or a bare specifier still holds.
+
+### One byte (Req 13.4)
+
+The step fetches the copies, changes one byte of the bytes of `src/split.js` in memory, hashes, and prints
+`mismatchLine(result)`. Nothing is stored. The contract `R13.4` does the same change in a scratch copy of the example, runs
+the real `necro verify` on the risen receipt, and requires the same line from both. `necro verify` stops at the changed
+file before it re-runs any contract, so the line does not depend on the contracts.
+
+### How the worker will load modules (Req 13.2, 13.3, 13.6, 13.7; task 25)
+
+A throwaway spike, checked in Chromium and WebKit (Firefox was not tested), ran the seven contracts in a module Worker in
+about 0.1 s. The worker fetches the files as text, builds `blob:` modules from them, and points `node:test`,
+`node:assert/strict` and the relative imports at those blobs. Workers have no import maps, so the loader rewrites the
+module specifiers in the text it has already hashed: the static `from './x.js'` of the `src/` files and the dynamic
+`import('../../src/x.js')` of the contract files. It builds the `src/` and `test/gen.js` blobs first, in dependency order,
+then the two contract files.
+
+Task 25 adds four files for this, all under `site/lib/`, which `test/site-canon.test.js` scans (no `node:` import, no bare
+specifier): `site/lib/play-worker.js` (the worker), `site/lib/play-loader.js` (reads the hashed text, rewrites the specifiers,
+builds the blobs), `site/lib/play-node-test.js` (the `node:test` stand-in) and `site/lib/play-node-assert.js` (the
+`node:assert/strict` stand-in). None goes under `site/play/`: R13.1 keeps that folder for the byte copies and
+`risen-receipt.json` only, and fails on any other file there.
+
+The seven contracts are `requirement-2-split.contract.test.js` (R2.1, R2.2) and `properties.contract.test.js` (R5.1 to
+R5.5). Their imports are `node:test`, `node:assert/strict`, `src/split.js`, `src/parse.js`, `src/balances.js`,
+`src/settle.js`, `src/report.js` and `test/gen.js`, plus `src/errors.js` and `src/money.js` through those. All of them are
+pinned in the buried sample, so each run has a pin for everything it executes. The other 11 contracts need the ledger's
+command line (they start a process), which a browser cannot do. The seven are a fixed list in the code, never inferred from
+an error (Req 13.5).
+
+Why this is safe to do outside the page's Content Security Policy: a dedicated worker loaded from the page's origin takes its
+policy from its own response headers, not from the `<meta>` tag in `index.html`, and GitHub Pages sends none. With
+`script-src 'self'` sent as a header on the worker, both engines refuse the `blob:` import. So the worker sits outside the
+page's policy, and the policy in `index.html` stays as it is (Req 13.10). The safety comes from the worker, not from the
+policy:
+
+- It takes only a run name, `planted` or `fixed`. It takes no code, path or URL from the page, the paste box or the address.
+- Before it builds any module it fetches the copies and checks each against the pin in the receipt for that run: the buried
+  sample for `planted` (with `applyPlanted` applied to `src/split.js` first), the risen receipt for `fixed`. One mismatch
+  stops the run before anything is built.
+- It builds modules only from those hashed files and from the two stand-ins it ships. An import it does not know is refused.
+- It stops after 10 seconds (Req 13.8).
+
+The stand-ins are small. `node:test` provides `test(name, fn)` and runs the tests in order, recording pass or fail and the
+assertion message. `node:assert/strict` provides `equal`, `deepEqual`, `ok` and `throws` with Node's strict behaviour for the
+values the contracts compare. The page says so in one sentence (Req 13.7), and the contract `R13.7` compares the browser's
+result for each of the seven with a real `necro check ledger` in Node on the same code.
+
+### The fallback (Req 13.8)
+
+A run ends in one of three ways: results, or a plain sentence plus the gate's full run from the receipts. The sentence covers
+a worker that cannot start, a copy whose hash does not match, and a run past 10 seconds. After the sentence the page shows
+the result of the gate's full run for that step: for the planted change, 9 failing of 18 from the buried sample, and for the
+fix, 18 passing from the risen receipt. A step never stays on "running": a timer in the page ends a run even if the worker
+never answers, and terminates the worker.
+
+### The start control and the first screen (Req 13.9; task 26)
+
+The frozen R9.5 contract needs the verdict banner fully inside the first screen. Measured today in headless Chrome:
+
+| Window | Story strip | Banner | Spare below the banner |
+|---|---|---|---|
+| 1280x800 | 128 to 292 | 559 to 693 | 107 px |
+| 390x844 | 97 to 388 | 714 to 836 | 8 px |
+
+At 1280x800 there is room. At 390x844 there are 8 px, so the control may add no height there. The plan:
+
+- The control is a button in the existing `.try` row of the story strip, in the grid cell beside the label "See it happen
+  for real:", which today spans the whole row. The label takes the first column and the button the second. A label is one
+  line high, so the button is sized to that line (`min-height` equal to the label's line, small padding) and the row does
+  not grow.
+- If the measured banner bottom at 390x844 moves, the pixels are taken back from the phone-width spacing of the strip
+  (the gap between the evidence line and the bar, the beat padding), not from content. Task 26 measures both windows in
+  headless Chrome and reports the numbers; the frozen R9.5, R10, R11 and R12 contracts must pass unchanged.
+- The play is a `<section id="play" hidden>` placed directly after `#strip`, before the evidence line, and shown when the
+  control is used. It is hidden in the first-visit view, so the first screen does not change until a visitor asks for it, and
+  it needs no change to the banner logic: opening it does not call the code that brings the banner into view.
+- Without scripts the control is not drawn: the page says nothing about the play, so a visitor never sees a button that does
+  nothing (Req 13.9 says "with scripts on").
+- No sentence the play adds may say that contracts run only in Node, and none may be a second sentence naming
+  `necro verify`, JavaScript contracts and runner contracts, because the frozen R12.2 contract counts exactly one.
+
+### What the browser does not do
+
+The browser runs 7 of the ledger's 18 contracts. It checks hashes for the rest of the pins, and it does not start the
+ledger's command line, so R1, R3 and R4 (11 contracts) are not run in the browser. The page says this next to every browser
+run (Req 13.5) and shows the gate's full-run result from the receipts beside it. A browser run is a preview of the gate on
+the same code, not a replacement for `necro verify`.
+
+### Requirement coverage
+
+| Criterion | Where | Task |
+|---|---|---|
+| 13.1 | `site/play/`, `site/lib/play.js`, `play-files.contract.test.js` | 24 |
+| 13.4 | `site/lib/play.js` (`changeOneByte`, `mismatchLine`), `play-files.contract.test.js` | 24 |
+| 13.2, 13.3, 13.6, 13.7, 13.8 | worker, loader, stand-ins | 25 |
+| 13.5, 13.9, 13.10, and the page side of 13.2, 13.3, 13.4, 13.8 | `index.html`, `style.css`, `app.js` | 26 |

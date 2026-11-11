@@ -73,8 +73,11 @@ test('no file under site/ imports a node: module or a bare specifier', () => {
   const walk = (dir) => {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
       const p = path.join(dir, e.name);
-      if (e.isDirectory()) walk(p);
-      else if (e.name.endsWith('.js')) files.push(p);
+      // site/play/ holds byte copies of the ledger example, which is Node code (node:fs and the like). The page never
+      // imports them: the worker reads them as text, checks their hashes and rewrites their imports (design.md, Play).
+      if (e.isDirectory()) {
+        if (!(e.name === 'play' && path.resolve(dir) === path.resolve(fileURLToPath(SITE)))) walk(p);
+      } else if (e.name.endsWith('.js')) files.push(p);
     }
   };
   walk(fileURLToPath(SITE));
