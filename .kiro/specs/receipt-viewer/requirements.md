@@ -119,3 +119,12 @@ stand-ins for `node:test` and `node:assert`. (Revised Nov 11 for Requirement 13.
 4. WHEN a receipt has no task (a receipt written by `necro check`, not by a tick) THE SYSTEM SHALL say so in its task line in plain words instead of "none recorded".
 5. THE contracts for this requirement and for the revised 9.5 and 12.1 SHALL check geometry against the window, computed styles and text, and SHALL NOT pin pixel sizes or positions, so they pass on any operating system's fonts.
 
+
+## Requirement 15: The re-run command works for the receipt it is shown with, or is not offered
+**User story:** As a judge who copies the page's re-run command for a receipt, I want it to reach CONFIRMED whenever the receipt can be re-run from the repository, and to be told plainly when it cannot and what to run instead, so that the project's own evidence never answers me with an error.
+### Acceptance criteria
+1. WHEN the receipt names a valid commit and its `uncommitted` list is empty THE SYSTEM SHALL offer the re-run command, and the command SHALL check that commit out on a named local branch, not as a detached HEAD, so that a contract which clones the checkout (such as R5.2's) finds `origin/HEAD` and passes as it does in a plain clone.
+2. WHEN the receipt's `uncommitted` list is not empty THE SYSTEM SHALL NOT offer the clone command. It SHALL say in plain words that the receipt was written before some of the files it pins were committed, so a clone at its commit cannot re-run it, SHALL name those files, and SHALL give `necro verify` with the receipt's path to run in the project's own working copy, with a copy button for that line.
+3. WHEN the receipt names no commit THE SYSTEM SHALL NOT offer the clone command. It SHALL say that the receipt names no commit, so it can be re-run only in the folder that made it, and SHALL give `necro verify` with the receipt's path for that folder. This covers the buried sample and a receipt pasted from `necro demo`.
+4. THE SYSTEM SHALL decide between 1, 2 and 3 from the receipt's own fields (`gitCommit` and `uncommitted`) alone, with no network request, and the Check files button (Requirement 7) SHALL keep working as it does.
+5. THE contracts for this requirement SHALL show, without the network, that the command given for a committed receipt reaches CONFIRMED from a clone of this repository, including for a receipt that pins R5.2's contract, and that receipts of kinds 2 and 3 get no clone command.
