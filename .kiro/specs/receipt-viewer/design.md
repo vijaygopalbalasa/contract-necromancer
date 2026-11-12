@@ -516,3 +516,147 @@ the same code, not a replacement for `necro verify`.
 | 13.4 | `site/lib/play.js` (`changeOneByte`, `mismatchLine`), `play-files.contract.test.js` | 24 |
 | 13.2, 13.3, 13.6, 13.7, 13.8 | worker, loader, stand-ins | 25 |
 | 13.5, 13.9, 13.10, and the page side of 13.2, 13.3, 13.4, 13.8 | `index.html`, `style.css`, `app.js` | 26 |
+
+## Re-run box (Req 15)
+
+Requirement 15 came from a stranger test on Nov 12: the command in the re-run box does not reach CONFIRMED for most of this
+repository's own receipts. This section says what the box shows for each receipt and why the contracts for it
+(`contracts/receipt-viewer/rerun-box.contract.test.js`, task 28) are shaped as they are. It changes `site/lib/repo.js`,
+`site/app.js` and `site/index.html` only.
+
+### What goes wrong today
+
+Three causes, each seen on this repository's own receipts:
+
+1. **A detached checkout.** The command does `git checkout <commit>`, which leaves HEAD detached. A contract in the
+   receipt that clones the checkout finds no `origin/HEAD` in the clone (a clone of a detached HEAD does not set it), so
+   R5.2's `git checkout origin/HEAD -- <receipt>` fails and `necro verify` prints `MISMATCH. Contracts changed: R5.2 ...`.
+   Measured by hand in a scratch folder (macOS, git 2.51, Node.js 24.22, Chrome 157, a local copy of this repository
+   standing in for GitHub): the command the page builds today for the receipt
+   `.necro/receipts/receipt-viewer/a5577499...json` (commit 3596b034, `uncommitted` empty, pins R5.2) ends in that
+   MISMATCH after about 8 s; with the checkout on a branch it prints `CONFIRMED a5577499...` after about 45 s. Not yet seen
+   on Ubuntu CI.
+2. **Files the commit does not hold.** The gate writes the receipt before the work is committed, so the receipt pins files
+   that are not in the commit it names (`uncommitted` lists them). 47 of the 70 receipts under `.necro/receipts/` have a
+   non-empty list. A clone at the commit cannot match their pins, whatever the command does.
+3. **No commit.** A receipt written outside a git repository (the buried sample, a receipt from `necro demo`) has
+   `gitCommit: null`. The command still clones, drops the checkout, and ends in `necro verify` on a receipt that is not in
+   the clone.
+
+### The three kinds
+
+The box decides from `gitCommit` and `uncommitted` and from nothing else (15.4). It never reads the repository box for the
+decision, the hash check, the contract results or the network.
+
+| Kind | When | The box shows |
+|---|---|---|
+| clone | `gitCommit` is a full 40-character commit id and `uncommitted` is empty or absent | The clone command, as today, plus a checkout on a named branch (15.1). The two paragraphs about the verifier (Req 5.3) stay with it. |
+| uncommitted | a valid commit and `uncommitted` holds at least one path | No clone command. A sentence saying the receipt was written before some of the files it pins were committed, so a clone at its commit cannot re-run it. The files, as a list. `necro verify <receipt path>` to run in the project's own working copy, with a copy button (15.2). |
+| no-commit | `gitCommit` is null, absent, or not a full commit id | No clone command. A sentence saying the receipt names no commit, so it can be re-run only in the folder that made it. `necro verify <receipt path>` for that folder, with a copy button (15.3). |
+
+Decisions the requirement leaves open, made here so a person can overrule them when they review:
+
+- **No commit wins over a file list.** A receipt with `gitCommit: null` and a non-empty `uncommitted` is the third kind:
+  without a commit there is nothing it could be "not in yet". The contracts only require that it gets no clone command and
+  the local line.
+- **A `gitCommit` that is not 40 lowercase hex characters counts as no commit.** `files.js` (`checkFiles`) and `verifyCommand`
+  already treat it that way.
+- **A missing `uncommitted` field is an empty list.** Receipts written before the field existed, and the frozen R5.1 and
+  R5.3 contracts' receipts, have none, and they must keep getting the clone command.
+- **The receipt's path is the default place**, `.necro/receipts/<spec>/<receiptHash>.json`, as in the clone command. The
+  second and third kinds assume `necro` is installed where the reviewer runs the line (their own project), so the line is
+  plain `necro verify <path>` without the verifier definition. That verifier-pinning exists to stop a cloned project from
+  supplying its own verifier (Req 5.3); a reviewer who runs the line in their own working copy chose that verifier.
+
+### The code
+
+`site/lib/repo.js`:
+
+- `verifyCommand({ repo, receipt })` keeps its signature and still returns a string. For a valid commit it now emits, in
+  this order: `git checkout <commit>`, `git checkout -B necro-check`, `git checkout origin/HEAD -- <receipt file>`. The first
+  step is kept as it is because the frozen R5.1 contract looks for `git checkout <commit>` after the clone. Both new and old
+  steps start with `git checkout `, which the frozen R5.3 contract counts as project checkouts that must come before the
+  verifier is cloned. `-B` rather than `-b` so a repository whose default branch is called `necro-check` still works; HEAD is
+  detached at that point, so nothing is lost. For a receipt with no valid commit the command is as before (R5.3 asks
+  `verifyCommand` for such a receipt), but the page does not show it.
+- `localCommand(receipt)` returns `necro verify <path>`, with the path quoted by `shQuote` like every receipt field that
+  reaches a command.
+- `rerunPlan({ repo, receipt })` is the pure decision. It returns `{ kind: 'clone', command }`,
+  `{ kind: 'uncommitted', files, command }` or `{ kind: 'no-commit', command }`. `files` holds the string entries of
+  `uncommitted`, in receipt order. It does no I/O.
+
+`site/app.js`:
+
+- `updateCommand()` calls `rerunPlan` and shows the matching block. It still runs when the receipt is shown and when the
+  repository box changes. Only the clone kind depends on the repository box.
+- `NO_COMMIT_NOTE` and the `command-note` element go away: that note described a clone command without a checkout, which
+  the page no longer shows. Two constants take their place, `UNCOMMITTED_WHY` ("This receipt was written before some of the
+  files it pins were committed, so a clone at its commit cannot re-run it. These files were not in the commit yet:") and
+  `NO_COMMIT_WHY` ("This receipt names no commit, so it can be re-run only in the folder that made it."). Each local block
+  ends with one line saying where to run the command ("Run this in the project's own working copy:" for the second kind,
+  "Run this in that folder:" for the third).
+- File names come from the receipt and are untrusted: they are written with `textContent` into `li` elements.
+- The copy button for the local line uses the same `copyText` as the others and shows the same `Copied.` and
+  `Select the command and copy it.` notes.
+- The Check files button (`runFileCheck`, `checkFiles`) is not touched (15.4).
+
+`site/index.html`, inside `<section id="run">`:
+
+```
+h2 "Re-run it yourself"
+div#run-clone                         the two existing paragraphs, pre#command, button#copy, span#copy-note
+div#run-local[hidden]                 p#local-why, ul#local-files, p#local-where,
+                                      pre#local-command, button#local-copy "Copy command", span#local-copy-note
+```
+
+Exactly one of the two blocks is visible at a time. `pre#command` stays the first `pre` with an id in the document (the
+frozen R7.4 contract finds the re-run command that way), and `pre#local-command` comes after it. The text of the
+Requirement 5.3 warning stays inside `#run`, in the clone block. `test/site-style.test.js` slices the page between
+`id="run"` and `id="file-check"` to find it.
+
+### The contracts
+
+`rerun-box.contract.test.js` has one test per criterion. They are written against what the page shows, not against
+`rerunPlan`, so the module that decides can be named otherwise.
+
+| Test | What it does |
+|---|---|
+| R15.1 | Shows the committed fixture and reads the clone command from the box. Runs the project's part of that command (every step before the verifier is cloned) in `sh` against a local copy, then checks that HEAD is a named branch at the receipt commit, that the receipt file is in the checkout, and that a clone of the checkout has `origin/HEAD`. |
+| R15.2 | Shows the uncommitted fixture. No visible line of the page holds `git clone` or `git checkout`. The box has the sentence (written before, committed, clone), says working copy, names both uncommitted files and no committed one, shows exactly `necro verify <path>`, and its one copy button copies that line. Typing another repository changes nothing. |
+| R15.3 | The same for the buried sample and the demo receipt, with the sentence (names no commit, only, folder). |
+| R15.4 | Eight receipts that differ only in `gitCommit`, `uncommitted`, spec and a made-up hash, shown one after another on one page with the repository box filled and empty: the kind follows the two fields, nothing is left over from the receipt before, and the page fetches nothing. Then the Check files button on the four fixtures with a fetch that answers 404: files at the commit are requested, uncommitted files are marked and never requested, and a receipt with no commit is told the check needs a commit. |
+| R15.5 | The four fixtures get a clone command only if committed. Then the committed fixture's command runs in `sh` with git and node and no `necro` against a local copy of this repository, and must print `CONFIRMED <hash>` and exit 0. |
+
+How the local copy is made, and why it differs from R5.2's: R5.2 points git at this repository's own folder. These
+contracts first make a bare repository from this repository's HEAD with `main` as its default branch, and point git at that.
+GitHub always has a default branch, and a pull-request build checks this repository out detached, whose clone would have no
+`origin/HEAD` for reasons that have nothing to do with the command. Git's own configuration is switched off with
+`GIT_CONFIG_GLOBAL=/dev/null` and `GIT_CONFIG_NOSYSTEM=1`. HOME is the real one, not an empty folder as in R5.2: the
+fixture's receipt pins page contracts that start a headless Chrome, and Chrome hung on macOS with an empty HOME (seen with
+Chrome 157). R5.2 still checks that the command changes nothing outside the folder it clones.
+
+Fixtures, all existing files, with their shape asserted before use so a change to one cannot turn a test into another test:
+
+| Fixture | Why this one |
+|---|---|
+| `.necro/receipts/receipt-viewer/a5577499...json` | Commit 3596b034, `uncommitted` empty, pins the R5.2 contract, 39 contracts, task none. Its checkout re-runs in about 45 s, most of it the nested R5.2 run. The other receipts that pin R5.2 and have an empty list (up to 7edf93aa, 74 contracts) re-run more contracts, and every one of them starts browser contracts too; none was timed. |
+| `.necro/receipts/receipt-viewer/00e62843...json` | Commit 1d17794d, two uncommitted files (`site/app.js` and the R13 page contract). |
+| `site/sample-buried.json` | `gitCommit` null, no `uncommitted` field. |
+| `site/play/risen-receipt.json` | What `necro demo` writes. `gitCommit` null. |
+
+What the contracts do not do: re-run the risen sample (R5.2 does, through the same command), test a `gitCommit` that is not a
+full commit id, or test a receipt with no commit and a file list beyond "no clone command". R15.5 needs a Chrome or
+Chromium on the machine, as the receipt it re-runs does; set `CHROME_PATH` when it is not in a usual place.
+
+Checked in a scratch copy of the repository with this design applied: all five tests pass (R15.5 in about 46 s), and the
+frozen R5.1, R5.2, R5.3 and R7.4 contracts still pass. On the current code all five fail (task 28 lists why).
+
+### Requirement coverage
+
+| Criterion | Where | Task |
+|---|---|---|
+| 15.1 | `site/lib/repo.js` (`verifyCommand`), `rerun-box.contract.test.js` | 28 |
+| 15.2 | `site/lib/repo.js` (`rerunPlan`, `localCommand`), `site/app.js`, `site/index.html` | 28 |
+| 15.3 | `site/lib/repo.js` (`rerunPlan`, `localCommand`), `site/app.js`, `site/index.html` | 28 |
+| 15.4 | `site/lib/repo.js` (`rerunPlan`), `site/app.js` | 28 |
+| 15.5 | `rerun-box.contract.test.js` | 28 |
