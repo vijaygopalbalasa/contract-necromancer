@@ -93,6 +93,8 @@ receipts anyone can re-run.
 8. IF the receipt's requirements or contract hashes differ from the lock's for its spec AND the requirements and contract files on disk match the lock (the spec was frozen again after the receipt was written) THEN THE SYSTEM SHALL print `SUPERSEDED` with the spec name and each path whose hash changed, say that the receipt describes an earlier freeze and not today's code, and exit with code 1, instead of printing `MISMATCH`. When the files on disk do not match the lock, the rules above still print `MISMATCH`.
 9. WHEN `necro verify <receiptFile>` runs from a folder that does not contain the receipt's project THE SYSTEM SHALL take as the project root the nearest folder above the receipt file that contains `.necro/lock.json`, so the result is the same from any working directory (apart from the `Project:` line of 6.10), and IF no such folder exists THEN use the current folder as before.
 10. WHEN `necro verify` uses a project root other than the current folder THE SYSTEM SHALL first print `Project: <absolute path>` so the user sees whose contracts run.
+11. WHEN `necro verify` prints CONFIRMED for a receipt that records one or more failing contracts THE SYSTEM SHALL also print, on the next line, `This receipt records N failing contracts: <names>.` (`1 failing contract` for one), naming each failing contract in the receipt's order, and SHALL still exit with code 0, because the receipt is true.
+12. WHEN `necro verify` prints CONFIRMED for a receipt whose recorded contracts all pass THE SYSTEM SHALL print no such line, so the output for a passing receipt stays as it is.
 
 ## Requirement 7: Session summary
 **User story:** As a developer, I want a summary when the agent stops, so that a false "done" is visible.
