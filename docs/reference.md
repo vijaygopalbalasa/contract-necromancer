@@ -115,6 +115,8 @@ node ../../bin/necro.js verify .necro/receipts/ledger/86e6ee251eaacbfb90f621d45f
 CONFIRMED 86e6ee251eaacbfb90f621d45fd704e904bca4e803c0a2a644f9ce2f094a5801.
 ```
 
+When a `CONFIRMED` receipt records failing contracts (a `necro check` receipt can), `verify` prints `This receipt records N failing contracts: <names>.` on the next line, naming them in the receipt's order, and still exits 0 because the receipt is true; a receipt whose contracts all pass prints no such line.
+
 The older receipts print `SUPERSEDED`: they were written before a person froze the spec again (task 9 added contracts,
 task 36 added the runtime postconditions), so they describe an earlier freeze, not today's code.
 

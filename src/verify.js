@@ -243,5 +243,18 @@ export function verify(workingDir, receiptFile) {
   }
 
   console.log(`CONFIRMED ${receipt.receiptHash}.`);
+  // Req 6.11, 6.12: the re-run agrees with the receipt's list entry by entry, so that list says
+  // which contracts the receipt records as failing. A passing receipt prints nothing more.
+  const line = failingLine(receipt.contracts);
+  if (line) console.log(line);
   return 0;
+}
+
+// Req 6.11: the line for a confirmed receipt that records failures, or null when every
+// recorded contract passes. Names keep the receipt's order and are joined with ", ".
+export function failingLine(contracts) {
+  const failing = contracts.filter((c) => c.result !== 'pass').map((c) => c.name);
+  if (failing.length === 0) return null;
+  const noun = failing.length === 1 ? 'contract' : 'contracts';
+  return `This receipt records ${failing.length} failing ${noun}: ${failing.join(', ')}.`;
 }

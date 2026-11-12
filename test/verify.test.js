@@ -6,7 +6,7 @@ import path from 'node:path';
 import { hashFile } from '../src/canon.js';
 import { runContracts } from '../src/contracts.js';
 import { buildReceipt, writeReceipt, computeReceiptHash } from '../src/receipts.js';
-import { verify } from '../src/verify.js';
+import { verify, failingLine } from '../src/verify.js';
 import { readLock, freezeSpec } from '../src/lock.js';
 
 const REQ = '# Demo requirements\n';
@@ -894,5 +894,72 @@ test('R6.10 a receipt outside any project is checked in the current folder and p
   } finally {
     fs.rmSync(example, { recursive: true, force: true });
     fs.rmSync(orphans, { recursive: true, force: true });
+  }
+});
+
+const FAILING_CONTRACT = `import { test } from 'node:test';
+import assert from 'node:assert/strict';
+
+test('R6.11 zebra fails', () => { assert.equal(1, 2); });
+test('R6.11 holds', () => { assert.ok(true); });
+test('R6.11 apple fails', () => { assert.equal('a', 'b'); });
+`;
+
+test('R6.11 failingLine names one failing contract with the singular', () => {
+  assert.equal(
+    failingLine([
+      { name: 'a', result: 'pass' },
+      { name: 'b', result: 'fail' },
+    ]),
+    'This receipt records 1 failing contract: b.',
+  );
+});
+
+test('R6.11 failingLine names failing contracts in the receipt order, joined with ", "', () => {
+  assert.equal(
+    failingLine([
+      { name: 'z', result: 'fail' },
+      { name: 'm', result: 'pass' },
+      { name: 'a', result: 'fail' },
+    ]),
+    'This receipt records 2 failing contracts: z, a.',
+  );
+});
+
+test('R6.12 failingLine returns null when every recorded contract passes', () => {
+  assert.equal(failingLine([{ name: 'a', result: 'pass' }]), null);
+});
+
+test('R6.11 verify prints the failing line right after CONFIRMED and exits 0 for a receipt that records failures', () => {
+  const cwd = tmpCwd();
+  try {
+    write(cwd, '.kiro/specs/demo/requirements.md', REQ);
+    write(cwd, 'contracts/demo/fail.contract.test.js', FAILING_CONTRACT);
+    const lock = buildLock(cwd, 'demo', 'contracts/demo/fail.contract.test.js');
+    const { receipt, file } = makeReceipt(cwd, 'demo', lock);
+
+    const { code, out } = captureStdout(() => verify(cwd, file));
+    assert.equal(code, 0, out);
+    const lines = out.split('\n');
+    assert.equal(lines[0], `CONFIRMED ${receipt.receiptHash}.`);
+    assert.equal(lines[1], 'This receipt records 2 failing contracts: R6.11 zebra fails, R6.11 apple fails.');
+    assert.equal(lines[2], '');
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.12 verify prints only the CONFIRMED line for a receipt whose recorded contracts all pass', () => {
+  const cwd = tmpCwd();
+  try {
+    setupWithSources(cwd);
+    const lock = buildLock(cwd, 'demo', 'contracts/demo/canon.contract.test.js');
+    const { receipt, file } = makeReceipt(cwd, 'demo', lock);
+
+    const { code, out } = captureStdout(() => verify(cwd, file));
+    assert.equal(code, 0);
+    assert.equal(out, `CONFIRMED ${receipt.receiptHash}.\n`);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
