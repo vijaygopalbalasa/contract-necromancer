@@ -12,6 +12,9 @@ import { computeReceiptHash } from '../site/lib/canon.js';
 const fixtureText = fs.readFileSync(new URL('./fixtures/receipt-valid.json', import.meta.url), 'utf8');
 const fixture = () => JSON.parse(fixtureText);
 const RAW = 'https://raw.githubusercontent.com/o/n/main/r.json';
+// The fixture names a commit and lists one uncommitted file, so the re-run box shows the local line for it (Req 15.2).
+// This variant has every file in the commit, so the box shows the clone command.
+const committedText = JSON.stringify({ ...fixture(), uncommitted: [] });
 
 // A page with injected fetch, location and clipboard. `fetchMap` maps URL to a Response (or a function returning one).
 // Since task 17 a first visit loads the sample by itself. Most tests here are about something else, so by default the
@@ -355,18 +358,20 @@ const sha = (b) => crypto.createHash('sha256').update(b).digest('hex');
 test('the run command is visible as soon as a receipt is shown, with OWNER/NAME before a repository is typed', async () => {
   const p = page();
   assert.equal(p.el('run').hidden, true);
-  await paste(p, fixtureText);
+  await paste(p, committedText);
   assert.equal(p.el('run').hidden, false);
+  assert.equal(p.el('run-clone').hidden, false);
+  assert.equal(p.el('run-local').hidden, true);
   const r = fixture();
   assert.equal(p.text('command'), verifyCommand({ repo: '', receipt: r }));
   assert.ok(p.text('command').includes('git clone https://github.com/OWNER/NAME.git'));
-  assert.ok(p.text('command').includes(`git checkout ${r.gitCommit}`));
+  assert.ok(p.text('command').includes(`git checkout ${r.gitCommit} && git checkout -B necro-check`));
   assert.ok(p.text('command').includes(`necro verify .necro/receipts/${r.spec}/${r.receiptHash}.json`));
 });
 
 test('the run command changes to the real repository as the box changes, and falls back when it is invalid', async () => {
   const p = page();
-  await paste(p, fixtureText);
+  await paste(p, committedText);
   p.el('repo').value = 'octo/spec-repo';
   await p.el('repo').dispatch('input');
   assert.ok(p.text('command').includes('git clone https://github.com/octo/spec-repo.git'));
@@ -380,33 +385,134 @@ test('typing a repository before any receipt is shown does not break the page', 
   p.el('repo').value = 'octo/spec-repo';
   await p.el('repo').dispatch('input');
   assert.equal(p.el('run').hidden, true);
-  await paste(p, fixtureText);
+  await paste(p, committedText);
   assert.ok(p.text('command').includes('octo/spec-repo'));
 });
 
 test('a repository from ?receipt= appears in the run command', async () => {
-  const p = page({ search: `?receipt=${encodeURIComponent(RAW)}`, fetchMap: { [RAW]: new Response(fixtureText) } });
+  const p = page({ search: `?receipt=${encodeURIComponent(RAW)}`, fetchMap: { [RAW]: new Response(committedText) } });
   await p.ready;
   assert.ok(p.text('command').includes('git clone https://github.com/o/n.git'));
 });
 
-test('the command note says so when the receipt names no commit, and the command has no checkout', async () => {
+// ---- Task 28: the re-run box offers a command that works for its receipt, or none (Req 15) ----
+
+const withFields = (over) => JSON.stringify({ ...fixture(), ...over });
+const visibleBlock = (p) => (p.el('run-clone').hidden ? (p.el('run-local').hidden ? 'none' : 'local') : 'clone');
+const localFiles = (p) => findAll(p.el('local-files'), (e) => e.tagName === 'LI').map((e) => e.textContent);
+
+test('15.1 a valid commit and no uncommitted files shows the clone block and hides the local one', async () => {
+  const p = page();
+  await paste(p, committedText);
+  assert.equal(visibleBlock(p), 'clone');
+  assert.match(p.text('command'), /^git clone /);
+  assert.equal(p.text('local-command'), '');
+  assert.equal(p.text('local-why'), '');
+  assert.equal(localFiles(p).length, 0);
+  // A receipt written before the uncommitted field existed gets the same.
+  const { uncommitted, ...old } = fixture();
+  await paste(p, JSON.stringify(old));
+  assert.equal(visibleBlock(p), 'clone');
+});
+
+test('15.2 uncommitted files: no clone command, the reason, the files as text, and the local line', async () => {
+  const p = page();
+  await paste(p, withFields({ uncommitted: ['src/util.js', 'src/<b>x</b>.js'] }));
+  const r = fixture();
+  assert.equal(visibleBlock(p), 'local');
+  assert.equal(p.text('command'), '', 'no clone command is written');
+  assert.doesNotMatch(p.el('run').children.map((c) => c.textContent).join(' '), /git (clone|checkout)/);
+  assert.equal(
+    p.text('local-why'),
+    'This receipt was written before some of the files it pins were committed, so a clone at its commit cannot re-run it. These files were not in the commit yet:',
+  );
+  assert.deepEqual(localFiles(p), ['src/util.js', 'src/<b>x</b>.js']);
+  assert.ok(findAll(p.el('local-files'), (e) => e.tagName === 'B').length === 0, 'a file name creates no element');
+  assert.equal(p.text('local-where'), "Run this in the project's own working copy:");
+  assert.equal(p.text('local-command'), `necro verify .necro/receipts/${r.spec}/${r.receiptHash}.json`);
+});
+
+test('15.3 no commit: no clone command, the reason, no file list, and the local line', async () => {
   const p = page();
   const r = fixture();
-  r.gitCommit = null;
-  await paste(p, JSON.stringify(r));
-  assert.doesNotMatch(p.text('command'), /git checkout/);
-  assert.match(p.text('command-note'), /names no commit/);
-  await paste(p, fixtureText);
-  assert.equal(p.text('command-note'), '');
+  for (const over of [{ gitCommit: null, uncommitted: [] }, { gitCommit: null, uncommitted: ['src/util.js'] }, { gitCommit: 'main', uncommitted: [] }]) {
+    await paste(p, withFields(over));
+    assert.equal(visibleBlock(p), 'local', JSON.stringify(over));
+    assert.equal(p.text('command'), '');
+    assert.equal(p.text('local-why'), 'This receipt names no commit, so it can be re-run only in the folder that made it.');
+    assert.equal(localFiles(p).length, 0, 'a receipt with no commit names no files');
+    assert.equal(p.text('local-where'), 'Run this in that folder:');
+    assert.equal(p.text('local-command'), `necro verify .necro/receipts/${r.spec}/${r.receiptHash}.json`);
+  }
+});
+
+test('15.4 the kind follows the receipt on screen, with nothing left over from the one before', async () => {
+  const p = page();
+  await paste(p, withFields({ uncommitted: ['src/util.js'] }));
+  assert.equal(visibleBlock(p), 'local');
+  await paste(p, committedText);
+  assert.equal(visibleBlock(p), 'clone');
+  assert.equal(p.text('local-why'), '');
+  assert.equal(localFiles(p).length, 0);
+  assert.equal(p.text('local-command'), '');
+  await paste(p, withFields({ uncommitted: ['src/util.js'] }));
+  assert.equal(visibleBlock(p), 'local');
+  assert.equal(p.text('command'), '', 'the clone command is gone');
+  await paste(p, 'broken');
+  assert.equal(p.el('run').hidden, true);
+});
+
+test('15.4 typing a repository changes the clone command only, and the local line never depends on it', async () => {
+  const p = page();
+  await paste(p, withFields({ uncommitted: ['src/util.js'] }));
+  const before = p.text('local-command');
+  p.el('repo').value = 'octo/spec-repo';
+  await p.el('repo').dispatch('input');
+  assert.equal(visibleBlock(p), 'local');
+  assert.equal(p.text('local-command'), before);
+  assert.equal(p.text('command'), '');
+  assert.equal(p.calls.length, 0, 'nothing is fetched');
+});
+
+test('15.2 a hostile spec stays inside one quoted argument of the local line', async () => {
+  const p = page();
+  await paste(p, withFields({ spec: 'x; rm -rf ~', uncommitted: ['src/util.js'] }));
+  assert.equal(p.text('local-command'), `necro verify '.necro/receipts/x; rm -rf ~/${fixture().receiptHash}.json'`);
+});
+
+test('15.2 and 15.3 the copy button of the local line copies that line and reports as the other copy buttons do', async () => {
+  const written = [];
+  const p = page({ clipboard: { writeText: async (t) => void written.push(t) } });
+  await paste(p, withFields({ uncommitted: ['src/util.js'] }));
+  await p.el('local-copy').dispatch('click');
+  assert.deepEqual(written, [p.text('local-command')]);
+  assert.equal(p.text('local-copy-note'), 'Copied.');
+  assert.equal(p.text('copy-note'), '', 'the other copy button is not touched');
+  const missing = page();
+  await paste(missing, withFields({ gitCommit: null }));
+  await missing.el('local-copy').dispatch('click');
+  assert.equal(missing.text('local-copy-note'), 'Select the command and copy it.');
+  // The note goes with the receipt.
+  await paste(missing, committedText);
+  assert.equal(missing.text('local-copy-note'), '');
+});
+
+test('the Check files button is not changed by the kind of the receipt (15.4)', async () => {
+  const p = page({ fetchMap: {} });
+  await paste(p, withFields({ gitCommit: null }));
+  p.el('repo').value = 'octo/spec-repo';
+  await p.el('check').dispatch('click');
+  assert.equal(p.calls.length, 0);
+  assert.match(p.text('repo-error'), /commit/i);
 });
 
 test('the copy button writes the command to the clipboard', async () => {
   const written = [];
   const p = page({ clipboard: { writeText: async (t) => void written.push(t) } });
-  await paste(p, fixtureText);
+  await paste(p, committedText);
   await p.el('copy').dispatch('click');
   assert.deepEqual(written, [p.text('command')]);
+  assert.match(written[0], /^git clone /);
   assert.equal(p.text('copy-note'), 'Copied.');
 });
 
@@ -418,11 +524,11 @@ test('when the clipboard rejects or is missing the page says to select the comma
       },
     },
   });
-  await paste(rejecting, fixtureText);
+  await paste(rejecting, committedText);
   await rejecting.el('copy').dispatch('click');
   assert.equal(rejecting.text('copy-note'), 'Select the command and copy it.');
   const missing = page();
-  await paste(missing, fixtureText);
+  await paste(missing, committedText);
   await missing.el('copy').dispatch('click');
   assert.equal(missing.text('copy-note'), 'Select the command and copy it.');
 });
@@ -587,7 +693,7 @@ test('with no receipt the page offers a risen and a buried sample button', async
 });
 
 test('pressing Load the sample fetches ./sample-receipt.json from the same origin, renders it and sets the repository box', async () => {
-  const p = page({ fetchMap: { './sample-receipt.json': new Response(fixtureText) } });
+  const p = page({ fetchMap: { './sample-receipt.json': new Response(committedText) } });
   await p.ready;
   assert.equal(p.calls.length, 0, 'nothing is fetched until the button is pressed');
   await p.el('sample').dispatch('click');
@@ -605,7 +711,7 @@ test('SAMPLE_REPO is this repository on GitHub (7.4)', () => {
 });
 
 test('the sample re-run command clones this repository, not the placeholder (7.4)', async () => {
-  const p = page({ fetchMap: { './sample-receipt.json': new Response(fixtureText) } });
+  const p = page({ fetchMap: { './sample-receipt.json': new Response(committedText) } });
   await p.el('sample').dispatch('click');
   assert.ok(p.text('command').includes('git clone https://github.com/vijaygopalbalasa/contract-necromancer.git'));
   assert.doesNotMatch(p.text('command'), /OWNER\/NAME/);
@@ -877,7 +983,9 @@ test('9.2 the buried sample shows its failing contracts as gravestones and its h
   assert.equal(fails.length, 9);
   for (const row of fails) assert.match(row.textContent, /\bFAIL\b/);
   assert.equal(p.text('hash-badge'), 'MATCH');
-  assert.match(p.text('command-note'), /names no commit/);
+  assert.equal(p.el('run-clone').hidden, true);
+  assert.equal(p.el('run-local').hidden, false);
+  assert.match(p.text('local-why'), /names no commit/);
 });
 
 test('9.3 the banner is brought into view after paste, file pick, sample switch and a ?receipt= load', async () => {

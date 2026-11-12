@@ -1056,6 +1056,18 @@
           "sha256": "d15bbc20079dd6623e6681bf8e17cec3e20547aa35a27dd8a16a290f8f453281"
         },
         {
+          "name": "rerun-box",
+          "names": [
+            "R15.1 for a receipt with a valid commit and no uncommitted files the page offers the re-run command, and the command checks the commit out on a named branch, so a clone of the checkout has origin/HEAD",
+            "R15.2 for a receipt with uncommitted files the page offers no clone command, says the receipt was written before those files were committed, names them, and gives necro verify with a copy button",
+            "R15.3 for a receipt with no commit (the buried sample, a pasted demo receipt) the page offers no clone command, says it can be re-run only in the folder that made it, and gives necro verify with a copy button",
+            "R15.4 the page decides between the three from gitCommit and uncommitted alone, with no network request, and the Check files button keeps working",
+            "R15.5 without the network, the command for a committed receipt reaches CONFIRMED from a clone of this repository, including for a receipt that pins R5.2's contract, and receipts with uncommitted files or no commit get no clone command"
+          ],
+          "path": "contracts/receipt-viewer/rerun-box.contract.test.js",
+          "sha256": "c1fd58d880b296b1584e52b50404c4907bbfa594ee3307fc020a5a683901f7d1"
+        },
+        {
           "name": "sample",
           "names": [
             "R6.2 the page ships a real sample receipt from this repository and loads it when no receipt is open"
@@ -1083,10 +1095,10 @@
           "sha256": "47e17273eef50b96c039f01d4ab62d0c907bffe8f911b03d90a5dc1d4c19a08f"
         }
       ],
-      "frozenAt": "2026-11-11T22:12:40.052Z",
+      "frozenAt": "2026-11-12T06:10:24.929Z",
       "requirements": {
         "path": ".kiro/specs/receipt-viewer/requirements.md",
-        "sha256": "8a01c48e313ff0a8bfd19f358debfd447c126b154d38e7089075f0aae03fa44d"
+        "sha256": "4126440a56553e43f1e87c7a900afd5c026edecaa6d1ed7b386517855e388d0a"
       },
       "tasks": {
         "1": {
@@ -1291,6 +1303,16 @@
             "14.5"
           ],
           "text": "27. The first screen names Design by Contract and leads with the result (Req 9.5 revised, 12.1 revised, 14.1 to 14.5)"
+        },
+        "28": {
+          "criteria": [
+            "15.1",
+            "15.2",
+            "15.3",
+            "15.4",
+            "15.5"
+          ],
+          "text": "28. The re-run box offers a command that works for its receipt, or none (Req 15.1, 15.2, 15.3, 15.4, 15.5)"
         }
       },
       "ticked": [
@@ -1313,6 +1335,7 @@
         "24. The play's files and receipts (Req 13.1, 13.4)",
         "25. Run the seven contracts in the browser (Req 13.2, 13.3, 13.6, 13.7, 13.8)",
         "26. The play on the page (Req 13.2, 13.3, 13.4, 13.5, 13.8, 13.9, 13.10)",
+        "27. The first screen names Design by Contract and leads with the result (Req 9.5 revised, 12.1 revised, 14.1 to 14.5)",
         "3. **Receipt parsing and validation** (Req 1.3)",
         "4. **Summary and grouping by requirement** (Req 2.1, 2.2)",
         "5. **Repository and URL parsing** (Req 1.2)",

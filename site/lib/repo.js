@@ -94,12 +94,16 @@ const VERIFIER_STEPS = [
 ];
 
 // verifyCommand({ repo, receipt }) → one line a reviewer can paste into a POSIX shell (sh, bash or zsh):
-//   git clone <url> necro-check && cd necro-check && git checkout <commit> && git checkout origin/HEAD -- <receipt file>
+//   git clone <url> necro-check && cd necro-check && git checkout <commit> && git checkout -B necro-check
+//     && git checkout origin/HEAD -- <receipt file>
 //     && git clone <official url> .necro-verifier && git -C .necro-verifier checkout <pinned commit>
 //     && necro() { node .necro-verifier/bin/necro.js "$@"; } && necro verify <receipt file>
 // repo is "owner/name"; anything else shows the placeholder OWNER/NAME (no angle brackets, which are shell redirection).
 // Without a valid commit the checkout steps are left out.
-// The receipt is written after the commit it names, so the checkout of that commit does not hold it. The second checkout
+// The checkout of the commit leaves HEAD detached, and a clone of a detached HEAD has no origin/HEAD, which a contract that
+// clones the checkout may need. `git checkout -B necro-check` puts the commit on a named branch. -B, not -b, so a repository
+// whose default branch is called necro-check still works (HEAD is detached at that point, so nothing is lost).
+// The receipt is written after the commit it names, so the checkout of that commit does not hold it. The last checkout
 // takes the receipt file from the default branch, inside the clone, and leaves the code at the commit.
 // The verifier is fetched last, after the verified repository is checked out, so nothing in it can replace the verifier.
 export function verifyCommand({ repo, receipt }) {
@@ -109,9 +113,30 @@ export function verifyCommand({ repo, receipt }) {
   const steps = [`git clone ${shQuote(`https://github.com/${name}.git`)} necro-check`, 'cd necro-check'];
   if (isCommitId(receipt.gitCommit)) {
     steps.push(`git checkout ${receipt.gitCommit}`);
+    steps.push('git checkout -B necro-check');
     steps.push(`git checkout origin/HEAD -- ${file}`);
   }
   steps.push(...VERIFIER_STEPS);
   steps.push(`necro verify ${file}`);
   return steps.join(' && ');
+}
+
+// localCommand(receipt) → the line to run in the project's own working copy, where the reviewer chose their own verifier:
+//   necro verify <receipt file>
+// The path is the default place the gate writes a receipt, and is quoted like every receipt field.
+export function localCommand(receipt) {
+  return `necro verify ${shQuote(`.necro/receipts/${receipt.spec}/${receipt.receiptHash}.json`)}`;
+}
+
+// rerunPlan({ repo, receipt }) decides what the re-run box offers, from gitCommit and uncommitted and nothing else.
+//   { kind: 'clone', command }                  a full commit id and no uncommitted file: clone it and verify
+//   { kind: 'uncommitted', files, command }     a full commit id and files that commit does not hold: no clone can match
+//   { kind: 'no-commit', command }              no full commit id (null, missing, malformed): only the folder that made it
+// No commit wins over a file list: without a commit there is nothing a file could be "not in yet".
+// The repository only changes the text of the clone command. It does no I/O.
+export function rerunPlan({ repo, receipt }) {
+  if (!isCommitId(receipt.gitCommit)) return { kind: 'no-commit', command: localCommand(receipt) };
+  const files = Array.isArray(receipt.uncommitted) ? receipt.uncommitted.filter((f) => typeof f === 'string') : [];
+  if (files.length > 0) return { kind: 'uncommitted', files, command: localCommand(receipt) };
+  return { kind: 'clone', command: verifyCommand({ repo, receipt }) };
 }

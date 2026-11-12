@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseRepo, parseReceiptUrl, isCommitId, isSafeRepoPath, rawUrl, verifyCommand } from '../site/lib/repo.js';
+import { parseRepo, parseReceiptUrl, isCommitId, isSafeRepoPath, rawUrl, verifyCommand, rerunPlan, localCommand } from '../site/lib/repo.js';
 import * as repoModule from '../site/lib/repo.js';
 
 const COMMIT = '0123456789abcdef0123456789abcdef01234567';
@@ -174,6 +174,8 @@ const CLONE_VERIFIER = `git clone ${VERIFIER_URL} ${VERIFIER_DIR}`;
 const CHECKOUT_PIN = `git -C ${VERIFIER_DIR} checkout ${PIN}`;
 const DEFINE_NECRO = `necro() { node ${VERIFIER_DIR}/bin/necro.js "$@"; }`;
 const VERIFIER_STEPS = ` && ${CLONE_VERIFIER} && ${CHECKOUT_PIN} && ${DEFINE_NECRO}`;
+// Task 28: the commit is checked out on a named branch, so a clone of the checkout has origin/HEAD.
+const BRANCH_STEP = 'git checkout -B necro-check';
 
 // The command without the fixed verifier steps, so the tokenizer sees only what shQuote produces.
 function withoutDefinition(command) {
@@ -191,7 +193,7 @@ test('verifyCommand clones, checks out the commit, brings in the receipt, gets t
   const file = `.necro/receipts/receipt-viewer/${HASH}.json`;
   assert.equal(
     command,
-    `git clone https://github.com/octo/spec-repo.git necro-check && cd necro-check && git checkout ${COMMIT} && git checkout origin/HEAD -- ${file}${VERIFIER_STEPS} && necro verify ${file}`,
+    `git clone https://github.com/octo/spec-repo.git necro-check && cd necro-check && git checkout ${COMMIT} && ${BRANCH_STEP} && git checkout origin/HEAD -- ${file}${VERIFIER_STEPS} && necro verify ${file}`,
   );
   assert.ok(!/[\r\n]/.test(command));
 });
@@ -249,21 +251,101 @@ test('verifyCommand keeps hostile receipt fields inside one quoted argument', ()
   for (const spec of hostile) {
     const command = verifyCommand({ repo: 'octo/spec-repo', receipt: receiptOf({ spec }) });
     const parts = commands(withoutDefinition(command));
-    assert.equal(parts.length, 5, JSON.stringify(spec));
+    assert.equal(parts.length, 6, JSON.stringify(spec));
     const file = `.necro/receipts/${spec}/${HASH}.json`;
-    assert.deepEqual(parts[3], ['git', 'checkout', 'origin/HEAD', '--', file], JSON.stringify(spec));
-    assert.deepEqual(parts[4].slice(0, 2), ['necro', 'verify'], JSON.stringify(spec));
-    assert.equal(parts[4].length, 3, `exactly one argument for ${JSON.stringify(spec)}`);
-    assert.equal(parts[4][2], file, JSON.stringify(spec));
+    assert.deepEqual(parts[3], ['git', 'checkout', '-B', 'necro-check'], JSON.stringify(spec));
+    assert.deepEqual(parts[4], ['git', 'checkout', 'origin/HEAD', '--', file], JSON.stringify(spec));
+    assert.deepEqual(parts[5].slice(0, 2), ['necro', 'verify'], JSON.stringify(spec));
+    assert.equal(parts[5].length, 3, `exactly one argument for ${JSON.stringify(spec)}`);
+    assert.equal(parts[5][2], file, JSON.stringify(spec));
   }
   const hostileHash = verifyCommand({ repo: 'octo/spec-repo', receipt: receiptOf({ receiptHash: 'x; echo hi' }) });
   const hostileParts = commands(withoutDefinition(hostileHash));
-  assert.equal(hostileParts[3].length, 5);
-  assert.equal(hostileParts[4].length, 3);
+  assert.equal(hostileParts[4].length, 5);
+  assert.equal(hostileParts[5].length, 3);
 });
 
 test('verifyCommand leaves safe values unquoted', () => {
   const command = verifyCommand({ repo: 'octo/spec-repo', receipt: receiptOf({ spec: 'my-spec_1.0' }) });
   assert.ok(!command.includes("'"));
   assert.ok(command.includes(`necro verify .necro/receipts/my-spec_1.0/${HASH}.json`));
+});
+
+// ---- Task 28: the re-run box (Req 15) ----
+
+test('verifyCommand puts the commit on a named branch right after checking it out, before the receipt is brought in', () => {
+  const command = verifyCommand({ repo: 'octo/spec-repo', receipt: receiptOf() });
+  const steps = command.split(' && ');
+  const at = steps.indexOf(`git checkout ${COMMIT}`);
+  assert.ok(at > 0, 'checks the commit out');
+  assert.equal(steps[at + 1], BRANCH_STEP);
+  assert.ok(steps[at + 2].startsWith('git checkout origin/HEAD -- '));
+  // Every project checkout comes before the verifier is cloned.
+  const verifier = steps.findIndex((s) => s === CLONE_VERIFIER);
+  assert.ok(steps.slice(verifier).every((s) => !s.startsWith('git checkout ')));
+});
+
+test('verifyCommand for a receipt with no valid commit has no branch step', () => {
+  for (const gitCommit of [null, undefined, 'main', 'a'.repeat(39)]) {
+    assert.ok(!verifyCommand({ repo: 'octo/spec-repo', receipt: receiptOf({ gitCommit }) }).includes(BRANCH_STEP), String(gitCommit));
+  }
+});
+
+test('localCommand is necro verify on the default receipt path, with no verifier definition', () => {
+  assert.equal(localCommand(receiptOf()), `necro verify .necro/receipts/receipt-viewer/${HASH}.json`);
+  assert.equal(localCommand(receiptOf({ spec: 'my-spec_1.0' })), `necro verify .necro/receipts/my-spec_1.0/${HASH}.json`);
+});
+
+test('localCommand keeps hostile receipt fields inside one quoted argument', () => {
+  const hostile = ['x; rm -rf ~', 'a$(id)b', 'a`id`b', "it's", 'line\nbreak', '-rf', 'a b', 'a && b', '$HOME', ''];
+  for (const spec of hostile) {
+    const parts = commands(localCommand(receiptOf({ spec })));
+    assert.equal(parts.length, 1, JSON.stringify(spec));
+    assert.equal(parts[0].length, 3, JSON.stringify(spec));
+    assert.deepEqual(parts[0].slice(0, 2), ['necro', 'verify']);
+    assert.equal(parts[0][2], `.necro/receipts/${spec}/${HASH}.json`);
+  }
+  assert.equal(commands(localCommand(receiptOf({ receiptHash: 'x; echo hi' })))[0].length, 3);
+});
+
+test('rerunPlan: a valid commit with an empty or missing uncommitted list is the clone kind', () => {
+  for (const extra of [{}, { uncommitted: [] }]) {
+    const receipt = receiptOf(extra);
+    const plan = rerunPlan({ repo: 'octo/spec-repo', receipt });
+    assert.equal(plan.kind, 'clone');
+    assert.equal(plan.command, verifyCommand({ repo: 'octo/spec-repo', receipt }));
+  }
+  assert.equal(rerunPlan({ repo: '', receipt: receiptOf() }).kind, 'clone');
+  assert.ok(rerunPlan({ repo: '', receipt: receiptOf() }).command.includes('OWNER/NAME'));
+});
+
+test('rerunPlan: a valid commit with uncommitted files is the uncommitted kind, with the files in receipt order', () => {
+  const receipt = receiptOf({ uncommitted: ['src/b.js', 'src/a.js'] });
+  const plan = rerunPlan({ repo: 'octo/spec-repo', receipt });
+  assert.deepEqual(plan, { kind: 'uncommitted', files: ['src/b.js', 'src/a.js'], command: localCommand(receipt) });
+  assert.doesNotMatch(plan.command, /git/);
+});
+
+test('rerunPlan: null, missing and malformed commits are the no-commit kind, whatever uncommitted holds', () => {
+  for (const gitCommit of [null, undefined, '', 'main', COMMIT.toUpperCase(), 'a'.repeat(39), `${COMMIT}0`, 7]) {
+    for (const uncommitted of [undefined, [], ['src/a.js']]) {
+      const receipt = receiptOf({ gitCommit, uncommitted });
+      const plan = rerunPlan({ repo: 'octo/spec-repo', receipt });
+      assert.deepEqual(plan, { kind: 'no-commit', command: localCommand(receipt) }, `${String(gitCommit)} ${JSON.stringify(uncommitted)}`);
+    }
+  }
+});
+
+test('rerunPlan decides from gitCommit and uncommitted alone: the repository and the hash do not matter', () => {
+  const receipt = receiptOf({ uncommitted: ['src/a.js'] });
+  for (const repo of ['', 'octo/spec-repo', 'not a repo', undefined]) assert.equal(rerunPlan({ repo, receipt }).kind, 'uncommitted');
+  for (const receiptHash of [HASH, 'f'.repeat(64), 'broken']) {
+    assert.equal(rerunPlan({ repo: 'a/b', receipt: receiptOf({ receiptHash }) }).kind, 'clone');
+  }
+});
+
+test('rerunPlan ignores entries of uncommitted that are not strings and counts a list with none as empty', () => {
+  assert.equal(rerunPlan({ repo: 'a/b', receipt: receiptOf({ uncommitted: [1, null, {}] }) }).kind, 'clone');
+  assert.deepEqual(rerunPlan({ repo: 'a/b', receipt: receiptOf({ uncommitted: ['x.js', 1] }) }).files, ['x.js']);
+  assert.equal(rerunPlan({ repo: 'a/b', receipt: receiptOf({ uncommitted: 'src/a.js' }) }).kind, 'clone');
 });

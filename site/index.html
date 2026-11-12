@@ -147,23 +147,34 @@
 
     <section class="card" id="run" aria-labelledby="run-title" hidden>
       <h2 id="run-title">Re-run it yourself</h2>
-      <p>
-        This command clones the repository at the commit, takes the receipt from the default branch, and runs
-        <code>necro verify</code> on it. It needs Git and Node.js 24 and no install, and it changes nothing outside the
-        folder it clones. It assumes the receipt is in the default place, <code>.necro/receipts/</code>.
-      </p>
-      <p>
-        The verifier comes from <code>vijaygopalbalasa/contract-necromancer</code> at a fixed commit named in the
-        command, never from the repository being verified, so a project cannot ship a verifier that always says
-        CONFIRMED. Verifying runs the project's own contracts, which is code from that repository, so run this command
-        only for a repository you are willing to run.
-      </p>
-      <pre id="command"></pre>
-      <div class="row">
-        <button type="button" id="copy">Copy command</button>
-        <span id="copy-note" aria-live="polite"></span>
+      <div id="run-clone">
+        <p>
+          This command clones the repository at the commit, takes the receipt from the default branch, and runs
+          <code>necro verify</code> on it. It needs Git and Node.js 24 and no install, and it changes nothing outside the
+          folder it clones. It assumes the receipt is in the default place, <code>.necro/receipts/</code>.
+        </p>
+        <p>
+          The verifier comes from <code>vijaygopalbalasa/contract-necromancer</code> at a fixed commit named in the
+          command, never from the repository being verified, so a project cannot ship a verifier that always says
+          CONFIRMED. Verifying runs the project's own contracts, which is code from that repository, so run this command
+          only for a repository you are willing to run.
+        </p>
+        <pre id="command"></pre>
+        <div class="row">
+          <button type="button" id="copy">Copy command</button>
+          <span id="copy-note" aria-live="polite"></span>
+        </div>
       </div>
-      <p class="muted" id="command-note"></p>
+      <div id="run-local" hidden>
+        <p id="local-why"></p>
+        <ul id="local-files"></ul>
+        <p id="local-where"></p>
+        <pre id="local-command"></pre>
+        <div class="row">
+          <button type="button" id="local-copy">Copy command</button>
+          <span id="local-copy-note" aria-live="polite"></span>
+        </div>
+      </div>
     </section>
 
     <section class="card" id="file-check" aria-labelledby="files-title" hidden>

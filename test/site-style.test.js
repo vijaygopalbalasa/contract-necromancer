@@ -91,7 +91,7 @@ test('index.html says necro verify re-runs the contracts (Requirement 12.2), the
 test('index.html has the elements the app fills in, each id once', () => {
   const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]);
   assert.equal(new Set(ids).size, ids.length, 'ids are unique');
-  for (const id of ['paste', 'show', 'file', 'sample', 'error', 'receipt', 'spec', 'commit', 'receipt-hash', 'created', 'task', 'summary', 'groups', 'hash-check', 'hash-badge', 'hash-detail', 'run', 'command', 'copy', 'copy-note', 'command-note', 'file-check', 'repo', 'check', 'repo-error', 'file-notice', 'file-summary', 'files']) {
+  for (const id of ['paste', 'show', 'file', 'sample', 'error', 'receipt', 'spec', 'commit', 'receipt-hash', 'created', 'task', 'summary', 'groups', 'hash-check', 'hash-badge', 'hash-detail', 'run', 'command', 'copy', 'copy-note', 'run-clone', 'run-local', 'local-why', 'local-files', 'local-where', 'local-command', 'local-copy', 'local-copy-note', 'file-check', 'repo', 'check', 'repo-error', 'file-notice', 'file-summary', 'files']) {
     assert.ok(ids.includes(id), `missing id ${id}`);
   }
   assert.match(html, /id="error"[^>]*role="alert"/);
@@ -359,4 +359,22 @@ test('5.3 the run section warns that verifying runs the project\'s own contracts
   assert.match(text, /fixed commit/);
   assert.match(text, /never from the repository being verified/);
   assert.doesNotMatch(text, /node bin\/necro\.js/, 'the page no longer says the verified repository supplies bin/necro.js');
+});
+
+test('the re-run box holds a clone block and a local block, pre#command stays the first pre with an id (Req 15)', () => {
+  const run = html.slice(html.indexOf('id="run"'), html.indexOf('id="file-check"'));
+  assert.ok(!html.includes('command-note'), 'the old command note is gone');
+  assert.match(run, /<div id="run-clone">/);
+  assert.match(run, /<div id="run-local" hidden>/);
+  assert.ok(run.indexOf('id="run-clone"') < run.indexOf('id="run-local"'));
+  const pres = [...html.matchAll(/<pre\b[^>]*\sid="([^"]+)"/g)].map((m) => m[1]);
+  assert.equal(pres[0], 'command', 'the first pre with an id is the clone command');
+  assert.ok(pres.indexOf('local-command') > 0);
+  // The Requirement 5.3 warning stays inside the clone block.
+  const clone = run.slice(run.indexOf('id="run-clone"'), run.indexOf('id="run-local"'));
+  assert.match(clone, /never from the repository being verified/);
+  assert.match(clone, /id="command"/);
+  assert.match(clone, /id="copy"/);
+  assert.match(run.slice(run.indexOf('id="run-local"')), /id="local-copy"/);
+  assert.ok(!/—/.test(run), 'no em dashes');
 });

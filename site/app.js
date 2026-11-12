@@ -4,7 +4,7 @@
 
 import { computeReceiptHash } from './lib/canon.js';
 import { parseReceipt, summarize, groupContracts, sortByCriterion, plainTaskLine, verdict, MAX_RECEIPT_BYTES } from './lib/receipt.js';
-import { parseReceiptUrl, parseRepo, isCommitId, verifyCommand } from './lib/repo.js';
+import { parseReceiptUrl, parseRepo, rerunPlan } from './lib/repo.js';
 import { checkFiles } from './lib/files.js';
 import { SAMPLES, chooseInitialView, scrollOptions } from './lib/samples.js';
 import { runPlay, fullRunFor } from './lib/play-loader.js';
@@ -22,7 +22,13 @@ const SAMPLE_FAILED = 'Could not load the sample. Reload the page and try again.
 const COPY_FAILED = 'Select the command and copy it.';
 const UNCOMMITTED_NOTICE = 'Some files are not in the commit yet. Commit the work and re-run the gate for a fully public check.';
 const NO_TASK_LINE = 'No task. This receipt was written by necro check, not by a tick.';
-const NO_COMMIT_NOTE = 'This receipt names no commit, so the command does not check one out.';
+// The re-run box (Req 15). The first line of each local block says why there is no clone command, the second where to run
+// the line. Only the clone kind offers a clone.
+const UNCOMMITTED_WHY =
+  'This receipt was written before some of the files it pins were committed, so a clone at its commit cannot re-run it. These files were not in the commit yet:';
+const NO_COMMIT_WHY = 'This receipt names no commit, so it can be re-run only in the folder that made it.';
+const WHERE_WORKING_COPY = "Run this in the project's own working copy:";
+const WHERE_FOLDER = 'Run this in that folder:';
 const TIMEOUT_MS = 15000;
 
 // The play (Req 13). The folder it reads its copies from is the site folder, as an absolute address, so the same code works
@@ -62,7 +68,8 @@ export function start({ document, location, fetch, navigator, matchMedia, play =
   const els = {};
   for (const id of [
     'paste', 'show', 'file', 'error', 'receipt', 'spec', 'commit', 'receipt-hash', 'created', 'task', 'summary', 'groups',
-    'hash-check', 'hash-badge', 'hash-detail', 'repo', 'run', 'command', 'copy', 'copy-note', 'command-note', 'file-check',
+    'hash-check', 'hash-badge', 'hash-detail', 'repo', 'run', 'run-clone', 'run-local', 'command', 'copy', 'copy-note', 'file-check',
+    'local-why', 'local-files', 'local-where', 'local-command', 'local-copy', 'local-copy-note',
     'check', 'repo-error', 'file-notice', 'file-summary', 'files', 'sample', 'sample-buried', 'sample-note', 'verdict',
     'demo-command', 'demo-copy', 'demo-copy-note', 'strip-command', 'strip-copy', 'strip-copy-note',
     'strip-play', 'play', 'play-title', 'play-send', 'play-fix', 'play-byte', 'play-status',
@@ -91,7 +98,7 @@ export function start({ document, location, fetch, navigator, matchMedia, play =
     for (const id of ['verdict', 'receipt', 'hash-check', 'run', 'file-check']) els[id].hidden = true;
     for (const id of [
       'verdict', 'sample-note', 'spec', 'commit', 'receipt-hash', 'created', 'task', 'summary', 'groups', 'hash-badge', 'hash-detail',
-      'command', 'copy-note', 'command-note', 'repo-error', 'file-notice', 'file-summary', 'files',
+      'command', 'copy-note', 'local-why', 'local-files', 'local-where', 'local-command', 'local-copy-note', 'repo-error', 'file-notice', 'file-summary', 'files',
     ]) {
       els[id].textContent = '';
     }
@@ -187,11 +194,26 @@ export function start({ document, location, fetch, navigator, matchMedia, play =
     }
   }
 
-  // The run command follows the repository box, so a reviewer sees the real command as soon as they type.
+  // The re-run box shows one of three things, chosen by rerunPlan from the receipt alone (Req 15). Only the clone command
+  // follows the repository box, so a reviewer sees the real command as soon as they type. Everything from the receipt is
+  // written with textContent.
   function updateCommand() {
     if (current === null) return;
-    els.command.textContent = verifyCommand({ repo: els.repo.value, receipt: current });
-    els['command-note'].textContent = isCommitId(current.gitCommit) ? '' : NO_COMMIT_NOTE;
+    const plan = rerunPlan({ repo: els.repo.value, receipt: current });
+    const clone = plan.kind === 'clone';
+    els['run-clone'].hidden = !clone;
+    els['run-local'].hidden = clone;
+    els.command.textContent = clone ? plan.command : '';
+    els['local-why'].textContent = '';
+    els['local-files'].textContent = '';
+    els['local-where'].textContent = '';
+    els['local-command'].textContent = '';
+    if (clone) return;
+    const uncommitted = plan.kind === 'uncommitted';
+    els['local-why'].textContent = uncommitted ? UNCOMMITTED_WHY : NO_COMMIT_WHY;
+    for (const file of plan.files || []) els['local-files'].appendChild(make('li', '', file));
+    els['local-where'].textContent = uncommitted ? WHERE_WORKING_COPY : WHERE_FOLDER;
+    els['local-command'].textContent = plan.command;
   }
 
   function fileRow(f) {
@@ -626,6 +648,7 @@ export function start({ document, location, fetch, navigator, matchMedia, play =
   els.repo.addEventListener('input', updateCommand);
   els.check.addEventListener('click', runFileCheck);
   els.copy.addEventListener('click', () => copyText(els.command, els['copy-note']));
+  els['local-copy'].addEventListener('click', () => copyText(els['local-command'], els['local-copy-note']));
   els['demo-copy'].addEventListener('click', () => copyText(els['demo-command'], els['demo-copy-note']));
   els['strip-copy'].addEventListener('click', () => copyText(els['strip-command'], els['strip-copy-note']));
   setUpPlay();
