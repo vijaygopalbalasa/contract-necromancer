@@ -25,7 +25,7 @@ necro init                 # write the Kiro hooks and steering file; trust the w
 necro freeze <spec>        # a person does this, after reading the contracts
 necro check <spec>         # run every frozen contract now and write a receipt
 necro audit                # check each ticked task after the fact
-necro verify <receipt>     # re-run a receipt: CONFIRMED, MISMATCH or SUPERSEDED
+necro verify <receipt>     # re-run a receipt: CONFIRMED (its results reproduce, failures included), MISMATCH or SUPERSEDED
 ```
 
 Before `freeze`, write `.kiro/specs/<spec>/requirements.md` with numbered acceptance criteria, and one contract per
@@ -148,7 +148,7 @@ function with no postcondition can still lie. [More](docs/reference.md#runtime-p
 
 ## Limits
 
-- Guard rails, not a sandbox: a shell command or the contract code can change any file, including `.necro/`. The guarantee is `necro verify`, which trusts `.necro/lock.json`; commit it, check `git diff` before you trust a receipt, and run `necro verify` in CI.
+- Guard rails, not a sandbox: a shell command or the contract code can change any file, including `.necro/`. The guarantee is `necro verify`, which trusts `.necro/lock.json`; commit it and check `git diff` before you trust a receipt. CONFIRMED means the same files give the same results, so a receipt that records failing contracts can be CONFIRMED too; in CI, run `necro audit`, which fails unless every ticked task's contracts pass.
 - Receipts are files in the project, so an agent able to write files can add one. A forged receipt can only make `necro audit` accept a task whose required contracts pass now: it can fake where a tick came from, not whether the work holds.
 - `--frozen-intrinsics` freezes the language's built-in prototypes (`String`, `Array`, `Object`, `Map` and the rest), not `JSON`, `Buffer`, the global names or Node's modules, and `plain()` cannot help against code that changes what a test framework does. Contracts that check `console` output get a writable copy of `console`.
 - The receipt card on the viewer page checks hashes, not test runs. The play runs the example's seven JavaScript-only contracts in the browser, with small stand-ins for `node:test` and `node:assert`. The gate and `necro verify` run every contract in Node.js.
