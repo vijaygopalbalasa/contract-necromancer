@@ -429,3 +429,20 @@ text as the ticked task and the disk file with the line ticked as the state afte
 ticks nothing, so every contract is required and the receipt's `task` is `null`. A `tasksFilePath` that resolves
 outside the project, or that is not `.kiro/specs/<spec>/tasks.md`, names no spec, so the call is blocked with a short
 message.
+
+## Clarification (a confirmed receipt that records failures, Req 6.11 and 6.12)
+`necro check` writes a receipt even when a contract fails (Req 9.2), and `verify` confirms a receipt when the re-run
+gives the same results, so a receipt that records a failure can print CONFIRMED. That is true but easy to misread as
+"the contracts pass". After `CONFIRMED <receiptHash>.`, `verify` therefore looks at the receipt's own `contracts` list.
+Once the checks above have passed, the re-run agrees with that list entry by entry, so it is the list to report. Every
+entry whose `result` is not `pass` is a failing contract.
+
+- With none, `verify` prints nothing more, so the output for a passing receipt is the single line it always was (6.12).
+- With one or more, it prints on the next line `This receipt records N failing contracts: <names>.`, or
+  `This receipt records 1 failing contract: <name>.` for one. Names are joined with `, ` like the paths and names in
+  the other `verify` messages, and keep the order of the receipt's `contracts` list, not a sorted order.
+- The exit code stays 0. The line is information about a receipt that is true, not a mismatch. `MISMATCH`,
+  `SUPERSEDED` and the altered-receipt message are unchanged and print no such line.
+
+The change is a few lines at the end of `verify` in `src/verify.js`. It adds no module and no receipt field, so
+`receiptHash` and every existing receipt are unaffected.

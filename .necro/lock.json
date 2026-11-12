@@ -407,6 +407,16 @@
           "sha256": "de4b270f732d4f17837457c4fd44a04821a98e19d43954274075ddf0adeaca11"
         },
         {
+          "name": "verify-failing",
+          "names": [
+            "R6.11 verify prints, on the line after CONFIRMED, how many failing contracts the receipt records and names them, and still exits 0 (one failing contract)",
+            "R6.11 verify names every failing contract in the receipt's order and uses the plural for two (two failing contracts)",
+            "R6.12 verify prints CONFIRMED and the receipt hash and no failing-contract line for a receipt whose recorded contracts all pass"
+          ],
+          "path": "contracts/necro-core/verify-failing.contract.test.js",
+          "sha256": "c0a07fd4975144ba4ea61001cc2204eaa3cdaffb1b8e694870a31dc056a2e6bf"
+        },
+        {
           "name": "verify-root",
           "names": [
             "R6.10 necro verify prints Project: and the absolute path of the project first when its root is not the current folder, and no such line from the root itself"
@@ -429,7 +439,7 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-12T06:29:19.690Z",
+      "frozenAt": "2026-11-12T06:34:04.052Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
         "sha256": "720691f75dd731a6c5c08acd77f7da5ce7eac1de974cbea9d7bac227d4ce1532"
@@ -756,6 +766,13 @@
             "15.11"
           ],
           "text": "40. **Freeze the assertions, copy the results** (Req 13.17, 13.18, 15.11)"
+        },
+        "41": {
+          "criteria": [
+            "6.11",
+            "6.12"
+          ],
+          "text": "41. **Say when a confirmed receipt records failures** (Req 6.11, 6.12)"
         },
         "3b": {
           "criteria": [
