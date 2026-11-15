@@ -38,15 +38,17 @@ evidence matches only `job-<id>-<hex>.json`.
 `receipts/` holds the three receipts the gate wrote, one per accepted tick. Run in the judge-protocol working tree:
 
 - `bc99f504...` (task 3, all 6 contracts pass): `CONFIRMED`.
-- `f31db847...` (task 1) and `4a9549e0...` (task 2): `MISMATCH`, because when they were written the evidence contracts
-  R2.1 and R2.2 were still failing (not required for those tasks), and they pass now. A receipt is a snapshot of
-  that moment; this is the verifier noticing that the world moved on.
+- `f31db847...` (task 1) and `4a9549e0...` (task 2): `SUPERSEDED`, naming `bc99f504...`. When they were written the
+  evidence contracts R2.1 and R2.2 were still failing (not required for those tasks), and they pass now: later work
+  under the same freeze changed the results, and the newer receipt confirms today's code.
+
+Verified from this repository, the copies in `receipts/` print `OTHER PROJECT`: they belong to judge-protocol.
 
 ## Honest status
 
 The change is merged into judge-protocol ([pull request #29](https://github.com/vijaygopalbalasa/judge-protocol/pull/29),
-Nov 12 2026). In a clone of that repository, run from `judge-service/` after `npm ci` (without the dependencies
-installed, verify cannot run the contracts),
+Nov 12 2026). In a clone of that repository, run from `judge-service/` after `npm ci` (without them, verify
+prints `INCOMPLETE` and says to run `npm ci`),
 `necro verify .necro/receipts/api-errors/bc99f504b6460d31fb279cb986dfc70e4e65c70598518ec011f77fb9ea8a88f9.json`
 prints CONFIRMED. This folder also keeps the spec, contracts, receipts, diff, unit tests and the Kiro logs (local paths
 replaced with `<home>`). The requirements are mine; Kiro drafted the design, tasks and contracts and wrote the code and

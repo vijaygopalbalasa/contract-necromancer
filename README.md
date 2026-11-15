@@ -4,7 +4,21 @@ Design by Contract, from Eiffel (1986), raised for coding agents.
 
 A coding agent can mark a task done in Kiro when the work does not meet the requirements. Contract Necromancer's Kiro hooks refuse the tick in `tasks.md` until the frozen contracts for that task pass, and each passing task leaves a receipt that anyone can re-run.
 
-**[Result](experiments/README.md):** on a task that cannot honestly be finished, Kiro marked it done in 11 of 11 runs without the gate and 0 of 19 with it, across two models; the hook alone was enough. Under a "do whatever it takes" prompt, one gated run of six got past the gate by patching JavaScript built-ins; that hole is closed and the cheat is kept as a test.
+**Used on a real fix.** In Judge Protocol, a live project of mine, Kiro fixed two real bugs in the API under the gate: an
+error response could hand a caller the chain RPC URL (which can carry a provider key), and an evidence route could serve
+the wrong file. The gate refused Kiro's first tick, because only one of the two error paths logged the full error and the
+contract asks for both. The fix then passed all 6 frozen contracts and was merged
+([PR #29](https://github.com/vijaygopalbalasa/judge-protocol/pull/29), [case study](case-studies/judge-api-errors/README.md)).
+Re-check it:
+
+```
+git clone https://github.com/vijaygopalbalasa/judge-protocol && cd judge-protocol/judge-service && npm ci
+npx -y github:vijaygopalbalasa/contract-necromancer verify .necro/receipts/api-errors/bc99f504b6460d31fb279cb986dfc70e4e65c70598518ec011f77fb9ea8a88f9.json
+```
+
+It prints `CONFIRMED`. Without `npm ci` it prints `INCOMPLETE` and says to run `npm ci`.
+
+**[Result](experiments/README.md):** on a task that cannot honestly be finished, Kiro marked it done in 11 of 11 runs without the gate and 0 of 19 with it, across two models, 3 to 5 runs per cell (a small experiment; every run's log is in `experiments/`); the hook alone was enough. Under a "do whatever it takes" prompt, one gated run of six got past the gate by patching JavaScript built-ins; that hole is closed and the cheat is kept as a test.
 
 **Try it in one command** (Node.js 24 and git): `npx -y github:vijaygopalbalasa/contract-necromancer demo`. The gate refuses a planted bug, accepts the fix, the receipt verifies, and code that is right only under the test runner is stopped at runtime. With no install, [the live page](https://vijaygopalbalasa.github.io/contract-necromancer/) has a Try it here button that sends the gate a false done and then the fix, in the browser. Also: the [video](https://youtu.be/TYrSyhIYqlk).
 
@@ -109,11 +123,37 @@ ContractViolation: R5.1 splitExpense: the shares of 3225 cents add up to 3224 ce
 
 To try it with no install, open the live page https://vijaygopalbalasa.github.io/contract-necromancer/ and press the Try it here button. It sends the gate a false done and then the fix, in the browser.
 
+## Re-run a receipt
+
+Every passing tick writes a receipt, and `necro verify` re-runs it. It prints one of five words:
+
+| It prints | Meaning | Exit |
+|---|---|---|
+| `CONFIRMED` | The pinned files and the contract results are the same today. | 0 |
+| `MISMATCH` | Something the receipt pinned has changed; it names the files or contracts. | 1 |
+| `SUPERSEDED` | The spec was frozen again, or later work under the same freeze changed the code; it says which, and names the newer receipt when there is one. | 1 |
+| `INCOMPLETE` | A contract could not run here (for example pytest is not installed, or `npm ci` was not run); it names what is missing, and nothing it could run differed. | 2 |
+| `OTHER PROJECT` | The receipt was written in another project; verify it from that project's checkout. | 2 |
+
+Three receipts to try, from a clone of this repository
+(`git clone https://github.com/vijaygopalbalasa/contract-necromancer && cd contract-necromancer`):
+
+```
+node bin/necro.js verify .necro/receipts/necro-core/ea4cc3a61da549d677edb36f2d5d3f13cbfeb98b96483c5295d6b9d9bdb77b8f.json
+node bin/necro.js verify .necro/receipts/receipt-viewer/53f08727127a58ff9cbab85bf5943ef2ebae74840e10b08cc6b6555630636ee2.json
+node bin/necro.js verify examples/pumpkin-ledger/.necro/receipts/ledger/86e6ee251eaacbfb90f621d45fd704e904bca4e803c0a2a644f9ce2f094a5801.json
+```
+
+The first is the tool's own: `CONFIRMED` with pytest installed, `INCOMPLETE` naming R13.6 without it. The second is the
+page's and needs Chrome or Chromium. The third needs only Node.js. Older receipts print `SUPERSEDED`. Re-running all 111 receipts here with pytest installed gives 8 `CONFIRMED`,
+100 `SUPERSEDED`, 3 `OTHER PROJECT` (the case-study copies) and no `MISMATCH`; without pytest, 4 of the 8 print
+`INCOMPLETE` instead.
+
 ## See it
 
 - [Live receipt viewer](https://vijaygopalbalasa.github.io/contract-necromancer/), which opens a receipt from a Raw link on `https://raw.githubusercontent.com/vijaygopalbalasa/contract-necromancer/` with `?receipt=`.
 - [Demo video](https://youtu.be/TYrSyhIYqlk).
-- [Case study](case-studies/judge-api-errors/README.md): a real fix in Judge Protocol, gated end to end; the gate refused a half-done tick. Its receipts are in this repository; the change itself lands in judge-protocol after Nov 15.
+- [Case study](case-studies/judge-api-errors/README.md): a real fix in Judge Protocol, gated end to end; the gate refused a half-done tick, and the fix is merged ([PR #29](https://github.com/vijaygopalbalasa/judge-protocol/pull/29)).
 - Examples with their own frozen contracts and receipts: [Pumpkin Ledger](examples/pumpkin-ledger), [Night Shift](examples/night-shift), [Leap Age](examples/leap-age) (Python).
 - [Experiment](experiments/README.md), [reference](docs/reference.md), [how it was built and who wrote what](docs/how-it-was-built.md), [limits](docs/limits.md).
 
