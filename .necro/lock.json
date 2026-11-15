@@ -275,7 +275,7 @@
             "R13.6 a Python example has pytest contracts and a runners.json, and the gate refuses a planted bug, accepts the fix and writes a receipt"
           ],
           "path": "contracts/necro-core/python-example.contract.test.js",
-          "sha256": "c51d21ae8d9a925f4653a344dfce0def0c28c2140077b0855f7b01aa5cfbdfcf"
+          "sha256": "2dec0e5e73de8856d82b760e181d161882bc4c79a4c4f0db9295f1f5b6e1dcb4"
         },
         {
           "name": "receipts",
@@ -404,7 +404,25 @@
             "R6.9 necro verify on an example's receipt gives the same output and exit code from the repository root, the example folder and an unrelated folder, and a receipt outside any project is checked in the current folder"
           ],
           "path": "contracts/necro-core/verify-anywhere.contract.test.js",
-          "sha256": "de4b270f732d4f17837457c4fd44a04821a98e19d43954274075ddf0adeaca11"
+          "sha256": "029c98a04718963ad91ec0d0c81d9b84efd08cbf96fb28a171e408256db7ae3e"
+        },
+        {
+          "name": "verify-cannot-run-skip",
+          "names": [
+            "R6.17 verify prints INCOMPLETE naming the contract and what is missing, exits 2, and never prints MISMATCH when a Node contract skips with \"cannot run:\"",
+            "R6.17 the same project prints CONFIRMED and exits 0 once the contract no longer skips",
+            "R6.17 necro check still fails the contract and prints the reason, with exit 1",
+            "R6.17 the gate refuses the tick of a task whose contract skips with \"cannot run:\", prints the reason, and allows it once the contract runs",
+            "R6.17 necro audit counts a ticked task whose contract skips with \"cannot run:\" as failing and prints the reason",
+            "R6.17 a skip with another reason stays a failing contract in verify: MISMATCH, exit 1, never INCOMPLETE",
+            "R6.17 a skip with a reason that has \"cannot run\" but not the prefix with a colon stays a failing contract in verify: MISMATCH, exit 1, never INCOMPLETE",
+            "R6.17 a skip with a reason that holds the prefix only after other words stays a failing contract in verify: MISMATCH, exit 1, never INCOMPLETE",
+            "R6.17 a skip with no reason stays a failing contract in verify: MISMATCH, exit 1, never INCOMPLETE",
+            "R6.17 a skip with another reason is refused by the gate as before",
+            "R6.17 a change to the contract file is still a MISMATCH when it also skips with \"cannot run:\""
+          ],
+          "path": "contracts/necro-core/verify-cannot-run-skip.contract.test.js",
+          "sha256": "58f2b17c8e0cee3be786d12dba565d416f32af85535bfb2d5828cda61f45d125"
         },
         {
           "name": "verify-failing",
@@ -438,10 +456,14 @@
           "names": [
             "R6.15 verify prints OTHER PROJECT naming the spec and exits 2 when the spec is neither in the lock nor in the project",
             "R6.15 a spec that exists in the project but is not frozen keeps its answer: MISMATCH, not in the lock, exit 1",
-            "R6.15 a receipt for a spec that is in the lock is verified as before (CONFIRMED in its own project)"
+            "R6.15 a receipt for a spec that is in the lock is verified as before (CONFIRMED in its own project)",
+            "R6.15 a copy of the receipt filed elsewhere in the project (case-studies/x/receipts/<hash>.json) prints OTHER PROJECT and exits 2",
+            "R6.15 a copy of the receipt outside any project prints OTHER PROJECT and exits 2",
+            "R6.15 an altered copy filed elsewhere in the project is still a MISMATCH saying the receipt was altered, not OTHER PROJECT",
+            "R6.15 a spec that exists in the project but is not frozen keeps MISMATCH for a copy filed elsewhere in the project"
           ],
           "path": "contracts/necro-core/verify-other-project.contract.test.js",
-          "sha256": "636d49dc3594134c86ac72eb154e4aef1e85963888c6cd589068cd52c06911fb"
+          "sha256": "4b0f6ed7911d0fae7a2c871810a7159e7cf1906f7ea05fb4a5e33062f82b7305"
         },
         {
           "name": "verify-root",
@@ -481,13 +503,13 @@
             "R6.7 when a lock exists verify requires the receipt to equal the lock exactly and runs the lock's contracts, so a receipt that leaves out a failing contract is a MISMATCH"
           ],
           "path": "contracts/necro-core/verify.contract.test.js",
-          "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
+          "sha256": "a6938c76c75ea62351737a67ea61e10faa3264c7ac31641837ba2d08f811564c"
         }
       ],
-      "frozenAt": "2026-11-15T17:56:04.424Z",
+      "frozenAt": "2026-11-15T21:11:28.506Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
-        "sha256": "95fe91ca80fe427a56208deb1fea98ebed19e86df3fae78dc8c4b261d2cebf88"
+        "sha256": "7a4eb7eae418d723c6cc8f83d6458fdda2f907d4bcd75990924d463d8903b1d9"
       },
       "tasks": {
         "1": {
@@ -851,6 +873,20 @@
           ],
           "text": "46. **Count a contract that cannot run as failing, and name what is missing, outside verify** (Req 6.16)"
         },
+        "47": {
+          "criteria": [
+            "6.17"
+          ],
+          "text": "47. **Count a Node contract that skips with `cannot run:` as not run in verify** (Req 6.17)"
+        },
+        "48": {
+          "criteria": [
+            "6.7",
+            "6.9",
+            "6.15"
+          ],
+          "text": "48. **Say OTHER PROJECT wherever the receipt file is filed** (Req 6.15, 6.7, 6.9)"
+        },
         "3b": {
           "criteria": [
             "4.7",
@@ -944,6 +980,11 @@
         "4. **Receipts** (Req 5.1, 5.2, 5.3)",
         "40. **Freeze the assertions, copy the results** (Req 13.17, 13.18, 15.11)",
         "41. **Say when a confirmed receipt records failures** (Req 6.11, 6.12)",
+        "42. **Say INCOMPLETE when a runner or an imported module is missing** (Req 6.13)",
+        "43. **Say SUPERSEDED when later work under the same freeze replaced a receipt** (Req 6.14)",
+        "44. **Say OTHER PROJECT for a receipt from elsewhere** (Req 6.15)",
+        "45. **Name all five verify outcomes in the MCP tool, README and docs** (Req 10.2, 6.13 to 6.15)",
+        "46. **Count a contract that cannot run as failing, and name what is missing, outside verify** (Req 6.16)",
         "5. **Verify** (Req 6.1, 6.2, 6.3)",
         "6. **PreToolUse: block edits to frozen files** (Req 3.1, 3.2, 3.4)",
         "7. **Gate on marking a task done** (Req 4.1, 4.2, 4.3, 4.4, 4.5, 4.6)",

@@ -139,8 +139,10 @@ test('R6.9 necro verify on an example\'s receipt gives the same output and exit 
 
     const bare = make();
     put(bare, '.necro/lock.json', JSON.stringify({ specs: {} }));
+    // The spec is nowhere in that folder, so the receipt came from another project (6.15), wherever the file is.
     const lacking = verifyFrom(bare, orphan);
-    assert.equal(lacking.status, 1, `${lacking.stdout}${lacking.stderr}`);
-    assert.match(lacking.stdout, /MISMATCH/);
+    assert.equal(lacking.status, 2, `${lacking.stdout}${lacking.stderr}`);
+    assert.match(lacking.stdout, /OTHER PROJECT/);
     assert.ok(lacking.stdout.includes("'demo'"), lacking.stdout);
+    assert.doesNotMatch(lacking.stdout, /MISMATCH/);
   }));

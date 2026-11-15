@@ -551,7 +551,7 @@ spec in the project: the folder `.kiro/specs/<spec>/` or `contracts/<spec>/`. If
 project and is merely not frozen, so the current message stays (`MISMATCH. Spec '<spec>' is not in the lock...`, exit
 1). If neither exists, the receipt was written elsewhere and `verify` prints
 `OTHER PROJECT. Spec '<spec>' is not in this project. This receipt was written in another project; verify it from that project's checkout.`
-and returns 2. When no lock file exists, nothing changes: the receipt's own pins are used as before.
+and returns 2. When no lock file exists, nothing changes: the receipt's own pins are used as before. `OTHER PROJECT` applies wherever the receipt file is filed (under `.necro/receipts`, elsewhere in this project such as `case-studies/x/receipts/<hash>.json`, or outside any project), so the earlier limit to `.necro/receipts` goes away; the receipt's hash is still checked first, so an altered copy stays `MISMATCH. The receipt was altered.`
 
 **The gate counts a contract that cannot run as failing (6.16).** Only `verify` has an outcome for "not run". Every
 other path treats a contract that cannot run as a failing contract. This is what the code does today, read from
@@ -583,6 +583,27 @@ other path treats a contract that cannot run as a failing contract. This is what
   otherwise; the `FAILING` reason then also lists the missing phrases of the failing contracts that cannot run, so the
   Stop and PostTaskExec undo message names them in the mixed case as well. Nothing is skipped and no exit code changes.
 - The Stop summary line (`failing: <names>`) lists the contracts by name and is not the refusal, so it stays as it is.
+
+**A Node contract that skips with `cannot run:` (6.17).** A contract can know that it cannot run here and say so with a skip
+reason, for example R13.6 when `python3 -m pytest` is not available (its reason is `cannot run: pytest not found;
+python3 -m pip install pytest`). The rules:
+- *Where the reason is read.* Node's test reporter gives a skipped test or suite a `skip` value that is the reason text, or
+  `true` when there is none. `src/contract-runner.js` turns it into a boolean today (`flagged`), which drops the text. It
+  also keeps the text as `skipReason` (a string, or `null`) on each event. `interpret` in `src/contracts.js` reads it
+  where it already turns a skip into a failing result (Req 4.7): when `skipReason` starts with `cannot run:` (exact,
+  lower case, with the colon, at the very start), the result stays `fail` and also gets `cannotRun` set to the rest of the
+  reason, trimmed. When that rest is empty the phrase is `the contract skipped itself as not runnable`. Any other reason,
+  or none, sets nothing.
+- *Verify only.* The mark is the one 6.13 already uses, so `src/verify.js` needs no new branch: a result with `cannotRun`
+  is collected in `notRun` instead of being compared, after every file hash, lock and name check and every contract that
+  did run agree. `verify` prints `INCOMPLETE`, names the contract and prints the rest of the reason as what is missing
+  (`missingPhrase` returns a text it does not know unchanged), and exits 2. A skip with another reason, or with none, has
+  no mark, so a receipt that recorded a pass gives `MISMATCH. Contracts changed: <name>.` and exit 1, as today.
+- *Everything else.* `runContracts` keeps the result `fail`, and `failingRequired`, `decideTicks`, `auditSpec` and
+  `checkSpec` do not look at the mark (6.16). `necro check` prints `The contracts cannot run here: <reason>.` and exits 1;
+  `necro audit` gives the verdict `CANNOT_RUN` with the reason; PreToolUse (a write to `tasks.md` or `task_update`),
+  PostToolUse, Stop and PostTaskExec refuse or untick the task and append `The contracts cannot run here: <reason>.` to
+  the refusal, through the code of task 46. Nothing about a skip changes the receipt format.
 
 **Exit codes.** CONFIRMED 0, MISMATCH 1, SUPERSEDED 1 (both 6.8 and 6.14), INCOMPLETE 2, OTHER PROJECT 2. `bin/necro.js`
 already passes the returned number to the process exit.

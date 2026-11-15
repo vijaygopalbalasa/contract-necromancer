@@ -291,10 +291,18 @@ test('R6.7 when a lock exists verify requires the receipt to equal the lock exac
     assertMismatch(renamed, 'name changed');
     assert.ok(renamed.stdout.includes('R6.7 first contract'), renamed.stdout);
 
-    // A receipt for a spec that is not in the lock.
+    // A receipt for a spec that is in this project but not in the lock (not frozen).
+    put(cwd, '.kiro/specs/other/requirements.md', '# Requirements: other\n');
     const otherSpec = forged((r) => { r.spec = 'other'; });
     assertMismatch(otherSpec, 'spec not in the lock');
     assert.ok(otherSpec.stdout.includes('other'), otherSpec.stdout);
+
+    // A receipt for a spec that is nowhere in this project came from another project (6.15 applies instead).
+    const nowhere = forged((r) => { r.spec = 'elsewhere'; });
+    assert.equal(nowhere.status, 2, `${nowhere.stdout}${nowhere.stderr}`);
+    assert.match(nowhere.stdout, /OTHER PROJECT/);
+    assert.ok(nowhere.stdout.includes('elsewhere'), nowhere.stdout);
+    assert.doesNotMatch(nowhere.stdout, /MISMATCH/);
 
     // A lock with no specs at all is still a lock.
     fs.writeFileSync(lockFile, JSON.stringify({ specs: {} }));

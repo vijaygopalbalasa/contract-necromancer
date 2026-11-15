@@ -474,16 +474,34 @@ test('R6.7 a receipt that changes a recorded contract name is a MISMATCH', () =>
   }
 });
 
-test('R6.7 a receipt for a spec that is not in the lock is a MISMATCH', () => {
+test('R6.7 a receipt for a spec that is in the project but not in the lock is a MISMATCH', () => {
   const cwd = tmpCwd();
   try {
     const { file } = frozenWithReceipt(cwd);
+    write(cwd, '.kiro/specs/other/requirements.md', '# Other\n');
     const { code, out } = verifyForged(cwd, file, (r) => {
       r.spec = 'other';
     });
     assert.equal(code, 1, out);
     assert.match(out, /MISMATCH/);
     assert.ok(out.includes("'other'"), out);
+    assert.doesNotMatch(out, /OTHER PROJECT/);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('R6.7 a receipt for a spec that is nowhere in the project is OTHER PROJECT, exit 2, wherever the receipt is filed', () => {
+  const cwd = tmpCwd();
+  try {
+    const { file } = frozenWithReceipt(cwd);
+    const { code, out } = verifyForged(cwd, file, (r) => {
+      r.spec = 'other';
+    });
+    assert.equal(code, 2, out);
+    assert.match(out, /OTHER PROJECT/);
+    assert.ok(out.includes("'other'"), out);
+    assert.doesNotMatch(out, /MISMATCH/);
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }
@@ -804,9 +822,10 @@ test('R6.9 a receipt outside any project with a lock is verified in the current 
     // Run in a folder whose lock lacks the spec: the lock of that folder decides.
     write(bare, '.necro/lock.json', JSON.stringify({ specs: {} }));
     const noSpec = verifyFrom(bare, orphan);
-    assert.equal(noSpec.code, 1, noSpec.out);
-    assert.match(noSpec.out, /MISMATCH/);
+    assert.equal(noSpec.code, 2, noSpec.out);
+    assert.match(noSpec.out, /OTHER PROJECT/);
     assert.ok(noSpec.out.includes("'demo'"), noSpec.out);
+    assert.doesNotMatch(noSpec.out, /MISMATCH/);
   } finally {
     fs.rmSync(example, { recursive: true, force: true });
     fs.rmSync(orphans, { recursive: true, force: true });

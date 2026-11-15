@@ -9,8 +9,9 @@
 // copy under the temporary directory: freeze the spec, plant a bug in the code, show the gate refusing the tick of a task,
 // fix the bug, show the gate accepting it and writing a receipt, and re-run that receipt with `necro verify`.
 //
-// It needs `python3 -m pytest`. When that is not available it skips, with a plain message. (A skipped contract does not
-// pass, but the contract is the same one that runs wherever pytest is installed.)
+// It needs `python3 -m pytest`. When that is not available it skips, with a reason that starts with `cannot run:` (Req 6.17).
+// (A skipped contract does not pass, and `necro verify` counts it as not run, but the contract is the same one that runs
+// wherever pytest is installed.)
 //
 // This file carries its own helpers, so it does not depend on any file that is not frozen.
 //
@@ -48,7 +49,7 @@ function cleanEnv() {
 function skipReason() {
   const res = spawnSync('python3', ['-m', 'pytest', '--version'], { encoding: 'utf8', env: cleanEnv(), stdio: ['ignore', 'pipe', 'pipe'] });
   if (res.status === 0) return false;
-  return 'Skipped: python3 -m pytest is not available here. Install pytest (python3 -m pip install pytest) to run this contract.';
+  return 'cannot run: pytest not found; python3 -m pip install pytest';
 }
 
 function necro(cwd, args, input) {
