@@ -188,6 +188,7 @@ export function auditSpec(cwd, spec, lock = readLock(cwd), results = null, { onl
       verdict,
       failing: verdict === FAILING ? failing : [],
       ...(verdict === CANNOT_RUN ? { cannotRun } : {}),
+      ...(verdict === FAILING && missing.some(Boolean) ? { missing: [...new Set(missing.filter(Boolean).map((r) => r.cannotRun))] } : {}),
     });
   }
   return { spec, tasks };
@@ -201,7 +202,7 @@ export function problems(audit) {
       ...t,
       reason:
         t.verdict === FAILING
-          ? `required contracts fail now: ${t.failing.join(', ')}`
+          ? `required contracts fail now: ${t.failing.join(', ')}${t.missing ? ` (cannot run here: ${t.missing.join('; ')})` : ''}`
           : t.verdict === CANNOT_RUN
             ? `its contracts cannot run here (${t.cannotRun.join('; ')}), so it cannot be checked`
             : 'no receipt shows the gate accepted it',

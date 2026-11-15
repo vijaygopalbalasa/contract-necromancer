@@ -44,6 +44,8 @@ export function checkSpec(cwd, spec) {
     if (failing.length > 0 && failing.every((r) => r.cannotRun)) {
       lines.push(`The contracts cannot run here: ${missing.join('; ')}. Install or fix it, then run 'necro check ${spec}' again.`);
     } else {
+      // Req 6.16: a real failure next to a contract that cannot run still names what is missing.
+      if (missing.length > 0) lines.push(`The contracts cannot run here: ${missing.join('; ')}. Install or fix it too.`);
       lines.push(
         results.length === 0
           ? 'No contracts ran. Check the contract files in the spec.'

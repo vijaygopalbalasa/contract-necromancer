@@ -698,7 +698,7 @@ export function handlePreToolUse(payload) {
 // Returns { failing, required, task }: the sorted names of failing required
 // contracts, the sorted names that were required, and the ticked task as
 // { id, line } (null when no task line can be named).
-function decideTicks(lock, spec, results, change) {
+export function decideTicks(lock, spec, results, change) {
   const names = [...new Set(results.map((r) => r.name))].sort();
   // `change.ticked` names the tasks directly when the tool does (task_update, Req 4.19).
   const ticked = change.ticked ?? (change.exact ? newlyTickedTexts(change.before, change.after) : []);
@@ -717,13 +717,13 @@ function decideTicks(lock, spec, results, change) {
   const reasons = [...new Set(results.filter((r) => r.result === 'fail' && failing.includes(r.name) && r.reason).map((r) => r.reason))];
   // Req 6.16: a contract that cannot run counts as failing, and the refusal names what is missing.
   const missing = [...new Set(results.filter((r) => r.result === 'fail' && failing.includes(r.name) && r.cannotRun).map((r) => r.cannotRun))];
-  if (missing.length > 0) reasons.push(`The contracts cannot run here: ${missing.join('; ')}. Install it, then try again.`);
-  return { failing, required, task, reasons };
+  return { failing, required, task, reasons, missing };
 }
 
 // "Contracts failed: a, b." and, for contract files that could not run, the reasons (Req 4.5, 13.4).
-function failedMessage(failing, reasons) {
-  return [`Contracts failed: ${failing.join(', ')}.`, ...reasons].join(' ');
+export function failedMessage(failing, reasons, missing = []) {
+  const cannot = missing.length > 0 ? [`The contracts cannot run here: ${missing.join('; ')}. Install it, then try again.`] : [];
+  return [`Contracts failed: ${failing.join(', ')}.`, ...reasons, ...cannot].join(' ');
 }
 
 // Gate: run the spec's frozen contracts; block unless the contracts the ticked
@@ -742,14 +742,14 @@ function runGate(cwd, spec, change) {
   const lock = readLock(cwd);
   // Req 4.4, 4.14: run every frozen contract with node --test.
   const results = runContracts(cwd, spec, lock);
-  const { failing, required, task, reasons } = decideTicks(lock, spec, results, change);
+  const { failing, required, task, reasons, missing } = decideTicks(lock, spec, results, change);
 
   // Req 4.5: a failing required contract blocks the edit, listing each by name.
   if (failing.length > 0) {
     return {
       exitCode: 2,
       stdout: '',
-      stderr: failedMessage(failing, reasons),
+      stderr: failedMessage(failing, reasons, missing),
     };
   }
 
@@ -788,13 +788,13 @@ function checkShellTicks(cwd, lock) {
     }
 
     const results = runContracts(cwd, spec, lock);
-    const { failing, required, task, reasons } = decideTicks(lock, spec, results, { before: baseline, after: current, exact: true });
+    const { failing, required, task, reasons, missing } = decideTicks(lock, spec, results, { before: baseline, after: current, exact: true });
     if (failing.length > 0) {
       fs.writeFileSync(file, baseline);
       recordState(cwd, spec, baseline);
       const rel = toRel(path.relative(cwd, file));
       messages.push(
-        `${failedMessage(failing, reasons)} Restored ${rel} to its last recorded state. Fix the code, then tick the task again.`,
+        `${failedMessage(failing, reasons, missing)} Restored ${rel} to its last recorded state. Fix the code, then tick the task again.`,
       );
       continue;
     }
