@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { hashFile } from './canon.js';
-import { lockedRunners, findRunner, runReport, spawnLimited, timeoutReason, withoutRedirects, frozenGlobDrift, mapCaseName } from './runners.js';
+import { missingFromStderr, lockedRunners, findRunner, runReport, spawnLimited, timeoutReason, withoutRedirects, frozenGlobDrift, mapCaseName } from './runners.js';
 
 const RUNNER = fileURLToPath(new URL('./contract-runner.js', import.meta.url));
 
@@ -96,7 +96,14 @@ function interpret(run, stem, rel) {
     const reason = run
       ? `${rel} failed to load or stopped early${why ? `: ${why}` : ''}. Fix the file, then run the check again.`
       : `${rel} could not be run, because the contract runner stopped. Run it again, and check that Node.js 24 or newer is installed.`;
-    contracts.push({ name: stem, result: 'fail', fileFailure: true, loadFailure: contracts.length === 0, reason, errorLines });
+    const failure = { name: stem, result: 'fail', fileFailure: true, loadFailure: contracts.length === 0, reason, errorLines };
+    // Req 6.13: a file that never loaded because an imported package is not installed did not run. A path import
+    // is the project's own file, so missingFromStderr leaves it unmarked.
+    if (failure.loadFailure && run) {
+      const missing = missingFromStderr(errorLines.join('\n'));
+      if (missing !== null) failure.cannotRun = missing;
+    }
+    contracts.push(failure);
   } else if (contracts.length === 0) {
     const reason = `${rel} loads but defines no test. Add tests whose names start with a criterion ID, such as "R1.1 ...".`;
     contracts.push({ name: stem, result: 'fail', fileFailure: true, noTests: true, reason, errorLines: [] });
@@ -119,7 +126,13 @@ function interpretReport(run, stem) {
     if (run.cannotRun !== undefined) failure.cannotRun = run.cannotRun;
     return [failure];
   }
-  if (run.reason !== undefined) return run.cases.map((t) => ({ name: mapCaseName(t.name), result: 'fail', reason: run.reason }));
+  if (run.reason !== undefined) {
+    return run.cases.map((t) => {
+      const r = { name: mapCaseName(t.name), result: 'fail', reason: run.reason };
+      if (run.cannotRun !== undefined) r.cannotRun = run.cannotRun;
+      return r;
+    });
+  }
   return run.cases.map((t) => ({ name: mapCaseName(t.name), result: t.outcome === 'passed' ? 'pass' : 'fail' }));
 }
 

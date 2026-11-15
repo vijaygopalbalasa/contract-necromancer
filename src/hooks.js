@@ -715,6 +715,9 @@ function decideTicks(lock, spec, results, change) {
   }
   // Req 13.4: a contract file that gave no usable report says why, naming the file.
   const reasons = [...new Set(results.filter((r) => r.result === 'fail' && failing.includes(r.name) && r.reason).map((r) => r.reason))];
+  // Req 6.16: a contract that cannot run counts as failing, and the refusal names what is missing.
+  const missing = [...new Set(results.filter((r) => r.result === 'fail' && failing.includes(r.name) && r.cannotRun).map((r) => r.cannotRun))];
+  if (missing.length > 0) reasons.push(`The contracts cannot run here: ${missing.join('; ')}. Install it, then try again.`);
   return { failing, required, task, reasons };
 }
 

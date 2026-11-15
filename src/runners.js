@@ -368,6 +368,21 @@ function readCases(report, file) {
   return { cases };
 }
 
+// Req 6.13: the text of a report with its XML escapes undone, or '' when it cannot be read.
+function reportText(report) {
+  try {
+    return fs
+      .readFileSync(report, 'utf8')
+      .replace(/&apos;|&#39;|&#x27;/g, "'")
+      .replace(/&quot;/g, '"')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&');
+  } catch {
+    return '';
+  }
+}
+
 // Req 16.4: the last few non-empty lines of a text, each cut to a readable length.
 export function tailLines(text, count = 5) {
   const lines = String(text || '')
@@ -452,10 +467,16 @@ export function runReport(cwd, absPath, command, env) {
       const ended = tail.length > 0 ? ` The end of its standard error: ${tail.join(' | ')}.` : '';
       const read = readCases(report, file);
       if (read.cases) {
-        return {
+        // Req 6.13: a report whose cases all fail and whose text says a module is missing: nothing ran.
+        const out = {
           cases: read.cases,
           reason: `The command for ${file} ${how}, so the file counts as failing whatever its report says.${ended} Fix the failing contracts, or the command in runners.json.`,
         };
+        if (read.cases.every((t) => t.outcome !== 'passed')) {
+          const gone = missingFromStderr(`${res.stderr}\n${reportText(report)}`);
+          if (gone !== null && gone.startsWith('the Python module')) out.cannotRun = gone;
+        }
+        return out;
       }
       // Req 16.4: no report, and the standard error names a missing module: the contracts did not run at all.
       const missing = missingFromStderr(res.stderr);

@@ -83,6 +83,19 @@ function frozenOf(receipt) {
   return receipt.frozen.filter((f) => f && typeof f.path === 'string' && typeof f.sha256 === 'string');
 }
 
+// Req 6.13: "pytest not found; install pytest" from the phrase a runner gives for what it could not run.
+function missingPhrase(text) {
+  let m = /^the program (\S+) was not found$/.exec(text);
+  if (m) return `${m[1]} not found; install ${m[1]}`;
+  m = /^the Node\.js package (.+) is not installed$/.exec(text);
+  if (m) return `${m[1]} not found; run npm ci`;
+  m = /^the Python module (.+) is not installed$/.exec(text);
+  if (m) return `${m[1]} not found; pip install ${m[1]}`;
+  m = /^the program (\S+) could not be started/.exec(text);
+  if (m) return `${m[1]} could not be started; fix the command in runners.json`;
+  return text;
+}
+
 // Names that appear a different number of times in two lists.
 function diffNames(expected, got) {
   const count = new Map();
@@ -231,15 +244,31 @@ export function verify(workingDir, receiptFile) {
   const receiptMap = new Map(receipt.contracts.map((c) => [key(c), c]));
   const freshMap = new Map(fresh.map((r) => [key(r), r]));
   const changedContracts = [];
+  // Req 6.13: a contract that could not run (runner or imported module missing) is not a changed result.
+  const notRun = [];
+  const receiptPaths = new Set(receipt.contracts.map((c) => c.path));
   for (const [k, c] of receiptMap) {
-    if (!freshMap.has(k) || freshMap.get(k).result !== c.result) changedContracts.push(c.name);
+    const got = freshMap.get(k);
+    if (got && got.cannotRun) notRun.push({ name: c.name, missing: got.cannotRun });
+    else if (!got || got.result !== c.result) changedContracts.push(c.name);
   }
   for (const [k, r] of freshMap) {
-    if (!receiptMap.has(k)) changedContracts.push(r.name);
+    if (receiptMap.has(k)) continue;
+    // The file-level entry of a file that did not run is not a new contract, unless the receipt records none for it.
+    if (r.cannotRun) {
+      if (!receiptPaths.has(r.path)) notRun.push({ name: r.name, missing: r.cannotRun });
+    } else {
+      changedContracts.push(r.name);
+    }
   }
   if (changedContracts.length > 0) {
     console.log(`MISMATCH. Contracts changed: ${[...new Set(changedContracts)].sort().join(', ')}.`);
     return 1;
+  }
+  if (notRun.length > 0) {
+    console.log('INCOMPLETE. This receipt could only be partly checked on this machine. Contracts that did not run:');
+    for (const n of notRun) console.log(`- ${n.name} (${missingPhrase(n.missing)})`);
+    return 2;
   }
 
   console.log(`CONFIRMED ${receipt.receiptHash}.`);
