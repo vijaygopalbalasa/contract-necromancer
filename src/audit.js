@@ -187,7 +187,7 @@ export function auditSpec(cwd, spec, lock = readLock(cwd), results = null, { onl
       text,
       verdict,
       failing: verdict === FAILING ? failing : [],
-      ...(verdict === CANNOT_RUN ? { cannotRun } : {}),
+      ...(verdict === CANNOT_RUN ? { cannotRun, failing } : {}),
       ...(verdict === FAILING && missing.some(Boolean) ? { missing: [...new Set(missing.filter(Boolean).map((r) => r.cannotRun))] } : {}),
     });
   }
@@ -241,7 +241,7 @@ export function runAudit(cwd, specName) {
         t.verdict === FAILING
           ? ` (failing: ${t.failing.join(', ')})`
           : t.verdict === CANNOT_RUN
-            ? ` (cannot run here: ${t.cannotRun.join('; ')})`
+            ? ` (cannot run here: ${t.cannotRun.join('; ')}; contracts: ${t.failing.join(', ')})`
             : '';
       for (const m of t.cannotRun || []) missing.add(m);
       out.push(`  ${t.verdict.padEnd(10)}  ${t.text}${detail}`);

@@ -72,6 +72,11 @@ function flagged(value) {
   return value !== undefined && value !== null && value !== false;
 }
 
+// The text of a skip reason, or null when there is none (the flag is true or unset).
+function reasonOf(value) {
+  return typeof value === 'string' ? value : null;
+}
+
 // Under --frozen-intrinsics the error of a failed test reaches this process without its `failureType`, so a suite that failed
 // only because a child failed cannot be told apart that way. It is told apart by the events themselves: a child reports before
 // its parent, so a failed event at nesting n+1 not yet claimed by a parent at nesting n is a failed child of that parent.
@@ -92,6 +97,7 @@ function record(ok, d) {
     nesting: d.nesting,
     kind,
     skip: flagged(d.skip),
+    skipReason: reasonOf(d.skip),
     todo: flagged(d.todo),
     failureType,
   });

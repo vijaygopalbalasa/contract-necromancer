@@ -1,0 +1,18 @@
+{"t":"2026-11-15T21:11:39.758Z","tool":"execute_bash","what":"cd && grep && head && grep && head && cat && git && head"}
+{"t":"2026-11-15T21:11:42.714Z","tool":"execute_bash","what":"cd && sed && cat && grep"}
+{"t":"2026-11-15T21:11:47.622Z","tool":"execute_bash","what":"cd && node && grep"}
+{"t":"2026-11-15T21:11:50.512Z","tool":"execute_bash","what":"cd && sed && grep && head"}
+{"t":"2026-11-15T21:11:56.887Z","tool":"execute_bash","what":"cd && node && grep && head"}
+{"t":"2026-11-15T21:12:08.747Z","tool":"execute_bash","what":"cd && python3 && grep"}
+{"t":"2026-11-15T21:12:16.997Z","tool":"execute_bash","what":"cd && node && tail && git"}
+{"t":"2026-11-15T21:12:23.362Z","tool":"execute_bash","what":"cd && sed && git"}
+{"t":"2026-11-15T21:14:29.511Z","tool":"execute_bash","what":"cd && python3 && grep && head && node && grep && head"}
+{"t":"2026-11-15T21:14:33.737Z","tool":"execute_bash","what":"cd && grep && head"}
+{"t":"2026-11-15T21:14:37.255Z","tool":"execute_bash","what":"cd && sed"}
+{"t":"2026-11-15T21:14:40.565Z","tool":"execute_bash","what":"cd && sed && grep"}
+{"t":"2026-11-15T21:16:22.078Z","tool":"execute_bash","what":"cd && python3 && grep && head && (timeout && grep && head"}
+{"t":"2026-11-15T21:16:27.231Z","tool":"execute_bash","what":"cd && timeout && grep"}
+{"t":"2026-11-15T21:16:30.232Z","tool":"execute_bash","what":"cd && timeout && grep && head && tail"}
+{"t":"2026-11-15T21:17:34.857Z","tool":"execute_bash","what":"cd && node && grep && head"}
+{"t":"2026-11-15T21:20:16.275Z","tool":"str_replace","what":".kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-15T21:20:22.888Z","tool":"execute_bash","what":"cd && grep && git && rm"}

@@ -72,6 +72,8 @@ function errorLinesOf(stderr) {
 // (`rel`) and, for a file that did not load, `errorLines`, the first lines of its error. A file that reported no test
 // before it stopped carries `loadFailure: true` as well (it never loaded), and a file that loaded and defines no
 // test carries `noTests: true`. A file that reported tests and then exited badly is neither.
+const CANNOT_RUN_PREFIX = 'cannot run:';
+
 function interpret(run, stem, rel) {
   const contracts = [];
   let fileFailed = run === null;
@@ -88,7 +90,12 @@ function interpret(run, stem, rel) {
       if (!e.ok) fileFailed = true;
       continue;
     }
-    contracts.push({ name: e.name, result: e.ok && !e.skip && !e.todo ? 'pass' : 'fail' });
+    const result = { name: e.name, result: e.ok && !e.skip && !e.todo ? 'pass' : 'fail' };
+    // Req 6.17: a skip whose reason starts with `cannot run:` stays failing and carries what is missing.
+    if (e.skip && typeof e.skipReason === 'string' && e.skipReason.startsWith(CANNOT_RUN_PREFIX)) {
+      result.cannotRun = e.skipReason.slice(CANNOT_RUN_PREFIX.length).trim() || 'the contract skipped itself as not runnable';
+    }
+    contracts.push(result);
   }
   if (fileFailed) {
     const errorLines = errorLinesOf(run ? run.stderr : '');
