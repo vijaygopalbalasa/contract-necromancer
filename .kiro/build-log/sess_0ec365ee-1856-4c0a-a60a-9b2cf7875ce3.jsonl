@@ -1,10 +1,10 @@
 {"t":"2026-11-07T20:24:40.759Z","tool":"grep_search","what":""}
 {"t":"2026-11-07T20:24:56.950Z","tool":"execute_bash","what":"npm && tail"}
-{"t":"2026-11-07T20:25:38.054Z","tool":"str_replace","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-07T20:25:38.054Z","tool":"str_replace","what":".kiro/specs/necro-core/tasks.md"}
 {"t":"2026-11-07T20:25:41.078Z","tool":"execute_bash","what":"git && head && grep && cut && ls && head"}
 {"t":"2026-11-07T20:26:21.186Z","tool":"execute_bash","what":"node && echo && ls && head && grep && grep"}
 {"t":"2026-11-07T20:26:25.044Z","tool":"execute_bash","what":"grep && cut && ls && head && git"}
-{"t":"2026-11-07T20:27:02.542Z","tool":"str_replace","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-07T20:27:02.542Z","tool":"str_replace","what":".kiro/specs/necro-core/tasks.md"}
 {"t":"2026-11-07T20:27:06.913Z","tool":"execute_bash","what":"node && head && node && tail"}
 {"t":"2026-11-07T20:27:08.895Z","tool":"execute_bash","what":"node && head && ls && cat && head"}
 {"t":"2026-11-07T20:27:50.076Z","tool":"execute_bash","what":"node && tail && echo && git"}

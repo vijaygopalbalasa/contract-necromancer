@@ -1,10 +1,10 @@
-{"t":"2026-11-12T06:10:56.389Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/receipt-viewer/tasks.md"}
-{"t":"2026-11-12T06:10:56.389Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/contracts/receipt-viewer/rerun-box.contract.test.js"}
+{"t":"2026-11-12T06:10:56.389Z","tool":"read_file","what":".kiro/specs/receipt-viewer/tasks.md"}
+{"t":"2026-11-12T06:10:56.389Z","tool":"read_file","what":"contracts/receipt-viewer/rerun-box.contract.test.js"}
 {"t":"2026-11-12T06:10:56.550Z","tool":"grep_search","what":""}
-{"t":"2026-11-12T06:10:59.784Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/contracts/receipt-viewer/rerun-box.contract.test.js"}
+{"t":"2026-11-12T06:10:59.784Z","tool":"read_file","what":"contracts/receipt-viewer/rerun-box.contract.test.js"}
 {"t":"2026-11-12T06:10:59.863Z","tool":"execute_bash","what":"cd && sed && echo && sed && git && head && git && head"}
 {"t":"2026-11-12T06:11:03.510Z","tool":"execute_bash","what":"cd && cat && echo && grep && Command\\ && copy\\ && updateCommand\\ && NO_COMMIT\" && echo && grep && head && git && grep && node && console.log(Object.keys(l), &&  && {}))\""}
-{"t":"2026-11-12T06:11:09.140Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/site/app.js"}
+{"t":"2026-11-12T06:11:09.140Z","tool":"read_file","what":"site/app.js"}
 {"t":"2026-11-12T06:11:09.398Z","tool":"execute_bash","what":"cd && sed && grep && NO_COMMIT\\ && verifyCommand\\ && names && grep"}
 {"t":"2026-11-12T06:11:23.416Z","tool":"execute_bash","what":"cd && grep && command-note\\ && names && 'command'\\ && \\.command\\b\" && head && grep && git"}
 {"t":"2026-11-12T06:11:25.944Z","tool":"execute_bash","what":"cd && sed && echo && sed && sed && sed && sed"}
@@ -22,6 +22,6 @@
 {"t":"2026-11-12T06:15:58.081Z","tool":"execute_bash","what":"cd && cat && assert.ok(!html.includes('command-note'), && assert.match(run, && assert.match(run, && < && const && assert.equal(pres[0], && assert.ok(pres.indexOf('local-command') && // && assert.match"}
 {"t":"2026-11-12T06:16:55.692Z","tool":"execute_bash","what":"cd && node && grep && ^✖ && ^ℹ && pass && fail && duration)\" && git && git && node && grep && ^✖ && ^ℹ && pass && fail && duration)\" && git && git"}
 {"t":"2026-11-12T06:18:40.680Z","tool":"execute_bash","what":"cd && node && grep && pass && fail && skipped)\" && node && grep && pass && fail && skipped) && ^✖\" && grep && head && git"}
-{"t":"2026-11-12T06:21:00.708Z","tool":"str_replace","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/receipt-viewer/tasks.md"}
+{"t":"2026-11-12T06:21:00.708Z","tool":"str_replace","what":".kiro/specs/receipt-viewer/tasks.md"}
 {"t":"2026-11-12T06:21:04.602Z","tool":"execute_bash","what":"cd && grep && cut && git && ls && head && ls"}
 {"t":"2026-11-12T06:23:24.411Z","tool":"execute_bash","what":"cd && sed && cut &&  && node && '+c.result).join(', && node && tail"}

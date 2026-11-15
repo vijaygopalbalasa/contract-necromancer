@@ -1,4 +1,4 @@
-{"t":"2026-11-09T14:44:28.923Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/README.md"}
+{"t":"2026-11-09T14:44:28.923Z","tool":"read_file","what":"README.md"}
 {"t":"2026-11-09T14:44:29.230Z","tool":"execute_bash","what":"cd && git && head && ls && ls && head"}
 {"t":"2026-11-09T14:44:36.149Z","tool":"execute_bash","what":"cd && node && echo && git && head && grep && youtu\\.be && vimeo && loom\\.com && video\" && grep && head"}
 {"t":"2026-11-09T14:44:39.784Z","tool":"execute_bash","what":"cd && git && grep && youtu\\.be && vimeo && loom\\.com\" && cut && head && echo && cat && head && ls && head"}

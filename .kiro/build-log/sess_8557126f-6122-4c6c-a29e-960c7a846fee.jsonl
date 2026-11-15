@@ -12,7 +12,7 @@
 {"t":"2026-11-09T19:11:17.490Z","tool":"execute_bash","what":"cd && python3 && const && for &&  && {}).sort()) && lock.specs[spec].ticked)) && continue && } &&  && null)) && } && } && grep && pass && fail) && ✖\" && head"}
 {"t":"2026-11-09T19:11:36.138Z","tool":"execute_bash","what":"cd && node && tail"}
 {"t":"2026-11-09T19:11:42.531Z","tool":"execute_bash","what":"cd && grep && head && grep && JSON.parse\" && head"}
-{"t":"2026-11-09T19:11:59.742Z","tool":"fs_write","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/contracts/necro-core/audit-upgrade.contract.test.js"}
+{"t":"2026-11-09T19:11:59.742Z","tool":"fs_write","what":"contracts/necro-core/audit-upgrade.contract.test.js"}
 {"t":"2026-11-09T19:12:02.330Z","tool":"execute_bash","what":"cd && node && tail && git && head && echo && "}
 {"t":"2026-11-09T19:12:05.791Z","tool":"execute_bash","what":"cd && git && git"}
 {"t":"2026-11-09T19:12:10.745Z","tool":"execute_bash","what":"cd && git && tail && git && git && grep"}
