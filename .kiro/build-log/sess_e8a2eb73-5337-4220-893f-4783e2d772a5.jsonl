@@ -1,0 +1,12 @@
+{"t":"2026-11-15T19:09:24.136Z","tool":"execute_bash","what":"grep && head && grep && head && grep && head && git && head"}
+{"t":"2026-11-15T19:09:27.316Z","tool":"execute_bash","what":"sed && sed && grep && head && grep && head && ls && head && grep && head"}
+{"t":"2026-11-15T19:09:34.022Z","tool":"execute_bash","what":"sed && sed && sed && grep && cut && node && grep"}
+{"t":"2026-11-15T19:09:38.642Z","tool":"execute_bash","what":"node && grep && head && grep && head && sed"}
+{"t":"2026-11-15T19:09:43.688Z","tool":"execute_bash","what":"node && tail && grep && head"}
+{"t":"2026-11-15T19:09:51.554Z","tool":"execute_bash","what":"cat && import && import && import && // && const && function && } && if && } && assert.ok(tool) && assertAllFive('necro_verify && }) && test('README && const && assert.ok(lines.length && for && }) && "}
+{"t":"2026-11-15T19:09:55.179Z","tool":"execute_bash","what":"sed && sed"}
+{"t":"2026-11-15T19:09:58.529Z","tool":"execute_bash","what":"python3 && grep"}
+{"t":"2026-11-15T19:11:21.562Z","tool":"execute_bash","what":"python3 && assert && open(p,'w').write(s.replace(a,b,1)) && grep && npm && grep && node && grep"}
+{"t":"2026-11-15T19:11:27.028Z","tool":"execute_bash","what":"sed && grep && cut && grep && sed && cut"}
+{"t":"2026-11-15T19:12:59.752Z","tool":"execute_bash","what":"sed && cut && grep"}
+{"t":"2026-11-15T19:16:27.848Z","tool":"str_replace","what":".kiro/specs/necro-core/tasks.md"}

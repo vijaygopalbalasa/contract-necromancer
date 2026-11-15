@@ -52,7 +52,7 @@ necro init              # write the Kiro hooks and steering file into a project
 necro freeze <spec>     # lock requirements.md and the contracts of a spec
 necro check <spec>      # run every frozen contract now and write a receipt, without ticking a task
 necro audit [spec]      # list every ticked task as ok, no receipt, failing or cannot run; exit 0 only if all are ok
-necro verify <receipt>  # re-run a receipt: CONFIRMED, MISMATCH or SUPERSEDED
+necro verify <receipt>  # re-run a receipt, exit code after each outcome: CONFIRMED 0, MISMATCH 1, SUPERSEDED 1, INCOMPLETE 2, OTHER PROJECT 2
 necro help              # list every command with one line on what it does
 necro mcp               # serve necro_status, necro_check and necro_verify over MCP (stdio)
 necro demo              # show the gate refuse a false "done", accept the fix and re-check the receipt
@@ -169,7 +169,7 @@ npm test
      puts back to `[ ]` every ticked task that `necro audit` does not call `ok`.
    - `PostTaskExec` does the same after Kiro finishes a spec task, whatever the task run did.
 5. Each tick that passes writes a receipt to `.necro/receipts/<spec>/<hash>.json`. `necro verify` re-runs it and prints
-   `CONFIRMED` or `MISMATCH`.
+   `CONFIRMED`, `MISMATCH`, `SUPERSEDED`, `INCOMPLETE` or `OTHER PROJECT`.
 
 A tick needs the contracts for the criteria listed on the ticked task, such as `(Req 1.1, 1.4)`, as recorded when the spec
 was frozen. It needs every contract when the task is the last unticked one, when the lock does not know the task, when the

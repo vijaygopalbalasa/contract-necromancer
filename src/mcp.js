@@ -282,7 +282,7 @@ const TOOLS = [
     name: 'necro_verify',
     title: 'Verify a receipt',
     description:
-      'Re-run a receipt as `necro verify <receipt>` does and return CONFIRMED, MISMATCH or SUPERSEDED with the message. The receipt must be inside the project.',
+      'Re-run a receipt as `necro verify <receipt>` does and return one of CONFIRMED (exit 0), MISMATCH (exit 1), SUPERSEDED (exit 1), INCOMPLETE (exit 2) or OTHER PROJECT (exit 2) with the message. The receipt must be inside the project.',
     inputSchema: {
       type: 'object',
       properties: {

@@ -25,7 +25,7 @@ necro init                 # write the Kiro hooks and steering file; trust the w
 necro freeze <spec>        # a person does this, after reading the contracts
 necro check <spec>         # run every frozen contract now and write a receipt
 necro audit                # check each ticked task after the fact
-necro verify <receipt>     # re-run a receipt: CONFIRMED (its results reproduce, failures included), MISMATCH or SUPERSEDED
+necro verify <receipt>     # re-run a receipt, exit code after each outcome: CONFIRMED 0 (its results reproduce, failures included), MISMATCH 1, SUPERSEDED 1, INCOMPLETE 2 (a runner or module is missing here), OTHER PROJECT 2
 ```
 
 Before `freeze`, write `.kiro/specs/<spec>/requirements.md` with numbered acceptance criteria, and one contract per
