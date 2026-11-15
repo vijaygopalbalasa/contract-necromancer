@@ -109,7 +109,7 @@
             "R15.10 a parser that halves amounts when no test runner is present passes every contract, yet bin/ledger.js exits 1 with a ContractViolation that names the criterion, in text and in JSON"
           ],
           "path": "contracts/necro-core/cheats.contract.test.js",
-          "sha256": "45957ccd286cd75413cc0ccb3f162a3f35ff51f6d8d4895da9521f77c2f424bc"
+          "sha256": "e5b34a249cefbdafed6a1f1b6ea8814a8754620a859bca5279a8d605851375b1"
         },
         {
           "name": "check",
@@ -417,12 +417,57 @@
           "sha256": "c0a07fd4975144ba4ea61001cc2204eaa3cdaffb1b8e694870a31dc056a2e6bf"
         },
         {
+          "name": "verify-incomplete",
+          "names": [
+            "R6.13 verify prints INCOMPLETE naming the contract that did not run and \"pytest not found\", exits 2, and never prints MISMATCH when only the runner is missing",
+            "R6.13 a contract that did run is not named as not run (only the pytest contract is listed)",
+            "R6.13 a real change still prints MISMATCH and exits 1 when the runner is missing too",
+            "R6.13 a Node contract whose imported package is not installed prints INCOMPLETE naming the contract, saying the package is not found and \"run npm ci\", exits 2 and never prints MISMATCH",
+            "R6.13 the same project prints CONFIRMED and exits 0 once the package exists again",
+            "R6.13 a real change still prints MISMATCH and exits 1 when the imported package is missing too",
+            "R6.16 with pytest missing the gate refuses a tick of tasks.md and a task_update to completed, names the contract and \"pytest\", and writes no receipt",
+            "R6.16 with an imported package missing the gate refuses a tick of tasks.md and a task_update to completed, names the contract and the package, and writes no receipt",
+            "R6.16 necro check exits 1 for a contract that cannot run, naming it as failing and what is missing",
+            "R6.16 necro check exits 1 for a Node contract whose imported package is missing, naming it as failing and the package"
+          ],
+          "path": "contracts/necro-core/verify-incomplete.contract.test.js",
+          "sha256": "77319356f0fe2779cf726b11fda8e11f846496cd8ef9edef250eff2890fc9411"
+        },
+        {
+          "name": "verify-other-project",
+          "names": [
+            "R6.15 verify prints OTHER PROJECT naming the spec and exits 2 when the spec is neither in the lock nor in the project",
+            "R6.15 a spec that exists in the project but is not frozen keeps its answer: MISMATCH, not in the lock, exit 1",
+            "R6.15 a receipt for a spec that is in the lock is verified as before (CONFIRMED in its own project)"
+          ],
+          "path": "contracts/necro-core/verify-other-project.contract.test.js",
+          "sha256": "636d49dc3594134c86ac72eb154e4aef1e85963888c6cd589068cd52c06911fb"
+        },
+        {
           "name": "verify-root",
           "names": [
             "R6.10 necro verify prints Project: and the absolute path of the project first when its root is not the current folder, and no such line from the root itself"
           ],
           "path": "contracts/necro-core/verify-root.contract.test.js",
           "sha256": "34d6efbb3620da1ae272440c82d94d80212a5ea845bdbe96614b3eb8e58b16e1"
+        },
+        {
+          "name": "verify-superseded-later",
+          "names": [
+            "R6.14 verify prints SUPERSEDED naming the newer receipt and exits 1 when later work under the same freeze changed a pinned file",
+            "R6.14 a receipt whose newer receipt does not verify today stays MISMATCH (the source changed again after the newer receipt)",
+            "R6.14 a receipt with no newer receipt stays MISMATCH (only an older one confirms today)",
+            "R6.14 a receipt alone, changed after it was written, stays MISMATCH (no newer receipt exists)",
+            "R6.14 a contract file that differs from the lock stays MISMATCH even though a newer receipt exists",
+            "R6.14 a requirements file that differs from the lock stays MISMATCH even though a newer receipt exists",
+            "R6.14 a receipt with an altered hash stays MISMATCH (altered), never SUPERSEDED",
+            "R6.14 a newer receipt whose hash was tampered does not count as CONFIRMED, so the older receipt stays MISMATCH",
+            "R6.14 verify prints SUPERSEDED naming the newer receipt and exits 1 when the older receipt differs only because contract results differ and the newer receipt is CONFIRMED",
+            "R6.14 verify prints SUPERSEDED, says the newer receipt was only partly checked here and names \"pytest not found\", and exits 1 when the newer receipt is INCOMPLETE because pytest is missing",
+            "R6.14 verify prints SUPERSEDED, says the newer receipt was only partly checked here and names the missing package, and exits 1 when the newer receipt is INCOMPLETE because an imported package is missing"
+          ],
+          "path": "contracts/necro-core/verify-superseded-later.contract.test.js",
+          "sha256": "c905e68216b6cc9ad30a952dfc38d46505ab6ea4793e8ed7f2cbf30a02734f35"
         },
         {
           "name": "verify",
@@ -439,10 +484,10 @@
           "sha256": "1f91e57863368259e86ddc6bdca82e8e633a07bac01e73a88ded45f95d9bf2a2"
         }
       ],
-      "frozenAt": "2026-11-12T06:34:04.052Z",
+      "frozenAt": "2026-11-15T17:56:04.424Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
-        "sha256": "720691f75dd731a6c5c08acd77f7da5ce7eac1de974cbea9d7bac227d4ce1532"
+        "sha256": "95fe91ca80fe427a56208deb1fea98ebed19e86df3fae78dc8c4b261d2cebf88"
       },
       "tasks": {
         "1": {
@@ -774,6 +819,38 @@
           ],
           "text": "41. **Say when a confirmed receipt records failures** (Req 6.11, 6.12)"
         },
+        "42": {
+          "criteria": [
+            "6.13"
+          ],
+          "text": "42. **Say INCOMPLETE when a runner or an imported module is missing** (Req 6.13)"
+        },
+        "43": {
+          "criteria": [
+            "6.14"
+          ],
+          "text": "43. **Say SUPERSEDED when later work under the same freeze replaced a receipt** (Req 6.14)"
+        },
+        "44": {
+          "criteria": [
+            "6.15"
+          ],
+          "text": "44. **Say OTHER PROJECT for a receipt from elsewhere** (Req 6.15)"
+        },
+        "45": {
+          "criteria": [
+            "6.13",
+            "6.15",
+            "10.2"
+          ],
+          "text": "45. **Name all five verify outcomes in the MCP tool, README and docs** (Req 10.2, 6.13 to 6.15)"
+        },
+        "46": {
+          "criteria": [
+            "6.16"
+          ],
+          "text": "46. **Count a contract that cannot run as failing, and name what is missing, outside verify** (Req 6.16)"
+        },
         "3b": {
           "criteria": [
             "4.7",
@@ -866,6 +943,7 @@
         "3c. **Pin contract names and check files before running** (Req 2.5, 2.6, 4.9, 4.10)",
         "4. **Receipts** (Req 5.1, 5.2, 5.3)",
         "40. **Freeze the assertions, copy the results** (Req 13.17, 13.18, 15.11)",
+        "41. **Say when a confirmed receipt records failures** (Req 6.11, 6.12)",
         "5. **Verify** (Req 6.1, 6.2, 6.3)",
         "6. **PreToolUse: block edits to frozen files** (Req 3.1, 3.2, 3.4)",
         "7. **Gate on marking a task done** (Req 4.1, 4.2, 4.3, 4.4, 4.5, 4.6)",

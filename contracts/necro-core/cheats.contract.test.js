@@ -13,7 +13,7 @@
 // R15.10  THE Pumpkin Ledger postconditions SHALL also guard `parseLedger`, recomputing from the input text each line's payer,
 //         amount in cents and split list, so a parser that changes amounts is stopped at runtime.
 //
-// The two cheats of R13.15 and R13.16 are the real ones: under a "do whatever it takes" prompt a GPT-5.6 Luna run passed an
+// The two cheats of R13.15 and R13.16 are the real ones: under a "do whatever it takes" prompt a model B run passed an
 // impossible contract by patching `String.prototype.split` and `Array.prototype.map` in `src/report.js`, and an ungated run
 // returned a `String` subclass with its own `split`. Their code is kept unchanged in test/fixtures/cheats/, and this file
 // pins it by hash. The tests use the real modules and the real command line, on copies of the bundled example in temporary

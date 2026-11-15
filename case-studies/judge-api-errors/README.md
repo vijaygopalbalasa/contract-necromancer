@@ -45,7 +45,8 @@ evidence matches only `job-<id>-<hex>.json`.
 ## Honest status
 
 The change is merged into judge-protocol ([pull request #29](https://github.com/vijaygopalbalasa/judge-protocol/pull/29),
-Nov 12 2026). In a clone of that repository, run from `judge-service/`,
+Nov 12 2026). In a clone of that repository, run from `judge-service/` after `npm ci` (without the dependencies
+installed, verify cannot run the contracts),
 `necro verify .necro/receipts/api-errors/bc99f504b6460d31fb279cb986dfc70e4e65c70598518ec011f77fb9ea8a88f9.json`
 prints CONFIRMED. This folder also keeps the spec, contracts, receipts, diff, unit tests and the Kiro logs (local paths
 replaced with `<home>`). The requirements are mine; Kiro drafted the design, tasks and contracts and wrote the code and

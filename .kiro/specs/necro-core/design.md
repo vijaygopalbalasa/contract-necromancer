@@ -446,3 +446,149 @@ entry whose `result` is not `pass` is a failing contract.
 
 The change is a few lines at the end of `verify` in `src/verify.js`. It adds no module and no receipt field, so
 `receiptHash` and every existing receipt are unaffected.
+
+## Clarification (honest verify outcomes, Req 6.13 to 6.16)
+`necro verify` now has five outcomes: CONFIRMED (exit 0), MISMATCH (exit 1), SUPERSEDED (exit 1), INCOMPLETE (exit 2)
+and OTHER PROJECT (exit 2). Exit 2 means "no verdict about the code": the check could not be made here. Exit 1 means
+the receipt does not describe today's code. All changes are in `src/verify.js`, plus a small helper in
+`src/contracts.js` or `src/runners.js` if the re-run must report which contracts could not run.
+
+**A contract that cannot run versus a changed one (6.13).** Two causes count as "not run": the runner is not installed,
+or a module the contract imports is not installed (a fresh clone before `npm ci`). The runner code already marks a
+result `cannotRun` when the program is not found (`ENOENT`) or the standard error of a command without a report says a
+module is missing (`missingFromStderr` in `src/runners.js`), and `check` and `audit` already use that mark. `verify`
+ignores it today, so a contract that did not run looks like a result that differs, and prints `MISMATCH. Contracts
+changed`. The re-run in `verify` therefore keeps the mark. The comparison of re-run results with the receipt skips every
+contract that has `cannotRun` and collects it in a list instead. File hashes, lock checks, contract names and
+frozen-glob drift are compared first, exactly as now, so a real change still ends in `MISMATCH` even when a module or
+runner is missing. Only when all of those match, and every contract that did run agrees with the receipt, and the list
+is not empty, does `verify` print `INCOMPLETE` and return 2.
+
+*How a missing imported module is detected.* Today the mark is set only for a command with no report. Two more places
+must set it, using the same `missingFromStderr` wording so every cause reads the same:
+- A Node contract goes through `src/contract-runner.js`. When its import fails to load, `interpret` in
+  `src/contracts.js` returns one failing contract named after the file, with `fileFailure` and `loadFailure` set and the
+  first lines of the error in `errorLines`. Node's message for an uninstalled package is `Cannot find package 'x'
+  imported from ...` with code `ERR_MODULE_NOT_FOUND`. When `loadFailure` is set and `errorLines` match
+  `ERR_MODULE_NOT_FOUND` or `Cannot find package '<name>'` with a bare package name (not a path starting with `.` or
+  `/`, which is the project's own file and a real failure), the result gets `cannotRun`. Because a file that never
+  loaded reports none of its recorded contract names, each recorded name the run did not report (the stale-lock branch in
+  `runContracts`) takes the file's `cannotRun` the way the runner-file branch already does, so the receipt's names are
+  compared as "not run", not as "missing from the lock".
+- A Python contract run by a command (`pytest`) that exits non-zero still writes a report, and a test file that imports
+  a missing module gives an error case whose text holds `ModuleNotFoundError: No module named 'x'`. `runReport` checks
+  the standard error and the error text of the report cases with the Python pattern of `missingFromStderr`. It sets
+  `cannotRun` only for a module other than the runner (`pytest` itself missing is already covered by the same pattern and
+  reads the same). A report that holds other failures or an assertion failure is not changed by this: a contract that
+  ran and failed is a result, never "not run".
+
+*Telling the cases apart.* A contract is "not run" only when its output has no result because of a missing program or
+module. A contract that ran and failed (an assertion failure, a thrown error in a test body, a syntax error, a path
+import that does not exist) keeps `cannotRun` unset and compares as a differing result. A contract whose own file hash
+differs from the receipt is a change whatever the import says. So the order is: pinned file hashes and names first,
+then results of contracts that ran, then the not-run list.
+
+*The message.* `INCOMPLETE` names each contract that did not run, what is missing as a short phrase ending in "not
+found", and the usual fix in parentheses:
+- Missing program (`ENOENT`): `pytest not found (install pytest)`.
+- Missing Node package: `<package> not found (run npm ci)`, for example `necro-fake-dep not found (run npm ci)`.
+- Missing Python module: `<module> not found (pip install <module>)`, for example `requests not found (pip install
+  requests)`. For `pytest` itself the module is `pytest`, so the phrase is `pytest not found (pip install pytest)`.
+The missing item is the module name Node or Python reports. Phrases are listed once per contract and the list keeps the
+receipt's order. The exit code stays 2 and `MISMATCH` is never printed when the only difference is what did not run.
+A contract that ran and differs from the receipt is still a change: with both a changed contract and a missing module or
+runner the answer is `MISMATCH`.
+
+**Newer receipt under the same freeze (6.14).** The check applies only where `verify` would print `MISMATCH` because
+pinned files or contract results differ (the "Files changed" and "Contracts changed" branches). It does not apply to an
+altered receipt hash, to a missing spec in the lock, to a receipt without requirements or contracts, or to any
+difference between the receipt's requirement and contract hashes and the lock's, and 6.8 keeps handling a spec that was
+frozen again. It applies only when the receipt's requirements and contract hashes (and runners and frozen files) equal
+the lock's. The candidates are the other receipts in `.necro/receipts/<spec>/`. The order is the `createdAt` each
+receipt wrote itself, not the file's modification time (which a copy or a checkout changes). `createdAt` is not part of
+the receipt hash, so a candidate must be strictly later than the receipt being verified, and a receipt without a
+readable `createdAt` is never a candidate. Because `createdAt` is outside the receipt hash, a wrong date can only change which receipt is named. It can never turn a real change into SUPERSEDED, because that still needs a newer receipt that verifies today. Candidates are tried newest first. A candidate counts when verifying it
+gives CONFIRMED today, which includes the altered-hash check. The first one that does is named in the SUPERSEDED
+message by its path, with the sentence that later work under the same freeze changed the code or the results, and
+`verify` returns 1.
+
+To avoid recursion, `verify` is split into an inner function that takes an option `allowNewer` and the public `verify`
+that calls it with `allowNewer: true`. When the inner function checks a candidate it calls the same inner function with
+`allowNewer: false` and with printing turned off, so a candidate never looks for its own newer receipt. Each candidate
+is also strictly later than the one before it in the chain, so the search ends after one pass over the folder even
+without the option. The candidate's run prints nothing, and its exit code decides. No candidate that is not CONFIRMED
+changes the answer, so the result is `MISMATCH` as before. A run that finds no candidate costs one directory read.
+
+**A newer receipt that is only partly checkable here (6.14, INCOMPLETE).** A newer receipt can be the right answer
+for the older one even when this machine cannot run all of its contracts (a fresh clone with no `pytest`, or before
+`npm ci`). The inner function of `verify` therefore returns a small result instead of only a number: `{ code, notRun }`,
+where `code` is 0 (CONFIRMED), 1, or 2 (INCOMPLETE) and `notRun` is the list `{ name, missing, fix }` that 6.13 already
+collects, in the receipt's order. The candidate check runs with `allowNewer: false` and with printing off, so a candidate
+reports nothing itself. The outcomes of a candidate are read like this:
+- `code` 0: CONFIRMED. The candidate counts.
+- `code` 2 with a non-empty `notRun`: INCOMPLETE. Every file hash, lock check, contract name and every contract that
+  did run agree with today, and only the contracts in `notRun` could not be run. The candidate counts, because it is the
+  newer receipt that describes today's code as far as this machine can see.
+- Anything else (`MISMATCH`, an altered hash, `SUPERSEDED`, `OTHER PROJECT`): the candidate does not count. A tampered
+  or changed newer receipt never makes an older one `SUPERSEDED`.
+Candidates are still tried newest first and the first one that counts is used, so a newer INCOMPLETE receipt is chosen
+before an older CONFIRMED one. The older receipt must itself reach the "Files changed" or "Contracts changed" branch with
+requirement and contract hashes equal to the lock's, as before; the older receipt's own contracts that cannot run are
+skipped by 6.13 first, so a differing contract result of one that did run still counts as a difference. "Contract results
+differ" in 6.14 therefore needs no extra code: two receipts under one freeze with the same lock hashes whose recorded
+results differ (for example a contract that reads a file no receipt pins) take the "Contracts changed" branch, and a
+CONFIRMED newer receipt turns it into `SUPERSEDED`.
+
+The message for a CONFIRMED candidate is unchanged. For an INCOMPLETE candidate one sentence is added after the usual
+one, naming each contract in `notRun` with what is missing and the fix, the way 6.13 words them:
+`SUPERSEDED. Receipt <older path> was replaced by <newer path>: later work under the same freeze changed the code or the results. The newer receipt could only be partly checked on this machine: <name> (<missing>; <fix>)[, <name> (...)].`
+for example `... could only be partly checked on this machine: R6.13 python criterion holds (pytest not found; install pytest).`
+The exit code is 1, as for every `SUPERSEDED`, not 2: the older receipt is the one being judged, and it does not describe
+today's code. `OTHER PROJECT` and `INCOMPLETE` of the receipt that was asked about are not changed by this.
+
+**A spec of another project (6.15).** When a lock exists and the receipt's spec is not in it, `verify` looks for the
+spec in the project: the folder `.kiro/specs/<spec>/` or `contracts/<spec>/`. If either exists, the spec belongs to this
+project and is merely not frozen, so the current message stays (`MISMATCH. Spec '<spec>' is not in the lock...`, exit
+1). If neither exists, the receipt was written elsewhere and `verify` prints
+`OTHER PROJECT. Spec '<spec>' is not in this project. This receipt was written in another project; verify it from that project's checkout.`
+and returns 2. When no lock file exists, nothing changes: the receipt's own pins are used as before.
+
+**The gate counts a contract that cannot run as failing (6.16).** Only `verify` has an outcome for "not run". Every
+other path treats a contract that cannot run as a failing contract. This is what the code does today, read from
+`src/check.js`, `src/hooks.js` and `src/audit.js`:
+- `runContracts` gives every contract that cannot run a result of `fail`, with the mark `cannotRun` as an extra field
+  (`src/runners.js` sets it, `src/contracts.js` copies it to the file's recorded names). The mark is information, never a
+  result. `failingRequired` in `src/audit.js` and `decideTicks` in `src/hooks.js` read only `result === 'fail'` and never
+  look at `cannotRun`, so the gate already refuses the tick for PreToolUse (a write to `tasks.md` or `task_update`),
+  PostToolUse (the shell tick check restores the file) and the verdict of Stop and PostTaskExec (`auditSpec` gives
+  `CANNOT_RUN`, which `problems` lists as not ok, so `undoUnsupportedTicks` unticks the task). `necro check` also
+  exits 1, because it counts every result that is not `pass`. So the tick is refused today, and no code has to decide that
+  again. What the contracts of 6.16 pin is that this stays true when 6.13 is built: the `cannotRun` mark that task 42 adds
+  for a missing Node package or Python module must be skipped only inside `src/verify.js`, never in `runContracts`,
+  `failingRequired`, `decideTicks`, `auditSpec` or `checkSpec`.
+- What is not true today is the second half of 6.16, naming what is missing, on the gate's refusal. The message of
+  PreToolUse and PostToolUse is `failedMessage(failing, reasons)`, and the `reasons` are the `reason` texts of the failing
+  results. For a runner that is not installed that text is `The command for test_a.py could not start (ENOENT). Check the
+  command in runners.json.`, which does not name the program; the phrase that does, `the program pytest was not found`,
+  sits in `cannotRun` and only `check` (when every failure cannot run), `audit` and Stop/PostTaskExec print it. A missing
+  Node package or Python module already appears in the reason (the first lines of the load error or the standard error
+  tail), so those cases name it today; task 42 will also set `cannotRun` for them.
+- What must change, in `src/hooks.js` only: `decideTicks` also returns `missing`, the distinct `cannotRun` phrases of the
+  failing required results, and `failedMessage` appends `The contracts cannot run here: <phrases>. Install or fix it, then
+  tick the task again.` when `missing` is not empty. This covers PreToolUse, `task_update` and PostToolUse, which all
+  call `failedMessage`. A real failure and a missing runner together stay one refusal that lists both. In `src/check.js`
+  the line `The contracts cannot run here: ...` is printed only when every failure cannot run; with a mix it must be added
+  too, before the line that says how many contracts failed, so what is missing is named whenever it is part of the
+  failure. In `src/audit.js` the verdict stays `CANNOT_RUN` only when every failing contract cannot run, and `FAILING`
+  otherwise; the `FAILING` reason then also lists the missing phrases of the failing contracts that cannot run, so the
+  Stop and PostTaskExec undo message names them in the mixed case as well. Nothing is skipped and no exit code changes.
+- The Stop summary line (`failing: <names>`) lists the contracts by name and is not the refusal, so it stays as it is.
+
+**Exit codes.** CONFIRMED 0, MISMATCH 1, SUPERSEDED 1 (both 6.8 and 6.14), INCOMPLETE 2, OTHER PROJECT 2. `bin/necro.js`
+already passes the returned number to the process exit.
+
+**Wording of the five outcomes.** Requirement 10.2 lists the five outcomes. The `necro_verify` description in
+`src/mcp.js` (today "CONFIRMED, MISMATCH or SUPERSEDED") must name CONFIRMED, MISMATCH, SUPERSEDED, INCOMPLETE and
+OTHER PROJECT. Every line in the README and in `docs/` that lists what `necro verify` prints must name all five, with
+the exit codes where the line gives codes. No new field is added to any receipt, so `receiptHash` and every existing
+receipt are unaffected.
