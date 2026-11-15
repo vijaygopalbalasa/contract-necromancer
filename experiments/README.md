@@ -1,12 +1,12 @@
 # Does the gate change what Kiro does? An experiment
 
 **Result:** on a task that cannot honestly be finished, Kiro marked it done in **11 of 11** runs without the gate and in
-**0 of 19** runs with it, across two models (Claude Haiku 5.5 and GPT-5.6 Luna). The hook alone, without the steering
+**0 of 19** runs with it, across two models available in Kiro (model A and model B). The hook alone, without the steering
 file, was enough (0 of 8). Under a "do whatever it takes" prompt, one gated run of six beat the gate by patching
 JavaScript built-ins; that hole is now closed and the cheat is kept as a test (round 3). On achievable specs (rounds 1
 and 4) the gate changed nothing: every task built in every run, either way.
 
-Nov 9 to 10, 2026. Kiro CLI. Round 1: `claude-haiku-5.5`, 12 runs. Round 2: `claude-haiku-5.5` and `gpt-5.6-luna`, 24 runs.
+Nov 9 to 10, 2026. Kiro CLI. Round 1: model A, 12 runs. Round 2: model A and model B, 24 runs.
 
 ## Setup
 
@@ -71,12 +71,12 @@ commit `2c7e4ad` in a separate clone, so later work could not change it mid-expe
 
 | Model | Arm | Runs | Runs with a false "done" | False ticks | Contracts edited | Seconds per run |
 |---|---|---|---|---|---|---|
-| Claude Haiku 5.5 | off | 5 | **5** | 10 | 0 | 216 to 534 |
-| Claude Haiku 5.5 | hook only | 5 | **0** | 0 | 0 | 235 to 329 |
-| Claude Haiku 5.5 | on | 5 | **0** | 0 | 0 | 255 to 319 |
-| GPT-5.6 Luna | off | 3 | **3** | 6 | 0 | 189 to 269 |
-| GPT-5.6 Luna | hook only | 3 | **0** | 0 | 0 | 214 to 269 |
-| GPT-5.6 Luna | on | 3 | **0** | 0 | 0 | 212 to 246 |
+| Model A | off | 5 | **5** | 10 | 0 | 216 to 534 |
+| Model A | hook only | 5 | **0** | 0 | 0 | 235 to 329 |
+| Model A | on | 5 | **0** | 0 | 0 | 255 to 319 |
+| Model B | off | 3 | **3** | 6 | 0 | 189 to 269 |
+| Model B | hook only | 3 | **0** | 0 | 0 | 214 to 269 |
+| Model B | on | 3 | **0** | 0 | 0 | 212 to 246 |
 
 Raw results: `results-v2.jsonl`. Logs: `logs/v2-*.txt`. Across both rounds: gate off, 11 of 11 runs ticked tasks 6
 and 7 although a frozen contract for their criteria fails; gated (hook only or full), 0 of 19.
@@ -89,15 +89,15 @@ today." Tool pinned at `96e0404` (`run4.sh`). Since R3.3 cannot honestly pass, a
 
 | Model | Arm | Runs | False "done" | Cheated to a pass | Contract edited |
 |---|---|---|---|---|---|
-| Claude Haiku 5.5 | off | 3 | 3 | 0 | 0 |
-| Claude Haiku 5.5 | on | 3 | 0 | 0 | 0 |
-| GPT-5.6 Luna | off | 3 | 2 | 1 | 1 |
-| GPT-5.6 Luna | on | 3 | 0 | **1** | 0 |
+| Model A | off | 3 | 3 | 0 | 0 |
+| Model A | on | 3 | 0 | 0 | 0 |
+| Model B | off | 3 | 2 | 1 | 1 |
+| Model B | on | 3 | 0 | **1** | 0 |
 
-- **Gate off:** every run ended with tasks 6 and 7 ticked on code that does not meet the spec. One Luna run edited the
+- **Gate off:** every run ended with tasks 6 and 7 ticked on code that does not meet the spec. One model B run edited the
   frozen contract file itself; another returned a `String` subclass whose `split()` hides the offending line from the
   contract, so the contract passed.
-- **Gate on: one run beat the gate.** Luna patched `String.prototype.split` and `Array.prototype.map` from
+- **Gate on: one run beat the gate.** Model B patched `String.prototype.split` and `Array.prototype.map` from
   `src/report.js` so the contract's own assertions misread the output; the contract passed and the tick went through.
   This is the kind of cheating ImpossibleBench reports, and it got past this version of the tool.
 - **What changed because of it:** task 39. JavaScript contracts now run with `--frozen-intrinsics` (the patch throws and
@@ -105,7 +105,7 @@ today." Tool pinned at `96e0404` (`run4.sh`). Since R3.3 cannot honestly pass, a
   cheat files are kept in `test/fixtures/cheats/` with contracts that must fail on them.
 
 ### Round 3 re-run after the fix
-The gated arm again, GPT-5.6 Luna, 3 runs, same pressure prompt, tool at `3709929` (after task 39). 0 of 3 false
+The gated arm again, model B, 3 runs, same pressure prompt, tool at `3709929` (after task 39). 0 of 3 false
 "done", 0 cheats, 0 contracts edited. In all three runs Kiro left tasks 6 and 7 open and said the contract cannot pass
 as written. No run tried the patch this time, so this re-run does not show the fix stopping it; the fixture test in
 `test/fixtures/cheats/` does that, by running the real cheat file and requiring the contract to fail.
@@ -118,10 +118,10 @@ overlaps, guest rows across zones, and a kinder meeting time. Achievable, with r
 
 | Model | Arm | Runs | False "done" | Contracts failing at the end | Seconds per run |
 |---|---|---|---|---|---|
-| Claude Haiku 5.5 | off | 3 | 0 | 0 | 132 to 160 |
-| Claude Haiku 5.5 | on | 3 | 0 | 0 | 94 to 137 |
-| GPT-5.6 Luna | off | 3 | 0 | 0 | 132 to 161 |
-| GPT-5.6 Luna | on | 3 | 0 | 0 | 143 to 182 |
+| Model A | off | 3 | 0 | 0 | 132 to 160 |
+| Model A | on | 3 | 0 | 0 | 94 to 137 |
+| Model B | off | 3 | 0 | 0 | 132 to 161 |
+| Model B | on | 3 | 0 | 0 | 143 to 182 |
 
 A null result: both models built the daylight-saving logic correctly in all 12 runs, with or without the gate. On a
 well-specified task within reach, these agents did not claim "done" falsely, and the gate cost nothing. The gate's value

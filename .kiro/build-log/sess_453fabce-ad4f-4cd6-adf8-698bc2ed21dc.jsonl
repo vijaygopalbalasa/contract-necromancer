@@ -3,7 +3,7 @@
 {"t":"2026-11-09T17:17:52.613Z","tool":"grep_search","what":""}
 {"t":"2026-11-09T17:17:56.587Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/.kiro/specs/necro-core/requirements.md"}
 {"t":"2026-11-09T17:17:57.577Z","tool":"execute_bash","what":"sed && echo && cat && head && echo && git && head && ls && wc"}
-{"t":"2026-11-09T17:17:58.060Z","tool":"list_directory","what":"/private/tmp/claude-501/-Users-vijaygopalb-Judge-Protocol/b0fd0584-1d93-4c83-a6c6-0f159df240b4/scratchpad/necro"}
+{"t":"2026-11-09T17:17:58.060Z","tool":"list_directory","what":"[scratch folder]/necro"}
 {"t":"2026-11-09T17:18:05.318Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/src/contracts.js"}
 {"t":"2026-11-09T17:18:05.318Z","tool":"read_file","what":"/Users/vijaygopalb/Judge Protocol/kiroween/contract-necromancer/src/runners.js"}
 {"t":"2026-11-09T17:18:05.510Z","tool":"execute_bash","what":"cd && for && do && cat && done && ls && cat"}
