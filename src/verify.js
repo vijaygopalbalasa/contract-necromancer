@@ -108,7 +108,62 @@ function diffNames(expected, got) {
 // the results by name. Prints CONFIRMED <receiptHash>. and returns 0 when
 // everything matches; prints MISMATCH with the changed paths or contract names
 // and returns 1 otherwise.
-export function verify(workingDir, receiptFile) {
+// Req 6.14: when the receipt's requirement and contract hashes equal the lock's, look for a later
+// receipt of the same spec that verifies CONFIRMED or INCOMPLETE today. Newest first. Returns
+// { rel, receipt, notRun } for the first one, or null.
+function supersedingReceipt(cwd, receiptAbs, receipt, frozenSpec) {
+  const lockContracts = new Map((frozenSpec.contracts || []).map((c) => [c.path, c.sha256]));
+  if (!frozenSpec.requirements || receipt.requirements.sha256 !== frozenSpec.requirements.sha256) return null;
+  for (const c of receipt.contracts) if (lockContracts.get(c.path) !== c.sha256) return null;
+  if (typeof receipt.createdAt !== 'string') return null;
+
+  const dir = path.join(cwd, '.necro', 'receipts', receipt.spec);
+  let names;
+  try {
+    names = fs.readdirSync(dir).filter((n) => n.endsWith('.json'));
+  } catch {
+    return null;
+  }
+  const later = [];
+  for (const n of names) {
+    const abs = path.join(dir, n);
+    if (abs === receiptAbs) continue;
+    try {
+      const other = JSON.parse(fs.readFileSync(abs, 'utf8'));
+      if (other && other.spec === receipt.spec && typeof other.createdAt === 'string' && other.createdAt > receipt.createdAt) {
+        later.push({ abs, other });
+      }
+    } catch {
+      // A file that is not a receipt cannot supersede anything.
+    }
+  }
+  later.sort((a, b) => (a.other.createdAt < b.other.createdAt ? 1 : a.other.createdAt > b.other.createdAt ? -1 : 0));
+  for (const { abs, other } of later) {
+    let result;
+    try {
+      result = verifyInner(cwd, abs, { allowNewer: false, say: () => {} });
+    } catch {
+      continue;
+    }
+    const rel = path.relative(cwd, abs).split(path.sep).join('/');
+    if (result.code === 0) return { rel, receipt: other, notRun: [] };
+    if (result.code === 2 && result.notRun.length > 0) return { rel, receipt: other, notRun: result.notRun };
+  }
+  return null;
+}
+
+function reportSuperseded(say, found) {
+  say(
+    `SUPERSEDED. This receipt is out of date because later work under the same freeze changed the code or the results. The newer receipt is ${found.rel} (${found.receipt.receiptHash}). Verify that receipt for the current state.`,
+  );
+  if (found.notRun.length > 0) {
+    const missing = found.notRun.map((n) => `${n.name} (${missingPhrase(n.missing)})`).join(', ');
+    say(`The newer receipt could only be partly checked on this machine: ${missing}.`);
+  }
+  return { code: 1, notRun: [] };
+}
+
+function verifyInner(workingDir, receiptFile, { allowNewer, say }) {
   const receiptAbs = receiptPath(workingDir, receiptFile);
   const receipt = JSON.parse(fs.readFileSync(receiptAbs, 'utf8'));
   // Req 6.9: everything below is relative to the receipt's project, not to where
@@ -116,12 +171,12 @@ export function verify(workingDir, receiptFile) {
   const cwd = projectRoot(workingDir, receiptAbs);
   // Req 6.10: say whose contracts run when the root is not the current folder. Two
   // spellings of one folder that differ by a symbolic link are the same folder.
-  if (!sameFolder(cwd, workingDir)) console.log(`Project: ${cwd}`);
+  if (!sameFolder(cwd, workingDir)) say(`Project: ${cwd}`);
 
   // Req 6.5: a receipt must have requirements and contracts.
   if (!receipt.requirements || !receipt.contracts || receipt.contracts.length === 0) {
-    console.log('MISMATCH.');
-    return 1;
+    say('MISMATCH.');
+    return { code: 1, notRun: [] };
   }
 
   // Req 6.4: verify the receiptHash matches what it should be.
@@ -131,8 +186,8 @@ export function verify(workingDir, receiptFile) {
   delete receiptForHashing.createdAt;
   const computedHash = sha256(canonicalJson(receiptForHashing));
   if (computedHash !== receipt.receiptHash) {
-    console.log('MISMATCH. The receipt was altered.');
-    return 1;
+    say('MISMATCH. The receipt was altered.');
+    return { code: 1, notRun: [] };
   }
 
   // Re-hash every pinned file: requirements, contracts, and imported sources.
@@ -153,8 +208,8 @@ export function verify(workingDir, receiptFile) {
   const lock = readLock(cwd);
   const frozenSpec = hasLock && lock.specs ? lock.specs[receipt.spec] : null;
   if (hasLock && !frozenSpec) {
-    console.log(`MISMATCH. Spec '${receipt.spec}' is not in the lock. Run 'necro freeze ${receipt.spec}' first.`);
-    return 1;
+    say(`MISMATCH. Spec '${receipt.spec}' is not in the lock. Run 'necro freeze ${receipt.spec}' first.`);
+    return { code: 1, notRun: [] };
   }
   const namesChanged = [];
   if (frozenSpec) {
@@ -163,10 +218,10 @@ export function verify(workingDir, receiptFile) {
     // still judged by the exact-match rules below (Req 6.7).
     const superseded = supersededPaths(cwd, receipt, frozenSpec);
     if (superseded.length > 0) {
-      console.log(
+      say(
         `SUPERSEDED. Spec '${receipt.spec}' was frozen again after this receipt was written. Changed since then: ${superseded.join(', ')}. This receipt describes an earlier freeze, not today's code. Run 'necro check ${receipt.spec}' for a current receipt.`,
       );
-      return 1;
+      return { code: 1, notRun: [] };
     }
     // Requirements hash against the lock.
     if (!frozenSpec.requirements || receipt.requirements.sha256 !== frozenSpec.requirements.sha256) {
@@ -215,13 +270,18 @@ export function verify(workingDir, receiptFile) {
   const drift = frozenGlobDrift(cwd, driftEntry);
   changedFiles.push(...drift.added, ...drift.removed);
 
+  const later = (text) => {
+    const found = allowNewer && frozenSpec ? supersedingReceipt(cwd, receiptAbs, receipt, frozenSpec) : null;
+    if (found) return reportSuperseded(say, found);
+    say(text);
+    return { code: 1, notRun: [] };
+  };
+
   if (changedFiles.length > 0) {
-    console.log(`MISMATCH. Files changed: ${[...new Set(changedFiles)].sort().join(', ')}.`);
-    return 1;
+    return later(`MISMATCH. Files changed: ${[...new Set(changedFiles)].sort().join(', ')}.`);
   }
   if (namesChanged.length > 0) {
-    console.log(`MISMATCH. Contracts changed: ${[...new Set(namesChanged)].sort().join(', ')}.`);
-    return 1;
+    return later(`MISMATCH. Contracts changed: ${[...new Set(namesChanged)].sort().join(', ')}.`);
   }
 
   // All pinned files match: re-run the contracts and compare results by file and
@@ -262,21 +322,24 @@ export function verify(workingDir, receiptFile) {
     }
   }
   if (changedContracts.length > 0) {
-    console.log(`MISMATCH. Contracts changed: ${[...new Set(changedContracts)].sort().join(', ')}.`);
-    return 1;
+    return later(`MISMATCH. Contracts changed: ${[...new Set(changedContracts)].sort().join(', ')}.`);
   }
   if (notRun.length > 0) {
-    console.log('INCOMPLETE. This receipt could only be partly checked on this machine. Contracts that did not run:');
-    for (const n of notRun) console.log(`- ${n.name} (${missingPhrase(n.missing)})`);
-    return 2;
+    say('INCOMPLETE. This receipt could only be partly checked on this machine. Contracts that did not run:');
+    for (const n of notRun) say(`- ${n.name} (${missingPhrase(n.missing)})`);
+    return { code: 2, notRun };
   }
 
-  console.log(`CONFIRMED ${receipt.receiptHash}.`);
+  say(`CONFIRMED ${receipt.receiptHash}.`);
   // Req 6.11, 6.12: the re-run agrees with the receipt's list entry by entry, so that list says
   // which contracts the receipt records as failing. A passing receipt prints nothing more.
   const line = failingLine(receipt.contracts);
-  if (line) console.log(line);
-  return 0;
+  if (line) say(line);
+  return { code: 0, notRun: [] };
+}
+
+export function verify(workingDir, receiptFile) {
+  return verifyInner(workingDir, receiptFile, { allowNewer: true, say: (t) => console.log(t) }).code;
 }
 
 // Req 6.11: the line for a confirmed receipt that records failures, or null when every
