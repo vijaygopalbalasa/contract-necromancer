@@ -1,0 +1,7 @@
+{"t":"2026-11-15T21:21:33.908Z","tool":"execute_bash","what":"grep && head && grep && head && cat"}
+{"t":"2026-11-15T21:21:52.613Z","tool":"execute_bash","what":"node && grep && head"}
+{"t":"2026-11-15T21:22:08.601Z","tool":"execute_bash","what":"node && grep && head"}
+{"t":"2026-11-15T21:23:46.509Z","tool":"execute_bash","what":"python3 && head && npm && grep && node && grep"}
+{"t":"2026-11-15T21:23:49.418Z","tool":"execute_bash","what":"sed && sed && cut && git"}
+{"t":"2026-11-15T21:26:21.999Z","tool":"str_replace","what":".kiro/specs/necro-core/tasks.md"}
+{"t":"2026-11-15T21:26:24.309Z","tool":"execute_bash","what":"sed && cut && git"}
