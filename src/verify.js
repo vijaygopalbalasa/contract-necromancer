@@ -208,6 +208,18 @@ function verifyInner(workingDir, receiptFile, { allowNewer, say }) {
   const lock = readLock(cwd);
   const frozenSpec = hasLock && lock.specs ? lock.specs[receipt.spec] : null;
   if (hasLock && !frozenSpec) {
+    // Req 6.15: a receipt filed in this project for a spec that is neither frozen nor present here came from another project.
+    const name = String(receipt.spec);
+    // Only a receipt filed under .necro/receipts counts; a loose file is just a bad receipt.
+    const rel = path.relative(path.join(cwd, '.necro', 'receipts'), receiptAbs);
+    const insideProject = rel !== '' && !rel.startsWith('..') && !path.isAbsolute(rel);
+    const plain = insideProject && name !== '' && name !== '.' && name !== '..' && !/[\\/]/.test(name);
+    if (plain
+      && !fs.existsSync(path.join(cwd, '.kiro', 'specs', name))
+      && !fs.existsSync(path.join(cwd, 'contracts', name))) {
+      say(`OTHER PROJECT. Spec '${name}' is not in this project. This receipt was written in another project and must be verified from that project's checkout.`);
+      return { code: 2, notRun: [] };
+    }
     say(`MISMATCH. Spec '${receipt.spec}' is not in the lock. Run 'necro freeze ${receipt.spec}' first.`);
     return { code: 1, notRun: [] };
   }

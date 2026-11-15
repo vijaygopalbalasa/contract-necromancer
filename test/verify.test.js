@@ -489,6 +489,26 @@ test('R6.7 a receipt for a spec that is not in the lock is a MISMATCH', () => {
   }
 });
 
+test('R6.15 a receipt for a spec that is neither in the lock nor in the project is OTHER PROJECT', () => {
+  const cwd = tmpCwd();
+  try {
+    const { file } = frozenWithReceipt(cwd);
+    const forged = forge(cwd, file, (r) => {
+      r.spec = 'other';
+    });
+    const filed = path.join(cwd, '.necro', 'receipts', 'other', 'copied.json');
+    fs.mkdirSync(path.dirname(filed), { recursive: true });
+    fs.renameSync(forged, filed);
+    const { code, out } = captureStdout(() => verify(cwd, filed));
+    assert.equal(code, 2, out);
+    assert.match(out, /OTHER PROJECT/);
+    assert.ok(out.includes("'other'"), out);
+    assert.match(out, /another project/);
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
 test('R6.7 an empty lock still means the receipt\'s spec is missing from it', () => {
   const cwd = tmpCwd();
   try {
