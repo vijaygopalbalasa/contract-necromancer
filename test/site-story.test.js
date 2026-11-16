@@ -153,7 +153,8 @@ test('R10.3 the Content Security Policy is byte for byte the one the design give
 
 test('R10.4 the title starts with "Contract Necromancer" and the story reads in the order it is drawn', () => {
   assert.match(html, /<title>Contract Necromancer\b[^<]*<\/title>/);
-  const order = ['brand', 'sample-row', 'open', 'verdict', 'receipt', 'how', 'hash-check', 'run', 'file-check', 'about'];
+  // Revised Nov 16: How it works sits above the sample bar, after the result element and the play.
+  const order = ['brand', 'real-use', 'strip', 'evidence', 'play', 'how', 'sample-row', 'open', 'verdict', 'receipt', 'hash-check', 'run', 'file-check', 'about'];
   for (let i = 1; i < order.length; i += 1) {
     assert.ok(idAt(order[i - 1]) < idAt(order[i]), `#${order[i - 1]} must come before #${order[i]}`);
   }
@@ -233,7 +234,8 @@ test('R10.5 the link works without JavaScript and nothing new is loaded for it',
 });
 
 test('R10.5 the reading order is the drawn order and the link stays in the flow, readable and not moved by CSS', () => {
-  const order = ['brand', 'sample-row', 'open', 'jump-how', 'verdict', 'receipt', 'how'];
+  // Revised Nov 16: the target is above the link, so the link jumps up.
+  const order = ['brand', 'how', 'sample-row', 'open', 'jump-how', 'verdict', 'receipt'];
   for (let i = 1; i < order.length; i += 1) {
     assert.ok(idAt(order[i - 1]) < idAt(order[i]), `#${order[i - 1]} must come before #${order[i]}`);
   }

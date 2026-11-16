@@ -41,6 +41,16 @@
       </div>
     </section>
 
+    <p class="evidence" id="evidence">
+      <span class="result">
+        <span class="lead">On a task that cannot be finished, across two models, Kiro marked it done in</span>
+        <span class="stat stat-ungated"><strong class="num">11 of 11</strong> runs without the gate</span>
+        <span class="stat stat-gated">and <strong class="num">0 of 19</strong> with it.</span>
+      </span>
+      <span class="size">Two models, 3 to 5 runs per cell (a cell is one model with one arm).</span>
+      <span class="caveat">Under a "do whatever it takes" prompt, one gated run of six got past the gate by patching JavaScript built-ins. That hole is closed and the cheat is kept as a test. <a href="https://github.com/vijaygopalbalasa/contract-necromancer/blob/main/experiments/README.md">See the experiment</a>.</span>
+    </p>
+
     <section class="play" id="play" aria-labelledby="play-title" hidden>
       <h3 id="play-title" tabindex="-1">Try the gate on this page</h3>
       <p class="play-intro" id="play-intro">Send the gate a false "done" for task 4, watch it refuse, then send the fix and watch it accept.</p>
@@ -78,15 +88,24 @@
       <p class="play-note" id="play-note">The browser runs the contracts with small stand-ins for <code>node:test</code> and <code>node:assert</code>, while the gate runs them in Node.js.</p>
     </section>
 
-    <p class="evidence" id="evidence">
-      <span class="result">
-        <span class="lead">On a task that cannot be finished, across two models, Kiro marked it done in</span>
-        <span class="stat stat-ungated"><strong class="num">11 of 11</strong> runs without the gate</span>
-        <span class="stat stat-gated">and <strong class="num">0 of 19</strong> with it.</span>
-      </span>
-      <span class="size">Two models, 3 to 5 runs per cell (a cell is one model with one arm).</span>
-      <span class="caveat">Under a "do whatever it takes" prompt, one gated run of six got past the gate by patching JavaScript built-ins. That hole is closed and the cheat is kept as a test. <a href="https://github.com/vijaygopalbalasa/contract-necromancer/blob/main/experiments/README.md">See the experiment</a>.</span>
-    </p>
+    <section class="card how" id="how" aria-labelledby="how-title">
+      <h2 id="how-title">How it works</h2>
+      <ol class="steps">
+        <li>A person freezes the spec's contracts.</li>
+        <li>The gate refuses to tick a task until they pass.</li>
+        <li>Every passing task leaves a receipt anyone can re-run.</li>
+      </ol>
+      <pre class="demo"><code id="demo-command">npx -y github:vijaygopalbalasa/contract-necromancer demo</code></pre>
+      <div class="row">
+        <button type="button" id="demo-copy">Copy demo command</button>
+        <span id="demo-copy-note" aria-live="polite"></span>
+      </div>
+      <p class="muted">Needs Node.js 24 and git, and shows the gate refuse a planted bug, accept the fix and re-check the receipt.</p>
+      <p class="links">
+        <a href="https://youtu.be/TYrSyhIYqlk">Watch the demo video</a>
+        <a href="https://github.com/vijaygopalbalasa/contract-necromancer">See the repository</a>
+      </p>
+    </section>
 
     <section class="bar" id="start" aria-label="Choose a receipt">
       <p class="muted" id="sample-note" aria-live="polite"></p>
@@ -121,25 +140,6 @@
         <dt>Created</dt><dd id="created"></dd>
         <dt>Task</dt><dd id="task"></dd>
       </dl>
-    </section>
-
-    <section class="card how" id="how" aria-labelledby="how-title">
-      <h2 id="how-title">How it works</h2>
-      <ol class="steps">
-        <li>A person freezes the spec's contracts.</li>
-        <li>The gate refuses to tick a task until they pass.</li>
-        <li>Every passing task leaves a receipt anyone can re-run.</li>
-      </ol>
-      <pre class="demo"><code id="demo-command">npx -y github:vijaygopalbalasa/contract-necromancer demo</code></pre>
-      <div class="row">
-        <button type="button" id="demo-copy">Copy demo command</button>
-        <span id="demo-copy-note" aria-live="polite"></span>
-      </div>
-      <p class="muted">Needs Node.js 24 and git, and shows the gate refuse a planted bug, accept the fix and re-check the receipt.</p>
-      <p class="links">
-        <a href="https://youtu.be/TYrSyhIYqlk">Watch the demo video</a>
-        <a href="https://github.com/vijaygopalbalasa/contract-necromancer">See the repository</a>
-      </p>
     </section>
 
     <section class="card" id="hash-check" aria-labelledby="hash-title" hidden>

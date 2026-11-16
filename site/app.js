@@ -623,16 +623,17 @@ export function start({ document, location, fetch, navigator, matchMedia, play =
     takeFocus(box);
   }
 
-  // The start control is drawn only when scripts run. Using it opens the play below the story strip and moves focus to its
-  // heading. It does not call the code that brings the verdict banner into view.
+  // The start control is drawn only when scripts run. The play is open on load. Using it scrolls the play's heading to a small margin and moves focus to Send the tick. It does not call the code that brings the verdict banner into view.
   function setUpPlay() {
     if (!els['strip-play'] || !els.play) return;
     els['strip-play'].className = els['strip-play'].className.split(/\s+/).filter((c) => c && c !== 'needs-script').join(' ');
+    // The play is open from the start. Nothing waits for a click; the file keeps it hidden so scripts off draw nothing.
+    els.play.hidden = false;
+    els['strip-play'].setAttribute('aria-expanded', 'true');
     els['strip-play'].addEventListener('click', () => {
       els.play.hidden = false;
-      els['strip-play'].setAttribute('aria-expanded', 'true');
       if (typeof els.play.scrollIntoView === 'function') els.play.scrollIntoView(scrollOptions({ reducedMotion: reducedMotion() }));
-      takeFocus(els['play-title']);
+      if (els['play-send'] && typeof els['play-send'].focus === 'function') els['play-send'].focus({ preventScroll: true });
     });
     els['play-send'].addEventListener('click', () => runStep('planted'));
     els['play-fix'].addEventListener('click', () => runStep('fixed'));

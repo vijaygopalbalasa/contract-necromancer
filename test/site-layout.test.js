@@ -40,7 +40,8 @@ test('the parts of the page come in this order: name, sample switch, verdict ban
 
 test('nothing tall comes before the verdict banner: no paste box in the open, no explanation, no legend', () => {
   assert.doesNotMatch(beforeVerdict.replace(element('details', 'open'), ''), /<textarea|<input|class="lede"|class="legend"|id="limit"/, 'a form field or the explanation sits above the banner');
-  assert.doesNotMatch(beforeVerdict, /<h2/, 'a second heading sits above the banner');
+  // Revised Nov 16: "How it works" now sits above the banner; it is the only h2 there.
+  assert.deepEqual((beforeVerdict.match(/<h2\b[^>]*>[\s\S]*?<\/h2>/g) || []).map((h) => h.replace(/<[^>]*>/g, '')), ['How it works'], 'a second heading sits above the banner');
 });
 
 test('the way to open your own receipt sits above the result in a collapsed details element with paste, file and Show', () => {

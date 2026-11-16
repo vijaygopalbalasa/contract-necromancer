@@ -115,14 +115,19 @@ test('R12.1 Requirement 9.5 (revised Nov 12) still holds with the result in plac
           page: document.documentElement.scrollWidth,
           strip: { bottom: b('strip').bottom },
           evidence: { top: e.top, bottom: e.bottom, left: e.left, right: e.right, height: e.height },
+          counts: [...document.querySelectorAll('#evidence .num')].map((n) => {
+            const c = n.getBoundingClientRect();
+            return { top: c.top, bottom: c.bottom, left: c.left, right: c.right };
+          }),
           verdict: { top: v.top, bottom: v.bottom },
         };
       });
       const at = `at ${size.width}x${size.height}`;
       assert.ok(m.strip.bottom <= m.evidence.top, `${at}: the line is below the strip`);
       assert.ok(m.evidence.bottom <= m.verdict.top, `${at}: the line is above the banner`);
-      assert.ok(m.evidence.top >= 0 && m.evidence.bottom <= m.h && m.evidence.left >= 0 && m.evidence.right <= m.w, `${at}: the line is inside the first screen`);
-      if (size.width > 800) assert.ok(m.verdict.bottom <= m.h, `${at}: the banner ends at ${Math.round(m.verdict.bottom)} of ${m.h}`);
+      // Revised Nov 16: the whole result element is in the first screen at 1280x800; at 390x844 only its two large counts are.
+      if (size.width > 800) assert.ok(m.evidence.top >= 0 && m.evidence.bottom <= m.h && m.evidence.left >= 0 && m.evidence.right <= m.w, `${at}: the line is inside the first screen`);
+      else for (const b of m.counts) assert.ok(b.top >= 0 && b.bottom <= m.h && b.left >= 0 && b.right <= m.w, `${at}: a large count is inside the first screen`);
       assert.ok(m.page <= m.w, `${at}: the page scrolls sideways`);
     }
   });

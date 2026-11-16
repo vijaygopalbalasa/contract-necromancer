@@ -56,7 +56,9 @@ test('R14.1 the page heading and the title stay as they were', () => {
   assert.equal(headings.length, 1);
   assert.equal(textOf(headings[0]), IDEA);
   assert.equal(/<title>([^<]*)<\/title>/.exec(html)[1], TITLE);
-  assert.doesNotMatch(html.slice(html.indexOf('<body'), idAt('verdict')), /<h2/, 'no second heading above the banner');
+  // Revised Nov 16: the play's heading and "How it works" are the only headings besides the page heading above the banner.
+  const above = (html.slice(html.indexOf('<body'), idAt('verdict')).match(/<h[1-6]\b[^>]*>[\s\S]*?<\/h[1-6]>/g) || []).map((h) => `${/^<(h\d)/.exec(h)[1]} ${textOf(h)}`);
+  assert.deepEqual(above, [`h1 ${IDEA}`, 'h3 Try the gate on this page', 'h2 How it works'], 'no other heading above the banner');
 });
 
 test('R14.1 with scripts off the line is drawn next to the heading, inside the first screen', { skip: NO_BROWSER }, async () => {
@@ -321,7 +323,7 @@ test('R14.4 the page says in plain words that a receipt without a task came from
 
 // ---- the revised 9.5: what the first screen shows at each window ----
 
-test('R9.5 (revised) at 1280x800 the verdict banner is in the first screen, with no sideways scroll and the way to open your own receipt on the page', { skip: NO_BROWSER }, async () => {
+test('R9.5 (revised Nov 16) at 1280x800 Try it here, the whole result and the real-use line are in the first screen; the banner need not be; with no sideways scroll and the way to open your own receipt on the page', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     const m = await browser.measure(DESKTOP, () => {
       const box = (id) => {
@@ -336,6 +338,7 @@ test('R9.5 (revised) at 1280x800 the verdict banner is in the first screen, with
         sideways: document.documentElement.scrollWidth,
         verdict: box('verdict'),
         evidence: box('evidence'),
+        real: box('real-use'),
         play: box('strip-play'),
       };
       // Open the form after the boxes are read: it is closed on a first visit.
@@ -345,7 +348,9 @@ test('R9.5 (revised) at 1280x800 the verdict banner is in the first screen, with
       return result;
     });
     assert.equal(m.scrollY, 0);
-    assert.ok(m.verdict.height > 0 && m.verdict.top >= 0 && m.verdict.bottom <= m.h && m.verdict.left >= 0 && m.verdict.right <= m.w, `the banner ends at ${Math.round(m.verdict.bottom)} of ${m.h}`);
+    const inside = (b) => b.height > 0 && b.top >= 0 && b.bottom <= m.h && b.left >= 0 && b.right <= m.w;
+    assert.ok(inside(m.evidence), `the result spans ${Math.round(m.evidence.top)} to ${Math.round(m.evidence.bottom)} of ${m.h}`);
+    assert.ok(inside(m.real), 'the real-use line is in the first screen');
     assert.ok(m.evidence.bottom <= m.verdict.top, 'the result is above the banner');
     assert.ok(m.play.bottom <= m.h && m.play.right <= m.w, 'the start control is in the first screen');
     assert.ok(m.sideways <= m.w && m.sidewaysOpen <= m.w, 'no sideways scroll');

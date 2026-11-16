@@ -62,17 +62,17 @@ test('R13.9 the start control is a real button in the story strip, after the cop
   assert.doesNotMatch(label, /sample|show|risen|buried/i, 'the frozen first-visit contracts look buttons up by these words');
 });
 
-test('R13.9 the play is a hidden section directly after the story strip and before the evidence line and the verdict banner', () => {
-  const strip = sectionOf('strip');
+test('R13.9 (revised Nov 16) the play is a hidden section directly after the result element and before the verdict banner', () => {
   const play = sectionOf('play');
-  assert.equal(html.slice(strip.end, play.start).trim(), '', 'nothing stands between the strip and the play');
-  assert.match(play.text, /^<section\b[^>]*\bid="play"[^>]*\bhidden\b/, 'hidden until the control is used');
-  assert.ok(play.end <= idAt('evidence') && idAt('evidence') < idAt('verdict'));
+  const evidenceEnd = html.indexOf('</p>', idAt('evidence')) + '</p>'.length;
+  assert.equal(html.slice(evidenceEnd, play.start).trim(), '', 'nothing stands between the result element and the play');
+  assert.match(play.text, /^<section\b[^>]*\bid="play"[^>]*\bhidden\b/, 'hidden in the file, so scripts off draw nothing; the script opens it on load');
+  assert.ok(idAt('strip') < idAt('evidence') && play.end <= idAt('verdict'));
   assert.match(play.text, /aria-labelledby="play-title"/);
   assert.match(play.text, /<h3\b[^>]*\bid="play-title"[^>]*\btabindex="-1"/, 'a heading that can take focus when the play opens');
   // The frozen layout tests: nothing tall above the banner.
   const above = html.slice(html.indexOf('<body'), idAt('verdict'));
-  assert.doesNotMatch(above, /<h2/, 'no second heading above the banner');
+  assert.deepEqual((above.match(/<h2\b[^>]*>[\s\S]*?<\/h2>/g) || []).map(textOf), ['How it works'], 'no other second-level heading above the banner');
   assert.doesNotMatch(play.text, /<(textarea|input|pre|img|svg|script|iframe|video)\b|style=/i);
 });
 
@@ -270,16 +270,17 @@ const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
 // All the text the play has made so far: every element whose id starts with play-.
 const playText = (page) => [...page.dom.byId.values()].filter((e) => e.id.startsWith('play-')).map((e) => e.textContent).join('\n');
 
-test('R13.9 the page draws the start control once scripts run, loads nothing for the play, and opens the play when it is used', async () => {
+test('R13.9 the page draws the start control once scripts run, loads nothing for the play, opens the play on load, and Try it here scrolls to it', async () => {
   const page = await openPlay();
   assert.equal(el(page, 'strip-play').className.includes('needs-script'), false, 'the control is drawn');
-  assert.equal(el(page, 'play').hidden, true, 'the play stays closed');
+  assert.equal(el(page, 'play').hidden, false, 'the play is open on load (revised Nov 16)');
+  assert.equal(el(page, 'strip-play').getAttribute('aria-expanded'), 'true');
   assert.deepEqual(page.requested, [], 'nothing is fetched before the play is used');
   await el(page, 'strip-play').dispatch('click');
   assert.equal(el(page, 'play').hidden, false);
   assert.equal(el(page, 'strip-play').getAttribute('aria-expanded'), 'true');
   assert.deepEqual(page.requested, [], 'opening the play fetches nothing either');
-  assert.equal(page.focused.at(-1), 'play-title', 'focus moves to the play heading');
+  assert.equal(page.focused.at(-1), 'play-send', 'focus moves to the Send the tick button');
   assert.ok(page.scrolled.some((s) => s.id === 'play'), 'the play is brought into view');
   assert.equal(page.calls.length, 0, 'no run starts by itself');
   assert.ok(!page.scrolled.some((s) => s.id === 'verdict'), 'opening the play does not scroll to the banner');
@@ -621,7 +622,7 @@ const SCREENS = [
   { name: '390x844', width: 390, height: 844, mobile: true },
 ];
 
-test('R13.9 the start control is drawn in the first screen at 1280x800 and 390x844, at least 24 by 24, and the banner stays in the first screen at 1280x800', { skip: NO_BROWSER }, async () => {
+test('R13.9 the start control is drawn in the first screen at 1280x800 and 390x844, at least 24 by 24', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     for (const screen of SCREENS) {
       const m = await browser.measure(screen, () => {
@@ -646,13 +647,11 @@ test('R13.9 the start control is drawn in the first screen at 1280x800 and 390x8
       const at = screen.name;
       assert.ok(m.shown, `${at}: the control is drawn`);
       assert.equal(m.text, 'Try it here');
-      assert.equal(m.playShown, false, `${at}: the play is closed on a first visit`);
+      assert.equal(m.playShown, true, `${at}: the play is open on load`);
       assert.ok(m.control.width >= 24 && m.control.height >= 24, `${at}: target ${m.control.width} x ${m.control.height}`);
       assert.ok(m.copy.width >= 24 && m.copy.height >= 24, `${at}: the copy button keeps its size`);
       assert.ok(m.control.top >= 0 && m.control.bottom <= m.h && m.control.left >= 0 && m.control.right <= m.w, `${at}: the control is inside the first screen`);
-      // Revised 9.5 (Nov 12): the banner is required in the first screen at 1280x800 only. At 390x844 the start control (checked
-      // above) and the result line take its place.
-      if (screen.width > 800) assert.ok(m.verdict.top >= 0 && m.verdict.bottom <= m.h, `${at}: the banner ends at ${m.verdict.bottom} of ${m.h}`);
+      // Revised 9.5 (Nov 16): the banner follows the open play and is not required in the first screen.
       assert.ok(m.sideways <= m.w, `${at}: sideways scroll`);
       // Not on top of the other controls.
       const overlap = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
@@ -731,7 +730,7 @@ test('R13.2 R13.3 R13.4 R13.5 R13.10 in a browser the three steps run the real w
       assert.match(m['play-result-fixed'], /MATCH/);
       assert.match(m['play-result-fixed'], /18 of 18 passing/);
       assert.ok(m['play-result-byte'].includes(MISMATCH), m['play-result-byte']);
-      assert.ok(m.strip.bottom <= m.play.top + 0.5 && m.play.bottom <= m.evidence.top + 0.5, `${at}: the play sits directly below the strip`);
+      assert.ok(m.strip.bottom <= m.evidence.top + 0.5 && m.evidence.bottom <= m.play.top + 0.5, `${at}: the play sits directly below the result element`);
       assert.ok(m.sideways <= m.width, `${at}: the page scrolls sideways (${m.sideways} in ${m.width})`);
       for (const [w, h] of m.buttons) assert.ok(w >= 24 && h >= 24, `${at}: a play button is ${w} x ${h}`);
     }
