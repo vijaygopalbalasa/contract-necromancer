@@ -2,7 +2,7 @@
 
 Design by Contract, from Eiffel (1986), raised for coding agents.
 
-A coding agent can mark a task done in Kiro when the work does not meet the requirements. Contract Necromancer's Kiro hooks refuse the tick in `tasks.md` until the frozen contracts for that task pass, and each passing task leaves a receipt that anyone can re-run.
+A coding agent can mark a task done in Kiro when the work does not meet the requirements. Contract Necromancer's Kiro hooks refuse the tick in `tasks.md` until the frozen contracts for that task pass, and each passing task leaves a receipt you can re-run.
 
 **Used on a real fix.** In Judge Protocol, a live project of mine, Kiro fixed two real bugs in the API under the gate: an
 error response could hand a caller the chain RPC URL (which can carry a provider key), and an evidence route could serve
