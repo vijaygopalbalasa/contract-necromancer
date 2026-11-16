@@ -1,14 +1,17 @@
-// Contract for R9.5 of the receipt-viewer spec, as revised on Nov 9: on a first visit the sample is shown at once and its
-// verdict banner is in the first screen, without scrolling, in a 1280x800 window and in a 390x844 phone window, with no
-// horizontal scrolling and with the way to open your own receipt still on the page. The word limit above the banner is
-// gone so that the story of Requirement 11 can sit there.
+// Contract for R9.5 of the receipt-viewer spec, as revised on Nov 16: on a first visit the sample is shown at once. In the
+// first screen, without scrolling, a 1280x800 window shows Try it here, the whole result element of 12.1 and the real-use
+// line of 16.3; a 390x844 phone window shows Try it here, the two large counts of 14.2 and the real-use line. Neither window
+// scrolls sideways, and the way to open your own receipt is still reachable on the page. The verdict banner follows the open
+// play and need not be in the first screen (earlier: Nov 9 dropped the word limit above the banner, Nov 12 took the banner
+// out of the phone's first screen). At phone width only the two counts must fit, so fonts wider than this Mac's cannot push a
+// check past the fold.
 //
 // This replaces above-fold.contract.test.js, which checks the old wording. A person removes that file.
 //
 // The page is measured, not read: the file starts the Chrome or Chromium on this machine in headless mode, serves site/
 // from a local server on 127.0.0.1, sets the window size, waits for the sample to appear and reads the layout over the
 // DevTools protocol (Node's built-in WebSocket, no dependencies). Set CHROME_PATH if the browser is somewhere unusual.
-// With no browser the contract fails and says so: a layout that was not measured is not a pass.
+// With no browser (Requirement 16.7) a test skips with a reason that starts with "cannot run:"; a skip is never a pass.
 //
 // There is no shared helper file (a helper would not be frozen), so the browser code is carried in this file and in
 // first-screen.contract.test.js. The page script and the sample notes are named below the way a static import would name
@@ -17,7 +20,7 @@
 //   import {} from '../../site/lib/samples.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
@@ -32,21 +35,48 @@ const TYPES = {
   '.json': 'application/json; charset=utf-8',
 };
 
+// Requirement 16.7: when CHROME_PATH is set only that path is tried; otherwise the usual macOS, Linux and Windows install
+// paths, then the folders of PATH. A machine with no browser gives null, and every test that needs one skips (NO_BROWSER).
 function findBrowser() {
+  const isFile = (p) => {
+    try {
+      return fs.statSync(p).isFile();
+    } catch {
+      return false;
+    }
+  };
+  if (process.env.CHROME_PATH) return isFile(process.env.CHROME_PATH) ? process.env.CHROME_PATH : null;
+  const windows = [process.env.PROGRAMFILES, process.env['PROGRAMFILES(X86)'], process.env.LOCALAPPDATA].filter(Boolean).flatMap((base) => [
+    path.join(base, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+    path.join(base, 'Chromium', 'Application', 'chrome.exe'),
+    path.join(base, 'BraveSoftware', 'Brave-Browser', 'Application', 'brave.exe'),
+    path.join(base, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+  ]);
   const fixed = [
-    process.env.CHROME_PATH,
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     '/Applications/Chromium.app/Contents/MacOS/Chromium',
     '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
     '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/snap/bin/chromium',
+    '/usr/bin/microsoft-edge',
+    ...windows,
   ];
-  for (const p of fixed) if (p && fs.existsSync(p)) return p;
-  for (const name of ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'chrome', 'microsoft-edge']) {
-    const found = spawnSync('which', [name], { encoding: 'utf8' });
-    if (found.status === 0 && found.stdout.trim()) return found.stdout.trim();
+  for (const p of fixed) if (isFile(p)) return p;
+  const names = ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'chrome', 'microsoft-edge'];
+  const extensions = process.platform === 'win32' ? ['.exe', '.cmd', ''] : [''];
+  for (const dir of (process.env.PATH || '').split(path.delimiter)) {
+    if (!dir) continue;
+    for (const name of names) for (const extension of extensions) if (isFile(path.join(dir, name + extension))) return path.join(dir, name + extension);
   }
   return null;
 }
+
+// What a missing browser looks like to the gate: a skip whose reason starts with "cannot run:" (necro-core 6.17).
+const NO_BROWSER = findBrowser() ? false : 'cannot run: no Chrome or Chromium found (set CHROME_PATH)';
 
 function serveSite(requests) {
   const server = http.createServer((req, res) => {
@@ -108,7 +138,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function withBrowser(run) {
   const chrome = findBrowser();
   if (!chrome) {
-    throw new Error('No Chrome or Chromium found. Install one, or set CHROME_PATH to its program, and run this again.');
+    throw new Error(NO_BROWSER);
   }
   const requests = [];
   const server = await serveSite(requests);
@@ -210,7 +240,7 @@ const FIRST_SCREENS = [
   { name: '390x844 phone', width: 390, height: 844, mobile: true },
 ];
 
-test('R9.5 on a first visit the verdict banner is in the first screen at 1280x800 and at 390x844, with no horizontal scrolling and the way to open your own receipt on the page', async () => {
+test('R9.5 (revised Nov 16) on a first visit Try it here, the real-use line and the result (the whole element at 1280x800, the two large counts at 390x844) are in the first screen, with no horizontal scrolling and the way to open your own receipt on the page', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     for (const screen of FIRST_SCREENS) {
       const m = await browser.measure(screen, () => {
@@ -219,6 +249,8 @@ test('R9.5 on a first visit the verdict banner is in the first screen at 1280x80
           return { top: b.top, bottom: b.bottom, left: b.left, right: b.right, width: b.width, height: b.height };
         };
         const verdict = document.getElementById('verdict');
+        const box = (el) => (el ? rect(el) : null);
+        const evidence = document.getElementById('evidence');
         const open = document.getElementById('open');
         const summary = open && open.querySelector('summary');
         const result = {
@@ -231,6 +263,13 @@ test('R9.5 on a first visit the verdict banner is in the first screen at 1280x80
           verdictText: verdict ? verdict.textContent.replace(/\s+/g, ' ').trim() : null,
           verdictShown: !!verdict && !verdict.hidden && getComputedStyle(verdict).display !== 'none',
           verdict: verdict ? rect(verdict) : null,
+          tryIt: box(document.getElementById('strip-play')),
+          tryItShown: !!document.getElementById('strip-play') && document.getElementById('strip-play').getClientRects().length > 0,
+          realUse: box(document.getElementById('real-use')),
+          realUseText: document.getElementById('real-use') ? document.getElementById('real-use').innerText.replace(/\s+/g, ' ').trim() : '',
+          evidence: box(evidence),
+          counts: evidence ? [...evidence.querySelectorAll('.num')].map(rect) : [],
+          countsText: evidence ? [...evidence.querySelectorAll('.num')].map((e) => e.textContent.trim()) : [],
           openShown: !!open && getComputedStyle(open).display !== 'none',
           open: open ? rect(open) : null,
           summaryText: summary ? summary.textContent.trim() : null,
@@ -252,13 +291,17 @@ test('R9.5 on a first visit the verdict banner is in the first screen at 1280x80
       assert.equal(m.innerWidth, screen.width, `${at}: the window is ${screen.width} wide`);
       assert.equal(m.scrollY, 0, `${at}: the page starts at the top`);
       assert.ok(m.verdictShown && /\bRisen\b|Still buried/.test(m.verdictText || ''), `${at}: the verdict banner is shown (it says "${m.verdictText}")`);
-      // Requirement 9.5 revised Nov 12: at 390x844 the start control and the result line take the banner's place (first-screen-v3).
-      if (!screen.mobile) {
-        assert.ok(
-          m.verdict.top >= 0 && m.verdict.bottom <= m.innerHeight && m.verdict.height > 0,
-          `${at}: the banner must be fully inside the first screen, it spans ${Math.round(m.verdict.top)} to ${Math.round(m.verdict.bottom)} of ${m.innerHeight}`,
-        );
-        assert.ok(m.verdict.left >= 0 && m.verdict.right <= m.innerWidth, `${at}: the banner is not cut off at the side`);
+      // Requirement 9.5 revised Nov 16: the banner follows the open play and need not be in the first screen. What must be:
+      const inside = (b) => !!b && b.width > 0 && b.height > 0 && b.top >= 0 && b.bottom <= m.innerHeight && b.left >= 0 && b.right <= m.innerWidth;
+      const where = (b) => (b ? `${Math.round(b.top)} to ${Math.round(b.bottom)} of ${m.innerHeight}` : 'not on the page');
+      assert.ok(m.tryItShown && inside(m.tryIt), `${at}: Try it here must be in the first screen, it spans ${where(m.tryIt)}`);
+      assert.ok(/\S/.test(m.realUseText) && inside(m.realUse), `${at}: the real-use line must be in the first screen, it spans ${where(m.realUse)}`);
+      if (screen.mobile) {
+        assert.equal(m.counts.length, 2, `${at}: the result has its two large counts`);
+        assert.deepEqual(m.countsText, ['11 of 11', '0 of 19'], `${at}: the two counts`);
+        m.counts.forEach((b, i) => assert.ok(inside(b), `${at}: count ${m.countsText[i]} must be in the first screen, it spans ${where(b)}`));
+      } else {
+        assert.ok(inside(m.evidence), `${at}: the whole result element must be in the first screen, it spans ${where(m.evidence)}`);
       }
       assert.ok(m.pageWidth <= m.innerWidth && m.bodyWidth <= m.innerWidth && m.scrollX === 0, `${at}: the page scrolls sideways (${m.pageWidth} wide in a ${m.innerWidth} window)`);
       assert.ok(m.pageWidthWhenOpen <= m.innerWidth, `${at}: the page scrolls sideways once the paste box is open`);

@@ -5,8 +5,7 @@
 // R11.1 runs `node bin/necro.js demo` and checks the beats against its output. Layout, animation and the favicon request
 // are measured in a headless Chrome or Chromium: the file serves site/ from a local server on 127.0.0.1, sets the window
 // size and reads the page over the DevTools protocol (Node's built-in WebSocket, no dependencies). Set CHROME_PATH if the
-// browser is somewhere unusual. With no browser these contracts fail and say so: a layout that was not measured is not
-// a pass.
+// browser is somewhere unusual. With no browser (Requirement 16.7) a test skips with a reason that starts with "cannot run:"; a skip is never a pass.
 //
 // There is no shared helper file (a helper would not be frozen), so the browser code is carried in this file and in
 // above-fold-v2.contract.test.js. The sample notes are read with a dynamic import so this file always loads and every
@@ -31,21 +30,48 @@ const TYPES = {
   '.json': 'application/json; charset=utf-8',
 };
 
+// Requirement 16.7: when CHROME_PATH is set only that path is tried; otherwise the usual macOS, Linux and Windows install
+// paths, then the folders of PATH. A machine with no browser gives null, and every test that needs one skips (NO_BROWSER).
 function findBrowser() {
+  const isFile = (p) => {
+    try {
+      return fs.statSync(p).isFile();
+    } catch {
+      return false;
+    }
+  };
+  if (process.env.CHROME_PATH) return isFile(process.env.CHROME_PATH) ? process.env.CHROME_PATH : null;
+  const windows = [process.env.PROGRAMFILES, process.env['PROGRAMFILES(X86)'], process.env.LOCALAPPDATA].filter(Boolean).flatMap((base) => [
+    path.join(base, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+    path.join(base, 'Chromium', 'Application', 'chrome.exe'),
+    path.join(base, 'BraveSoftware', 'Brave-Browser', 'Application', 'brave.exe'),
+    path.join(base, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+  ]);
   const fixed = [
-    process.env.CHROME_PATH,
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     '/Applications/Chromium.app/Contents/MacOS/Chromium',
     '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
     '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/snap/bin/chromium',
+    '/usr/bin/microsoft-edge',
+    ...windows,
   ];
-  for (const p of fixed) if (p && fs.existsSync(p)) return p;
-  for (const name of ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'chrome', 'microsoft-edge']) {
-    const found = spawnSync('which', [name], { encoding: 'utf8' });
-    if (found.status === 0 && found.stdout.trim()) return found.stdout.trim();
+  for (const p of fixed) if (isFile(p)) return p;
+  const names = ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'chrome', 'microsoft-edge'];
+  const extensions = process.platform === 'win32' ? ['.exe', '.cmd', ''] : [''];
+  for (const dir of (process.env.PATH || '').split(path.delimiter)) {
+    if (!dir) continue;
+    for (const name of names) for (const extension of extensions) if (isFile(path.join(dir, name + extension))) return path.join(dir, name + extension);
   }
   return null;
 }
+
+// What a missing browser looks like to the gate: a skip whose reason starts with "cannot run:" (necro-core 6.17).
+const NO_BROWSER = findBrowser() ? false : 'cannot run: no Chrome or Chromium found (set CHROME_PATH)';
 
 function serveSite(requests) {
   const server = http.createServer((req, res) => {
@@ -107,7 +133,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function withBrowser(run) {
   const chrome = findBrowser();
   if (!chrome) {
-    throw new Error('No Chrome or Chromium found. Install one, or set CHROME_PATH to its program, and run this again.');
+    throw new Error(NO_BROWSER);
   }
   const requests = [];
   const server = await serveSite(requests);
@@ -236,7 +262,7 @@ function strip() {
 
 // ---- R11.1 ----
 
-test('R11.1 between the heading and the verdict banner, a strip of three plain-text beats taken from the real necro demo output: Kiro says task 4 is done, the gate refuses and names R2.1 and R2.2, then it accepts, writes a receipt and necro verify prints CONFIRMED', async () => {
+test('R11.1 between the heading and the verdict banner, a strip of three plain-text beats taken from the real necro demo output: Kiro says task 4 is done, the gate refuses and names R2.1 and R2.2, then it accepts, writes a receipt and necro verify prints CONFIRMED', { skip: NO_BROWSER }, async () => {
   const s = strip();
   assert.equal(s.beats.length, 3, 'three beats');
   assert.ok(HTML.indexOf('<h1') < s.start && s.end < idAt('verdict'), 'the strip sits between the heading and the verdict banner');
@@ -287,7 +313,7 @@ test('R11.1 between the heading and the verdict banner, a strip of three plain-t
 
 // ---- R11.2 ----
 
-test('R11.2 the strip animates in CSS only, and under prefers-reduced-motion: reduce all three beats show at once with no animation', async () => {
+test('R11.2 the strip animates in CSS only, and under prefers-reduced-motion: reduce all three beats show at once with no animation', { skip: NO_BROWSER }, async () => {
   // CSS only: the animation lives in the no-preference block, nothing outside it, and the page script knows no beats.
   const motion = [...CSS.matchAll(/@media\s*\(prefers-reduced-motion:\s*no-preference\)\s*{([\s\S]*?)\n}\n/g)].map((m) => m[1]).join('\n');
   assert.match(motion, /\.beat\b[^{]*{[^}]*animation:/, 'the beats animate under no-preference');
@@ -320,7 +346,7 @@ test('R11.2 the strip animates in CSS only, and under prefers-reduced-motion: re
 
 // ---- R11.3 ----
 
-test('R11.3 the demo command and a copy button that copies it are in the first screen at 1280x800', async () => {
+test('R11.3 the demo command and a copy button that copies it are in the first screen at 1280x800', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     const m = await browser.measure({ width: 1280, height: 800 }, async () => {
       const box = (id) => {
@@ -352,7 +378,7 @@ test('R11.3 the demo command and a copy button that copies it are in the first s
 
 // ---- R11.4 ----
 
-test('R11.4 the sample buttons read "A passing receipt" and "A refused one", and each sample note says in one sentence what a receipt is', async () => {
+test('R11.4 the sample buttons read "A passing receipt" and "A refused one", and each sample note says in one sentence what a receipt is', { skip: NO_BROWSER }, async () => {
   const buttons = Object.fromEntries([...HTML.matchAll(/<button[^>]*id="(sample|sample-buried)"[^>]*>([^<]*)<\/button>/g)].map((m) => [m[1], m[2].trim()]));
   assert.match(buttons.sample, /^A passing receipt\b/);
   assert.match(buttons['sample-buried'], /^A refused one\b/);
@@ -381,7 +407,7 @@ test('R11.4 the sample buttons read "A passing receipt" and "A refused one", and
 
 // ---- R11.5 ----
 
-test('R11.5 an inline data: SVG favicon of the gravestone mark, so the browser requests no icon file, and a title that says what the page does, with the Content Security Policy unchanged', async () => {
+test('R11.5 an inline data: SVG favicon of the gravestone mark, so the browser requests no icon file, and a title that says what the page does, with the Content Security Policy unchanged', { skip: NO_BROWSER }, async () => {
   const icons = [...HTML.matchAll(/<link\b[^>]*>/g)].map((m) => m[0]).filter((tag) => /\brel="icon"/.test(tag));
   assert.equal(icons.length, 1, 'one favicon link');
   assert.match(icons[0], /\btype="image\/svg\+xml"/);

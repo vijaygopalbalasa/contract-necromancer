@@ -28,7 +28,8 @@
 // - pasted:      site/play/risen-receipt.json, what `necro demo` writes, `gitCommit` is null. The third kind.
 //
 // R15.5 re-runs the committed fixture with the real verifier, which takes about 45 seconds, and needs git, Node.js 24
-// and a Chrome or Chromium on this machine (set CHROME_PATH when it is not in a usual place). It does not repeat the
+// and a Chrome or Chromium on this machine (set CHROME_PATH when it is not in a usual place). With none, R15.5 skips with a
+// reason that starts with "cannot run:" (Requirement 16.7), because the re-run would measure nothing. It does not repeat the
 // risen sample, which R5.2 already re-runs through the same command.
 //
 // The page is loaded with a dynamic import inside each test, so this file always loads and every contract name is
@@ -44,6 +45,50 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+
+// Requirement 16.7: when CHROME_PATH is set only that path is tried; otherwise the usual macOS, Linux and Windows install
+// paths, then the folders of PATH. A machine with no browser gives null, and every test that needs one skips (NO_BROWSER).
+function findBrowser() {
+  const isFile = (p) => {
+    try {
+      return fs.statSync(p).isFile();
+    } catch {
+      return false;
+    }
+  };
+  if (process.env.CHROME_PATH) return isFile(process.env.CHROME_PATH) ? process.env.CHROME_PATH : null;
+  const windows = [process.env.PROGRAMFILES, process.env['PROGRAMFILES(X86)'], process.env.LOCALAPPDATA].filter(Boolean).flatMap((base) => [
+    path.join(base, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+    path.join(base, 'Chromium', 'Application', 'chrome.exe'),
+    path.join(base, 'BraveSoftware', 'Brave-Browser', 'Application', 'brave.exe'),
+    path.join(base, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+  ]);
+  const fixed = [
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    '/Applications/Chromium.app/Contents/MacOS/Chromium',
+    '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
+    '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/snap/bin/chromium',
+    '/usr/bin/microsoft-edge',
+    ...windows,
+  ];
+  for (const p of fixed) if (isFile(p)) return p;
+  const names = ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'chrome', 'microsoft-edge'];
+  const extensions = process.platform === 'win32' ? ['.exe', '.cmd', ''] : [''];
+  for (const dir of (process.env.PATH || '').split(path.delimiter)) {
+    if (!dir) continue;
+    for (const name of names) for (const extension of extensions) if (isFile(path.join(dir, name + extension))) return path.join(dir, name + extension);
+  }
+  return null;
+}
+
+// What a missing browser looks like to the gate: a skip whose reason starts with "cannot run:" (necro-core 6.17).
+const BROWSER = findBrowser();
+const NO_BROWSER = BROWSER ? false : 'cannot run: no Chrome or Chromium found (set CHROME_PATH)';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url)).replace(/\/$/, '');
 const APP_URL = new URL('../../site/app.js', import.meta.url);
@@ -474,7 +519,8 @@ function localClone(receipt) {
       GIT_AUTHOR_EMAIL: 'rerun-box@example.invalid',
       GIT_COMMITTER_NAME: 'rerun box',
       GIT_COMMITTER_EMAIL: 'rerun-box@example.invalid',
-      ...(process.env.CHROME_PATH ? { CHROME_PATH: process.env.CHROME_PATH } : {}),
+      // The browser this file found (CHROME_PATH or a usual place), handed on because the PATH below holds only git and node.
+      ...(BROWSER ? { CHROME_PATH: BROWSER } : {}),
     };
     const run = (args, options = {}) => spawnSync(git, args, { encoding: 'utf8', env, ...options });
     for (const args of [['init', '--bare', '-q', mirror], ['-C', mirror, 'fetch', '-q', ROOT, 'HEAD:refs/heads/main'], ['-C', mirror, 'symbolic-ref', 'HEAD', 'refs/heads/main']]) {
@@ -650,7 +696,7 @@ test('R15.4 the page decides between the three from gitCommit and uncommitted al
   }
 });
 
-test("R15.5 without the network, the command for a committed receipt reaches CONFIRMED from a clone of this repository, including for a receipt that pins R5.2's contract, and receipts with uncommitted files or no commit get no clone command", async () => {
+test("R15.5 without the network, the command for a committed receipt reaches CONFIRMED from a clone of this repository, including for a receipt that pins R5.2's contract, and receipts with uncommitted files or no commit get no clone command", { skip: NO_BROWSER }, async () => {
   // The kinds: the committed fixture is offered a clone command; the other three fixtures are not.
   for (const name of ['committed', 'uncommitted', 'buried', 'pasted']) {
     const { text } = fixture(name);

@@ -4,14 +4,18 @@
 // plain words that a receipt with no task came from necro check, and at 390x844 shows the start control and the result line
 // where the verdict banner used to be required (the banner is still required at 1280x800).
 //
+// Revised Nov 16 for Requirement 16 (a person freezes this file again): the play is open above the banner, so the banner is no
+// longer required in any first screen. 9.5 now asks for Try it here, the result element and the real-use line at 1280x800, and
+// Try it here, the two large counts and the real-use line at 390x844. The only headings above the banner are the page heading,
+// the play's heading and "How it works" (10.1). The play's buttons never use the filled style or glow of Try it here (14.3).
+//
 // Per Requirement 14.5 nothing here pins a pixel size or a position. Boxes are compared with the window and with each other,
 // styles are read as computed values (ratios and contrast), and text is read as text, so the contracts pass on any operating
 // system's fonts. The last contract reads this file and checks that.
 //
 // Text is read from site/index.html. Layout is measured in a headless Chrome or Chromium: the file serves site/ from a local
 // server on 127.0.0.1, sets the window size and reads the page over the DevTools protocol (Node's built-in WebSocket, no
-// dependencies). Set CHROME_PATH if the browser is somewhere unusual. With no browser the layout contracts fail and say so:
-// a layout that was not measured is not a pass.
+// dependencies). Set CHROME_PATH if the browser is somewhere unusual. With no browser (Requirement 16.7) a test skips with a reason that starts with "cannot run:"; a skip is never a pass.
 //
 // There is no shared helper file (a helper would not be frozen), so the browser code is carried in this file, as in
 // evidence.contract.test.js. The page script and the sample notes are named below the way a static import would name them,
@@ -20,7 +24,7 @@
 //   import {} from '../../site/lib/samples.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
@@ -35,21 +39,48 @@ const TYPES = {
   '.json': 'application/json; charset=utf-8',
 };
 
+// Requirement 16.7: when CHROME_PATH is set only that path is tried; otherwise the usual macOS, Linux and Windows install
+// paths, then the folders of PATH. A machine with no browser gives null, and every test that needs one skips (NO_BROWSER).
 function findBrowser() {
+  const isFile = (p) => {
+    try {
+      return fs.statSync(p).isFile();
+    } catch {
+      return false;
+    }
+  };
+  if (process.env.CHROME_PATH) return isFile(process.env.CHROME_PATH) ? process.env.CHROME_PATH : null;
+  const windows = [process.env.PROGRAMFILES, process.env['PROGRAMFILES(X86)'], process.env.LOCALAPPDATA].filter(Boolean).flatMap((base) => [
+    path.join(base, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+    path.join(base, 'Chromium', 'Application', 'chrome.exe'),
+    path.join(base, 'BraveSoftware', 'Brave-Browser', 'Application', 'brave.exe'),
+    path.join(base, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+  ]);
   const fixed = [
-    process.env.CHROME_PATH,
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     '/Applications/Chromium.app/Contents/MacOS/Chromium',
     '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
     '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/snap/bin/chromium',
+    '/usr/bin/microsoft-edge',
+    ...windows,
   ];
-  for (const p of fixed) if (p && fs.existsSync(p)) return p;
-  for (const name of ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'chrome', 'microsoft-edge']) {
-    const found = spawnSync('which', [name], { encoding: 'utf8' });
-    if (found.status === 0 && found.stdout.trim()) return found.stdout.trim();
+  for (const p of fixed) if (isFile(p)) return p;
+  const names = ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'chrome', 'microsoft-edge'];
+  const extensions = process.platform === 'win32' ? ['.exe', '.cmd', ''] : [''];
+  for (const dir of (process.env.PATH || '').split(path.delimiter)) {
+    if (!dir) continue;
+    for (const name of names) for (const extension of extensions) if (isFile(path.join(dir, name + extension))) return path.join(dir, name + extension);
   }
   return null;
 }
+
+// What a missing browser looks like to the gate: a skip whose reason starts with "cannot run:" (necro-core 6.17).
+const NO_BROWSER = findBrowser() ? false : 'cannot run: no Chrome or Chromium found (set CHROME_PATH)';
 
 function serveSite(requests) {
   const server = http.createServer((req, res) => {
@@ -111,7 +142,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function withBrowser(run) {
   const chrome = findBrowser();
   if (!chrome) {
-    throw new Error('No Chrome or Chromium found. Install one, or set CHROME_PATH to its program, and run this again.');
+    throw new Error(NO_BROWSER);
   }
   const requests = [];
   const server = await serveSite(requests);
@@ -256,10 +287,12 @@ test('R14.1 the page heading and the title stay as they were', () => {
   assert.equal(headings.length, 1);
   assert.equal(textOf(headings[0]), IDEA);
   assert.equal(/<title>([^<]*)<\/title>/.exec(html)[1], TITLE);
-  assert.doesNotMatch(html.slice(html.indexOf('<body'), idAt('verdict')), /<h2/, 'no second heading above the banner');
+  // Revised Nov 16 (10.1): above the banner the only headings are the page heading, the play's heading and "How it works".
+  const above = (html.slice(html.indexOf('<body'), idAt('verdict')).match(/<h[1-6]\b[^>]*>[\s\S]*?<\/h[1-6]>/g) || []).map(textOf);
+  assert.deepEqual(above, [IDEA, 'Try the gate on this page', 'How it works'], 'the headings above the banner');
 });
 
-test('R14.1 with scripts off the line is drawn next to the heading, inside the first screen', async () => {
+test('R14.1 with scripts off the line is drawn next to the heading, inside the first screen', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     for (const size of [DESKTOP, PHONE]) {
       const m = await browser.measure({ ...size, scripts: false, settle: false }, () => {
@@ -319,7 +352,7 @@ test('R12.1 (revised Nov 12) one element holds the result and the round 3 caveat
   assert.ok(html.split(EXPERIMENT).length === 2, 'the address appears once on the page');
 });
 
-test('R14.2 the result is drawn with more weight than body text: the two counts are large, bold and at AA contrast, and so is the caveat', async () => {
+test('R14.2 the result is drawn with more weight than body text: the two counts are large, bold and at AA contrast, and so is the caveat', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     for (const size of [DESKTOP, PHONE]) {
       for (const scripts of [true, false]) {
@@ -381,7 +414,7 @@ test('R14.2 the result is drawn with more weight than body text: the two counts 
 
 // ---- 14.3: Try it here is the single main action ----
 
-test('R14.3 with scripts on, no other control above the verdict banner is filled like Try it here', async () => {
+test('R14.3 (revised Nov 16) with scripts on, no other control above the verdict banner is filled or glowing like Try it here, and the three buttons of the open play are among those checked', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     for (const size of [DESKTOP, PHONE]) {
       const m = await browser.measure(size, () => {
@@ -394,7 +427,7 @@ test('R14.3 with scripts on, no other control above the verdict banner is filled
         );
         const fill = (e) => {
           const s = getComputedStyle(e);
-          return { id: e.id || e.textContent.trim().slice(0, 30), bg: s.backgroundColor, shadow: s.boxShadow };
+          return { id: e.id || e.textContent.trim().slice(0, 30), bg: s.backgroundColor, shadow: s.boxShadow, animation: s.animationName, image: s.backgroundImage };
         };
         return { play: fill(play), others: above.map(fill), playDrawn: play.getClientRects().length > 0 };
       });
@@ -402,15 +435,23 @@ test('R14.3 with scripts on, no other control above the verdict banner is filled
       assert.ok(m.playDrawn, `${at}: Try it here is drawn`);
       assert.notEqual(m.play.bg, 'rgba(0, 0, 0, 0)', `${at}: Try it here is filled`);
       assert.ok(m.others.length >= 4, `${at}: other controls were found above the banner (${m.others.map((o) => o.id).join(', ')})`);
+      const ids = m.others.map((o) => o.id);
+      for (const id of ['play-send', 'play-fix', 'play-byte']) assert.ok(ids.includes(id), `${at}: the play's ${id} is drawn above the banner, so it is checked (found ${ids.join(', ')})`);
+      // Each property is compared with Try it here's own value only when Try it here sets one (a fill is required above; a
+      // glow, an animation or a gradient only when it has one), so an unrelated animation or icon background on another
+      // control cannot fail this contract.
+      const sets = { shadow: m.play.shadow !== 'none', animation: m.play.animation !== 'none', image: m.play.image !== 'none' };
       for (const o of m.others) {
         assert.notEqual(o.bg, m.play.bg, `${at}: ${o.id} is filled like Try it here`);
-        assert.notEqual(o.shadow, m.play.shadow, `${at}: ${o.id} has the glow of Try it here`);
+        if (sets.shadow) assert.notEqual(o.shadow, m.play.shadow, `${at}: ${o.id} has the glow of Try it here`);
+        if (sets.animation) assert.notEqual(o.animation, m.play.animation, `${at}: ${o.id} has the animation of Try it here`);
+        if (sets.image) assert.notEqual(o.image, m.play.image, `${at}: ${o.id} has the gradient fill of Try it here`);
       }
     }
   });
 });
 
-test('R14.3 with scripts off Try it here is not drawn, so the page never shows a button that does nothing', async () => {
+test('R14.3 with scripts off Try it here is not drawn, so the page never shows a button that does nothing', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     const m = await browser.measure({ ...DESKTOP, scripts: false, settle: false }, () => document.getElementById('strip-play').getClientRects().length);
     assert.equal(m, 0);
@@ -419,7 +460,7 @@ test('R14.3 with scripts off Try it here is not drawn, so the page never shows a
 
 // ---- 14.4: a receipt with no task says so ----
 
-test('R14.4 a receipt with no task says so in its task line in plain words, not "none recorded": it was written by necro check, not by a tick', async () => {
+test('R14.4 a receipt with no task says so in its task line in plain words, not "none recorded": it was written by necro check, not by a tick', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     const m = await browser.measure(DESKTOP, async () => {
       const task = () => document.getElementById('task').textContent.trim();
@@ -439,11 +480,13 @@ test('R14.4 a receipt with no task says so in its task line in plain words, not 
 
 // ---- the revised 9.5: what the first screen shows at each window ----
 
-test('R9.5 (revised Nov 12) at 1280x800 the verdict banner is in the first screen, with no sideways scroll and the way to open your own receipt on the page', async () => {
+test('R9.5 (revised Nov 16) at 1280x800 Try it here, the whole result element and the real-use line are in the first screen, with no sideways scroll and the way to open your own receipt on the page; the banner need not be', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     const m = await browser.measure(DESKTOP, () => {
       const box = (id) => {
-        const b = document.getElementById(id).getBoundingClientRect();
+        const el = document.getElementById(id);
+        if (!el) return { top: 0, bottom: 0, left: 0, right: 0, height: 0 };
+        const b = el.getBoundingClientRect();
         return { top: b.top, bottom: b.bottom, left: b.left, right: b.right, height: b.height };
       };
       const open = document.getElementById('open');
@@ -454,6 +497,7 @@ test('R9.5 (revised Nov 12) at 1280x800 the verdict banner is in the first scree
         sideways: document.documentElement.scrollWidth,
         verdict: box('verdict'),
         evidence: box('evidence'),
+        realUse: box('real-use'),
         play: box('strip-play'),
       };
       // Open the form after the boxes are read: it is closed on a first visit.
@@ -463,21 +507,25 @@ test('R9.5 (revised Nov 12) at 1280x800 the verdict banner is in the first scree
       return result;
     });
     assert.equal(m.scrollY, 0);
-    assert.ok(m.verdict.height > 0 && m.verdict.top >= 0 && m.verdict.bottom <= m.h && m.verdict.left >= 0 && m.verdict.right <= m.w, `the banner ends at ${Math.round(m.verdict.bottom)} of ${m.h}`);
+    const inside = (b) => b.height > 0 && b.top >= 0 && b.bottom <= m.h && b.left >= 0 && b.right <= m.w;
+    assert.ok(inside(m.play), 'Try it here is in the first screen');
+    assert.ok(inside(m.evidence), `the whole result element is in the first screen, it spans ${Math.round(m.evidence.top)} to ${Math.round(m.evidence.bottom)} of ${m.h}`);
+    assert.ok(inside(m.realUse), `the real-use line is in the first screen, it spans ${Math.round(m.realUse.top)} to ${Math.round(m.realUse.bottom)} of ${m.h}`);
     assert.ok(m.evidence.bottom <= m.verdict.top, 'the result is above the banner');
-    assert.ok(m.play.bottom <= m.h && m.play.right <= m.w, 'the start control is in the first screen');
     assert.ok(m.sideways <= m.w && m.sidewaysOpen <= m.w, 'no sideways scroll');
     assert.ok(m.openDrawn, 'the way to open your own receipt is on the page');
   });
 });
 
-test('R9.5 (revised Nov 12) at 390x844 the start control and the whole result are in the first screen, with no sideways scroll and the way to open your own receipt on the page', async () => {
+test('R9.5 (revised Nov 16) at 390x844 Try it here, the two large counts and the real-use line are in the first screen, with no sideways scroll and the way to open your own receipt on the page', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     const m = await browser.measure(PHONE, () => {
-      const box = (id) => {
-        const b = document.getElementById(id).getBoundingClientRect();
+      const rect = (el) => {
+        const b = el.getBoundingClientRect();
         return { top: b.top, bottom: b.bottom, left: b.left, right: b.right, height: b.height };
       };
+      const empty = { top: 0, bottom: 0, left: 0, right: 0, height: 0 };
+      const box = (id) => (document.getElementById(id) ? rect(document.getElementById(id)) : empty);
       const open = document.getElementById('open');
       const result = {
         w: innerWidth,
@@ -486,7 +534,9 @@ test('R9.5 (revised Nov 12) at 390x844 the start control and the whole result ar
         sideways: document.documentElement.scrollWidth,
         body: document.body.scrollWidth,
         play: box('strip-play'),
-        evidence: box('evidence'),
+        realUse: box('real-use'),
+        counts: [...document.querySelectorAll('#evidence .num')].map(rect),
+        countsText: [...document.querySelectorAll('#evidence .num')].map((e) => e.textContent.trim()),
       };
       open.open = true;
       result.sidewaysOpen = document.documentElement.scrollWidth;
@@ -496,13 +546,15 @@ test('R9.5 (revised Nov 12) at 390x844 the start control and the whole result ar
     assert.equal(m.scrollY, 0);
     const inside = (b) => b.height > 0 && b.top >= 0 && b.bottom <= m.h && b.left >= 0 && b.right <= m.w;
     assert.ok(inside(m.play), `the start control spans ${Math.round(m.play.top)} to ${Math.round(m.play.bottom)} of ${m.h}`);
-    assert.ok(inside(m.evidence), `the result spans ${Math.round(m.evidence.top)} to ${Math.round(m.evidence.bottom)} of ${m.h}`);
+    assert.deepEqual(m.countsText, ['11 of 11', '0 of 19'], 'the two large counts');
+    m.counts.forEach((b, i) => assert.ok(inside(b), `the count ${m.countsText[i]} spans ${Math.round(b.top)} to ${Math.round(b.bottom)} of ${m.h}`));
+    assert.ok(inside(m.realUse), `the real-use line spans ${Math.round(m.realUse.top)} to ${Math.round(m.realUse.bottom)} of ${m.h}`);
     assert.ok(m.sideways <= m.w && m.body <= m.w && m.sidewaysOpen <= m.w, 'no sideways scroll');
     assert.ok(m.openDrawn, 'the way to open your own receipt is on the page');
   });
 });
 
-test('R12.1 (revised Nov 12) the result with its caveat is in the first screen at 1280x800 and 390x844, below the strip and above the banner, with scripts on and off', async () => {
+test('R12.1 (revised Nov 16) the result is below the strip and above the banner with scripts on and off, and in the first screen: the whole element at 1280x800, its two large counts at 390x844', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     for (const size of [DESKTOP, PHONE]) {
       for (const scripts of [true, false]) {
@@ -511,12 +563,23 @@ test('R12.1 (revised Nov 12) the result with its caveat is in the first screen a
             const b = document.getElementById(id).getBoundingClientRect();
             return { top: b.top, bottom: b.bottom, left: b.left, right: b.right, height: b.height };
           };
-          return { w: innerWidth, h: innerHeight, strip: box('strip'), evidence: box('evidence'), verdict: box('verdict'), sideways: document.documentElement.scrollWidth };
+          const counts = [...document.querySelectorAll('#evidence .num')].map((e) => {
+            const b = e.getBoundingClientRect();
+            return { top: b.top, bottom: b.bottom, left: b.left, right: b.right, height: b.height };
+          });
+          return { w: innerWidth, h: innerHeight, strip: box('strip'), evidence: box('evidence'), verdict: box('verdict'), counts, sideways: document.documentElement.scrollWidth };
         });
         const at = `at ${size.width} with scripts ${scripts ? 'on' : 'off'}`;
         assert.ok(m.strip.bottom <= m.evidence.top, `${at}: below the strip`);
         if (scripts) assert.ok(m.evidence.bottom <= m.verdict.top, `${at}: above the banner`);
-        assert.ok(m.evidence.height > 0 && m.evidence.top >= 0 && m.evidence.bottom <= m.h && m.evidence.left >= 0 && m.evidence.right <= m.w, `${at}: inside the first screen, it spans ${Math.round(m.evidence.top)} to ${Math.round(m.evidence.bottom)} of ${m.h}`);
+        const inside = (b) => b.height > 0 && b.top >= 0 && b.bottom <= m.h && b.left >= 0 && b.right <= m.w;
+        if (size === DESKTOP) {
+          assert.ok(inside(m.evidence), `${at}: the whole element is inside the first screen, it spans ${Math.round(m.evidence.top)} to ${Math.round(m.evidence.bottom)} of ${m.h}`);
+        } else {
+          // Requirement 9.5 revised Nov 16: at phone width only the two counts must fit, so wider fonts cannot push a check past the fold.
+          assert.equal(m.counts.length, 2, `${at}: two large counts`);
+          m.counts.forEach((b, i) => assert.ok(inside(b), `${at}: count ${i + 1} is inside the first screen, it spans ${Math.round(b.top)} to ${Math.round(b.bottom)} of ${m.h}`));
+        }
         assert.ok(m.sideways <= m.w, `${at}: no sideways scroll`);
       }
     }

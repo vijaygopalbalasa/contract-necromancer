@@ -8,8 +8,7 @@
 // The test drives the real page, index.html with site/app.js, in a headless Chrome or Chromium. The file serves site/ the
 // way GitHub Pages does: from a server on 127.0.0.1 whose pages sit under /contract-necromancer/, with no
 // Content-Security-Policy header on any response. The browser is driven over the DevTools protocol with Node's built-in
-// WebSocket, no dependencies. Set CHROME_PATH if the browser is somewhere unusual. With no browser this contract fails and
-// says so: a page that was not run in a browser is not a pass.
+// WebSocket, no dependencies. Set CHROME_PATH if the browser is somewhere unusual. With no browser (Requirement 16.7) a test skips with a reason that starts with "cannot run:"; a skip is never a pass.
 //
 // There is no shared helper file (a helper would not be frozen), so the browser code is carried in this file, as the other
 // page contracts do. The site modules are named below the way a static import would name them, because the receipt pins
@@ -23,7 +22,7 @@
 //   import {} from '../../site/lib/canon.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
@@ -40,21 +39,48 @@ const TYPES = {
   '.md': 'text/markdown; charset=utf-8',
 };
 
+// Requirement 16.7: when CHROME_PATH is set only that path is tried; otherwise the usual macOS, Linux and Windows install
+// paths, then the folders of PATH. A machine with no browser gives null, and every test that needs one skips (NO_BROWSER).
 function findBrowser() {
+  const isFile = (p) => {
+    try {
+      return fs.statSync(p).isFile();
+    } catch {
+      return false;
+    }
+  };
+  if (process.env.CHROME_PATH) return isFile(process.env.CHROME_PATH) ? process.env.CHROME_PATH : null;
+  const windows = [process.env.PROGRAMFILES, process.env['PROGRAMFILES(X86)'], process.env.LOCALAPPDATA].filter(Boolean).flatMap((base) => [
+    path.join(base, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+    path.join(base, 'Chromium', 'Application', 'chrome.exe'),
+    path.join(base, 'BraveSoftware', 'Brave-Browser', 'Application', 'brave.exe'),
+    path.join(base, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+  ]);
   const fixed = [
-    process.env.CHROME_PATH,
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     '/Applications/Chromium.app/Contents/MacOS/Chromium',
     '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
     '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/snap/bin/chromium',
+    '/usr/bin/microsoft-edge',
+    ...windows,
   ];
-  for (const p of fixed) if (p && fs.existsSync(p)) return p;
-  for (const name of ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'chrome', 'microsoft-edge']) {
-    const found = spawnSync('which', [name], { encoding: 'utf8' });
-    if (found.status === 0 && found.stdout.trim()) return found.stdout.trim();
+  for (const p of fixed) if (isFile(p)) return p;
+  const names = ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'chrome', 'microsoft-edge'];
+  const extensions = process.platform === 'win32' ? ['.exe', '.cmd', ''] : [''];
+  for (const dir of (process.env.PATH || '').split(path.delimiter)) {
+    if (!dir) continue;
+    for (const name of names) for (const extension of extensions) if (isFile(path.join(dir, name + extension))) return path.join(dir, name + extension);
   }
   return null;
 }
+
+// What a missing browser looks like to the gate: a skip whose reason starts with "cannot run:" (necro-core 6.17).
+const NO_BROWSER = findBrowser() ? false : 'cannot run: no Chrome or Chromium found (set CHROME_PATH)';
 
 // Serve site/ under /contract-necromancer/. No response carries a Content-Security-Policy header.
 function serveSite() {
@@ -118,7 +144,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function withBrowser(run) {
   const chrome = findBrowser();
   if (!chrome) {
-    throw new Error('No Chrome or Chromium found. Install one, or set CHROME_PATH to its program, and run this again.');
+    throw new Error(NO_BROWSER);
   }
   const server = await serveSite();
   const origin = `http://127.0.0.1:${server.address().port}`;
@@ -204,7 +230,7 @@ async function withBrowser(run) {
 const DESKTOP = { width: 1280, height: 800, mobile: false };
 const PHONE = { width: 390, height: 844, mobile: true };
 
-test('R13.9 Try it here is drawn as the main action, clearly different from Copy, both buttons at least 24 by 24 and at AA contrast, and the start control and the whole verdict banner inside the first screen at 1280x800 and 390x844 in the browser that runs it', async () => {
+test('R13.9 Try it here is drawn as the main action, clearly different from Copy, both buttons at least 24 by 24 and at AA contrast, and the start control inside the first screen at 1280x800 and 390x844 in the browser that runs it (revised Nov 16: the verdict banner follows the open play and is no longer required there)', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     for (const screen of [DESKTOP, PHONE]) {
       const at = `${screen.width}x${screen.height}`;
@@ -261,8 +287,7 @@ test('R13.9 Try it here is drawn as the main action, clearly different from Copy
         const where = (b) => `x ${Math.round(b.left)} to ${Math.round(b.right)}, y ${Math.round(b.top)} to ${Math.round(b.bottom)}`;
         assert.ok(inside(m.play.box), `${at}: the start control must be fully inside the first screen, it spans ${where(m.play.box)}`);
         assert.ok(m.verdict.box.height > 0, `${at}: the verdict banner is drawn`);
-        // Requirement 9.5 revised Nov 12: at 390x844 the start control and the result line take the banner's place (first-screen-v3).
-        if (!screen.mobile) assert.ok(inside(m.verdict.box), `${at}: the verdict banner must be fully inside the first screen, it spans ${where(m.verdict.box)}`);
+        // Requirement 9.5 revised Nov 16: the play is open above the banner, so the banner is not required in the first screen.
       });
     }
   });

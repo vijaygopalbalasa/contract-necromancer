@@ -5,8 +5,7 @@
 //
 // Text is read from site/index.html and site/style.css. Layout is measured in a headless Chrome or Chromium: the file
 // serves site/ from a local server on 127.0.0.1, sets the window size and reads the page over the DevTools protocol
-// (Node's built-in WebSocket, no dependencies). Set CHROME_PATH if the browser is somewhere unusual. With no browser the
-// layout contract fails and says so: a layout that was not measured is not a pass.
+// (Node's built-in WebSocket, no dependencies). Set CHROME_PATH if the browser is somewhere unusual. With no browser (Requirement 16.7) a test skips with a reason that starts with "cannot run:"; a skip is never a pass.
 //
 // There is no shared helper file (a helper would not be frozen), so the browser code is carried in this file, as in
 // above-fold-v2.contract.test.js. The page script is named below the way a static import would name it, because the
@@ -14,7 +13,7 @@
 //   import {} from '../../site/app.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
@@ -29,21 +28,48 @@ const TYPES = {
   '.json': 'application/json; charset=utf-8',
 };
 
+// Requirement 16.7: when CHROME_PATH is set only that path is tried; otherwise the usual macOS, Linux and Windows install
+// paths, then the folders of PATH. A machine with no browser gives null, and every test that needs one skips (NO_BROWSER).
 function findBrowser() {
+  const isFile = (p) => {
+    try {
+      return fs.statSync(p).isFile();
+    } catch {
+      return false;
+    }
+  };
+  if (process.env.CHROME_PATH) return isFile(process.env.CHROME_PATH) ? process.env.CHROME_PATH : null;
+  const windows = [process.env.PROGRAMFILES, process.env['PROGRAMFILES(X86)'], process.env.LOCALAPPDATA].filter(Boolean).flatMap((base) => [
+    path.join(base, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+    path.join(base, 'Chromium', 'Application', 'chrome.exe'),
+    path.join(base, 'BraveSoftware', 'Brave-Browser', 'Application', 'brave.exe'),
+    path.join(base, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+  ]);
   const fixed = [
-    process.env.CHROME_PATH,
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     '/Applications/Chromium.app/Contents/MacOS/Chromium',
     '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
     '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/snap/bin/chromium',
+    '/usr/bin/microsoft-edge',
+    ...windows,
   ];
-  for (const p of fixed) if (p && fs.existsSync(p)) return p;
-  for (const name of ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'chrome', 'microsoft-edge']) {
-    const found = spawnSync('which', [name], { encoding: 'utf8' });
-    if (found.status === 0 && found.stdout.trim()) return found.stdout.trim();
+  for (const p of fixed) if (isFile(p)) return p;
+  const names = ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'chrome', 'microsoft-edge'];
+  const extensions = process.platform === 'win32' ? ['.exe', '.cmd', ''] : [''];
+  for (const dir of (process.env.PATH || '').split(path.delimiter)) {
+    if (!dir) continue;
+    for (const name of names) for (const extension of extensions) if (isFile(path.join(dir, name + extension))) return path.join(dir, name + extension);
   }
   return null;
 }
+
+// What a missing browser looks like to the gate: a skip whose reason starts with "cannot run:" (necro-core 6.17).
+const NO_BROWSER = findBrowser() ? false : 'cannot run: no Chrome or Chromium found (set CHROME_PATH)';
 
 function serveSite(requests) {
   const server = http.createServer((req, res) => {
@@ -105,7 +131,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function withBrowser(run) {
   const chrome = findBrowser();
   if (!chrome) {
-    throw new Error('No Chrome or Chromium found. Install one, or set CHROME_PATH to its program, and run this again.');
+    throw new Error(NO_BROWSER);
   }
   const requests = [];
   const server = await serveSite(requests);
@@ -256,7 +282,7 @@ test('R12.1 one short plain line between the story strip and the verdict banner 
   assert.match(textOf(links[0][2]), /experiment/i, 'the link says where it goes');
 });
 
-test('R12.1 the line is in the first screen at 1280x800 and 390x844 with scripts on and off, and the verdict banner, with no sideways scroll, still is (Requirement 9.5)', async () => {
+test('R12.1 (revised Nov 16) the line is below the strip and above the banner with scripts on and off, with no sideways scroll, and in the first screen: the whole line at 1280x800, its two large counts at 390x844; the banner need not be (Requirement 9.5 as revised)', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     for (const screen of FIRST_SCREENS) {
       const measureLayout = () => {
@@ -276,6 +302,10 @@ test('R12.1 the line is in the first screen at 1280x800 and 390x844 with scripts
           bodyWidth: document.body.scrollWidth,
           strip: box('strip'),
           evidence: box('evidence'),
+          counts: [...e.querySelectorAll('.num')].map((n) => {
+            const b = n.getBoundingClientRect();
+            return { top: b.top, bottom: b.bottom, left: b.left, right: b.right, width: b.width, height: b.height };
+          }),
           verdict: box('verdict'),
           shown: style.display !== 'none' && style.visibility === 'visible',
           text: e.innerText.replace(/\s+/g, ' ').trim(),
@@ -290,20 +320,18 @@ test('R12.1 the line is in the first screen at 1280x800 and 390x844 with scripts
         assert.equal(m.href, EXPERIMENT, `${at}: the link goes to the experiment write-up`);
         assert.ok(m.shown && m.evidence.width > 0 && m.evidence.height > 0, `${at}: the line is drawn`);
         assert.ok(m.strip.bottom <= m.evidence.top, `${at}: the line is drawn below the strip`);
-        assert.ok(
-          m.evidence.top >= 0 && m.evidence.bottom <= m.innerHeight && m.evidence.left >= 0 && m.evidence.right <= m.innerWidth,
-          `${at}: the line must be inside the first screen, it spans ${Math.round(m.evidence.top)} to ${Math.round(m.evidence.bottom)} of ${m.innerHeight}`,
-        );
+        const inside = (b) => b.height > 0 && b.top >= 0 && b.bottom <= m.innerHeight && b.left >= 0 && b.right <= m.innerWidth;
+        if (!screen.mobile) {
+          assert.ok(inside(m.evidence), `${at}: the line must be inside the first screen, it spans ${Math.round(m.evidence.top)} to ${Math.round(m.evidence.bottom)} of ${m.innerHeight}`);
+        } else {
+          // Requirement 9.5 revised Nov 16: at phone width only the two large counts must fit, so wider fonts cannot push a check past the fold.
+          assert.equal(m.counts.length, 2, `${at}: the line has two large counts`);
+          m.counts.forEach((b, i) => assert.ok(inside(b), `${at}: count ${i + 1} must be inside the first screen, it spans ${Math.round(b.top)} to ${Math.round(b.bottom)} of ${m.innerHeight}`));
+        }
         assert.ok(m.pageWidth <= m.innerWidth && m.bodyWidth <= m.innerWidth && m.scrollX === 0, `${at}: the page scrolls sideways (${m.pageWidth} wide in a ${m.innerWidth} window)`);
         if (scripts) {
           assert.ok(m.evidence.bottom <= m.verdict.top, `${at}: the line is drawn above the banner`);
-          // Requirement 9.5 revised Nov 12: at 390x844 the start control and the result line take the banner's place (first-screen-v3).
-          if (!screen.mobile) {
-            assert.ok(
-              m.verdict.top >= 0 && m.verdict.bottom <= m.innerHeight && m.verdict.height > 0,
-              `${at}: the banner must be fully inside the first screen, it spans ${Math.round(m.verdict.top)} to ${Math.round(m.verdict.bottom)} of ${m.innerHeight}`,
-            );
-          }
+          // Requirement 9.5 revised Nov 16: the banner follows the open play, so it is no longer required in the first screen.
         }
       }
     }

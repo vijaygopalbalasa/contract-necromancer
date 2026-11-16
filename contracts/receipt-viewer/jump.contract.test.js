@@ -10,9 +10,54 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { createHash } from 'node:crypto';
+
+
+// Requirement 16.7: when CHROME_PATH is set only that path is tried; otherwise the usual macOS, Linux and Windows install
+// paths, then the folders of PATH. A machine with no browser gives null, and every test that needs one skips (NO_BROWSER).
+function findBrowser() {
+  const isFile = (p) => {
+    try {
+      return fs.statSync(p).isFile();
+    } catch {
+      return false;
+    }
+  };
+  if (process.env.CHROME_PATH) return isFile(process.env.CHROME_PATH) ? process.env.CHROME_PATH : null;
+  const windows = [process.env.PROGRAMFILES, process.env['PROGRAMFILES(X86)'], process.env.LOCALAPPDATA].filter(Boolean).flatMap((base) => [
+    path.join(base, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+    path.join(base, 'Chromium', 'Application', 'chrome.exe'),
+    path.join(base, 'BraveSoftware', 'Brave-Browser', 'Application', 'brave.exe'),
+    path.join(base, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+  ]);
+  const fixed = [
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    '/Applications/Chromium.app/Contents/MacOS/Chromium',
+    '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
+    '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/snap/bin/chromium',
+    '/usr/bin/microsoft-edge',
+    ...windows,
+  ];
+  for (const p of fixed) if (isFile(p)) return p;
+  const names = ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'chrome', 'microsoft-edge'];
+  const extensions = process.platform === 'win32' ? ['.exe', '.cmd', ''] : [''];
+  for (const dir of (process.env.PATH || '').split(path.delimiter)) {
+    if (!dir) continue;
+    for (const name of names) for (const extension of extensions) if (isFile(path.join(dir, name + extension))) return path.join(dir, name + extension);
+  }
+  return null;
+}
+
+// What a missing browser looks like to the gate: a skip whose reason starts with "cannot run:" (necro-core 6.17).
+const NO_BROWSER = findBrowser() ? false : 'cannot run: no Chrome or Chromium found (set CHROME_PATH)';
 
 const ROOT = new URL('../../', import.meta.url);
 const read = (p) => fs.readFileSync(new URL(p, ROOT), 'utf8');
@@ -45,7 +90,7 @@ function openTagsAt(index) {
   return stack;
 }
 
-test('R10.5 a short plain link above the verdict banner jumps to the How it works section, and the page still passes the frozen R9.5 contract', () => {
+test('R10.5 a short plain link above the verdict banner jumps to the How it works section, and the page still passes the frozen R9.5 contract', { skip: NO_BROWSER }, () => {
   // One plain link to the section, with at most six words, that names where it goes.
   const links = [...HTML.matchAll(/<a\b([^>]*\bhref="#how"[^>]*)>([\s\S]*?)<\/a>/g)];
   assert.equal(links.length, 1, 'exactly one link points at #how');
@@ -70,7 +115,8 @@ test('R10.5 a short plain link above the verdict banner jumps to the How it work
   assert.ok(!open.some((t) => t.tag === 'details' || /\bhidden\b/.test(t.attrs)), 'the link is not inside a closed or hidden element');
 
   // The page reads in the order it is drawn, and the CSS keeps the link in the flow and readable.
-  const order = ['brand', 'sample-row', 'open', 'verdict', 'receipt', 'how'];
+  // Revised Nov 16 (16.2): How it works now follows the play, so the link in the sample bar jumps up to it.
+  const order = ['brand', 'play', 'how', 'sample-row', 'open', 'verdict', 'receipt'];
   for (let i = 1; i < order.length; i += 1) {
     assert.ok(idAt(order[i - 1]) < idAt(order[i]), `#${order[i - 1]} must come before #${order[i]}`);
   }
@@ -87,11 +133,18 @@ test('R10.5 a short plain link above the verdict banner jumps to the How it work
   assert.equal(/<meta[^>]*http-equiv="Content-Security-Policy"[^>]*content="([^"]*)"/.exec(HTML)?.[1], CSP);
   assert.equal((HTML.match(/<script\b/g) || []).length, 1);
 
-  // The frozen R9.5 contract is the file the lock pins, and it passes on its own against this page.
+  // The R9.5 contract (as revised Nov 16) is a file the lock pins, and it equals its pin. necro freeze re-pins every contract
+  // file of the spec, so this comparison passes from the freeze on. Until a person freezes receipt-viewer again it is EXPECTED
+  // to fail, because above-fold-v2 was revised on Nov 16: that is the review step, not a bug. Do not drop it. Then it passes
+  // on its own against this page, run as a child, which starts a browser (this test skips when there is none).
   const lock = JSON.parse(read('.necro/lock.json'));
   const pinned = lock.specs?.['receipt-viewer']?.contracts?.find((c) => c.path === ABOVE_FOLD);
   assert.ok(pinned, 'the lock pins the above-fold contract');
-  assert.equal(createHash('sha256').update(fs.readFileSync(new URL(ABOVE_FOLD, ROOT))).digest('hex'), pinned.sha256, 'the above-fold contract is unchanged');
+  assert.equal(
+    createHash('sha256').update(fs.readFileSync(new URL(ABOVE_FOLD, ROOT))).digest('hex'),
+    pinned.sha256,
+    `${ABOVE_FOLD} is not the file the lock pins; a person freezes receipt-viewer again after reviewing it`,
+  );
   const env = { ...process.env };
   for (const k of Object.keys(env)) if (k.startsWith('NODE_TEST_')) delete env[k];
   const run = spawnSync(process.execPath, ['--test', ABOVE_FOLD], { cwd: fileURLToPath(ROOT), encoding: 'utf8', env });

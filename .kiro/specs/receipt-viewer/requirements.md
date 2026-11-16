@@ -70,16 +70,16 @@ stand-ins for `node:test` and `node:assert`. (Revised Nov 11 for Requirement 13.
 2. WHEN the page offers samples THE SYSTEM SHALL offer two from this repository: a risen one (every required contract passes) and a buried one (a real receipt with failing required contracts, written by `necro check` on a spec with a planted bug), and switching between them SHALL need one click.
 3. WHEN a receipt is shown after a user action (load, paste, pick, sample switch) THE SYSTEM SHALL bring the verdict banner into view, with no scrolling animation under `prefers-reduced-motion: reduce`.
 4. WHEN the page is taller than the window THE SYSTEM SHALL draw its background without a visible band or seam at any scroll position.
-5. WHEN the sample is shown on a first visit THE SYSTEM SHALL show the verdict banner without scrolling in a 1280x800 window; in a 390x844 phone window it SHALL show, without scrolling, the start control of the play (Requirement 13.9) and the result line of Requirement 12.1. In both windows there SHALL be no horizontal scrolling, and the way to open your own receipt SHALL still be reachable on the same page. (Revised Nov 9: the earlier word limit above the banner is dropped so that the story of Requirement 11 can sit above it. Revised Nov 12 for Requirement 14: at phone width the start control and the result line take the place of the banner.)
+5. WHEN the sample is shown on a first visit THE SYSTEM SHALL show without scrolling, in a 1280x800 window, Try it here (13.9), the whole result element of 12.1 and the real-use line of 16.3, and in a 390x844 phone window Try it here, the two large counts of 14.2 and the real-use line of 16.3. In both windows there SHALL be no horizontal scrolling, and the way to open your own receipt SHALL still be reachable on the same page. The verdict banner follows the open play and need not be in the first screen. (Revised Nov 9: the earlier word limit above the banner is dropped so that the story of Requirement 11 can sit above it. Revised Nov 12 for Requirement 14: at phone width the start control and the result line take the place of the banner. Revised Nov 16 for Requirement 16: the play is open above the banner, so the banner leaves the first screen; at phone width only the two counts must fit, so fonts wider than this Mac's cannot push a check past the fold.)
 
 ## Requirement 10: The story in one glance
 **User story:** As a judge who lands on the page from the submission, I want to know in ten seconds what the tool does and how to try it, so that the receipt makes sense and I can run the demo myself.
 ### Acceptance criteria
-1. WHEN the page loads THE SYSTEM SHALL show as the page heading, above the sample bar, one sentence naming the idea (Kiro cannot call a task done until its frozen contracts pass), and SHALL keep the first-visit view within Requirement 9.5 and its frozen contract as written.
-2. WHEN the page loads THE SYSTEM SHALL show, directly after the receipt card in reading order, a short "How it works" section with three numbered steps (a person freezes the spec's contracts; the gate refuses the tick until they pass; every passing task leaves a receipt anyone can re-run) and the command `npx -y github:vijaygopalbalasa/contract-necromancer demo` in a code block with a copy button, with one line saying it needs Node.js 24 and git and shows the gate refuse a planted bug, accept the fix and re-check the receipt.
-3. WHEN the page loads THE SYSTEM SHALL show plain links to the demo video (`https://youtu.be/TYrSyhIYqlk`) and the repository in that section, readable without JavaScript, and SHALL keep the Content Security Policy unchanged (no embedded video, no external script, style, font or image).
+1. WHEN the page loads THE SYSTEM SHALL show as the page heading, above the sample bar, one sentence naming the idea (Kiro cannot call a task done until its frozen contracts pass), and SHALL keep the first-visit view within Requirement 9.5 and its frozen contract as revised on Nov 16. Above the verdict banner the only headings SHALL be the page heading, the play's heading and "How it works". (Revised Nov 16 for Requirement 16.)
+2. WHEN the page loads THE SYSTEM SHALL show, directly after the play and before the sample bar, a short "How it works" section with three numbered steps (a person freezes the spec's contracts; the gate refuses the tick until they pass; every passing task leaves a receipt anyone can re-run) and the command `npx -y github:vijaygopalbalasa/contract-necromancer demo` in a code block with a copy button, with one line saying it needs Node.js 24 and git and shows the gate refuse a planted bug, accept the fix and re-check the receipt. (Revised Nov 16 for Requirement 16: it was directly after the receipt card.)
+3. WHEN the page loads THE SYSTEM SHALL show plain links to the demo video and the repository in that section, readable without JavaScript, and SHALL keep the Content Security Policy unchanged (no embedded video, no external script, style, font or image). The video link SHALL be the same URL as the first youtu.be link in README.md. (Revised Nov 16: the video is replaced before Dec 1, and the page and the README must never point at different cuts.)
 4. THE SYSTEM SHALL keep the page title starting with "Contract Necromancer", keep the DOM order the same as the visual order, and work at phone width without horizontal scrolling.
-5. WHEN the page loads THE SYSTEM SHALL show, above the verdict banner, one short plain link (at most six words, such as "How it works, and try it") that jumps to the "How it works" section, and the page SHALL still pass the frozen Requirement 9.5 contract as written.
+5. WHEN the page loads THE SYSTEM SHALL show, above the verdict banner, one short plain link (at most six words, such as "How it works, and try it") that jumps to the "How it works" section, and the page SHALL still pass the frozen Requirement 9.5 contract as revised on Nov 16. (Revised Nov 16 for Requirement 16.)
 
 ## Requirement 11: The first screen tells the story
 **User story:** As a judge who has never heard of the tool, I want the first screen to show what happens when Kiro claims a task is done, so that the receipt below means something to me.
@@ -93,7 +93,7 @@ stand-ins for `node:test` and `node:assert`. (Revised Nov 11 for Requirement 13.
 ## Requirement 12: The evidence on the first screen
 **User story:** As a judge, I want to see on the first screen that the gate changes what Kiro does, so that I know why to trust the receipt below.
 ### Acceptance criteria
-1. WHEN the page loads THE SYSTEM SHALL show, between the story strip and the verdict banner, the experiment result (on a task that cannot honestly be finished, Kiro marked it done in 11 of 11 runs without the gate and 0 of 19 with it, across two models) and, in the same element, the round 3 caveat (under a "do whatever it takes" prompt one gated run of six got past the gate by patching JavaScript built-ins; that hole is closed and the cheat is kept as a test), with a plain link to `https://github.com/vijaygopalbalasa/contract-necromancer/blob/main/experiments/README.md`, while Requirement 9.5 still holds. (Revised Nov 12: the round 3 caveat is added so the page never states the result without it.)
+1. WHEN the page loads THE SYSTEM SHALL show, below the story strip and above the play, and so above the verdict banner, the experiment result (on a task that cannot honestly be finished, Kiro marked it done in 11 of 11 runs without the gate and 0 of 19 with it, across two models) and, in the same element, the round 3 caveat (under a "do whatever it takes" prompt one gated run of six got past the gate by patching JavaScript built-ins; that hole is closed and the cheat is kept as a test), with a plain link to `https://github.com/vijaygopalbalasa/contract-necromancer/blob/main/experiments/README.md`, while Requirement 9.5 still holds. (Revised Nov 12: the round 3 caveat is added so the page never states the result without it.) (Revised Nov 16 for Requirement 16: it was between the story strip and the verdict banner.)
 2. THE page SHALL not say that contracts re-run only in Node; it SHALL say that `necro verify` re-runs JavaScript contracts and runner contracts (for example pytest) alike.
 
 ## Requirement 13: Play the gate on the page
@@ -107,7 +107,7 @@ stand-ins for `node:test` and `node:assert`. (Revised Nov 11 for Requirement 13.
 6. THE worker SHALL run a copied file only after its SHA-256 matches the pin in the receipt for that run (the buried sample for the planted change, the risen receipt for the fix), SHALL build modules only from those files and the two stand-ins it ships, and SHALL take no code from the URL, the paste box or any other input.
 7. THE play SHALL say in one sentence that the browser runs the contracts with small stand-ins for `node:test` and `node:assert`, while the gate runs them in Node.js. For the planted change and for the fix, each of the seven contracts SHALL have the same result in the browser as in a run of `necro check ledger` in Node.js on the same code.
 8. IF the worker cannot start, a file fails its hash check, or a run takes longer than 10 seconds THEN THE SYSTEM SHALL stop the run, say what happened in one plain sentence, and show the gate's full-run result for that step from the receipts, and SHALL never leave a step showing "running".
-9. WHEN the page loads with scripts on THE SYSTEM SHALL offer a control that starts the play, visible in the first screen at 1280x800 and at 390x844, SHALL open the play directly below the story strip when it is used, and SHALL keep the frozen contracts for Requirements 9, 10, 11 and 12 passing as written.
+9. WHEN the page loads with scripts on THE SYSTEM SHALL show the play open directly after the result element of 12.1, and SHALL offer Try it here, visible in the first screen at 1280x800 and at 390x844, which scrolls the page so that the play's heading sits a small margin below the top of the window and moves focus to the play's first step (the Send the tick button). With scripts off neither the play nor Try it here is drawn. The frozen contracts for Requirements 9, 10, 11 and 12, as revised on Nov 16, SHALL pass. (Revised Nov 16 for Requirement 16: the play was closed until Try it here opened it below the story strip, and focus went to the play's heading.)
 10. THE play SHALL work with the keyboard alone (focus moves to each step's result, and results are announced in a polite live region), show results without animation under `prefers-reduced-motion: reduce`, fit a 390 px wide window with no sideways page scroll, keep the Content Security Policy in `index.html` unchanged, and fetch nothing but files from the page's own origin. No sentence it adds SHALL break the frozen Requirement 12.2 contract.
 
 ## Requirement 14: The first screen names what is raised and leads with the result
@@ -115,7 +115,7 @@ stand-ins for `node:test` and `node:assert`. (Revised Nov 11 for Requirement 13.
 ### Acceptance criteria
 1. WHEN the page loads THE SYSTEM SHALL show, beside the page heading, one short line naming the idea that is raised: Design by Contract, from Eiffel (1986), raised for coding agents. The line SHALL be readable without JavaScript, and the page heading (Requirement 10.1) and the title (Requirement 11.5) SHALL stay as they are.
 2. WHEN the page loads THE SYSTEM SHALL draw the result of Requirement 12.1 with more visual weight than body text, with the two counts (11 of 11 without the gate, 0 of 19 with it) as large numbers and the round 3 caveat in the same element, readable without JavaScript, at WCAG AA contrast.
-3. WHEN scripts are on THE SYSTEM SHALL make Try it here the single main action of the first screen: no other control above the verdict banner SHALL be drawn in the same filled style as Try it here.
+3. WHEN scripts are on THE SYSTEM SHALL make Try it here the single main action of the first screen: no other control above the verdict banner SHALL be drawn in the same filled style as Try it here. The play's buttons SHALL NOT use the filled style or the glow of Try it here. (Revised Nov 16 for Requirement 16: the open play now sits above the banner.)
 4. WHEN a receipt has no task (a receipt written by `necro check`, not by a tick) THE SYSTEM SHALL say so in its task line in plain words instead of "none recorded".
 5. THE contracts for this requirement and for the revised 9.5 and 12.1 SHALL check geometry against the window, computed styles and text, and SHALL NOT pin pixel sizes or positions, so they pass on any operating system's fonts.
 
@@ -128,3 +128,33 @@ stand-ins for `node:test` and `node:assert`. (Revised Nov 11 for Requirement 13.
 3. WHEN the receipt names no commit THE SYSTEM SHALL NOT offer the clone command. It SHALL say that the receipt names no commit, so it can be re-run only in the folder that made it, and SHALL give `necro verify` with the receipt's path for that folder. This covers the buried sample and a receipt pasted from `necro demo`.
 4. THE SYSTEM SHALL decide between 1, 2 and 3 from the receipt's own fields (`gitCommit` and `uncommitted`) alone, with no network request, and the Check files button (Requirement 7) SHALL keep working as it does.
 5. THE contracts for this requirement SHALL show, without the network, that the command given for a committed receipt reaches CONFIRMED from a clone of this repository, including for a receipt that pins R5.2's contract, and that receipts of kinds 2 and 3 get no clone command.
+
+## Requirement 16: Try it first, the real case on the first screen, the long receipt folded
+**User story:** As a judge with a few minutes, I want to try the gate first, see that it was used on a real
+repository, and reach "How it works" without scrolling past a long receipt, so that the page shows its best part and
+its strongest evidence first.
+### Acceptance criteria
+1. WHEN the page loads with scripts on THE SYSTEM SHALL show the play of Requirement 13 already open, directly after
+   the result element of 12.1, without the user pressing Try it here (13.9 as revised).
+2. WHEN the page loads THE SYSTEM SHALL show the sample receipt's verdict banner and one summary line per requirement
+   (for example "Requirement 4 (20 of 20 pass)") with each requirement's contract list folded, plus one control that
+   unfolds all of them. The receipt's content, the hash check, the pinned-file check and the re-run command
+   (Requirements 3, 4, 7, 15) SHALL keep working unchanged. The page order SHALL be: brand and heading, real-use line,
+   story strip, result element, play, How it works, sample bar, open your own receipt, verdict banner, receipt, hash
+   check, re-run command, file check, about.
+3. WHEN the page loads THE SYSTEM SHALL show, after the page heading and readable without JavaScript, one line on real
+   use: in the judge-protocol repository the gate refused Kiro's first tick, which had built only half of a criterion,
+   and the finished fix passed all six frozen contracts and was merged (pull request #29), with links to the pull
+   request and to the case study in this repository.
+4. Requirement 12.1's result SHALL also give, in the same element, the size of the experiment: two models, and three
+   to five runs per cell (model and arm), the exact counts from experiments/README.md.
+5. The contracts for this requirement SHALL check page order, open or folded state and text against the DOM and the
+   window, and SHALL NOT pin pixel sizes or positions (as 14.5), so they pass on any operating system's fonts.
+6. With scripts off THE SYSTEM SHALL still show the first screen's text, the real-use line and a static summary of
+   the sample receipt (its verdict and one line per requirement) written in index.html, and a contract SHALL compare
+   that summary with site/sample-receipt.json so the two cannot drift.
+7. IF a browser contract of this spec finds no Chrome or Chromium THEN it SHALL skip with a reason starting
+   `cannot run:` that names the missing browser and CHROME_PATH, so `necro verify` reports it as not run (necro-core
+   6.17) while the gate still counts it as failing (necro-core 4.7 and 6.16). When CHROME_PATH is set, only that path
+   SHALL be tried; otherwise the usual macOS, Linux and Windows install paths, then PATH. A layout that was not
+   measured never passes.

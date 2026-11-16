@@ -21,7 +21,9 @@ const APP_URL = new URL('../../site/app.js', import.meta.url);
 
 const IDEA = 'Kiro cannot call a task done until its frozen contracts pass.';
 const DEMO = 'npx -y github:vijaygopalbalasa/contract-necromancer demo';
-const VIDEO = 'https://youtu.be/TYrSyhIYqlk';
+// Revised Nov 16 (10.3): the video link is the first youtu.be link in README.md, whichever cut that is (the video is replaced
+// before Dec 1, and the page and the README must never point at different cuts).
+const VIDEO = /https:\/\/youtu\.be\/[\w-]+/.exec(fs.readFileSync(new URL('../../README.md', import.meta.url), 'utf8'))?.[0];
 const REPO = 'https://github.com/vijaygopalbalasa/contract-necromancer';
 const CSP =
   "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'";
@@ -141,21 +143,23 @@ test('R10.1 the page heading is one sentence naming the idea, above the sample b
   assert.ok(at < idAt('sample-row'), 'the heading comes before the sample buttons');
   assert.ok(at < idAt('open'), 'the heading comes before the way to open your own receipt');
   assert.ok(at < idAt('verdict'), 'the heading comes before the verdict banner');
-  // The heading must not push the first-visit view out of Requirement 9.5: it is the only heading above the banner,
-  // and its size is still compact. The above-fold contract measures the rest.
-  const above = HTML.slice(HTML.indexOf('<body'), idAt('verdict'));
-  assert.doesNotMatch(above, /<h2/, 'no second heading above the banner');
+  // The heading must not push the first-visit view out of Requirement 9.5, and its size is still compact. The above-fold
+  // contract measures the rest. Revised Nov 16 (10.1): above the banner the only headings are the page heading, the play's
+  // heading and "How it works", in that order.
+  const above = (HTML.slice(HTML.indexOf('<body'), idAt('verdict')).match(/<h[1-6]\b[^>]*>[\s\S]*?<\/h[1-6]>/g) || []).map(words);
+  assert.deepEqual(above, [IDEA, 'Try the gate on this page', 'How it works'], 'the headings above the banner');
   const size = /(^|[\s;{}])h1\s*{[^}]*font-size:\s*clamp\(\s*([\d.]+)rem/.exec(CSS);
   assert.ok(size && Number(size[2]) <= 1.5, 'the heading stays compact at phone width');
 });
 
 // ---- R10.2 ----
 
-test('R10.2 a "How it works" section follows the receipt card with three steps, the demo command, a copy button and what the demo needs', async () => {
-  // Directly after the receipt card in reading order.
-  const receipt = section('receipt');
+test('R10.2 (revised Nov 16) a "How it works" section follows the play, before the sample bar, with three steps, the demo command, a copy button and what the demo needs', async () => {
+  // Directly after the play and before the sample bar, in reading order.
+  const play = section('play');
   const how = section('how');
-  assert.equal(HTML.slice(receipt.end, how.start).trim(), '', 'nothing stands between the receipt card and the section');
+  assert.equal(HTML.slice(play.end, how.start).trim(), '', 'nothing stands between the play and the section');
+  assert.ok(how.end < idAt('sample-row'), 'the section comes before the sample bar');
   assert.match(how.text, /<h2[^>]*>\s*How it works\s*<\/h2>/);
 
   // Three numbered steps, in this order.
@@ -199,7 +203,9 @@ test('R10.3 plain links to the demo video and the repository, with the Content S
   const how = section('how').text;
   const hrefs = [...how.matchAll(/<a\b[^>]*\bhref="([^"]*)"[^>]*>/g)].map((m) => m[1]);
   assert.deepEqual([...hrefs].sort(), [REPO, VIDEO].sort(), 'the section links to the video and the repository, and to nothing else');
-  assert.match(how, /<a\b[^>]*href="https:\/\/youtu\.be\/TYrSyhIYqlk"[^>]*>[^<]*video[^<]*<\/a>/i, 'the video link says what it is');
+  assert.ok(VIDEO, 'README.md has a youtu.be link');
+  const video = [...how.matchAll(/<a\b[^>]*\bhref="([^"]*)"[^>]*>([^<]*)<\/a>/g)].find((m) => m[1] === VIDEO);
+  assert.ok(video && /video/i.test(video[2]), 'the video link says what it is');
   assert.match(how, /<a\b[^>]*href="https:\/\/github\.com\/vijaygopalbalasa\/contract-necromancer"[^>]*>[^<]*repository[^<]*<\/a>/i, 'the repository link says what it is');
 
   // The Content Security Policy is the one from the design, byte for byte.
@@ -218,8 +224,10 @@ test('R10.3 plain links to the demo video and the repository, with the Content S
 test('R10.4 the title starts with "Contract Necromancer", the page reads in the order it is drawn, and it wraps at phone width', () => {
   assert.match(HTML, /<title>Contract Necromancer\b[^<]*<\/title>/);
 
-  // The document order is the story: idea, samples, own receipt, verdict, receipt, how it works, the checks, about.
-  const order = ['brand', 'sample-row', 'open', 'verdict', 'receipt', 'how', 'hash-check', 'run', 'file-check', 'about'];
+  // The document order is the story (Requirement 16.2, revised Nov 16): brand and heading, real-use line, story strip, result
+  // element, play, How it works, sample bar, open your own receipt, verdict banner, receipt, hash check, re-run command, file
+  // check, about.
+  const order = ['brand', 'real-use', 'strip', 'evidence', 'play', 'how', 'sample-row', 'open', 'verdict', 'receipt', 'hash-check', 'run', 'file-check', 'about'];
   for (let i = 1; i < order.length; i += 1) {
     assert.ok(idAt(order[i - 1]) < idAt(order[i]), `#${order[i - 1]} must come before #${order[i]}`);
   }

@@ -6,7 +6,7 @@
 // /contract-necromancer/, with no Content-Security-Policy header on any response, so the page's own policy is the one in its
 // meta tag and the worker has none, as in production. The browser is driven over the DevTools protocol with Node's built-in
 // WebSocket, no dependencies, and keys are pressed with real key events. Set CHROME_PATH if the browser is somewhere
-// unusual. With no browser these contracts fail and say so: a page that was not run in a browser is not a pass.
+// unusual. With no browser (Requirement 16.7) a test skips with a reason that starts with "cannot run:"; a skip is never a pass.
 //
 // What each step must show is taken from the receipts, not typed in here: the buried sample and the risen receipt give the
 // 9 failing and the 18 passing, and the risen receipt gives the pinned files. R13.7 (the browser result equals necro check)
@@ -76,21 +76,48 @@ const fullLine = (n, ids = []) =>
 const scopeLine = (n) =>
   `The browser ran 7 of the ledger's ${n.total} contracts. The other ${n.total - 7} start the ledger's command line, which a browser cannot do.`;
 
+// Requirement 16.7: when CHROME_PATH is set only that path is tried; otherwise the usual macOS, Linux and Windows install
+// paths, then the folders of PATH. A machine with no browser gives null, and every test that needs one skips (NO_BROWSER).
 function findBrowser() {
+  const isFile = (p) => {
+    try {
+      return fs.statSync(p).isFile();
+    } catch {
+      return false;
+    }
+  };
+  if (process.env.CHROME_PATH) return isFile(process.env.CHROME_PATH) ? process.env.CHROME_PATH : null;
+  const windows = [process.env.PROGRAMFILES, process.env['PROGRAMFILES(X86)'], process.env.LOCALAPPDATA].filter(Boolean).flatMap((base) => [
+    path.join(base, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+    path.join(base, 'Chromium', 'Application', 'chrome.exe'),
+    path.join(base, 'BraveSoftware', 'Brave-Browser', 'Application', 'brave.exe'),
+    path.join(base, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+  ]);
   const fixed = [
-    process.env.CHROME_PATH,
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     '/Applications/Chromium.app/Contents/MacOS/Chromium',
     '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
     '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/snap/bin/chromium',
+    '/usr/bin/microsoft-edge',
+    ...windows,
   ];
-  for (const p of fixed) if (p && fs.existsSync(p)) return p;
-  for (const name of ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'chrome', 'microsoft-edge']) {
-    const found = spawnSync('which', [name], { encoding: 'utf8' });
-    if (found.status === 0 && found.stdout.trim()) return found.stdout.trim();
+  for (const p of fixed) if (isFile(p)) return p;
+  const names = ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'chrome', 'microsoft-edge'];
+  const extensions = process.platform === 'win32' ? ['.exe', '.cmd', ''] : [''];
+  for (const dir of (process.env.PATH || '').split(path.delimiter)) {
+    if (!dir) continue;
+    for (const name of names) for (const extension of extensions) if (isFile(path.join(dir, name + extension))) return path.join(dir, name + extension);
   }
   return null;
 }
+
+// What a missing browser looks like to the gate: a skip whose reason starts with "cannot run:" (necro-core 6.17).
+const NO_BROWSER = findBrowser() ? false : 'cannot run: no Chrome or Chromium found (set CHROME_PATH)';
 
 // Serve site/ under /contract-necromancer/. No response carries a Content-Security-Policy header. `change(rel)` may replace
 // a file: it returns text to serve in its place, { status } to answer with that status, or null to serve the file on disk.
@@ -160,7 +187,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function withBrowser({ change = () => null } = {}, run) {
   const chrome = findBrowser();
   if (!chrome) {
-    throw new Error('No Chrome or Chromium found. Install one, or set CHROME_PATH to its program, and run this again.');
+    throw new Error(NO_BROWSER);
   }
   const requests = [];
   const server = await serveSite(requests, change);
@@ -309,7 +336,7 @@ const oneSentence = (text) => typeof text === 'string' && /\S/.test(text) && !te
 
 // ---- R13.2 ----
 
-test('R13.2 on the page, sending the tick with the planted change shows the tick refused: R2.1, R2.2 and R5.1 to R5.4 as gravestones with their assertion messages, R5.5 alive, drawn like the receipt rows', async () => {
+test('R13.2 on the page, sending the tick with the planted change shows the tick refused: R2.1, R2.2 and R5.1 to R5.4 as gravestones with their assertion messages, R5.5 alive, drawn like the receipt rows', { skip: NO_BROWSER }, async () => {
   await withBrowser({}, async (browser) => {
     await browser.open(DESKTOP, async ({ evaluate }) => {
       // Rows in the receipt card, for comparison: open the buried sample, which has both kinds.
@@ -352,7 +379,7 @@ test('R13.2 on the page, sending the tick with the planted change shows the tick
   });
 });
 
-test('R13.2 a failing row on the page shows its contract name and at most the first three lines of its assertion message, with the full message behind a details element in that row; a passing row stays one line of state and name', async () => {
+test('R13.2 a failing row on the page shows its contract name and at most the first three lines of its assertion message, with the full message behind a details element in that row; a passing row stays one line of state and name', { skip: NO_BROWSER }, async () => {
   await withBrowser({}, async (browser) => {
     for (const screen of [DESKTOP, PHONE]) {
       await browser.open(screen, async ({ evaluate }) => {
@@ -392,7 +419,7 @@ test('R13.2 a failing row on the page shows its contract name and at most the fi
 
 // ---- R13.3 ----
 
-test('R13.3 on the page, applying the fix shows all seven alive, the tick accepted, and the risen receipt with its hash recomputed (MATCH) and every pinned file hashed again from the copies', async () => {
+test('R13.3 on the page, applying the fix shows all seven alive, the tick accepted, and the risen receipt with its hash recomputed (MATCH) and every pinned file hashed again from the copies', { skip: NO_BROWSER }, async () => {
   await withBrowser({}, async (browser) => {
     await browser.open(DESKTOP, async ({ evaluate }) => {
       const out = await evaluate(openAndStep('fixed'));
@@ -427,7 +454,7 @@ test('R13.3 on the page, applying the fix shows all seven alive, the tick accept
 
 // ---- R13.4 ----
 
-test('R13.4 on the page, changing one byte of src/split.js shows exactly the line necro verify prints, MISMATCH. Files changed: src/split.js., and marks only that file as different', async () => {
+test('R13.4 on the page, changing one byte of src/split.js shows exactly the line necro verify prints, MISMATCH. Files changed: src/split.js., and marks only that file as different', { skip: NO_BROWSER }, async () => {
   await withBrowser({}, async (browser) => {
     await browser.open(PHONE, async ({ evaluate }) => {
       const out = await evaluate(openAndStep('byte'));
@@ -446,7 +473,7 @@ test('R13.4 on the page, changing one byte of src/split.js shows exactly the lin
 
 // ---- R13.5 ----
 
-test('R13.5 next to each browser run the page says the browser ran 7 of the ledger\'s 18 contracts and the other 11 start the command line, with the gate\'s full run on the same code, naming what failed: 9 of 18 failing for the planted change, 18 of 18 passing for the fix, and all of it before the contract rows', async () => {
+test('R13.5 next to each browser run the page says the browser ran 7 of the ledger\'s 18 contracts and the other 11 start the command line, with the gate\'s full run on the same code, naming what failed: 9 of 18 failing for the planted change, 18 of 18 passing for the fix, and all of it before the contract rows', { skip: NO_BROWSER }, async () => {
   assert.deepEqual(FULL, { planted: { failed: 9, passed: 9, total: 18 }, fixed: { failed: 0, passed: 18, total: 18 } }, 'the receipts say 9 failing of 18, and 18 passing');
   // The ids come from the receipts. They are also written out here, so a change in a receipt shows up as a failure.
   assert.deepEqual(FAILING, { planted: ['R2.1', 'R2.2', 'R3.1', 'R4.1', 'R4.2', 'R5.1', 'R5.2', 'R5.3', 'R5.4'], fixed: [] });
@@ -480,7 +507,7 @@ test('R13.5 next to each browser run the page says the browser ran 7 of the ledg
 
 // ---- R13.9 and R13.10: how the play and its start control look ----
 
-test('R13.10 the status line that repeats each result is visually hidden but stays in the polite live region, and the play opens with a small margin above its heading', async () => {
+test('R13.10 the status line that repeats each result is visually hidden but stays in the polite live region, and the play opens with a small margin above its heading', { skip: NO_BROWSER }, async () => {
   await withBrowser({}, async (browser) => {
     await browser.open({ ...DESKTOP, reducedMotion: true }, async ({ evaluate }) => {
       const before = await evaluate(`(() => {
@@ -518,7 +545,7 @@ test('R13.10 the status line that repeats each result is visually hidden but sta
 
 // ---- R13.8 ----
 
-test('R13.8 on the page, a worker that cannot start, a copy that fails its hash check and a run that takes too long each end in one plain sentence and the gate\'s full run, the buttons come back and nothing says running', async () => {
+test('R13.8 on the page, a worker that cannot start, a copy that fails its hash check and a run that takes too long each end in one plain sentence and the gate\'s full run, the buttons come back and nothing says running', { skip: NO_BROWSER }, async () => {
   const check = async (evaluate, kind, expectedSentence) => {
     const out = await evaluate(openAndStep(kind));
     assert.ok(out.done, `${kind}: the step ended`);
@@ -575,7 +602,7 @@ test('R13.8 on the page, a worker that cannot start, a copy that fails its hash 
 
 // ---- R13.9 ----
 
-test('R13.9 with scripts on a start control is drawn in the first screen at 1280x800 and 390x844, at least 24 by 24, beside the command; the play is closed until it is used and then opens directly below the story strip', async () => {
+test('R13.9 (revised Nov 16) with scripts on a start control is drawn in the first screen at 1280x800 and 390x844, at least 24 by 24, beside the command; the play is already open directly after the result element, and using the control moves focus to Send the tick with the play in the window', { skip: NO_BROWSER }, async () => {
   await withBrowser({}, async (browser) => {
     for (const screen of [DESKTOP, PHONE]) {
       await browser.open(screen, async ({ evaluate }) => {
@@ -592,27 +619,34 @@ test('R13.9 with scripts on a start control is drawn in the first screen at 1280
         const at = `${screen.width}x${screen.height}`;
         assert.notEqual(m.display, 'none', `${at}: the control is drawn`);
         assert.equal(m.text, 'Try it here');
-        assert.equal(m.playDisplay, 'none', `${at}: the play is closed on a first visit`);
+        assert.notEqual(m.playDisplay, 'none', `${at}: the play is already open on a first visit (Requirement 16.1)`);
         assert.ok(m.control.width >= 24 && m.control.height >= 24, `${at}: the control is ${m.control.width} x ${m.control.height}`);
         assert.ok(m.copy.width >= 24 && m.copy.height >= 24, `${at}: the copy button is ${m.copy.width} x ${m.copy.height}`);
         assert.ok(m.control.top >= 0 && m.control.bottom <= m.h && m.control.left >= 0 && m.control.right <= m.w, `${at}: the control is inside the first screen`);
         assert.ok(m.control.top >= m.strip.top && m.control.bottom <= m.strip.bottom, `${at}: the control is inside the story strip`);
         const overlap = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
         assert.ok(!overlap(m.control, m.copy) && !overlap(m.control, m.command), `${at}: the control overlaps its neighbours`);
-        // Requirement 9.5 revised Nov 12: at 390x844 the start control and the result line take the banner's place (first-screen-v3).
-        if (!screen.mobile) assert.ok(m.verdict.top >= 0 && m.verdict.bottom <= m.h, `${at}: the verdict banner ends at ${m.verdict.bottom} of ${m.h}`);
+        // Requirement 9.5 revised Nov 16: the banner follows the open play and is not required in the first screen.
         assert.ok(m.sideways <= m.w, `${at}: the page scrolls sideways`);
 
-        // Use it: the play opens directly below the strip, above the evidence line and the banner, and takes focus.
-        const o = await evaluate(`(() => {
+        // Use it: the play is already open directly after the result element (DOM order, not distance), above the banner. The
+        // control moves focus to the play's first step, Send the tick, and the play's heading and that button are in the window.
+        const o = await evaluate(`(async () => {
+          const before = document.getElementById('play').hidden;
           document.getElementById('strip-play').click();
-          const r = (id) => { const b = document.getElementById(id).getBoundingClientRect(); return { top: b.top + scrollY, bottom: b.bottom + scrollY }; };
-          return { strip: r('strip'), play: r('play'), evidence: r('evidence'), verdict: r('verdict'), focus: document.activeElement.id,
+          const seen = (id) => { const b = document.getElementById(id).getBoundingClientRect(); return b.width > 0 && b.height > 0 && b.top >= 0 && b.bottom <= innerHeight; };
+          // The page may scroll smoothly: give it up to two seconds to arrive.
+          for (let i = 0; i < 40 && !(seen('play-title') && seen('play-send')); i += 1) await new Promise((r) => setTimeout(r, 50));
+          const doc = (a, b) => (document.getElementById(a).compareDocumentPosition(document.getElementById(b)) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+          return { before, strip: doc('strip', 'evidence'), next: document.getElementById('evidence').nextElementSibling === document.getElementById('play'),
+            beforeBanner: doc('play', 'verdict'), focus: document.activeElement.id, headingSeen: seen('play-title'), sendSeen: seen('play-send'),
             expanded: document.getElementById('strip-play').getAttribute('aria-expanded'), heading: document.getElementById('play-title').textContent };
         })()`);
-        assert.ok(o.play.top >= o.strip.bottom - 0.5 && o.play.top - o.strip.bottom <= 20, `${at}: the play opens directly below the strip (${o.strip.bottom} to ${o.play.top})`);
-        assert.ok(o.play.bottom <= o.evidence.top + 0.5 && o.evidence.top < o.verdict.top, `${at}: the play comes before the evidence line and the banner`);
-        assert.equal(o.focus, 'play-title');
+        assert.equal(o.before, false, `${at}: the play is open before the control is used`);
+        assert.ok(o.strip && o.next, `${at}: the play is directly after the result element, which is after the story strip`);
+        assert.ok(o.beforeBanner, `${at}: the play comes before the banner`);
+        assert.equal(o.focus, 'play-send', `${at}: focus goes to the Send the tick button`);
+        assert.ok(o.headingSeen && o.sendSeen, `${at}: the play's heading and Send the tick are in the window after the control is used`);
         assert.equal(o.expanded, 'true');
         assert.ok(o.heading.length > 0);
       });
@@ -632,24 +666,29 @@ test('R13.9 with scripts on a start control is drawn in the first screen at 1280
   });
 });
 
-test('R13.9 the frozen contracts for Requirements 9, 10, 11 and 12 are the files the lock pins, and the first-screen one (R9.5) passes on its own against this page', () => {
+test('R13.9 (revised Nov 16) the contracts for Requirements 9, 10, 11 and 12 are pinned by the lock and equal their pins, and the R9.5 contract passes on its own against this page', { skip: NO_BROWSER }, () => {
+  // The lock pins each of these files and each file equals its pin. necro freeze re-pins every contract file of the spec, so
+  // these comparisons pass from the freeze on. Until a person freezes receipt-viewer again they are EXPECTED to fail for
+  // every file revised on Nov 16: that is the review step, not a bug. Do not drop them.
   const lock = readJson(path.join(ROOT, '.necro', 'lock.json'));
   const pins = lock.specs?.['receipt-viewer']?.contracts ?? [];
-  for (const name of ['above-fold-v2', 'first-visit', 'story', 'jump', 'first-screen', 'evidence', 'clean']) {
+  const files = ['above-fold-v2', 'first-visit', 'story', 'jump', 'first-screen', 'first-screen-v3', 'evidence', 'clean'];
+  for (const name of files) {
     const rel = `contracts/receipt-viewer/${name}.contract.test.js`;
-    const pinned = pins.find((c) => c.path === rel);
-    assert.ok(pinned, `the lock pins ${rel}`);
-    assert.equal(createHash('sha256').update(fs.readFileSync(path.join(ROOT, rel))).digest('hex'), pinned.sha256, `${rel} is unchanged`);
+    const pin = pins.find((c) => c.path === rel);
+    assert.ok(pin, `the lock pins ${rel}`);
+    assert.equal(createHash('sha256').update(fs.readFileSync(path.join(ROOT, rel))).digest('hex'), pin.sha256, `${rel} is not the file the lock pins; a person freezes receipt-viewer again after reviewing it`);
   }
+  // Only the R9.5 file runs as a child, as it was frozen. It starts a browser itself, which is why this test skips with no browser.
   const env = { ...process.env };
   for (const k of Object.keys(env)) if (k.startsWith('NODE_TEST_')) delete env[k];
   const run = spawnSync(process.execPath, ['--test', 'contracts/receipt-viewer/above-fold-v2.contract.test.js'], { cwd: ROOT, encoding: 'utf8', env });
-  assert.equal(run.status, 0, `the frozen R9.5 contract fails:\n${run.stdout}${run.stderr}`);
+  assert.equal(run.status, 0, `the R9.5 contract fails:\n${run.stdout.slice(-4000)}${run.stderr.slice(-2000)}`);
 });
 
 // ---- R13.10 ----
 
-test('R13.10 the play works with the keyboard alone: Tab reaches the start control, Enter opens the play and each step, focus moves to each result, and a polite live region announces it', async () => {
+test('R13.10 the play works with the keyboard alone: Tab reaches the start control, Enter on it moves focus into the open play and Enter runs each step, focus moves to each result, and a polite live region announces it', { skip: NO_BROWSER }, async () => {
   await withBrowser({}, async (browser) => {
     await browser.open(DESKTOP, async ({ evaluate, key }) => {
       const active = () => evaluate('document.activeElement.id');
@@ -658,12 +697,14 @@ test('R13.10 the play works with the keyboard alone: Tab reaches the start contr
       await key('Tab');
       assert.equal(await active(), 'strip-play', 'Tab from Copy reaches the start control');
       await key('Enter');
-      assert.equal(await evaluate(`document.getElementById('play').hidden`), false, 'Enter opens the play');
-      assert.equal(await active(), 'play-title', 'focus moves to the play heading');
+      assert.equal(await evaluate(`document.getElementById('play').hidden`), false, 'the play is open');
+      assert.equal(await active(), 'play-send', 'focus moves to the first step, the Send the tick button (13.9 as revised Nov 16)');
 
       // Tab order inside the play follows the page: step 1, step 2, step 3.
       await key('Tab');
-      assert.equal(await active(), 'play-send');
+      assert.equal(await active(), 'play-fix');
+      await key('Tab');
+      assert.equal(await active(), 'play-byte');
       for (const [button, result, announce] of [
         ['play-send', 'play-result-planted', /Step 1 done.*refuses/],
         ['play-fix', 'play-result-fixed', /Step 2 done.*accepts/],
@@ -689,7 +730,7 @@ test('R13.10 the play works with the keyboard alone: Tab reaches the start contr
   });
 });
 
-test('R13.10 under prefers-reduced-motion: reduce the results appear with no animation; at 390 px the page does not scroll sideways; the policy is unchanged; the play fetches only from its own origin and adds no sentence that breaks R12.2', async () => {
+test('R13.10 under prefers-reduced-motion: reduce the results appear with no animation; at 390 px the page does not scroll sideways; the policy is unchanged; the play fetches only from its own origin and adds no sentence that breaks R12.2', { skip: NO_BROWSER }, async () => {
   await withBrowser({}, async (browser) => {
     // Reduced motion: no animation anywhere in the play, and the page does not scroll smoothly.
     await browser.open({ ...PHONE, reducedMotion: true, settle: false }, async ({ evaluate }) => {

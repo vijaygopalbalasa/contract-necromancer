@@ -660,3 +660,228 @@ frozen R5.1, R5.2, R5.3 and R7.4 contracts still pass. On the current code all f
 | 15.3 | `site/lib/repo.js` (`rerunPlan`, `localCommand`), `site/app.js`, `site/index.html` | 28 |
 | 15.4 | `site/lib/repo.js` (`rerunPlan`), `site/app.js` | 28 |
 | 15.5 | `rerun-box.contract.test.js` | 28 |
+
+## Try it first, the real case, the long receipt folded (Req 16)
+
+Requirement 16 came from a person's review on Nov 16: the page should show its best part (the play) and its strongest
+evidence (a real fix in a real repository) before anything else, and the 81-row receipt should not push "How it works" a
+screen and a half down. It changes `site/index.html`, `site/style.css` and `site/app.js` only (tasks 29 to 31). Requirement
+16.7 (the browser lookup of the contracts) changes contract files only, and is designed in "The browser lookup (16.7)" below.
+
+### The play opens on load (16.1, 13.9 as revised)
+
+- `#play` stays `hidden` in `index.html`, so with scripts off neither the play nor Try it here is drawn (13.9).
+- `setUpPlay()` in `app.js` takes `hidden` off `#play` when the page starts and sets `aria-expanded="true"` on
+  `#strip-play`. Nothing waits for a click. The play no longer sits after the strip: it sits directly after the result
+  element, so the element before `#play` in the DOM is `#evidence`.
+- Try it here stays in the strip, as the single filled control (14.3). Pressing it does two things:
+  1. `#play.scrollIntoView(...)` as today, with `scroll-margin-top` on `.play` giving the small margin above the play's
+     heading (the rule that `play-page.contract.test.js` R13.10 already checks, unchanged). It scrolls on every press, also
+     when the play is already partly in view. Reason: 13.9 says it scrolls, the unchanged R13.10 contract needs the page to
+     move at 1280x800 where the play is partly in view, and a press that does nothing visible looks broken. If the play's
+     heading is already at that margin, the scroll is a no-op. Smooth scrolling stays off under reduced motion.
+  2. Focus goes to `#play-send` (the Send the tick button), with `focus({ preventScroll: true })`, so the focus move does
+     not fight the scroll. It used to go to `#play-title`. `#play-title` keeps `tabindex="-1"`, because the receipt-viewer
+     contracts and a screen reader still find the heading; only the focus target changes.
+- It still does not call the code that brings the verdict banner into view (9.3 is for receipts the user opens).
+
+### The new page order (16.2, 10.2, 12.1)
+
+The DOM order is the visual order (10.4). Top to bottom:
+
+| # | Part | Element | Moves? |
+|---|---|---|---|
+| 1 | brand and heading | `header#brand` (mark, eyebrow, `h1`, idea line) | no |
+| 2 | real-use line | `p#real-use` | new |
+| 3 | story strip | `section#strip` | no |
+| 4 | result element | `p#evidence` | up, from after the play |
+| 5 | play | `section#play` | down, from before the result |
+| 6 | How it works | `section#how` | up, from after the receipt |
+| 7 | sample bar | `section#start` (`#sample-row`, the jump link) | down |
+| 8 | open your own receipt | `details#open`, inside the sample bar | down |
+| 9 | static summary (scripts off, see below) | `section#static-summary` | new |
+| 10 | verdict banner | `section#verdict` | down |
+| 11 | receipt | `section#receipt` | down |
+| 12 | hash check, re-run command, file check | `#hash-check`, `#run`, `#file-check` | no |
+| 13 | about | `section#about` | no |
+
+The only headings above the banner are the page heading (`h1`), the play's heading (`h3#play-title`) and `h2` "How it
+works" (10.1). The real-use line, the result element, the static summary and the folded requirements use no heading
+element, so the frozen headings check in `story.contract.test.js` (R10.1) and `first-screen-v3.contract.test.js` stays
+exact. The jump link (10.5) stays in the sample bar. It now jumps up, to a section that is directly above the bar, and the
+text "How it works, and try it" still reads right. No CSS reorders anything (10.4).
+
+### The real-use line (16.3)
+
+`<p class="real-use" id="real-use">` directly after `</header>`, before the strip. Plain text and two plain links, no
+script, no `hidden`. The words, which the contract reads as text:
+
+> Used on a real repository: in judge-protocol the gate refused Kiro's first tick, which had built only half of a
+> criterion, and the finished fix passed all six frozen contracts and was merged (pull request #29). Read the case study.
+
+- "pull request #29" is the link text of the first link, `https://github.com/vijaygopalbalasa/judge-protocol/pull/29`.
+- "the case study" is the link text of the second, `https://github.com/vijaygopalbalasa/contract-necromancer/tree/main/case-studies/judge-api-errors`
+  (the folder in this repository; the page is on GitHub Pages, so a relative link would not reach it).
+- No em or en dash, and no sentence that names `necro verify`, so the frozen R12.2 sentence count (exactly one sentence names
+  `necro verify` with JavaScript contracts and runner contracts) is not touched.
+- Both facts come from `case-studies/judge-api-errors/README.md` and the README ("the gate refused a half-done tick, and the
+  fix is merged"). The contract checks the pull request address and that the folder exists in this repository.
+
+### The experiment size in the result element (16.4)
+
+A new `<span class="size">` inside `p#evidence`, between `.result` and `.caveat`: "Two models, 3 to 5 runs per cell (a cell
+is one model with one arm)." The counts are `experiments/README.md` word for word: its Limits section says "3 to 5 runs per
+cell, two small models", and its header says "across two models". The contract reads "N to M runs per cell" out of
+`experiments/README.md` and requires the same words in the element, so the two cannot drift. The element keeps its one link,
+the counts "11 of 11" and "0 of 19" as `strong.num`, and the round 3 caveat (12.1, 14.2).
+
+### The receipt folded (16.2)
+
+- `renderGroups` in `app.js` writes one `<details class="group">` per requirement, closed, with
+  `<summary>Requirement 4 (20 of 20 pass)</summary>` (the text the `h3` has today) and the `ul.contracts` inside. A receipt
+  with no requirement numbers keeps its one "Contracts" group, also folded. Every render starts folded, including the second
+  receipt a visitor opens.
+- One control, `<button type="button" id="groups-toggle">Unfold all requirements</button>`, sits in `#receipt` above
+  `#groups`. It sets `open = true` on every `details` in `#groups`. It stays one-way: a visitor folds one requirement by its
+  summary. Its label has no "show" and no "sample", because the fake-DOM contracts (`clean`, `look`, `first-visit`) find
+  buttons by those words.
+- The verdict banner, the receipt facts, the hash check, the re-run command and the file check do not change (3, 4, 7, 15).
+  The rows are the same `li.contract` elements, so the contracts that read rows still find them; a row in a folded `details`
+  is in the DOM but not drawn.
+- Nothing is lost: all 81 rows are in the page; only their drawing is folded.
+
+### The static summary for scripts off (16.6)
+
+- `<section class="card" id="static-summary" aria-label="The sample receipt, in short">` between the sample bar and the
+  verdict banner, written by hand in `index.html` from `site/sample-receipt.json`: a line `<p class="static-verdict">A risen
+  receipt: 81 contracts alive.</p>` and `<ul class="static-requirements">` with one `<li>` per requirement,
+  `Requirement 1 (3 of 3 pass)` to `Requirement 10 (5 of 5 pass)`. The words "Risen" and "Still buried" are left to the live
+  banner (lower case "risen" here), and the parts have classes, not ids: `first-visit.contract.test.js` looks for "Risen" in
+  the text of every element with an id, and must not find a second one next to the live banner. No heading, no button.
+- `app.js` sets `hidden` on `#static-summary` when the first receipt is shown, so with scripts on a visitor never sees two
+  summaries. With scripts off it is drawn, and the receipt card, verdict banner and checks stay hidden as today.
+- A contract compares the static text with `site/sample-receipt.json`: the verdict word and count, and each line, worked out
+  from the receipt by grouping names `R<n>.`. It also checks that, with scripts on, the live `summary` lines equal the static
+  lines. If the sample is regenerated and the page is not, a contract goes red.
+- With scripts off the first screen still shows the heading, idea line, real-use line, three beats and the result element
+  (all plain HTML today and after this change).
+
+### Risk: the first screen at 390x844 on a machine with other fonts (CI)
+
+A first screen that holds Try it here, the real-use line and the whole result element is tight at 390x844. A throwaway,
+unstyled prototype of the new order with the text above, measured in headless Chrome on this Mac, gave:
+
+| Window | Real-use line | Result element | Two counts end at | Spare under the result | Spare under the counts |
+|---|---|---|---|---|---|
+| 1280x800 | 112 to 189 | 399 to 530 | 454 | 270 | 346 |
+| 390x844 | 137 to 265 | 588 to 832 | 693 | 12 | 151 |
+
+So at 390x844 the whole result would end 12 px above the fold here, and a runner with a wider font would push it over.
+The decisions:
+
+1. The contracts at 390x844 check only Try it here, the two large counts and the real-use line (9.5 as revised). The whole
+   result element is checked at 1280x800 only. That is why three frozen checks that asked for the whole result at 390x844
+   are revised (`evidence.contract.test.js`, `first-screen-v3.contract.test.js` R12.1 and R9.5).
+2. No contract checks a distance or a spare margin: that would pin Mac pixels (16.5). The 120 px is a target the person
+   building the page checks by hand: trim or tighten the text above the result so that at 390x844 on this Mac the whole
+   result ends at least 120 px above the fold (it ends at 724 or higher up; the prototype ends at 832, so about 110 px must
+   go). Candidates, in order: the real-use line at 0.875rem with a line height of 1.4 and no more than four lines (about 40
+   px), shorter beats and tighter beat padding in the strip at phone width (about 50 px), the gap between rows of the strip,
+   the margin around the result. Do not shorten the counts, the round 3 caveat or the size sentence.
+3. Report the measured numbers for both windows in the task report, as task 27 did.
+
+### The contracts
+
+All use real Chrome through a copy of the browser helper carried in the file (no shared helper file: it would not be frozen;
+`test/fixtures/browser.js` is the template, as in the other receipt-viewer contracts). They read DOM order, open or folded
+state, text, and whether an element is inside the window. No pixel size or position. A test that cannot find a browser
+skips with a reason that starts with `cannot run:` (16.7); see "The browser lookup (16.7)" below.
+
+| File | Tests |
+|---|---|
+| `try-first.contract.test.js` (new) | R16.1 play open on load, directly after the result, none of it with scripts off; R16.1 Try it here puts focus on Send the tick and leaves the heading and the button in the window; R16.1 the whole page order, in the file and in the DOM (it also covers the order sentence of 16.2, so the fold task does not wait for it); R16.2 verdict banner, one folded summary line per requirement, one unfold-all control, nothing else lost; R16.2 one requirement folds and unfolds, a second receipt starts folded; R16.3 the real-use line (text, two links, no dash, after the heading, before the strip) and drawn with scripts off; R16.4 the size sentence against `experiments/README.md`; R16.5 no pixel size in this file; R16.6 first-screen text with scripts off, the static summary against `site/sample-receipt.json`, and static summary hidden with scripts on |
+| `video-link.contract.test.js` (new) | R10.3 the page's video link equals the first youtu.be link in README.md, and the page has no other youtu.be link; R10.3 every youtu.be link in README.md is the page's video link. Both pass now and after the final cut replaces the earlier one. Neither names a cut. No contract fails on purpose, because CI runs every contract file (see task 32). |
+| `no-browser.contract.test.js` (new) | R16.7 one test per browser contract file, found by scanning `contracts/receipt-viewer` (no list; it leaves itself out), run as a child with `CHROME_PATH` set to a path that does not exist (see "The browser lookup (16.7)"). It needs no browser. |
+
+Revised frozen contracts, each keeping its old intent where it still holds (a person freezes `receipt-viewer` again):
+
+| File and place | What changed |
+|---|---|
+| `above-fold-v2.contract.test.js` R9.5 (was line 259) | Try it here, the real-use line and the result (whole at 1280x800, two counts at 390x844) replace the banner in the first screen. No sideways scroll and the open-your-own-receipt control are kept. |
+| `first-screen-v3.contract.test.js` R9.5 at 1280x800 (was 466), R9.5 at 390x844, R12.1 | Same revision. The R12.1 first-screen check at 390x844 now asks for the two counts. |
+| `first-screen-v3.contract.test.js` R14.1 title test (was 259) | The headings above the banner are exactly the page heading, the play's heading and "How it works". |
+| `first-screen-v3.contract.test.js` R14.3 | Extended: the play's three buttons must be among the controls above the banner and must not share Try it here's fill. They must not share its glow, animation or gradient either, but each of those three is compared only when Try it here sets one (today it has a fill and a box-shadow glow, no animation and no gradient), so an unrelated animation or icon background on another control cannot fail it. |
+| `evidence.contract.test.js` R12.1 first screen (was 304) | The banner is no longer required in the first screen; the whole line at 1280x800, its two counts at 390x844. |
+| `play-start.contract.test.js` R13.9 (was 265) | The banner is no longer required in the first screen. |
+| `play-page.contract.test.js` R13.9 (was 595, 613 to 615), R13.9 lock test (was 635), R13.10 keyboard (was 662) | The play is open on load; it is the element after the result element (DOM order replaces a 20 px gap); focus goes to Send the tick and the heading and the button are in the window; the lock test keeps its pins and its comparison of each listed file with the lock's hash (now with `first-screen-v3` in the list) and, as frozen, child-runs only the R9.5 file (`above-fold-v2`); the keyboard test starts on Send the tick. R13.10 scroll (line 493) is not changed. |
+| `story.contract.test.js` R10.1 (was 147), R10.2 (was 154 to 157), R10.4 (was 224), R10.3 | Headings above the banner; How it works follows the play and comes before the sample bar; the new order; the video link is the first youtu.be link in README.md. |
+| `jump.contract.test.js` R10.5 (was 75) | The new order; the comparison of `above-fold-v2` with the lock's hash is kept. |
+| The ten browser contract files (see "The browser lookup (16.7)"), each in its own lookup and in the tests that need a browser | The 16.7 lookup and skip. |
+
+### Where criteria seem to pull against each other
+
+- **9.5 and the old checks at 390x844.** 9.5 asks for the two counts only, but `evidence.contract.test.js` and
+  `first-screen-v3.contract.test.js` also asked for the whole result there. I followed 9.5 and revised both; leaving them
+  would bring back the font dependence that 9.5 removes.
+- **13.9 and "scroll when the play is not in view".** 13.9 says Try it here scrolls. I scroll on every press (see above),
+  because the unchanged R13.10 contract needs it. A press when the play is already at the margin does nothing visible.
+- **10.3 equal to the README now.** The page and the README point at the same cut today, so "the same URL" holds. Both
+  video-link tests pass now and keep passing after the swap. They do not name a cut, because no contract may fail on
+  purpose (CI runs every contract file). Nothing in the contracts makes a person upload the final video; task 32 says so.
+- **13.9 and 16.2 against frozen file hashes.** 13.9 says the frozen contracts for 9, 10, 11 and 12 "as revised" pass. Two
+  contracts (the play-page lock test and `jump`) compare contract files with the lock's hashes. `necro freeze` re-pins every
+  contract file of the spec, so once a person has frozen the revised files these comparisons pass. Until then they are
+  EXPECTED to fail for every revised file: that is the review step, not a bug. They are kept on purpose and must not be
+  dropped. A revised file differing from its old pin is the reason for the freeze, not a reason to remove the check.
+- **The hash comparisons and "no contract fails on purpose".** The comparisons above fail until a person freezes. They do
+  not fail to force a human step by design of their own: they fail only while a reviewed file has not been re-pinned, and
+  pass from the freeze on without any edit. This is the one place where the two ideas meet, and the freeze is the answer.
+- **16.7 and the tests that are partly static.** A test that needs a browser for one step (the child runs in `jump` R10.5,
+  the play-page lock test and `rerun-box` R15.5, and a few page tests that read text first) skips as a whole when there is
+  no browser, so its static checks do not run either. Splitting each would add contracts and change names. A skipped test
+  never passes, so nothing is hidden, but a machine with no browser also learns nothing from the static half.
+- **16.6 and `first-visit.contract.test.js`.** A static "Risen" in an element with an id would break that frozen contract, so
+  the static summary uses lower case and classes (above). Not a conflict between criteria, but a reason for the wording.
+
+### Requirement coverage
+
+| Criterion | Where | Task |
+|---|---|---|
+| 16.1 | `app.js` (`setUpPlay`), `index.html`, `try-first.contract.test.js` | 30 |
+| 16.2 | `app.js` (`renderGroups`, `groups-toggle`), `index.html`, `style.css`, `try-first.contract.test.js` | 31 |
+| 16.3 | `index.html`, `style.css`, `try-first.contract.test.js` | 29 |
+| 16.4 | `index.html`, `style.css`, `try-first.contract.test.js` | 29 |
+| 16.5 | every Requirement 16 contract, `try-first.contract.test.js` R16.5 | 29, 30, 31 |
+| 16.6 | `index.html`, `app.js`, `try-first.contract.test.js` | 31 |
+| 16.7 | the ten browser contract files (their own lookup and skip), `no-browser.contract.test.js` | 33 |
+| 9.5, 10.1, 10.2, 10.5, 12.1, 13.9, 14.3 (revised) | `index.html`, `style.css`, `app.js`, the revised contracts above | 30 |
+| 10.3 (revised) | `index.html`, `README.md`, `video-link.contract.test.js` | 32 |
+
+### The browser lookup (16.7)
+
+Rule, in every contract file that needs a browser: when `CHROME_PATH` is set, only that path is tried (a path that is not a
+file means no browser); otherwise the usual macOS, Linux and Windows install paths, then the folders of `PATH`. With no
+browser, `NO_BROWSER` is the string `cannot run: no Chrome or Chromium found (set CHROME_PATH)` and every test that needs a
+browser is declared with `{ skip: NO_BROWSER }`. A skip with that prefix is reported by `necro verify` as not run (necro-core
+6.17) and still counts as failing in the gate (necro-core 4.7 and 6.16), so a layout that was not measured never passes.
+
+Files found by behaviour (what the code does, not a hand list):
+
+| Kind | Files | Skipping tests |
+|---|---|---|
+| Own lookup (`findBrowser`) and its own headless Chrome | `above-fold-v2`, `evidence`, `first-screen`, `first-screen-v3`, `play-start`, `play-page`, `play-run`, `try-first` | every test that calls `withBrowser` |
+| Child run that needs a browser | `jump` (R10.5 runs `above-fold-v2`), `play-page` (the R13.9 lock test runs `above-fold-v2`), `rerun-box` (R15.5 re-runs a receipt whose page contracts start Chrome) | the whole test, so a child run that measured nothing never counts as a pass |
+| Checked and found to need none | `story`, `look`, `clean`, `first-visit` (a fake DOM, text only), `canon`, `receipt`, `repo`, `files`, `sample`, `style`, `play-files` (hashes and `necro verify` of the ledger example), `fresh-clone` and `pinned-verifier` (re-run a `necro-core` sample and a fake repository) | none |
+
+`rerun-box` hands the browser it found to the child as `CHROME_PATH`, because the child's `PATH` holds only git and node.
+
+`no-browser.contract.test.js` needs no browser. It reads `contracts/receipt-viewer`, takes every contract file (except itself)
+whose code, comments left out, reads `process.env.CHROME_PATH` or starts a browser with `--remote-debugging-port`, and
+runs each as a child with `CHROME_PATH` set to a path that does not exist. One test per file passes only if every skip
+reason starts with `cannot run:` and names the browser and `CHROME_PATH`, the file shows at least one such skip, and no
+test fails with the missing-browser error. It was RED on the earlier lookups, which ignored a `CHROME_PATH` that pointed
+nowhere and went on to find Chrome in `/Applications`, and is GREEN with the new ones (task 33).
+
+Which files change: only contract files. The lookups live in them, so `site/`, `src/` and `bin/` are not touched and the
+build has nothing to implement for 16.7. A person freezes `receipt-viewer` again after reviewing the new
+`no-browser.contract.test.js` and the revised files.

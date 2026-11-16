@@ -6,8 +6,7 @@
 // whose pages sit under /contract-necromancer/, with no Content-Security-Policy header on any response, so the worker has
 // no policy of its own. The page it opens is the real index.html, so the page's own policy (the meta tag) applies to the
 // page that starts the worker, as in production. The browser is driven over the DevTools protocol with Node's built-in
-// WebSocket, no dependencies. Set CHROME_PATH if the browser is somewhere unusual. With no browser these contracts fail and
-// say so: a run that was not made in a browser is not a pass.
+// WebSocket, no dependencies. Set CHROME_PATH if the browser is somewhere unusual. With no browser (Requirement 16.7) a test skips with a reason that starts with "cannot run:"; a skip is never a pass.
 //
 // R13.7 compares the browser's seven results, name by name, with real `necro check ledger` runs in scratch copies of
 // examples/pumpkin-ledger, with and without the planted change. R13.6 and R13.8 serve changed copies (and, to get past the
@@ -74,21 +73,48 @@ const RISEN = readJson(path.join(SITE, 'play', 'risen-receipt.json'));
 const idOf = (name) => name.split(' ')[0];
 const oneSentence = (text) => typeof text === 'string' && /^[^\n]+\.$/.test(text);
 
+// Requirement 16.7: when CHROME_PATH is set only that path is tried; otherwise the usual macOS, Linux and Windows install
+// paths, then the folders of PATH. A machine with no browser gives null, and every test that needs one skips (NO_BROWSER).
 function findBrowser() {
+  const isFile = (p) => {
+    try {
+      return fs.statSync(p).isFile();
+    } catch {
+      return false;
+    }
+  };
+  if (process.env.CHROME_PATH) return isFile(process.env.CHROME_PATH) ? process.env.CHROME_PATH : null;
+  const windows = [process.env.PROGRAMFILES, process.env['PROGRAMFILES(X86)'], process.env.LOCALAPPDATA].filter(Boolean).flatMap((base) => [
+    path.join(base, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+    path.join(base, 'Chromium', 'Application', 'chrome.exe'),
+    path.join(base, 'BraveSoftware', 'Brave-Browser', 'Application', 'brave.exe'),
+    path.join(base, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+  ]);
   const fixed = [
-    process.env.CHROME_PATH,
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     '/Applications/Chromium.app/Contents/MacOS/Chromium',
     '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
     '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/snap/bin/chromium',
+    '/usr/bin/microsoft-edge',
+    ...windows,
   ];
-  for (const p of fixed) if (p && fs.existsSync(p)) return p;
-  for (const name of ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'chrome', 'microsoft-edge']) {
-    const found = spawnSync('which', [name], { encoding: 'utf8' });
-    if (found.status === 0 && found.stdout.trim()) return found.stdout.trim();
+  for (const p of fixed) if (isFile(p)) return p;
+  const names = ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'chrome', 'microsoft-edge'];
+  const extensions = process.platform === 'win32' ? ['.exe', '.cmd', ''] : [''];
+  for (const dir of (process.env.PATH || '').split(path.delimiter)) {
+    if (!dir) continue;
+    for (const name of names) for (const extension of extensions) if (isFile(path.join(dir, name + extension))) return path.join(dir, name + extension);
   }
   return null;
 }
+
+// What a missing browser looks like to the gate: a skip whose reason starts with "cannot run:" (necro-core 6.17).
+const NO_BROWSER = findBrowser() ? false : 'cannot run: no Chrome or Chromium found (set CHROME_PATH)';
 
 // Serve site/ under /contract-necromancer/, as GitHub Pages serves a project site. Nothing outside that folder exists. No
 // response carries a Content-Security-Policy header. `change(rel)` may replace a file: it returns text or bytes to serve in its
@@ -158,7 +184,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function withBrowser({ change = () => null } = {}, run) {
   const chrome = findBrowser();
   if (!chrome) {
-    throw new Error('No Chrome or Chromium found. Install one, or set CHROME_PATH to its program, and run this again.');
+    throw new Error(NO_BROWSER);
   }
   const requests = [];
   const server = await serveSite(requests, change);
@@ -292,7 +318,7 @@ function necroCheck(planted) {
 
 // ---- R13.2 and R13.3 ----
 
-test('R13.2 with the planted change the worker runs the two JavaScript-only ledger contract files against the copies and reports R2.1, R2.2 and R5.1 to R5.4 failing, each with its assertion message, and R5.5 passing', async () => {
+test('R13.2 with the planted change the worker runs the two JavaScript-only ledger contract files against the copies and reports R2.1, R2.2 and R5.1 to R5.4 failing, each with its assertion message, and R5.5 passing', { skip: NO_BROWSER }, async () => {
   await withBrowser({}, async ({ evaluate }) => {
     // The server is built like GitHub Pages: no policy header on the worker script, so the worker has no policy of its own.
     const header = await evaluate(`fetch('${LIB}play-worker.js').then((r) => ({ ok: r.ok, csp: r.headers.get('content-security-policy'), type: r.headers.get('content-type') }))`);
@@ -320,7 +346,7 @@ test('R13.2 with the planted change the worker runs the two JavaScript-only ledg
   });
 });
 
-test('R13.3 with the fix the worker runs the same seven contracts against the copies as they are and all seven pass', async () => {
+test('R13.3 with the fix the worker runs the same seven contracts against the copies as they are and all seven pass', { skip: NO_BROWSER }, async () => {
   await withBrowser({}, async ({ evaluate, requests }) => {
     const { out, posted, heard } = await evaluate(play('fixed'));
     assert.equal(out.ok, true, `the fixed run must give results, it gave: ${JSON.stringify(out)}`);
@@ -341,7 +367,7 @@ test('R13.3 with the fix the worker runs the same seven contracts against the co
 
 // ---- R13.6 ----
 
-test('R13.6 the worker runs a copy only after its hash matches the pin, builds modules only from those files and the two stand-ins, refuses an import it does not know, and takes no code from any input', async () => {
+test('R13.6 the worker runs a copy only after its hash matches the pin, builds modules only from those files and the two stand-ins, refuses an import it does not know, and takes no code from any input', { skip: NO_BROWSER }, async () => {
   // (a) A changed copy of a source file: refused before anything runs.
   const bytes = fs.readFileSync(path.join(SITE, 'play', 'src', 'parse.js'), 'utf8');
   await withBrowser({ change: (rel) => (rel === 'play/src/parse.js' ? `${bytes}\n// one more line\n` : null) }, async ({ evaluate }) => {
@@ -430,7 +456,7 @@ test('R13.6 the worker runs a copy only after its hash matches the pin, builds m
 
 // ---- R13.7 ----
 
-test('R13.7 for the planted change and for the fix, each of the seven contracts has the same result in the browser as in a run of necro check ledger in Node.js on the same code', async () => {
+test('R13.7 for the planted change and for the fix, each of the seven contracts has the same result in the browser as in a run of necro check ledger in Node.js on the same code', { skip: NO_BROWSER }, async () => {
   const names = BURIED.contracts.filter((c) => TWO_FILES.includes(c.path)).map((c) => c.name);
   assert.equal(names.length, 7, 'the buried sample lists seven contracts in the two files');
 
@@ -456,7 +482,7 @@ test('R13.7 for the planted change and for the fix, each of the seven contracts 
 
 // ---- R13.8 ----
 
-test('R13.8 a hash failure, a copy that cannot be loaded, a worker that cannot start and a run that takes too long each end in one plain sentence with the gate\'s full run from the receipts, never "running"', async () => {
+test('R13.8 a hash failure, a copy that cannot be loaded, a worker that cannot start and a run that takes too long each end in one plain sentence with the gate\'s full run from the receipts, never "running"', { skip: NO_BROWSER }, async () => {
   const FULL = { planted: { passed: 9, failed: 9, total: 18 }, fixed: { passed: 18, failed: 0, total: 18 } };
 
   // A hash failure, for each run.
