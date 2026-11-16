@@ -24,6 +24,8 @@
       </div>
     </header>
 
+    <p class="real-use" id="real-use">Used on a real repository: in judge-protocol the gate refused Kiro's first tick, which had built only half of a criterion, and the finished fix passed all six frozen contracts and was merged (<a href="https://github.com/vijaygopalbalasa/judge-protocol/pull/29">pull request #29</a>). Read <a href="https://github.com/vijaygopalbalasa/contract-necromancer/tree/main/case-studies/judge-api-errors">the case study</a>.</p>
+
     <section class="strip" id="strip" aria-label="What happens when Kiro says a task is done">
       <ol class="beats">
         <li class="beat">Kiro says task 4 is done. The code loses cents.</li>
@@ -82,6 +84,7 @@
         <span class="stat stat-ungated"><strong class="num">11 of 11</strong> runs without the gate</span>
         <span class="stat stat-gated">and <strong class="num">0 of 19</strong> with it.</span>
       </span>
+      <span class="size">Two models, 3 to 5 runs per cell (a cell is one model with one arm).</span>
       <span class="caveat">Under a "do whatever it takes" prompt, one gated run of six got past the gate by patching JavaScript built-ins. That hole is closed and the cheat is kept as a test. <a href="https://github.com/vijaygopalbalasa/contract-necromancer/blob/main/experiments/README.md">See the experiment</a>.</span>
     </p>
 
