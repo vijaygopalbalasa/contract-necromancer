@@ -56,7 +56,8 @@ async function paste(p, text) {
 }
 
 const rows = (p) => findAll(p.el('groups'), (e) => e.classList.contains('contract'));
-const headings = (p) => findAll(p.el('groups'), (e) => e.tagName === 'H3').map((e) => e.textContent);
+const headings = (p) => findAll(p.el('groups'), (e) => e.tagName === 'SUMMARY').map((e) => e.textContent);
+const folds = (p) => findAll(p.el('groups'), (e) => e.tagName === 'DETAILS');
 
 // ---- 1.1: paste and file pick ----
 
@@ -1054,4 +1055,60 @@ test('9.3 a page whose banner cannot scroll still shows the receipt', async () =
   const p = page({ scrollable: false });
   await paste(p, fixtureText);
   assert.equal(p.text('spec'), fixture().spec);
+});
+
+// ---- 16.2 and 16.6: the receipt folded by requirement, the static summary ----
+
+test('renderGroups writes one closed details per requirement, with its summary line, and every row stays in the page', async () => {
+  const p = page();
+  await paste(p, fixtureText);
+  const d = folds(p);
+  assert.equal(d.length, 2);
+  assert.ok(d.every((e) => e.open === false || e.open === undefined || !e.open), 'every requirement starts folded');
+  assert.deepEqual(headings(p), ['Requirement 1 (2 of 2 pass)', 'Requirement 2 (1 of 1 pass)']);
+  assert.equal(findAll(p.el('groups'), (e) => e.tagName === 'H3').length, 0, 'no h3 headings in the groups');
+  assert.equal(rows(p).length, fixture().contracts.length, 'all rows are still in the page');
+  for (const e of d) assert.equal(e.children[0].tagName, 'SUMMARY', 'the summary comes first');
+});
+
+test('a receipt with no requirement numbers has one folded "Contracts" group', async () => {
+  const p = page();
+  const r = fixture();
+  r.contracts = r.contracts.map((c, i) => ({ ...c, name: `plain ${i}` }));
+  await paste(p, JSON.stringify(r));
+  assert.deepEqual(headings(p), ['Contracts (3 of 3 pass)']);
+  assert.equal(folds(p).length, 1);
+  assert.ok(!folds(p)[0].open);
+});
+
+test('#groups-toggle is one button that opens every details, and its label has no "show" or "sample"', async () => {
+  const p = page();
+  await paste(p, fixtureText);
+  const t = p.el('groups-toggle');
+  assert.equal(t.tagName, 'BUTTON');
+  assert.equal(t.getAttribute('type'), 'button');
+  // The fake DOM keeps no text for elements written in the file, so the label is read from the file.
+  const label = /<button\b[^>]*\bid="groups-toggle"[^>]*>([^<]*)<\/button>/.exec(fs.readFileSync(new URL('../site/index.html', import.meta.url), 'utf8'))[1];
+  assert.doesNotMatch(label, /show|sample/i);
+  assert.match(label, /unfold all/i);
+  assert.ok(folds(p).every((e) => !e.open));
+  await t.dispatch('click');
+  assert.ok(folds(p).length > 0 && folds(p).every((e) => e.open === true));
+});
+
+test('every render folds the groups again, including the second receipt', async () => {
+  const p = page();
+  await paste(p, fixtureText);
+  await p.el('groups-toggle').dispatch('click');
+  assert.ok(folds(p).every((e) => e.open === true));
+  await paste(p, fixtureText);
+  assert.ok(folds(p).length > 0 && folds(p).every((e) => !e.open), 'folded again');
+});
+
+test('#static-summary is hidden once the first receipt is shown', async () => {
+  const p = page();
+  await p.ready;
+  assert.equal(p.el('static-summary').hidden, false, 'drawn until a receipt is shown');
+  await paste(p, fixtureText);
+  assert.equal(p.el('static-summary').hidden, true);
 });

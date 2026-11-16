@@ -1514,3 +1514,33 @@ button:disabled {
     scroll-behavior: auto !important;
   }
 }
+
+/* The receipt folded by requirement (16.2): one summary line per requirement, the rows inside. */
+details.group > summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.5rem 0;
+}
+
+details.group[open] > summary {
+  margin-bottom: 0.625rem;
+}
+
+#groups-toggle {
+  margin: 0.5rem 0 0;
+}
+
+/* The hand-written summary of the sample, for scripts off (16.6). The page hides it once a receipt is shown. */
+.static-verdict {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+
+.static-requirements {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.static-note {
+  margin: 0 0 0.25rem;
+}

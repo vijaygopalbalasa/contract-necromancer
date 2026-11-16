@@ -127,11 +127,29 @@
       <p class="jump"><a id="jump-how" href="#how">How it works, and try it</a></p>
     </section>
 
+    <section class="card" id="static-summary" aria-label="The sample receipt, in short">
+      <p class="static-note">The sample receipt, as it reads when scripts are off:</p>
+      <p class="static-verdict">A risen receipt: 81 contracts alive.</p>
+      <ul class="static-requirements">
+        <li>Requirement 1 (3 of 3 pass)</li>
+        <li>Requirement 2 (9 of 9 pass)</li>
+        <li>Requirement 3 (15 of 15 pass)</li>
+        <li>Requirement 4 (20 of 20 pass)</li>
+        <li>Requirement 5 (5 of 5 pass)</li>
+        <li>Requirement 6 (10 of 10 pass)</li>
+        <li>Requirement 7 (1 of 1 pass)</li>
+        <li>Requirement 8 (9 of 9 pass)</li>
+        <li>Requirement 9 (4 of 4 pass)</li>
+        <li>Requirement 10 (5 of 5 pass)</li>
+      </ul>
+    </section>
+
     <section class="verdict" id="verdict" aria-live="polite" hidden></section>
 
     <section class="card" id="receipt" aria-labelledby="receipt-title" hidden>
       <h2 id="receipt-title">Receipt</h2>
       <p class="summary" id="summary"></p>
+      <button type="button" id="groups-toggle">Unfold all requirements</button>
       <div id="groups"></div>
       <dl class="facts">
         <dt>Spec</dt><dd id="spec"></dd>

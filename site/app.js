@@ -67,7 +67,7 @@ export function start({ document, location, fetch, navigator, matchMedia, play =
   const $ = (id) => document.getElementById(id);
   const els = {};
   for (const id of [
-    'paste', 'show', 'file', 'error', 'receipt', 'spec', 'commit', 'receipt-hash', 'created', 'task', 'summary', 'groups',
+    'paste', 'show', 'file', 'error', 'receipt', 'spec', 'commit', 'receipt-hash', 'created', 'task', 'summary', 'groups', 'groups-toggle', 'static-summary',
     'hash-check', 'hash-badge', 'hash-detail', 'repo', 'run', 'run-clone', 'run-local', 'command', 'copy', 'copy-note', 'file-check',
     'local-why', 'local-files', 'local-where', 'local-command', 'local-copy', 'local-copy-note',
     'check', 'repo-error', 'file-notice', 'file-summary', 'files', 'sample', 'sample-buried', 'sample-note', 'verdict',
@@ -134,8 +134,10 @@ export function start({ document, location, fetch, navigator, matchMedia, play =
   function renderGroups(contracts) {
     els.groups.textContent = '';
     for (const g of groupContracts(sortByCriterion(contracts))) {
-      const section = make('div', 'group');
-      section.appendChild(make('h3', '', `${g.title} (${g.passed} of ${g.total} pass)`));
+      // Closed on every render. The summary line is the old heading text; the rows stay in the page inside the details.
+      const section = make('details', 'group');
+      section.open = false;
+      section.appendChild(make('summary', '', `${g.title} (${g.passed} of ${g.total} pass)`));
       const list = make('ul', 'contracts');
       for (const c of g.contracts) list.appendChild(contractRow(c));
       section.appendChild(list);
@@ -294,6 +296,8 @@ export function start({ document, location, fetch, navigator, matchMedia, play =
     }
     clearReceipt();
     els.error.textContent = '';
+    // With scripts on, the live receipt replaces the hand-written summary of the sample.
+    els['static-summary'].hidden = true;
     const id = shown;
     const receipt = parsed.receipt;
     current = receipt;
@@ -639,6 +643,11 @@ export function start({ document, location, fetch, navigator, matchMedia, play =
     els['play-fix'].addEventListener('click', () => runStep('fixed'));
     els['play-byte'].addEventListener('click', () => runStep('byte'));
   }
+
+  // One-way: opens every requirement. A visitor folds one by its summary line.
+  els['groups-toggle'].addEventListener('click', () => {
+    for (const d of els.groups.children) d.open = true;
+  });
 
   els.show.addEventListener('click', () => {
     latest += 1;
