@@ -29,6 +29,22 @@ hooks. `necro audit` checks every ticked task after the fact, so run it in CI. I
 Python contracts, Python 3.11 or newer and pytest. Without them the task is reported as `cannot run`, which says nothing
 about the work, and `audit` exits non-zero. See [the audit](reference.md#catch-a-tick-however-it-got-there).
 
+## A tick that runs past the hooks' time limit
+
+The gate runs every frozen contract of the spec on each tick, one file after another, and `necro init` gives each hook
+300 seconds. On this repository (116 receipt-viewer and 209 necro-core contracts) a tick takes four to five minutes on the
+Mac it was built on. In kiro-cli, a hook that runs past its limit is stopped with SIGTERM and the tool call goes through,
+whether the gate runs before the edit (PreToolUse) or after a shell command (PostToolUse). Such a tick lands with no
+receipt. When the turn ends, the Stop hook finds the ticked task with no receipt and puts it back to `[ ]` (Requirement
+14.3), and `necro audit` fails on it in CI, so a slow machine costs a retry. Until the turn ends the task shows as
+ticked. Running the contract files side by side would make a tick faster; it is not built.
+
+## Ranges in task lines
+
+The gate reads a task's criteria from the numbers in its `(Req ...)` group and does not expand ranges:
+`(Req 1.2 to 1.4)` requires the contracts of 1.2 and 1.4, not 1.3. Write each criterion out, as
+`.kiro/steering/product.md` asks.
+
 ## What runner contracts cannot defend against
 
 Code under test runs inside the test framework's own process. It can tamper with that process: write the report from an

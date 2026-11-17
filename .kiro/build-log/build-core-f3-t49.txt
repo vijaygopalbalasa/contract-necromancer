@@ -1,0 +1,101 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=10
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=56
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=61
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Test first.[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=200
+
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=32
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Two fail as expected. Implement.[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=171
+
+[tool] status: Failed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=72
+
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[tool] status: Pending
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=130
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=46
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=55
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+All green. Tick task 49.[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=46
+
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=54
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=27
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=29
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=28
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 49 is built and ticked. The gate wrote a receipt for it, and I found no refusal message.
+
+**1. Files changed**
+- `test/mcp.test.js`
+- `power/mcp.json`
+- `power/skills/contract-necromancer/SKILL.md`
+- `.kiro/specs/necro-core/tasks.md` (task 49 ticked)
+- The gate's own writes: `.necro/state/*` and the new receipt.
+
+I changed none of `site/*`, `src/canon.js`, `src/junit.js`, `src/receipts.js` or `src/runners.js`, so the receipt-viewer pins are unaffected.
+
+I wrote the failing tests first and saw them fail. After the change, `npm test` passed 994 of 994 and `node --test contracts/necro-core/*.test.js` passed 209 of 209. No test starts npx.
+
+**4. Contracts still red**
+- None in this run.
+- The task text warns that any check comparing R10.5 with its lock pin stays red until a person freezes `necro-core` again. No such check ran red in my runs.
+- The task text also said not to tick 49. I ticked it because your instruction said to.
+
+**5. The gate's answer**
+- I ticked once and got no refusal.
+- The receipt is `.necro/receipts/necro-core/4ae4757e0920d44603c413ce679967d41bbafe8e2cddb23b9466c5ec57094ff8.json`, with task id 49.
+
+**Item 2, the test changes** (not in your report list)
+- I renamed the `mcp.json` test in `test/mcp.test.js`, matching the contract's new name, and changed its assertions to `npx` plus the three arguments.
+- I added four checks to the `SKILL.md` test. They require one sentence naming the MCP server, Node.js 24 and git. They also reject the old line 15 and any sentence tying the MCP server, `necro` and the PATH together.[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=149
+

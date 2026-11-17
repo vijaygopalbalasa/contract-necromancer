@@ -1,0 +1,189 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=10
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=22
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=43
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=66
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=17
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=42
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=57
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=84
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=65
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=79
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=103
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=983
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=99
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=59
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=38
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Failing as expected. Now implement.[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=244
+
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=34
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=38
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=78
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=86
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=77
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=228
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=81
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=53
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=53
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 34 is ticked and the gate accepted it. `necro audit` lists 34 as ok. The newest receipt is `.necro/receipts/receipt-viewer/a396e294ac01bd55d3f5833c85e1514b2e766b9016bc55f592d18bc3a4fd812b.json`. I read its name from `ls -t` and did not open it. The gate gave no refusal, so I used one tick.
+
+`npm test` passes (998 tests). `node --test contracts/receipt-viewer/*.test.js` had 9 failures. Eight are task 35 contracts. The ninth, "R16.1 Try it here moves focus", passed on three later reruns, so I think it was a one-off under load.
+
+I changed `site/index.html` and `site/style.css`. `site/app.js` is unchanged, because the numbers in the new sentence are plain text that a test compares against `PLAY_CONTRACTS.length` and the receipt's contract count. The task text said not to touch `app.js`, and nothing needed it. I changed none of `src/canon.js`, `src/junit.js`, `src/receipts.js` or `src/runners.js`. The `site/*` changes re-break the pins of the newest receipt-viewer receipt.
+
+**1. Files changed**
+- `site/index.html`
+  - The heading is now "A Kiro task is done only when its frozen contracts pass."
+  - Step 3 is "Every passing task leaves a receipt you can re-run."
+  - A new `p.play-before` stands directly before `ol.play-steps`: "The browser runs 7 of the ledger's 18 contracts, and the other 11 need the ledger's command line." It uses a straight apostrophe.
+- `site/style.css`
+  - `.demo` and `.try code` now sit on one line (`white-space` `pre` and `nowrap`) and scroll sideways (`overflow-x: auto`).
+  - `.try code` keeps `min-width: 0` and no longer breaks inside words.
+  - Beats now run 300 ms with delays of 0, 80 and 160 ms, so the last one ends at 460 ms. The reduce block is unchanged.
+- `.kiro/specs/receipt-viewer/tasks.md`: task 34 ticked.
+- New `test/site-truth.test.js`.
+
+**2. Test files changed in `test/`**
+- `site-story.test.js`:
+  - The idea line (line 18) and the heading test now use the new wording.
+  - The R10.4 test (lines 168 to 175) now lets only the demo command's own box (`.demo`, `pre.demo`, `.demo code`, `#demo-command`) have `white-space` `pre` or `nowrap`.
+  - It also requires `.demo` and `.try code` to scroll sideways, and `.try code` to keep `min-width: 0` and drop `overflow-wrap: anywhere`.
+- `site-first-screen-v3.test.js` (`IDEA`, the heading and the headings above the banner) and `site-order.test.js` (the first heading): new heading text.
+- `site-truth.test.js` (new) covers:
+  - step 3;
+  - each beat's delay plus duration at most 500 ms, with reduce unchanged;
+  - the one-line command boxes;
+  - the new sentence's position, its three numbers and its apostrophe.
+
+I saw these fail before implementing.
+
+**3. Layout, headless Chrome with `withBrowser`, in px**
+
+At 390x844 (mobile emulation):
+
+| Element | Top | Bottom | Spare above the fold |
+|---|---|---|---|
+| Real-use line | 127 | 211 | 633 |
+| Try it here | 426 | 458 | 386 |
+| `#evidence` | 473 | 693 | 151 |
+| "11 of 11" | 515 | 546 | 298 |
+| "0 of 19" | 546 | 576 | 268 |
+| `p.play-before` | 933 | 1010 | below the fold |
+
+- The lower count ends 268 px above the fold, so it clears the 120 px minimum.
+- At 1280x800, `#evidence` is 350 to 472 (328 spare), the real-use line is 112 to 152 and Try it here is 299 to 331 (470 spare). Both counts sit inside the result element, so each has more than 328 px spare. I did not record their individual boxes.
+- There is no figure yet.
+- Both command lines are 1 line at 390. Each box scrolls sideways, and the strip command is `nowrap`.
+
+**4. Contracts still red**
+All belong to task 35 (the figure, Req 17), plus the R10.3 `img` tests:
+- R17.1 (2 tests), R17.2 (3 tests) and R17.3 (1 test) in `kiro-session.contract.test.js`.
+- R10.3 (2 tests) in `story.contract.test.js`.
+
+Because of those, `necro audit` now shows three earlier ticked tasks as failing: 13, 14 and 21. Each fails only on these task-35 contracts and passes again once task 35 is done.
+
+The R13.9 lock test was not red in my run, so I could not confirm the "stays red until a person freezes" note.
+
+**5. Gate**
+The tick was accepted on the first try. The receipt path is above.
+
+**6. Console errors and horizontal scroll**
+- Horizontal scroll: at 390 and 1280, `documentElement.scrollWidth` equalled `clientWidth` (390 and 1280), and body `scrollWidth` matched too.
+- Console errors: I did not capture the console. I only know that the page raised no script exception during measurement.
+- The frozen layout and play contracts, which also check scroll, passed.[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=385
+

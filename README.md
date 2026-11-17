@@ -139,16 +139,16 @@ Three receipts to try, from a clone of this repository
 (`git clone https://github.com/vijaygopalbalasa/contract-necromancer && cd contract-necromancer`):
 
 ```
-node bin/necro.js verify .necro/receipts/necro-core/ea4cc3a61da549d677edb36f2d5d3f13cbfeb98b96483c5295d6b9d9bdb77b8f.json
-node bin/necro.js verify .necro/receipts/receipt-viewer/5b1aa56bed34c543148268518453f5d9f3546e2ed60c5f3b19b4dade000836dc.json
+node bin/necro.js verify .necro/receipts/necro-core/1a24cb6dc025da9a0a09db0eea2332ee3120362730ab51ef33226539f9347c1f.json
+node bin/necro.js verify .necro/receipts/receipt-viewer/7b3af55f2c621a0dc7a318b3a4bc5051f9565d006d89b1ef330046c95faa0af7.json
 node bin/necro.js verify examples/pumpkin-ledger/.necro/receipts/ledger/86e6ee251eaacbfb90f621d45fd704e904bca4e803c0a2a644f9ce2f094a5801.json
 ```
 
 The first is the tool's own: `CONFIRMED` with pytest installed, `INCOMPLETE` naming R13.6 without it. The second is the
 page's: `CONFIRMED` with Chrome or Chromium, `INCOMPLETE` naming the missing browser without one. The third needs only
-Node.js. Older receipts print `SUPERSEDED`. Re-running all 117 receipts here with pytest and Chrome installed gives 11
-`CONFIRMED`, 103 `SUPERSEDED`, 3 `OTHER PROJECT` (the case-study copies) and no `MISMATCH`; without pytest, 4 of the 11
-print `INCOMPLETE` instead, and without a browser, the page's 4 newest receipts do.
+Node.js. Older receipts print `SUPERSEDED`. Re-running all 122 receipts here with pytest and Chrome installed gives 10
+`CONFIRMED`, 109 `SUPERSEDED`, 3 `OTHER PROJECT` (the case-study copies) and no `MISMATCH`; without pytest, 5 of the 10
+print `INCOMPLETE` instead, and without a browser, the page's 2 newest receipts do.
 
 ## See it
 
@@ -191,6 +191,8 @@ function with no postcondition can still lie. [More](docs/reference.md#runtime-p
 
 - Guard rails, not a sandbox: a shell command or the contract code can change any file, including `.necro/`. The guarantee is `necro verify`, which trusts `.necro/lock.json`; commit it and check `git diff` before you trust a receipt. CONFIRMED means the same files give the same results, so a receipt that records failing contracts can be CONFIRMED too; in CI, run `necro audit`, which fails unless every ticked task's contracts pass.
 - Receipts are files in the project, so an agent able to write files can add one. A forged receipt can only make `necro audit` accept a task whose required contracts pass now: it can fake where a tick came from, not whether the work holds.
+- Each tick runs every frozen contract of the spec, one file after another, inside the hooks' 300 second limit; on this repository a tick takes four to five minutes. In kiro-cli a hook that runs past its limit is stopped and the edit goes through, so such a tick lands with no receipt, and the Stop hook puts the task back to `[ ]` when the turn ends.
+- A task line names each criterion it needs, one by one: the gate reads `(Req 1.2 to 1.4)` as 1.2 and 1.4 only.
 - `--frozen-intrinsics` freezes the language's built-in prototypes (`String`, `Array`, `Object`, `Map` and the rest), not `JSON`, `Buffer`, the global names or Node's modules, and `plain()` cannot help against code that changes what a test framework does. Contracts that check `console` output get a writable copy of `console`.
 - The receipt card on the viewer page checks hashes, not test runs. The play runs the example's seven JavaScript-only contracts in the browser, with small stand-ins for `node:test` and `node:assert`. The gate and `necro verify` run every contract in Node.js.
 - The experiment is small: 3 to 5 runs per cell, two small models, one project, one planted contradiction.

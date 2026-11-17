@@ -1,0 +1,141 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=8
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=27
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=64
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=61
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=71
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=32
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=72
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=669
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Now the new unit test for the figure.[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=586
+
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=306
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=30
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=49
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Meanwhile, measure.[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=27
+
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=30
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Browser start flake (concurrent launches). Rerun that file alone, and measure.[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=154
+
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=78
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Only Chrome's own display-link noise, no page errors. Now tick task 35.[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=65
+
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Replace in File
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=37
+[tool] status: Pending
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=31
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Task 35 is ticked on the first try. The gate accepted the tick and wrote a receipt at `.necro/receipts/receipt-viewer/22dcab39362c801e58e3762e3790427314989952dde6f14f441fe19de98aa8f8.json`. The `.necro/state/receipt-viewer.tasks.md` file and its `.sha256` changed as part of that tick.
+
+**1. Files changed**
+- `site/index.html`: the figure sits inside the header after the 14.1 line. It has one `<img>` with a data: URL generated from the file with a command, width 765, height 128 and alt equal to the quote. The figcaption holds the quote in quotation marks, then the label.
+- `site/style.css`: `.intro` now wraps. The figure takes its own row, the caption is 13 px, the img is `display: none` by default, and from 52rem up it is `display: block` with max-width 36rem.
+- `test/site-session-figure.test.js` (new).
+- `test/site-story.test.js`, `test/site-style.test.js`, `test/site-first-screen-v3.test.js`.
+- `.kiro/specs/receipt-viewer/tasks.md`: task 35 ticked.
+- I did not touch `src/canon.js`, `src/junit.js`, `src/receipts.js`, `src/runners.js` or `site/kiro-session-nov8.webp`.
+- `site/*` changed, so the pins of the newest receipt-viewer receipt before this tick are re-broken. The tick wrote a new receipt.
+
+**2. Test files changed**
+- `site-story` (R10.3): it banned every `<img>`. It now requires exactly one, with a `data:image/webp;base64,` src.
+- `site-style`: it banned `<img>` and any non-listed `src`. It now allows the one data: webp img.
+- `site-first-screen-v3` (R9.5 at 390x844 and R12.1): at 390x844 they now check the start control and the two large counts, not the whole result element. This is the counts-only rule of 9.5 as revised Nov 16. At 1280x800 they still check the whole result element.
+- `site-session-figure.test.js` is new. It checks the figure's place, the caption and label, the alt equal to the quote, that the data: URL decodes to the webp bytes, the CSS display rules, the 13 px caption, and no animation, transition or clipping.
+
+**3. Layout, headless Chrome (top, bottom, distance from window bottom, in px)**
+
+| Element | 1280x800 | 390x844 |
+|---|---|---|
+| figure | 160, 296, 504 | 185, 255, 589 |
+| real-use line | 304, 343, 457 | 261, 345, 499 |
+| Try it here | 490, 522, 278 | 560, 592, 252 |
+| `#evidence` | 541, 664, 136 | 607, 827, 17 |
+| count 1 | 566, 596, 204 | 649, 680, 164 |
+| count 2 | 566, 596, 204 | 680, 711, 133 |
+
+The lower count ends 133 px above the bottom of the window at 390x844, so it clears the 120 px margin.
+
+**4. Red contracts**
+- None in `contracts/receipt-viewer/*.test.js` apart from browser-launch flakes: 115 of 116 passed, and the one failure was "The browser did not start" while many Chrome instances launched at once. The R17.2 and R17.4 contract passed when I reran `kiro-session.contract.test.js` alone (7 of 7).
+- The lock-hash comparisons passed here.
+- `npm test` had one failure, the R13.9 "browser did not start" case in `test/site-play-page.test.js`. It passed when rerun alone (33 of 33).
+
+**6. Console and scroll**
+- Console: I loaded the page in headless Chrome with logging on. Only Chrome's own display-link lines appeared, with no page errors.
+- Horizontal scroll: `document.documentElement.scrollWidth` equals `clientWidth` at both sizes, 1280 and 390.[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=248
+
