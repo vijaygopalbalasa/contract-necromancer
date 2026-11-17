@@ -1,0 +1,84 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=8
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=46
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=80
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=38
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Baseline recorded. Apply the edit.
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=276
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=104
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=81
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=162
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=286
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=144
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=88
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run Command
+I reordered the page function in the R11.2 Web Animations check. It now reads everything at 500 ms, then finishes the animations, then adds `finished`. Nothing else changed, and I did not freeze or tick anything.
+
+**(a) Changed lines**, all in `contracts/receipt-viewer/first-screen.contract.test.js`:
+- Lines 396 to 397: a comment, then `const result = {` replaces `const finished = ...; return {`. This also removes the `finished,` property from the object.
+- Lines 406 to 408: `for (const a of found) if (Number.isFinite(...endTime)) a.finish();`, then `result.finished = beats.map(four);`, then `return result;`.
+
+The assertions after the page function are untouched, and so are the test names. The file has no em or en dashes and no pinned pixel number.
+
+**Current unbuilt page in real Chrome.** One test fails and four pass, the same as before the change. The failing test is "R11.2 the strip animates in CSS only, and under prefers-reduced-motion: reduce all three beats show at once with no animation". Its first failing assertion is `at 1280: beat 1: animation-delay plus animation-duration of rise is 600 ms, and must be at most 500 ms`. That assertion comes before the page function, so the page function does not run on this page.
+
+**(b) Pages run.** I ran each on a temporary copy of the tree outside the workspace, with CSS appended in the no-preference block, and removed the copy afterwards. Only R11.2 was run on these.
+
+| Page | Result |
+|---|---|
+| Beats at 400 ms, with 50 ms and 100 ms stagger (stand-in for the current design) | pass |
+| 3 s glow on `main`, the element that holds the strip | pass |
+| Infinite glow on `main` | pass |
+| `.beats` fades in over 1.3 s from opacity 0 | fail: `OL, which holds the beats, is at opacity 0.552293 at 500 ms` |
+| `.beats` colour fade from transparent over 1.3 s | fail: `beat 1 has colour, opacity, filter, visibility ["rgba(236, 232, 245, 0.553)","1","none","visible"] at 500 ms and ["rgb(236, 232, 245)",...] once its animations finish` |
+| Beat animation in reverse | fail: `beat 1 is at opacity 0 at 500 ms, and must be fully drawn` |
+| Paused beat animation | fail: `an animation of LI.beat is paused, so it would never finish` |
+| Beat slow only at 390x844 (900 ms) | fail: `at 390: beat 1: animation-delay plus animation-duration of rise is 900 ms, and must be at most 500 ms` |
+
+**(c) Could not do.**
+- Tasks 34 and 35 are not built, so I could not run the real "current design". The 400 ms stagger page stands in for it.
+- I could not run a "task 34 done, no figure" page as its own case. The unbuilt page has no figure, and the stand-in page is a no-figure page, so the one run covers both.
+- The two pages with a list-level animation failed the static "no animation outside the motion block" check on my first run. The cause was my appended block, which did not end in a newline plus `}`. I reran them with a correctly shaped block, and the results above are from that run.[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=202
+

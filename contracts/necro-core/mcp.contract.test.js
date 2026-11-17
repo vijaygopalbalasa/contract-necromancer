@@ -9,7 +9,9 @@
 //        any other tool or a spec that is not frozen THEN it returns a tool error with one plain sentence, not a crash.
 // R10.4  WHEN a tool takes a spec name or a receipt path THE SYSTEM SHALL refuse a name or path outside the project root.
 // R10.5  WHEN the repository is installed as a Kiro power THE SYSTEM SHALL provide a power/ folder with plugin.json, mcp.json
-//        and skills/contract-necromancer/SKILL.md.
+//        and skills/contract-necromancer/SKILL.md. (Revised Nov 17: mcp.json starts the server with
+//        `npx -y github:vijaygopalbalasa/contract-necromancer mcp`, so the power needs no global install, and SKILL.md says the
+//        MCP server needs Node.js 24 and git. It started `necro mcp`, which worked only with the command on the PATH.)
 //
 // The tests start `necro mcp` as a child process in a temporary project (a frozen spec with two contracts and three tasks),
 // write JSON-RPC lines to its stdin, close stdin and read the replies from stdout. They also read the files in `power/`.
@@ -289,7 +291,7 @@ test('R10.4 a spec name or receipt path outside the project root is refused, als
     assert.ok(!fs.existsSync(path.join(outside, '.necro')), 'nothing was written outside the project');
   }));
 
-test('R10.5 power/ holds plugin.json with the Agent Plugins 1.0.0 fields, mcp.json that starts necro mcp, and a SKILL.md that teaches the workflow', () => {
+test('R10.5 power/ holds plugin.json with the Agent Plugins 1.0.0 fields, mcp.json that starts the MCP server through npx, and a SKILL.md that teaches the workflow and says in one sentence that the MCP server needs Node.js 24 and git, without saying it runs necro from the PATH', () => {
   const json = (rel) => JSON.parse(fs.readFileSync(path.join(POWER, rel), 'utf8'));
 
   const plugin = json('plugin.json');
@@ -305,8 +307,10 @@ test('R10.5 power/ holds plugin.json with the Agent Plugins 1.0.0 fields, mcp.js
   const servers = Object.values(mcp.mcpServers);
   assert.equal(servers.length, 1);
   assert.equal(servers[0].type, 'stdio');
-  assert.equal(servers[0].command, 'necro');
-  assert.deepEqual(servers[0].args, ['mcp']);
+  // Revised Nov 17: the server starts through npx, so the power needs no global install. This test reads the file and never
+  // starts the server this way (npx needs the network); the tests above start `necro mcp` from this checkout.
+  assert.equal(servers[0].command, 'npx');
+  assert.deepEqual(servers[0].args, ['-y', 'github:vijaygopalbalasa/contract-necromancer', 'mcp']);
 
   const skill = fs.readFileSync(path.join(POWER, 'skills', 'contract-necromancer', 'SKILL.md'), 'utf8');
   const front = /^---\n([\s\S]*?)\n---\n/.exec(skill);
@@ -323,4 +327,17 @@ test('R10.5 power/ holds plugin.json with the Agent Plugins 1.0.0 fields, mcp.js
   assert.match(body, /before[\s\S]{0,60}tick/i);
   assert.match(body, /necro_check/);
   assert.match(body, /necro_verify/);
+  // Revised Nov 17: the skill says what the npx start needs. Revised again Nov 17 after review: one sentence says both (so a
+  // "Node.js 24" in the command line install line and a "git" anywhere else do not count), and the old setup line, which said the
+  // MCP server runs the `necro` command from the PATH, is gone.
+  // A sentence ends at a full stop, question mark or exclamation mark that is followed by white space, so the dot in "Node.js" does
+  // not end one. The same sentence names the MCP server, Node.js 24 and git, in any order.
+  const sentences = body.split(/(?<=[.!?])\s+/);
+  assert.ok(
+    sentences.some((x) => /\bMCP server\b/i.test(x) && /\bNode\.js 24\b/.test(x) && /\bgit\b/i.test(x)),
+    'SKILL.md says in one sentence that the MCP server needs Node.js 24 and git',
+  );
+  assert.ok(!sentences.some((x) => /\bMCP server\b/i.test(x) && /\bnecro\b/.test(x) && /\bPATH\b/.test(x)), 'no sentence of SKILL.md says the MCP server needs necro on the PATH (10.5)');
+  assert.doesNotMatch(body, /The power's MCP server runs the `necro` command/, "SKILL.md no longer says the power's MCP server runs the `necro` command");
+  assert.doesNotMatch(body, /MCP server[^.]*\bruns?\b[^.]*\bnecro\b[^.]*\bPATH\b/i, 'SKILL.md does not say the MCP server runs necro from the PATH');
 });

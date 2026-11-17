@@ -1,0 +1,253 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=9
+I'll start by looking at the tree and the files named in the task.
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=75
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=71
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=132
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=441
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=397
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=41
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=420
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=101
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run Command
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=109
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run Command
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=16
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=81
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=111
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=127
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=96
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=156
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=64
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=102
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=48
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=241
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=1005
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=151
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=113
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=134
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=81
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run Command
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=53
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=92
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=43
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=57
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=116
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=384
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=54
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=131
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=77
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=114
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=150
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+All six changes are in as a draft. I did not run `necro freeze` and did not tick anything. No test was renamed, and I edited only the eight files you listed. Everything below was run in real Chrome.
+
+On the current, unbuilt page no first failing assertion changed, because none of the new assertions are reached there (the two R17.2 tests, the R11.2 test and R13.5 stop on an earlier one). I did not keep a copy of my previous draft, so I could not compare it directly. I checked each new assertion on throwaway pages built from the repo, which I deleted afterwards.
+
+**(a) Changed tests**
+
+| file:line, name | Fails now? | First failing assertion on the current page | Waits for |
+|---|---|---|---|
+| kiro-session:277, `shownInPage`, used by the R17.1 caption test (:335) and the R17.2 drawn test (:418) | yes | "at 1280: the page has one figure" and "the figure has an img" | task 35 |
+| play-page:308, `shownInPage`, used by R13.5 (:497) | yes | "at 1280: the element directly before the steps list is a paragraph" | task 34 |
+| kiro-session:391, R17.2 img source | yes | "the figure has an img with a src" | task 35 |
+| kiro-session:418, R17.2 screenshot drawn | yes | "the figure has an img" | task 35 |
+| story:475, R10.4 title and wrap (static) | no, it passes | none | none |
+| first-screen:316, R11.2 | yes | "at 1280: beat 1: animation-delay plus animation-duration of rise is 600 ms, and must be at most 500 ms" | task 34 |
+| mcp:294, R10.5 | yes | "'necro' !== 'npx'" | task 49 |
+
+- **First-screen:** the tolerance, the four-value read and the finish() comparison are inside R11.2, after the assertion that fails now.
+- **mcp:** the new SKILL.md sentence check comes after `command` and the plugin fields. It also fails now on the old line 15.
+- **Not run:** the R10.4 computed test (story:537) fails now on "#demo-command has computed white-space nowrap or pre, not pre-wrap" (task 34). I did not change it. The play-page lock test (:750) is unchanged and fails on the lock hash until a person freezes.
+
+**(b) What ticking 34, then 35, requires (task 32 open)**
+
+I built the table with `parseTasks`, ran all 26 contract files for 116 names, and called `requiredNames`.
+- Task 34 names 21 criteria and requires 40 contracts.
+- Task 35 now names 26 criteria and requires 51. That is the 40 from task 34, plus 4 × R10.3 and 7 × R17.
+- Without the three added numbers, task 35 would have required 48. R10.2, R11.2 and R13.5 are one contract each. The added numbers also cover task 34's own fixes.
+- Contracts per file for the 51 (task 34's 40 in parentheses):
+
+| file | task 35 requires (task 34 requires) |
+|---|---|
+| above-fold-v2 | 1 (1) |
+| evidence | 3 (3) |
+| first-screen-v3 | 8 (8) |
+| first-screen | 3 (3) |
+| jump | 1 (1) |
+| kiro-session | 7 (0) |
+| look | 2 (2) |
+| play-page | 6 (6) |
+| play-start | 1 (1) |
+| story | 6 (4) |
+| style | 1 (1) |
+| try-first | 10 (10) |
+| video-link | 2 (0) |
+
+**(c) Pages run**
+
+| Page | Test | Result |
+|---|---|---|
+| Caption in `#ffc800` | R17.1, R17.2 (all 7 R17 tests) | pass |
+| 13.5 sentence in `#ffc800` | R13.5 shown check | pass; the test then fails on a later assertion because my throwaway tree had no `test/` folder |
+| Caption `transparent` | R17.1, R17.2 | fail: "the caption is shown, not only drawn" |
+| Caption `oklch(0.8 0.1 200 / 0)` | R17.1, R17.2 | fail |
+| Caption `rgba(255, 200, 0, 0)` | R17.1, R17.2 | fail |
+| 13.5 sentence `transparent`, `oklch(... / 0)` or `rgba(..., 0)` | R13.5 | fail: "the sentence is shown, not only drawn" |
+| Correct figure page | all R17 tests | pass |
+| Script that sets the img src after load | R17.2 source | fail: "with scripts on and settled, the img src is still the one read with scripts off" |
+| `figure.session img { content: url(data:...) }` | R17.2 drawn | fail: "the computed content of the image is normal" |
+| `.steps li { text-wrap: nowrap; overflow: hidden; text-overflow: ellipsis }` | R10.4 static | fail: ".steps li stops wrapping in How it works" |
+| `.demo`, `#demo-command` and `.try code` with `white-space` or `text-wrap` nowrap | both R10.4 tests | pass |
+| Reworded stale SKILL.md line (npx in mcp.json) | R10.5 | fail on the new "no sentence ... MCP server needs necro on the PATH" assertion |
+| Honest setup paragraph (MCP server sentence names npx, Node.js 24 and git; install is a separate sentence) | R10.5 | pass |
+| Task 34 done, no figure | R11.2 | pass |
+| Colour fade on `.beats` | R11.2 | fail: beat 1 is `rgba(236, 232, 245, 0.553)` at 500 ms and `rgb(236, 232, 245)` after finish() |
+| 3 s glow on `.strip` (box-shadow) | R11.2 | pass |
+| Infinite glow on `.strip` | R11.2 | pass |
+
+**(d) Not done, and one contradiction**
+
+- I could not reproduce the 500.00000000000006 end time. A beat of 200 ms delay plus 300 ms duration reported exactly 500 in this Chrome, so my fixture passes with or without the tolerance. The `500 + 1e-6` bound is in as you specified.
+- For R10.4's static check on `.steps li`, the computed test is not the check that rejects it, because `.steps li` has computed white-space `normal`. The static test is what catches it.
+- No criterion contradicts another. The task 49 sub-line now says the new setup sentence must not name the MCP server together with `necro` and the PATH. My honest paragraph keeps the PATH out of the MCP server sentence, so it passes.[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=407
+

@@ -290,6 +290,27 @@ async function withBrowser({ change = () => null } = {}, run) {
 const DESKTOP = { width: 1280, height: 800, mobile: false };
 const PHONE = { width: 390, height: 844, mobile: true };
 
+// Revised Nov 17 after review: "visible" means visible, not only "has a box". This function is sent into the page as text
+// (Function.prototype.toString), so it uses nothing from this file. An element is shown when it has a client rect with a box,
+// when it and every ancestor have computed visibility "visible", opacity "1", clip "auto" and clip-path "none", when its own
+// text is not transparent and it is not drawn beside the page, and when nothing of it is cut off by its own box (the page's
+// own .sr-only rules cut a box down to a point). It pins no number and no font size.
+function shownInPage(e) {
+  if (!e) return false;
+  const first = e.getClientRects()[0];
+  if (!first || !(first.width > 0) || !(first.height > 0)) return false;
+  for (let n = e; n; n = n.parentElement) {
+    const s = getComputedStyle(n);
+    if (s.visibility !== 'visible' || s.opacity !== '1' || s.clip !== 'auto' || s.clipPath !== 'none') return false;
+  }
+  const color = getComputedStyle(e).color;
+  // Read the alpha itself: an opaque rgb(r, g, b) with a blue channel of 0 (gold) is shown; rgba(..., 0) and a slash alpha of 0 are not.
+  const alpha = /^rgba\([^)]*,\s*([\d.]+)\)$/.exec(color) || /\/\s*([\d.]+)\s*\)$/.exec(color);
+  if (color === 'transparent' || (alpha && Number(alpha[1]) === 0)) return false;
+  if (!(first.right > 0) || !(first.left < document.documentElement.clientWidth)) return false;
+  return e.scrollWidth <= e.clientWidth + 1 && e.scrollHeight <= e.clientHeight + 1;
+}
+
 // Helpers that run in the page: wait for a condition, and read a step's result place.
 const IN_PAGE = `
   const wait = async (ok, ms = 20000) => {
@@ -477,6 +498,59 @@ test('R13.5 next to each browser run the page says the browser ran 7 of the ledg
   assert.deepEqual(FULL, { planted: { failed: 9, passed: 9, total: 18 }, fixed: { failed: 0, passed: 18, total: 18 } }, 'the receipts say 9 failing of 18, and 18 passing');
   // The ids come from the receipts. They are also written out here, so a change in a receipt shows up as a failure.
   assert.deepEqual(FAILING, { planted: ['R2.1', 'R2.2', 'R3.1', 'R4.1', 'R4.2', 'R5.1', 'R5.2', 'R5.3', 'R5.4'], fixed: [] });
+  // Revised Nov 17 (13.5): with the play open and before any button is pressed, a sentence directly before the play's steps
+  // list says the browser runs N of the ledger's M contracts and the other M minus N need the ledger's command line. N and M
+  // are then the numbers the play states after each run, so the two cannot drift.
+  // Revised Nov 17 after review: 13.5 says the sentence is visible at every window width, so it is read at the desktop size and
+  // at the phone size, and "drawn" is "shown" (a box, visible, not clipped, not transparent), not only "has a box".
+  const reads = {};
+  await withBrowser({}, async (browser) => {
+    for (const screen of [DESKTOP, PHONE]) {
+      await browser.open(screen, async ({ evaluate }) => {
+        reads[screen.width] = await evaluate(`(() => {
+        const shownInPage = ${shownInPage.toString()};
+        const play = document.getElementById('play');
+        const steps = play ? play.querySelector('ol') : null;
+        const sentence = steps ? steps.previousElementSibling : null;
+        const button = document.getElementById('play-send');
+        const follows = (a, b) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+        return {
+          width: innerWidth,
+          open: !!play && !play.hidden && play.getClientRects().length > 0,
+          pressed: [...document.querySelectorAll('#play-result-planted, #play-result-fixed, #play-result-byte')].filter((r) => !r.hidden).length,
+          tag: sentence ? sentence.tagName : null,
+          text: sentence ? sentence.textContent.replace(/\\s+/g, ' ').trim() : '',
+          drawn: !!sentence && sentence.getClientRects().length > 0 && getComputedStyle(sentence).visibility === 'visible',
+          shown: shownInPage(sentence),
+          beforeFirstButton: !!sentence && !!button && follows(sentence, button),
+          stepsContainsButton: !!steps && !!button && steps.contains(button),
+        };
+      })()`);
+      });
+    }
+  });
+  for (const screen of [DESKTOP, PHONE]) {
+    const read = reads[screen.width];
+    const at = `at ${screen.width}`;
+    assert.equal(read.width, screen.width, `${at}: the window is ${screen.width} wide`);
+    assert.ok(read.open, `${at}: the play is open on load`);
+    assert.equal(read.pressed, 0, `${at}: no button has been pressed, so no result is shown yet`);
+    assert.ok(read.stepsContainsButton && read.beforeFirstButton, `${at}: the sentence comes before the first button, in the play's steps list`);
+    assert.equal(read.tag, 'P', `${at}: the element directly before the steps list is a paragraph`);
+    assert.ok(read.drawn, `${at}: the sentence is drawn`);
+    assert.ok(read.shown, `${at}: the sentence is shown, not only drawn: visible, opaque, not clipped, not cut off by its own box`);
+  }
+  assert.equal(reads[DESKTOP.width].text, reads[PHONE.width].text, 'the sentence reads the same at both window sizes');
+  const before = reads[PHONE.width];
+  const claim = /\bbrowser runs (\d+) of the ledger's (\d+) contracts\b[^.]*\bother (\d+) need the ledger's command line\b/i.exec(before.text);
+  assert.ok(claim, `the sentence says the browser runs N of the ledger's M contracts and the other M minus N need the ledger's command line: "${before.text}"`);
+  const [n, m, rest] = claim.slice(1).map(Number);
+  assert.equal(before.text.split(/(?<=[.!?])\s+/).length, 1, 'it is one sentence');
+  assert.equal(n, SEVEN.length, 'N is the seven contracts the browser runs');
+  assert.equal(m, FULL.planted.total, "M is the number of the ledger's contracts, as the receipts give it");
+  assert.equal(rest, m - n, 'the other contracts are M minus N');
+  assert.ok(!/[\u2013\u2014]/.test(before.text), 'no em or en dashes');
+
   await withBrowser({}, async (browser) => {
     await browser.open(PHONE, async ({ evaluate }) => {
       for (const kind of ['planted', 'fixed']) {
@@ -484,6 +558,10 @@ test('R13.5 next to each browser run the page says the browser ran 7 of the ledg
         assert.ok(out.done, kind);
         const lines = out.text.split('\n').map((l) => l.trim());
         assert.ok(lines.includes(scopeLine(FULL[kind])), `${kind}: the scope sentence is there, text was ${out.text}`);
+        // The sentence after the run states the numbers of the sentence before it (13.5, revised Nov 17).
+        const after = lines.map((l) => /^The browser ran (\d+) of the ledger's (\d+) contracts\. The other (\d+) start the ledger's command line/.exec(l)).find(Boolean);
+        assert.ok(after, `${kind}: the sentence after the run gives N, M and the rest`);
+        assert.deepEqual(after.slice(1).map(Number), [n, m, m - n], `${kind}: the numbers after the run equal N, M and M minus N of the sentence before it`);
         assert.ok(lines.includes(fullLine(FULL[kind], FAILING[kind])), `${kind}: the full run of the gate is there, text was ${out.text}`);
         const at = (s) => out.text.indexOf(s);
         assert.ok(at(scopeLine(FULL[kind])) < at(fullLine(FULL[kind], FAILING[kind])), `${kind}: the full run comes right after the scope sentence`);
@@ -617,6 +695,9 @@ test('R13.9 (revised Nov 16) with scripts on a start control is drawn in the fir
           };
         })()`);
         const at = `${screen.width}x${screen.height}`;
+        // Revised Nov 17 after review: under mobile emulation Chrome widens innerWidth when a page is wider than the window, so
+        // the sideways check below only means something when the window is the width that was asked for.
+        assert.equal(m.w, screen.width, `${at}: the window is ${screen.width} wide (it is ${m.w}, so the page is wider than the window)`);
         assert.notEqual(m.display, 'none', `${at}: the control is drawn`);
         assert.equal(m.text, 'Try it here');
         assert.notEqual(m.playDisplay, 'none', `${at}: the play is already open on a first visit (Requirement 16.1)`);
@@ -765,6 +846,7 @@ test('R13.10 under prefers-reduced-motion: reduce the results appear with no ani
           width: innerWidth, sideways: document.documentElement.scrollWidth, body: document.body.scrollWidth, wide: wide.slice(0, 5),
           targets: [...document.querySelectorAll('#play button, #strip-play, #play summary')].map((e) => { const b = e.getBoundingClientRect(); return [e.id || e.tagName, Math.round(b.width), Math.round(b.height)]; }),
         };`));
+      assert.equal(m.width, PHONE.width, `the window is ${PHONE.width} wide (it is ${m.width}, so the page is wider than the window)`);
       assert.ok(m.sideways <= m.width && m.body <= m.width, `the page is ${m.sideways} wide in a ${m.width} px window`);
       assert.deepEqual(m.wide, [], 'nothing in the play is wider than the window');
       assert.ok(m.targets.length >= 5);

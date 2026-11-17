@@ -2,7 +2,7 @@
 
 ## Introduction
 The `necro` command line tool freezes contracts for a Kiro spec, gates "task done" in Kiro on those contracts, and issues
-receipts anyone can re-run.
+receipts you can re-run.
 
 ## Glossary
 - **Contract file:** a `contracts/<spec>/*.contract.test.js` file.
@@ -134,7 +134,7 @@ receipts anyone can re-run.
 2. WHEN `tools/list` is called THE SYSTEM SHALL offer exactly three tools: `necro_status` (for each frozen spec, each task with ticked or not, the contracts it requires, and each contract's current pass or fail), `necro_check` (run `necro check <spec>` and return the results and the receipt path) and `necro_verify` (verify a receipt path and return CONFIRMED, MISMATCH, SUPERSEDED, INCOMPLETE or OTHER PROJECT with the message).
 3. THE SYSTEM SHALL offer no tool that freezes a spec, edits a frozen file or ticks a task, and IF a tool call names any other tool or a spec that is not frozen THEN THE SYSTEM SHALL return a tool error with one plain sentence, not crash.
 4. WHEN a tool takes a spec name or a receipt path THE SYSTEM SHALL refuse a name or path outside the project root.
-5. WHEN the repository is installed as a Kiro power THE SYSTEM SHALL provide a `power/` folder with `plugin.json` (the Agent Plugins 1.0.0 fields `$schema`, `name`, `version`, `description`, `author`, `keywords`), `mcp.json` that starts `necro mcp`, and `skills/contract-necromancer/SKILL.md` that teaches the workflow (EARS criteria, contracts drafted for a person to review, the person freezes, check status before ticking, verify receipts).
+5. WHEN the repository is installed as a Kiro power THE SYSTEM SHALL provide a `power/` folder with `plugin.json` (the Agent Plugins 1.0.0 fields `$schema`, `name`, `version`, `description`, `author`, `keywords`), `mcp.json` that starts the MCP server with `npx -y github:vijaygopalbalasa/contract-necromancer mcp`, so that the power needs no global install, and `skills/contract-necromancer/SKILL.md` that teaches the workflow (EARS criteria, contracts drafted for a person to review, the person freezes, check status before ticking, verify receipts) and says in one sentence that the MCP server needs Node.js 24 and git, and does not say that the MCP server runs the `necro` command from the PATH: no sentence of SKILL.md names the MCP server, `necro` and the PATH together. (Revised Nov 17: `mcp.json` started `necro mcp`, which worked only with the command on the PATH. Revised again Nov 17 after review: both needs in one sentence, and the old PATH sentence removed, so a stale setup line cannot pass. Revised a third time Nov 17 after a second review: no sentence may name all three, so the old line cannot come back reworded.)
 
 
 ## Requirement 11: One-command demo

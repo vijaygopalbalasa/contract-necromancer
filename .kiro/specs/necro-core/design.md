@@ -613,3 +613,26 @@ already passes the returned number to the process exit.
 OTHER PROJECT. Every line in the README and in `docs/` that lists what `necro verify` prints must name all five, with
 the exit codes where the line gives codes. No new field is added to any receipt, so `receiptHash` and every existing
 receipt are unaffected.
+
+## Clarification (the power starts its server through npx, Req 10.5 as revised Nov 17)
+`power/mcp.json` started the server with `"command": "necro"` and `"args": ["mcp"]`, which worked only when `necro` was
+already on the PATH, so installing the power alone gave a server that could not start. It now starts it the way the demo
+starts: `"command": "npx"` and `"args": ["-y", "github:vijaygopalbalasa/contract-necromancer", "mcp"]`, still one server of
+type `stdio` and still with the `$schema` line. The first start fetches the repository through npx, so it needs Node.js 24,
+git and the network once, and later starts use npx's cache. `power/skills/contract-necromancer/SKILL.md` therefore drops its
+"put `necro` on your PATH first" setup (lines 15 and 16) and says that the MCP server needs Node.js 24 and git. The commands
+`necro init` and `necro freeze` that a project runs are not changed by this, and still need `necro` installed
+(`npm install -g github:vijaygopalbalasa/contract-necromancer`, or `npx -y github:vijaygopalbalasa/contract-necromancer`
+for one command). The SKILL.md setup must say that, so a person does not think the power replaces the install for them.
+Revised again Nov 17 after review: `SKILL.md` says in one sentence that the MCP server needs Node.js 24 and git, and no longer
+says that the MCP server runs the `necro` command from the PATH. The contract checks one sentence (a sentence that names the
+MCP server, Node.js 24 and git together), because a bare match for `Node.js 24` is satisfied by the command line install line
+and a bare match for `git` by any "git" in the file, and it checks that the old line 15 (`The power's MCP server runs the
+`necro` command`) and any sentence in which the MCP server runs `necro` from the PATH are gone, so a `SKILL.md` that keeps
+the old line and adds "Commit them to git." elsewhere fails. The `R10.5` test is renamed, because its name said that
+`mcp.json` starts `necro mcp`. A rename before a freeze is safe: `freezeSpec` records each contract file's names from the run
+at freeze time (`src/lock.js`), so the lock takes the new name when a person freezes `necro-core` again. A task line names
+every criterion and never a range; task 49 names `10.5` alone.
+`src/mcp.js` and `bin/necro.js` do not change. Nothing in the tests starts the server through npx, because that needs the
+network and the repository on GitHub at the revision under test: the contract and the unit test read `mcp.json`, and every
+test that spawns `necro mcp` keeps spawning it from this checkout.

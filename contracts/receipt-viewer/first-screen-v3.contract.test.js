@@ -243,7 +243,8 @@ async function withBrowser(run) {
 const read = (p) => fs.readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const html = read('site/index.html');
 
-const IDEA = 'Kiro cannot call a task done until its frozen contracts pass.';
+// Revised Nov 17 (10.1, 14.1): the page heading is the new sentence; "cannot" overstated what hooks can stop.
+const IDEA = 'A Kiro task is done only when its frozen contracts pass.';
 const RAISED = 'Design by Contract, from Eiffel (1986), raised for coding agents.';
 const EXPERIMENT = 'https://github.com/vijaygopalbalasa/contract-necromancer/blob/main/experiments/README.md';
 const TITLE = 'Contract Necromancer: a task is done only when frozen contracts pass';
@@ -283,6 +284,7 @@ test('R14.1 one short line beside the page heading names Design by Contract, fro
 });
 
 test('R14.1 the page heading and the title stay as they were', () => {
+  // The heading is the one of Requirement 10.1 as revised Nov 17 (see IDEA above).
   const headings = html.match(/<h1\b[^>]*>[\s\S]*?<\/h1>/g) || [];
   assert.equal(headings.length, 1);
   assert.equal(textOf(headings[0]), IDEA);
@@ -544,6 +546,9 @@ test('R9.5 (revised Nov 16) at 390x844 Try it here, the two large counts and the
       return result;
     });
     assert.equal(m.scrollY, 0);
+    // Revised Nov 17 after review: under mobile emulation Chrome widens innerWidth to the content when a page is wider than the
+    // window, so a sideways scroll cannot be read from innerWidth alone. The window must be the width that was asked for.
+    assert.equal(m.w, PHONE.width, `the window is ${PHONE.width} wide (it is ${m.w}, so the page is wider than the window)`);
     const inside = (b) => b.height > 0 && b.top >= 0 && b.bottom <= m.h && b.left >= 0 && b.right <= m.w;
     assert.ok(inside(m.play), `the start control spans ${Math.round(m.play.top)} to ${Math.round(m.play.bottom)} of ${m.h}`);
     assert.deepEqual(m.countsText, ['11 of 11', '0 of 19'], 'the two large counts');
@@ -570,6 +575,7 @@ test('R12.1 (revised Nov 16) the result is below the strip and above the banner 
           return { w: innerWidth, h: innerHeight, strip: box('strip'), evidence: box('evidence'), verdict: box('verdict'), counts, sideways: document.documentElement.scrollWidth };
         });
         const at = `at ${size.width} with scripts ${scripts ? 'on' : 'off'}`;
+        assert.equal(m.w, size.width, `${at}: the window is ${size.width} wide (it is ${m.w}, so the page is wider than the window)`);
         assert.ok(m.strip.bottom <= m.evidence.top, `${at}: below the strip`);
         if (scripts) assert.ok(m.evidence.bottom <= m.verdict.top, `${at}: above the banner`);
         const inside = (b) => b.height > 0 && b.top >= 0 && b.bottom <= m.h && b.left >= 0 && b.right <= m.w;

@@ -869,9 +869,9 @@ Files found by behaviour (what the code does, not a hand list):
 
 | Kind | Files | Skipping tests |
 |---|---|---|
-| Own lookup (`findBrowser`) and its own headless Chrome | `above-fold-v2`, `evidence`, `first-screen`, `first-screen-v3`, `play-start`, `play-page`, `play-run`, `try-first` | every test that calls `withBrowser` |
+| Own lookup (`findBrowser`) and its own headless Chrome | `above-fold-v2`, `evidence`, `first-screen`, `first-screen-v3`, `play-start`, `play-page`, `play-run`, `try-first`, `kiro-session` (new Nov 17), `story` (since Nov 17, for its one computed-style test, R10.4) | every test that calls `withBrowser` |
 | Child run that needs a browser | `jump` (R10.5 runs `above-fold-v2`), `play-page` (the R13.9 lock test runs `above-fold-v2`), `rerun-box` (R15.5 re-runs a receipt whose page contracts start Chrome) | the whole test, so a child run that measured nothing never counts as a pass |
-| Checked and found to need none | `story`, `look`, `clean`, `first-visit` (a fake DOM, text only), `canon`, `receipt`, `repo`, `files`, `sample`, `style`, `play-files` (hashes and `necro verify` of the ledger example), `fresh-clone` and `pinned-verifier` (re-run a `necro-core` sample and a fake repository) | none |
+| Checked and found to need none | `look`, `clean`, `first-visit` (a fake DOM, text only), `canon`, `receipt`, `repo`, `files`, `sample`, `style`, `play-files` (hashes and `necro verify` of the ledger example), `fresh-clone` and `pinned-verifier` (re-run a `necro-core` sample and a fake repository) | none |
 
 `rerun-box` hands the browser it found to the child as `CHROME_PATH`, because the child's `PATH` holds only git and node.
 
@@ -885,3 +885,240 @@ nowhere and went on to find Chrome in `/Applications`, and is GREEN with the new
 Which files change: only contract files. The lookups live in them, so `site/`, `src/` and `bin/` are not touched and the
 build has nothing to implement for 16.7. A person freezes `receipt-viewer` again after reviewing the new
 `no-browser.contract.test.js` and the revised files.
+
+## Truth fixes and the real Kiro session (Req 10, 11, 13, 14 revised Nov 17; Req 17)
+
+A person's review of Nov 17 revised eight criteria (10.1, 10.2, 10.3, 10.4, 11.2, 11.3, 13.5, 14.1) and added Requirement 17.
+The revisions make the page say only what is true (a hook cannot stop a shell command, some receipts need more than a
+browser to re-run, the play ran 7 of 18 contracts and did not say so before a button), stop two things that failed on a
+phone (the demo command broke inside a word; the third beat of the strip was still invisible at 1.3 s), and add one still of
+the real Kiro session of Nov 8 to the header. The work changes `site/index.html` and `site/style.css` only; `site/app.js`
+is not touched. Tasks 34 and 35 do it. A task line names every criterion it needs, one by one, and never a range: the gate
+reads only the numbers written in the `(Req ...)` group and does not expand `17.1 to 17.4`, which records 17.1 and 17.4 only
+(`criteriaOf` in `src/lock.js`). With task 32 open a tick requires only the contracts whose names start with the recorded
+criteria (`requiredNames`), so task 34 names every criterion its change can break, all of which pass on a page where 34 is
+done and 35 is not, and task 35 names the first-screen criteria, 17.1, 17.2, 17.3 and 17.4 one by one, and also 10.2, 11.2 and 13.5, so it guards task 34's own fixes as well. The contracts are drafts for a person to review and
+freeze: `kiro-session.contract.test.js` (new) and the revised `story`, `first-screen-v3`, `first-screen` and `play-page`
+files (see "The contracts of Nov 17" below).
+
+### The heading and step 3 (10.1, 14.1, 10.2)
+
+- The page heading, the one `h1` in `header#brand`, becomes `A Kiro task is done only when its frozen contracts pass.` The
+  reason is in 10.1: "cannot" overstated what hooks can stop. Nothing else in the header changes: the eyebrow, the idea line
+  of 14.1 (`p#idea`) and the title of 11.5 stay as they are. The title already says "a task is done only when frozen
+  contracts pass", so the heading and the title now agree.
+- Step 3 of "How it works" becomes `Every passing task leaves a receipt you can re-run.` The three steps stay an ordered
+  list of three. Nothing else in the section changes. The README, the docs and the video are out of scope.
+- The headings above the banner stay exactly the page heading, the play's heading and "How it works", in that order. The
+  figure of Requirement 17 has a caption and no heading.
+
+### The demo command on one line (10.4, 11.3)
+
+The command is drawn twice: `code#demo-command` inside `pre.demo` in "How it works", and `code#strip-command` in the strip
+(`.try`, a grid). Today both wrap anywhere, because `pre` has `white-space: pre-wrap` and `.try code` has
+`overflow-wrap: anywhere`. At 390 px that split the command inside a word. The rule now has two sides:
+
+| Element | Computed style the page must give | Why |
+|---|---|---|
+| `#demo-command` | `white-space` `pre` or `nowrap`; its box is `pre.demo`, with `overflow-x: auto`, `max-width: 100%` | the code element is inline text inside the `pre`, and `overflow` does not apply to inline text. The `pre` holds only this command, so it is the command's own box |
+| `#strip-command` | `white-space: nowrap`, `overflow-x: auto`, `min-width: 0`; drop `overflow-wrap: anywhere` | it is a grid item, so it is a block box and scrolls by itself. `min-width: 0` is kept but not needed: measured without it, the page does not overflow, because a grid item that is a scroll container (`overflow-x: auto`) has an automatic minimum width of 0. What does overflow the page is a grid column sized to its content (`max-content`) on a phone, and the contract catches that |
+| every other `pre` and `code` | unchanged: `pre` keeps `pre-wrap` and `overflow-wrap: anywhere`, inline `code` wraps | 10.4: other code blocks keep wrapping (the re-run command, the diff lines, the file check) |
+
+Write the new rules on `.demo` and `.try code` only. Do not change the base `pre` rule. The copy buttons copy the same text
+as before, and the text of both elements stays `npx -y github:vijaygopalbalasa/contract-necromancer demo` with no markup
+inside. A scrolling box can be reached by keyboard in current Chrome without a `tabindex`, so none is added.
+
+The contract reads computed styles in real Chrome (`story.contract.test.js`, R10.4 as revised), and the CSS text as well, so
+no selector can slip past either: for the two commands, `white-space`, the `overflow-x` of the command's own box, one drawn
+line and the page not scrolling sideways at 390x844; for every other `pre` and `code`, drawn or not (computed `white-space`
+is read for hidden elements too), `white-space` not `nowrap` or `pre`. The static test keeps the old ban on `white-space: pre`
+or `nowrap` for every rule that styles How it works, except a rule whose every selector names only the demo command's own box
+(`.demo`, `pre.demo`, `.demo code`, `#demo-command`), and refuses the same on any other rule that names a `pre` or `code`
+element. It checks no width, so a different font cannot fail it. Under mobile emulation Chrome widens `innerWidth` and
+`innerHeight` to the content when a page is wider than the window (measured: `innerWidth` 652 and 510 while
+`document.documentElement.clientWidth` stayed 390 on two pages that scrolled sideways), so `scrollWidth > innerWidth` is never
+true there. The contract therefore asserts that `innerWidth` is the width asked for, and compares `scrollWidth` of the page
+and the body, and the right edge of each command box, with `document.documentElement.clientWidth`. The command being longer than its box at 390 px is not asserted
+either, because that depends on the font: if a font makes it fit, the box simply does not scroll.
+
+### The strip timing (11.2)
+
+Today `.beat` runs `rise` for 600 ms, and beats 2 and 3 start at 350 ms and 700 ms, so the last beat is fully drawn at
+1.3 s. A phone reviewer's first screenshot, taken earlier than that, showed the third beat blank. 11.2 now asks that for
+each beat the animation delay plus the animation duration is at most 500 ms.
+
+- Inside the existing `prefers-reduced-motion: no-preference` block set `animation-duration: 300ms` on `.beat` and the
+  delays to `0ms`, `80ms` and `160ms` on the first, second and third beat. The last beat ends at 460 ms, which leaves 40 ms
+  under the limit so that no rounding in a computed value can cross it. Keep the `rise` keyframes as they are: other
+  elements use them.
+- Under `reduce` nothing changes: the block that sets `animation: none !important` stays, so all three beats are there at
+  once with no animation. With scripts off nothing changes either, because the animation is CSS only and never hides text
+  that CSS cannot show.
+- The contract adds only the sum. It reads the computed `animation-delay` and `animation-duration` of each beat under
+  no-preference (comma lists are summed per animation) and asks that each sum is at most 500 ms. It keeps the reduce check
+  and the check that the beats do animate under no-preference, so the sum cannot pass because nothing is animated.
+
+### The sentence above the play's first button (13.5)
+
+Before any button is pressed the play (open on load, 16.1) says nothing about the 7 of 18. The new sentence goes in
+`section#play` directly before `ol.play-steps`, so it sits after the diff box and directly above the first step and its
+button:
+
+`The browser runs 7 of the ledger's 18 contracts, and the other 11 need the ledger's command line.`
+
+- It is a `p` (class `play-before`, no id needed) and one sentence. It is plain text in the HTML, because the play is
+  hidden with scripts off (13.9) and the sentence needs no script.
+- The numbers 7, 18 and 11 must equal the numbers of the sentence after a run (`scopeLine` in `app.js`: the fixed list of
+  seven, the ledger's total from the receipts, and total minus seven). Writing them twice is the drift that 13.5 forbids,
+  so the unit test of task 34 reads both and compares them, and the contract (R13.5 as revised) does the same in Chrome:
+  before any press it reads N, M and the rest from this sentence, requires N to be the seven, M to be the receipts' total
+  and the rest to be M minus N, and after each run requires the numbers of the post-run sentence to equal them.
+- The wording differs from the post-run sentence on purpose ("runs" and "need" against "ran" and "start"), so the contract
+  that finds the post-run sentence by its text cannot read this one. It adds no sentence that breaks R12.2: it says nothing
+  about running only in Node.
+
+### The figure of Requirement 17 (17.1 to 17.4)
+
+Markup, inside `header#brand`, as the last child, after the `div` that holds `p#idea` and before `</header>`. The real-use
+line then still follows the header directly (16.3).
+
+```html
+<figure class="session">
+  <img src="data:image/webp;base64,..." alt="I couldn't mark task 4 complete. A hook blocked the edit to tasks.md and reported failing contracts, so the checkbox is still [ ].">
+  <figcaption>"I couldn't mark task 4 complete. A hook blocked the edit to tasks.md and reported failing contracts, so the checkbox is still [ ]." <span class="session-label">Real Kiro session, recorded Nov 8, not a simulation.</span></figcaption>
+</figure>
+```
+
+- **Caption (17.1).** The quoted words in straight quotation marks, one space, then the label. It is plain text in the HTML,
+  so it reads with scripts off, and it is drawn at every width. No dash, no link.
+- **Image (17.2).** One `img`. `src` is `data:image/webp;base64,` followed by the base64 of the exact bytes of
+  `site/kiro-session-nov8.webp` (11,578 bytes, 15,440 characters of base64). The file stays in `site/` as the source of the
+  bytes. The page never requests it. `alt` is the quoted words, character for character. The policy already allows
+  `img-src data:`, so it stays byte for byte as it is, and `look.contract.test.js` R8.2 (images must be `data:`) holds.
+- **Drawn from 52rem up only.** `figure.session img { display: none; }` as the base rule, and
+  `@media (min-width: 52rem) { figure.session img { display: block; max-width: 36rem; height: auto; } }`. The width limit is a
+  layout choice (see "Risk" below): it keeps Kiro's words readable at about three quarters of their size and gives back about
+  30 px at 1280x800. A column of 52rem or more is always wider than 36rem, so the limit never needs `100%`. Below 52rem the
+  image is not drawn and the caption carries the words. No `picture`, no `srcset`, no `loading` attribute: a `display: none`
+  image from a `data:` URL costs no request.
+- **Layout.** `.intro` is a flex row (mark, then the text `div`). The figure must go on its own row under them: give
+  `.intro` `flex-wrap: wrap` and the figure `flex: 0 0 100%` and `margin: 0`. Without this a third flex item squeezes the
+  title into a narrow column, which a prototype measured at 306 px of extra height at 390 px wide. Give the caption the same
+  small type as the real-use line and set its `color` as a hex or `var()` of one, because R8.2 checks contrast on every rule
+  that sets a color.
+- **No link, no video, no animation (17.3).** The figure holds an `img` and a `figcaption` and nothing else. No `a`, no
+  button, no handler. No rule that sets `animation` may match the figure or anything in it: `.mark-check` and `.verdict`
+  are the only header-area animations today, and neither does. The contract reads the computed `animation-name` of the
+  figure and everything in it.
+- **Why the caption is a text copy of the alt text.** A screen reader gets the words twice where the image is drawn (the
+  alt text and the caption). That is the price of 17.1 asking for the words as text and 17.2 asking the same words as alt.
+  The contract compares the two, so they cannot drift.
+
+### Risk: the first screen in CI with the figure (17.3, 9.5)
+
+R9.5 (revised Nov 16) is the frozen contract that decides whether the figure fits: at 1280x800, Try it here, the real-use
+line and the whole result element in the first screen; at 390x844, only Try it here, the two large counts and the real-use
+line. The figure sits above all of them, so every pixel it adds pushes them down, and a runner with a wider font than this
+Mac makes it worse.
+
+**How it was measured.** The first table of this section came from an unstyled prototype and was wrong by a wide margin. The
+numbers below come from a review of Nov 17: a page built to this design, with the image drawn at its natural width in the
+752 px column, was measured in headless Chrome on a Mac and in a Linux container with Chromium and DejaVu fonts, each at
+1280x800 and 390x844 (the distance from the bottom of the part that must fit to the fold). The "no figure" rows are the page as
+it is today, measured on the Mac in this session.
+
+| Window | What is drawn | Where it ends | Spare under the part that must fit |
+|---|---|---|---|
+| 1280x800 | no figure (today, Mac) | whole result ends 472 | 328 |
+| 1280x800 | figure, image at its natural width, Mac | whole result ends 104 px above the fold | 104 |
+| 1280x800 | figure, image at its natural width, Linux (Chromium, DejaVu) | whole result ends 66 px above the fold | 66 |
+| 1280x800 | figure, image at `max-width: 36rem`, either | about 30 px more than the two rows above | about 134 (Mac) and about 96 (Linux) |
+| 390x844 | no figure (today, Mac) | lower count ends 576 | 268 |
+| 390x844 | figure with the caption only, Mac and Linux | lower count ends 120 px above the fold | 120 |
+
+The last two figures of the `max-width` row are the reviewer's numbers plus the "about 30 px" the limit gives back; they were
+not measured on Linux. A scratch build of this design made in the same session measured, on the Mac, 111 px under the whole
+result with the image at its natural width and 140 px with `max-width: 36rem`, which agrees with the 30 px. No contract pins
+any of these numbers (17.4, 14.5, 16.5). What follows from them:
+
+1. **The image is not drawn below 52rem** (17.2), because at 390 px the image would add its height on top of the caption. This
+   is the main protection of R9.5 at 390x844, where 120 px are left under the counts.
+2. **The caption stays short.** At 390 px it is about 6 lines in 0.8125rem. A longer caption, or a larger type size, takes the
+   120 px. Do not add a sentence to it, and do not enlarge it. The label is in a `span` on the same paragraph, not a second
+   block with its own margin.
+3. **The image is drawn with `max-width: 36rem` from 52rem up.** At its natural width the spare under the whole result at
+   1280x800 is 104 px on the Mac and 66 px on Linux, which is enough but thin on a runner with a wider font. The limit keeps
+   Kiro's words readable at about three quarters of their size and gives back about 30 px. If the person building the page still
+   sees less than about 40 px, shrink the image further before touching the counts, the caveat or the size sentence. That is a
+   layout choice, so no contract checks a size.
+4. **The first-screen contracts still run.** `above-fold-v2.contract.test.js` (R9.5) is not revised. If the figure pushes
+   the result out on a machine, that contract fails there, which is its job. The task report of task 35 gives the measured
+   numbers for both windows, as tasks 27 and 29 did.
+5. **The image is inline data.** The page makes no new request for it, so nothing can fail to load in CI and leave an empty
+   box. The cost is 15.4 KB more in `index.html`.
+
+### Where criteria seem to pull against each other (Nov 17)
+
+- **10.3 "only `<img>`" and the old no-image checks.** 10.3 now allows one image where three checks forbade every `<img>`:
+  `story.contract.test.js` R10.3, `test/site-story.test.js` (line 137) and `test/site-style.test.js` (line 204). All three
+  are revised to allow exactly one `img`, from a `data:image/webp` source with non-empty alt text. They still ban `iframe`,
+  `video`, `audio`, `embed`, `object`, `source`, `picture` and `style`. `look.contract.test.js` R8.2 already allows an `<img>`
+  whose source is `data:`, so it passes unchanged.
+- **10.4 "other code blocks keep wrapping" and the old `white-space` rule.** The frozen R10.4 refused `white-space: pre` or
+  `nowrap` on any rule that styles `.demo`, and the three unit tests copied it. Both must go, because `.demo` is now the box
+  of the demo command. The revised contract reads computed styles instead, so the ban is not lost: the one nowrap box is the
+  demo command, and every other code element is checked to wrap.
+- **17.3 "R9.5 still holds" and 17.1 "the caption is drawn" at 390x844.** The caption must be drawn at 390 px and R9.5 must
+  hold there, and the caption costs height. They do not contradict (the table above leaves 99 px), but they leave a thin
+  margin that depends on fonts. That is why the image, the biggest part, is not drawn on a phone and the caption is short.
+- **17.2 "at least 52rem" and a contract with no sizes.** 17.4 allows checking whether the image is drawn at 1280x800 and
+  at 390x844 only. The 52rem edge itself is therefore not tested at 831 and 832 px: that would pin a pixel size in the
+  contract. The edge is the one number in `style.css` and the unit test of task 35 reads it from there.
+- **10.3 "exactly one `img`" and task 34 (the R10.4 computed test).** The review asked the R10.4 computed test to assert that the
+  settled page has exactly one `img`, so an image added by `app.js` counts against 10.3. Task 34 names 10.4, and 34 is done
+  before 35 builds the one image, so "exactly one" there would keep 34 from ever being accepted. The two criteria cannot both
+  be met as worded, so the R10.4 computed test asserts at most one, and a new R10.3 test, run with scripts on and settled at
+  both sizes, asserts exactly one, in the figure, from a `data:image/webp` URL. Together they refuse an image added by the
+  script, and only the R10.3 test waits for task 35.
+- **"Drawn" and "visible".** 17.1 and 13.5 as revised say visible at every window width, so the contracts use one check
+  (`shownInPage`): a client rect with a box, and for the element and every ancestor computed visibility `visible`, opacity
+  `1`, clip `auto` and clip-path `none`, text that is not transparent, a box not drawn beside the page, and nothing cut off by
+  the element's own box. It pins no number and no font size. The page's own `.sr-only` rules fail it (a box of one point with
+  `overflow: hidden`).
+- **The hash comparisons stay red until a person freezes.** The R13.9 lock test of `play-page.contract.test.js` compares
+  `story`, `first-screen` and `first-screen-v3` with the lock's hashes. This revision changes those three files, so that
+  one test is EXPECTED to fail until a person freezes `receipt-viewer` again. It is the review step, as the Nov 16 section
+  says, and it passes from the freeze on without an edit. It does not list `kiro-session`, and it is not revised here.
+- **The new contract file and 16.7.** `no-browser.contract.test.js` finds browser contract files by what they do (they read
+  `process.env.CHROME_PATH`), so `kiro-session` and the revised `story` are found with no entry anywhere and it is not edited.
+  Each skips with `cannot run: no Chrome or Chromium found (set CHROME_PATH)`, the same text as the other files, and the
+  gate still counts a skip as failing.
+
+### The contracts of Nov 17
+
+| File | Tests |
+|---|---|
+| `kiro-session.contract.test.js` (new, drafts for a person to review) | R17.1 the figure is in the header after the line of 14.1 and before the real-use line, which still follows the header directly, with scripts off, and its box overlaps none of the heading, the line of 14.1 and the real-use line; R17.1 the caption is the quoted words in quotation marks and then the label, shown at both sizes; R17.2 and R17.4 one `img` in the figure, its alt text is the quoted words and equals the words the caption quotes; R17.2 the `src` is `data:image/webp;base64,` and decodes to exactly the bytes of `site/kiro-session-nov8.webp`, whose SHA-256 equals a constant in the contract; R17.2 shown at 1280x800 and not drawn at 390x844 with the caption still shown; R17.3 no link, control or media in the figure, no animation on the figure, inside it or around it, `animation-name` none on every ancestor and `transition-duration` 0s on the figure and everything in it; R17.4 the file pins no pixel size or position |
+| `story.contract.test.js` (revised) | R10.1 the new heading sentence; R10.2 step 3 says "a receipt you can re-run" and not "anyone"; R10.3 exactly one `img`, `data:image/webp` source, non-empty alt, the other embeds still banned; R10.3 (new) the settled page has exactly one `img`, in the figure; R10.4 (static, renamed) no fixed width, and the ban on `white-space: pre` or `nowrap` is back for every rule that styles How it works except the demo command's own box, and for any rule that names a `pre` or `code` element; R10.4 (computed, revised) the demo command on one line in its own box at both sizes, every other `pre` and `code` drawn or not wraps, at most one `img`, and the page does not scroll sideways, read against `clientWidth` with `innerWidth` asserted equal to the width asked for |
+| `first-screen-v3.contract.test.js` (revised) | the heading sentence in R14.1 (constant and the two heading checks); R9.5 at 390x844 and R12.1 assert that `innerWidth` is the width asked for |
+| `first-screen.contract.test.js` (revised) | R11.2 at 1280x800 and at 390x844: delay plus duration at most 500 ms, no beat animation paused, a finite end time of at most 500 ms for each animation of a beat, and at 500 ms (animations paused, `currentTime` set) every beat is at opacity 1 with no transform and everything that holds the beats is at opacity 1; the reduce check is kept |
+| `play-page.contract.test.js` (revised) | R13.5 reads the sentence before any press at 1280x800 and at 390x844 and requires it to be shown; the R13.9 control test and the R13.10 test at 390 assert that `innerWidth` is the width asked for |
+
+Test names. Three tests are renamed and the rest keep their names: the static R10.4 test of `story` (its title said the page
+wraps at phone width), the R17.3 test of `kiro-session` (new file) and the R10.5 test of `necro-core` `mcp.contract.test.js`.
+A rename before a freeze is safe, and the reason is not a stale lock: `freezeSpec` records each contract file's names from the
+run at freeze time (`src/lock.js`), so the lock takes the new names when a person freezes. Names matter to the gate for one
+thing, the prefix: a task requires the contracts whose names start with its criteria, so a name must keep starting with its
+criterion and a space. New tests (R10.3 settled, R10.4 computed, the new file) add names the same way.
+
+### Requirement coverage (Nov 17)
+
+| Criterion | Where | Task |
+|---|---|---|
+| 10.1, 14.1 | `index.html` (`h1`), `story`, `first-screen-v3` contracts | 34 |
+| 10.2 | `index.html` (step 3), `story` contract | 34 |
+| 10.4, 11.3 | `style.css` (`.demo`, `.try code`), `story` R10.4 computed test | 34 |
+| 11.2 | `style.css` (`.beat` timing), `first-screen` R11.2 | 34 |
+| 13.5 | `index.html` (`p.play-before`), `style.css` if needed, `play-page` R13.5 | 34 |
+| 17.1, 17.2, 17.3, 17.4 | `index.html` (`figure`), `style.css` (`.intro`, `.session`), `kiro-session` contract | 35 |
+| 10.3 | `index.html` (the one `img`), `story` R10.3 | 35 |

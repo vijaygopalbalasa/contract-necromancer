@@ -332,15 +332,96 @@ test('R11.2 the strip animates in CSS only, and under prefers-reduced-motion: re
         transforms: items.map((li) => getComputedStyle(li).transform),
       };
     };
-    // Measured at once, before any animation could have finished.
-    const reduced = await browser.measure({ width: 1280, height: 800, reducedMotion: true, settle: false }, beats);
-    assert.equal(reduced.count, 3);
-    assert.equal(reduced.running, 0, 'nothing is animating under reduce');
-    assert.deepEqual(reduced.names, ['none', 'none', 'none']);
-    assert.deepEqual(reduced.opacities, ['1', '1', '1'], 'all three beats are fully shown at once');
-    assert.deepEqual(reduced.transforms, ['none', 'none', 'none']);
-    const motionOn = await browser.measure({ width: 1280, height: 800, reducedMotion: false, settle: false }, beats);
-    assert.ok(motionOn.names.every((n) => n !== 'none'), 'where motion is welcome the beats are animated, so the check above is not trivially true');
+    // Revised Nov 17 after review (11.2 says "at every window width", because that reviewer was on a phone): everything below
+    // is read at 1280x800 and at 390x844 with mobile emulation.
+    for (const screen of [{ width: 1280, height: 800 }, { width: 390, height: 844, mobile: true }]) {
+      const at = `at ${screen.width}`;
+      // Measured at once, before any animation could have finished.
+      const reduced = await browser.measure({ ...screen, reducedMotion: true, settle: false }, beats);
+      assert.equal(reduced.count, 3);
+      assert.equal(reduced.running, 0, `${at}: nothing is animating under reduce`);
+      assert.deepEqual(reduced.names, ['none', 'none', 'none'], `${at}: no animation name under reduce`);
+      assert.deepEqual(reduced.opacities, ['1', '1', '1'], `${at}: all three beats are fully shown at once`);
+      assert.deepEqual(reduced.transforms, ['none', 'none', 'none'], `${at}: no transform under reduce`);
+      const motionOn = await browser.measure({ ...screen, reducedMotion: false, settle: false }, beats);
+      assert.ok(motionOn.names.every((n) => n !== 'none'), `${at}: where motion is welcome the beats are animated, so the check above is not trivially true`);
+
+      // Revised Nov 17 (11.2): where motion is welcome all three beats are fully drawn within 0.5 seconds of load: for each beat
+      // its computed animation-delay plus animation-duration is at most 500 ms. Computed values are lists (one entry per
+      // animation, repeated to the length of the animation-name list), so each animation of each beat is summed on its own.
+      const timing = await browser.measure({ ...screen, reducedMotion: false, settle: false }, () => {
+        const seconds = (t) => (t.trim().endsWith('ms') ? parseFloat(t) / 1000 : parseFloat(t));
+        return [...document.querySelectorAll('#strip li')].map((li) => {
+          const s = getComputedStyle(li);
+          const list = (v) => v.split(',').map(seconds);
+          const names = s.animationName.split(',');
+          const delays = list(s.animationDelay);
+          const durations = list(s.animationDuration);
+          return names.map((name, i) => ({ name: name.trim(), end: delays[i % delays.length] + durations[i % durations.length] }));
+        });
+      });
+      assert.equal(timing.length, 3, `${at}: three beats`);
+      timing.forEach((animations, i) => {
+        assert.ok(animations.some((a) => a.name !== 'none'), `${at}: beat ${i + 1} is animated, so its timing is measured and not trivially fine`);
+        for (const a of animations) {
+          assert.ok(Number.isFinite(a.end), `${at}: beat ${i + 1}: the delay and the duration of ${a.name} are numbers`);
+          assert.ok(a.end <= 0.5 + 1e-9, `${at}: beat ${i + 1}: animation-delay plus animation-duration of ${a.name} is ${Math.round(a.end * 1000)} ms, and must be at most 500 ms`);
+        }
+      });
+
+      // Revised Nov 17 after review: "fully drawn within 0.5 seconds" is more than delay plus duration. Read it from the
+      // Web Animations API, with no clock. Take every animation whose target is a beat, is inside a beat, or holds the strip
+      // (holds a beat: the list, the strip, and every ancestor up to the page). None may be paused. Each animation of a beat or
+      // of something inside a beat has a finite end time of at most 500 ms (an animation that never ends, or ends later, is not
+      // drawn in time). Then pause each of them and set its current time to 500 ms: each beat is fully opaque with no transform
+      // left over (a finished animation with fill both leaves the identity matrix), and so is everything that holds the beats.
+      const waapi = await browser.measure({ ...screen, reducedMotion: false, settle: false }, () => {
+        const beats = [...document.querySelectorAll('#strip li')];
+        const inBeat = (t) => beats.some((b) => b === t || b.contains(t));
+        const holdsBeat = (t) => beats.some((b) => t.contains(b));
+        const found = document.getAnimations().filter((a) => a.effect && a.effect.target && (inBeat(a.effect.target) || holdsBeat(a.effect.target)));
+        const states = found.map((a) => ({ target: a.effect.target.tagName + (a.effect.target.id ? '#' + a.effect.target.id : '') + (a.effect.target.className ? '.' + String(a.effect.target.className).split(' ')[0] : ''), state: a.playState }));
+        const ends = found.filter((a) => inBeat(a.effect.target)).map((a) => ({ name: a.animationName || a.constructor.name, end: a.effect.getComputedTiming().endTime }));
+        for (const a of found) {
+          a.pause();
+          a.currentTime = 500;
+        }
+        const ancestors = [];
+        for (const b of beats) for (let n = b.parentElement; n; n = n.parentElement) if (!ancestors.includes(n)) ancestors.push(n);
+        // Revised after review: opacity is not all that can still be on its way at 500 ms. Read colour, opacity, filter and
+        // visibility of each beat, then finish every animation that can end (a finite end time; an infinite one is left alone)
+        // and read them again. A beat that is still fading its colour, or anything else, at 500 ms changes when it finishes.
+        const four = (b) => { const c = getComputedStyle(b); return [c.color, c.opacity, c.filter, c.visibility]; };
+        const at500 = beats.map(four);
+        // Everything else is read at 500 ms too, before any animation is finished.
+        const result = {
+          at500,
+          count: beats.length,
+          found: found.length,
+          states,
+          ends,
+          beats: beats.map((b) => ({ opacity: getComputedStyle(b).opacity, transform: getComputedStyle(b).transform })),
+          ancestors: ancestors.map((n) => ({ tag: n.tagName + (n.id ? '#' + n.id : ''), opacity: getComputedStyle(n).opacity })),
+        };
+        for (const a of found) if (Number.isFinite(a.effect.getComputedTiming().endTime)) a.finish();
+        result.finished = beats.map(four);
+        return result;
+      });
+      assert.equal(waapi.count, 3, `${at}: three beats`);
+      for (const a of waapi.states) assert.notEqual(a.state, 'paused', `${at}: an animation of ${a.target} is paused, so it would never finish`);
+      for (const a of waapi.ends) {
+        assert.ok(Number.isFinite(a.end), `${at}: an animation of a beat (${a.name}) never ends`);
+        assert.ok(a.end <= 500 + 1e-6, `${at}: an animation of a beat (${a.name}) ends at ${a.end} ms, and must end within 500 ms`);
+      }
+      waapi.beats.forEach((b, i) => {
+        assert.equal(b.opacity, '1', `${at}: beat ${i + 1} is at opacity ${b.opacity} at 500 ms, and must be fully drawn`);
+        assert.ok(b.transform === 'none' || b.transform === 'matrix(1, 0, 0, 1, 0, 0)', `${at}: beat ${i + 1} still has transform ${b.transform} at 500 ms`);
+      });
+      waapi.at500.forEach((v, i) => {
+        assert.deepEqual(v, waapi.finished[i], `${at}: beat ${i + 1} has colour, opacity, filter, visibility ${JSON.stringify(v)} at 500 ms and ${JSON.stringify(waapi.finished[i])} once its animations finish, so it is not fully drawn at 500 ms`);
+      });
+      for (const n of waapi.ancestors) assert.equal(n.opacity, '1', `${at}: ${n.tag}, which holds the beats, is at opacity ${n.opacity} at 500 ms`);
+    }
   });
 });
 

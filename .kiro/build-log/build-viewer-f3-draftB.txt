@@ -1,0 +1,472 @@
+I'll start by looking at the tree and the files involved.
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=76
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=47
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=44
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=76
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=73
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=116
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=96
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=16
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=140
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=122
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=92
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=105
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=75
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=132
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=34
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=86
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=64
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=79
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=131
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=272
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=200
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=123
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=1766
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=1015
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=573
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=97
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=84
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=51
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=1071
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=329
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=128
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=106
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=1033
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=876
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=103
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=1547
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=525
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=329
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=148
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=50
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=476
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=156
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=1052
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=111
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=176
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=216
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=47
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=104
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=88
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=132
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=403
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=536
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=156
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=275
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=56
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=68
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=44
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=403
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=487
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=415
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=90
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=189
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=406
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=93
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Now rewrite tasks 34 and 35.
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=1358
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=184
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=90
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=412
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=148
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=213
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Confirmed: no overflow without `min-width: 0`. Now the design edits.
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=1942
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=98
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Now necro-core design edit, then regenerate names and compute the gate's lists.
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=301
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=261
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=308
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=534
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=92
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=87
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=96
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=237
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Draft done; nothing is frozen or ticked, and I touched only the files you listed. In real Chrome against the unbuilt page, 16 of 47 tests across the five receipt-viewer files and the necro-core mcp file fail. All of those wait for tasks 34, 35 or 49, or are the lock-hash test (R13.9 lock test, in the table). A scratch build of tasks 34 and 35 passed every contract except the lock test and the four that need a `.git` folder (R5.2, R5.3 twice, R15.1 and R15.5 fail here because this folder is not a git repo). One run also hit "The browser did not start", which looks like the browsers' startup timeout under parallel load (it happened once in four full runs).
+
+Every "must fail" page in items 2 to 10 failed the intended contract in a scratch copy under `/tmp`. I checked the mobile-width pages (the two phone-width cases from item 2) a second time with the `innerWidth` assertion switched off. They still failed on the `clientWidth` comparisons.
+
+Two criteria contradicted each other, and I resolved them like this:
+- **Exactly one `img` in R10.4 versus task 34.** Item 10 asks the R10.4 computed test to assert exactly one `img`, but task 34 names 10.4 and runs before task 35 builds the image, so 34 could never be accepted. The R10.4 computed test asserts at most one `img`. A new R10.3 test, run with scripts on and settled at both sizes, asserts exactly one, so an image added by `app.js` fails there. Only the new R10.3 test waits for task 35.
+- **Task 35's range.** "17.1 to 17.4" records only 17.1 and 17.4, which is the bug you described.
+
+## (a) New or revised tests
+
+| file:line | test | fails now? first failing assertion, waits for |
+|---|---|---|
+| story:459 | R10.3 settled page has exactly one `img` (new) | fails: "at 1280: the settled page has exactly one img element", task 35 |
+| story:475 | R10.4 static (renamed, white-space ban restored) | passes now |
+| story:537 | R10.4 computed (revised) | fails: "at 1280: #demo-command has computed white-space nowrap or pre, not pre-wrap", task 34 |
+| first-screen:316 | R11.2 (at both sizes, Web Animations API check) | fails: "beat 1: animation-delay plus animation-duration of rise is 600 ms", task 34 |
+| first-screen-v3:522 | R9.5 at 390 (`innerWidth` equals the width asked for) | passes now |
+| first-screen-v3:562 | R12.1 (same assertion, also added to this test) | passes now |
+| play-page:495 | R13.5 (read at both sizes, `shown` check) | fails: "at 1280: the element directly before the steps list is a paragraph", task 34 |
+| play-page:681 | R13.9 control test (`innerWidth` assertion) | passes now |
+| play-page:812 | R13.10 reduced motion and 390 (`innerWidth` assertion) | passes now |
+| kiro-session:286 | R17.1 place (overlap check added) | fails: "at 1280: the page has one figure", task 35 |
+| kiro-session:333 | R17.1 caption (`shown` at both sizes) | fails: "the figure has a figcaption of its own", task 35 |
+| kiro-session:389 | R17.2 bytes (SHA-256 assertion first) | fails: "the figure has an img with a src", task 35. The SHA assertion itself passes now. |
+| kiro-session:410 | R17.2 drawn (image and caption `shown`) | fails: "the figure has an img", task 35 |
+| kiro-session:447 | R17.3 (renamed; ancestors, held animations, transitions) | fails: "at 1280: the page has a figure", task 35 |
+| mcp:294 | necro-core R10.5 (renamed; one sentence, old line gone) | fails at the `npx` command assertion, task 49, then the SKILL.md assertions |
+
+Two extra changes: I rewrote the R10.4 static rule parser because the old regex skipped the first rule inside a media query. I also added a static check that no rule other than the two command boxes sets `white-space` to `pre` or `nowrap` on a `pre` or `code` element. That check is the only way to catch `.play-result code`, whose elements do not exist until a run.
+
+R13.9 lock test (play-page:748, not revised) fails now because the contract files differ from their pins; it passes once a person freezes.
+
+## (b) What ticking 34 and then 35 requires (task 32 open)
+
+I computed this with `parseTasks` and `requiredNames` from `src/lock.js`. The task table is built the way `taskTable` builds it, because that function is not exported. The test names come from a TAP run of all 27 receipt-viewer contract files (116 names). Task 34 is ticked first, then 35 with 34 already `[x]` and 32 open. The script is `/tmp/h/required.mjs`, outside the tree.
+
+- **Task 34** names 21 criteria and requires 40 contracts: 6.1, 8.2, 8.3, 9.5, 10.1, 10.2, 10.4, 10.5, 11.1, 11.2, 11.3, 12.1, 12.2, 13.5, 13.9, 13.10, 14.1, 16.1, 16.3, 16.4 and 16.6. It requires no R17 test and no R10.3 test, so it passes on a page with no figure yet. All 40 passed there, except the lock comparison inside R13.9 and the R10.5 test of the other spec.
+- **Task 35** names 23 criteria and requires 48 contracts: 6.1, 8.2, 8.3, 9.5, 10.1, 10.3, 10.4, 10.5, 11.1, 11.3, 12.1, 12.2, 13.9, 13.10, 14.1, 16.1, 16.3, 16.4, 16.6, 17.1, 17.2, 17.3 and 17.4. The check you asked for holds:
+  - all 7 R17 tests
+  - all 3 R9.5 tests
+  - all 4 R12.1 tests
+  - R11.3
+  - jump R10.5
+  - all 3 R13.9 tests
+
+## (c) Pinned SHA-256
+
+`78ace87fbbeac3de4d5117429f2ab64e09fcd85fe7a817768ba7044aa1775211`
+
+`shasum -a 256 site/kiro-session-nov8.webp`. A `node:crypto` run gave the same value. The contract asserts it in the R17.2 bytes test. A two-frame WebP swapped in with its data: URL fails there.
+
+## (d) Not done or different
+
+- **Design wording.** The necro-core design had no sentence blaming stale locks for renames. I added the correct reason to its Nov 17 clarification and fixed the wrong one in receipt-viewer design.md.
+- **Layout numbers.** The 104, 66 and 120 px figures are yours. The "about 134 and 96" for the 36rem image is those numbers plus "about 30 px", and was not measured on Linux. My scratch build on the Mac gave 111 px spare at natural width and 140 px at 36rem.
+- **Task 34 and `min-width: 0`.** I confirmed `min-width: 0` on `.try code` is not needed: without it nothing overflows. The design says so, and the task keeps the property as a safeguard.
+- **Contract strictness.** `shown()` also requires a non-empty box, text that is not transparent, and an element not drawn beside the page. These go beyond your list.
+- **R10.5 SKILL.md check.** It uses a sentence split instead of your example regex, so "Git and Node.js 24 are what the MCP server needs" also passes. Your regex needed "MCP server" first.
+- **Unreviewed wording.** I wrote the task 34 and 35 notes and the design text myself, and none of it has been reviewed.[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=536
+
