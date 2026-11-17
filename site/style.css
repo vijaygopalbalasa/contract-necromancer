@@ -623,6 +623,11 @@ pre {
   white-space: pre-line;
 }
 
+.play-expected {
+  margin: 0.25rem 0 0;
+  color: var(--text);
+}
+
 .play-scope,
 .play-full {
   margin: 0 0 0.5rem;

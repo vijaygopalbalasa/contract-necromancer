@@ -296,8 +296,8 @@ test('R13.2 sending the tick with the planted change runs "planted" and nothing 
   const box = el(page, 'play-result-planted');
   assert.equal(box.hidden, false);
   const text = allText(box);
-  assert.match(text, /Refused/);
-  assert.match(text, /6 of the 7 contracts the browser ran fail/);
+  assert.equal(box.children[0].textContent, 'Refused. 1000 cents split three ways paid out 999.');
+  assert.doesNotMatch(text, /6 of the 7 contracts the browser ran fail/);
   const rows = find(box, (n) => n.tagName === 'LI' && n.className.split(/\s+/).includes('contract'));
   assert.equal(rows.length, 7, 'seven rows');
   assert.deepEqual(
@@ -759,4 +759,39 @@ test('R13.10 under prefers-reduced-motion: reduce the play results appear with n
     assert.deepEqual(reduced.opacities, ['1']);
     assert.equal(reduced.smooth, 'auto');
   });
+});
+
+test('R13.2 the R2.1 row of a refused run holds its own "Ann should get 334." line, outside .note and details, and no other row or the fix holds it', async () => {
+  const page = await openPlay();
+  await el(page, 'play-send').dispatch('click');
+  await settle();
+  const rowsOf = (box) => find(box, (n) => n.tagName === 'LI' && classes(n).includes('contract'));
+  const holders = (box) => find(box, (n) => n.tagName === 'P' && n.textContent === 'Ann should get 334.');
+  const planted = el(page, 'play-result-planted');
+  const lines = holders(planted);
+  assert.equal(lines.length, 1);
+  assert.ok(classes(lines[0]).includes('play-expected'));
+  const [r21, ...others] = rowsOf(planted);
+  assert.ok(/R2\.1/.test(r21.textContent));
+  assert.deepEqual(r21.children.filter((c) => c === lines[0]).length, 1, 'a child of the row');
+  const kinds = r21.children.map((c) => classes(c)[0] || c.tagName.toLowerCase());
+  assert.ok(kinds.indexOf('note') >= 0 && kinds.indexOf('note') < kinds.indexOf('play-expected'));
+  assert.ok(kinds.indexOf('play-more') === -1 || kinds.indexOf('play-expected') < kinds.indexOf('play-more'), 'before the details');
+  assert.equal(find(find(r21, (n) => classes(n).includes('note'))[0], (n) => n === lines[0]).length, 0);
+  for (const r of others) assert.equal(holders(r).length, 0);
+  await el(page, 'play-fix').dispatch('click');
+  await settle();
+  await settle();
+  const fixed = el(page, 'play-result-fixed');
+  assert.equal(holders(fixed).length, 0);
+  assert.equal(fixed.children[0].textContent, 'Accepted. All 7 contracts the browser ran pass, so the tick is accepted.');
+});
+
+test('R13.2 a refused run in which R2.1 did not fail keeps the count line and shows no Ann line', async () => {
+  const page = await openPlay({ runPlay: async ({ run }) => ({ ok: true, run, results: SEVEN.map((name) => ({ name: `${name} x`, result: name === 'R5.1' ? 'fail' : 'pass', message: name === 'R5.1' ? 'bad' : '' })), full: { passed: 17, failed: 1, total: 18 } }) });
+  await el(page, 'play-send').dispatch('click');
+  await settle();
+  const box = el(page, 'play-result-planted');
+  assert.equal(box.children[0].textContent, 'Refused. 1 of the 7 contracts the browser ran fails, so the tick is refused.');
+  assert.doesNotMatch(allText(box), /Ann should get/);
 });

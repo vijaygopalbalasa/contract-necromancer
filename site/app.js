@@ -35,6 +35,8 @@ const TIMEOUT_MS = 15000;
 // from any path the page is served under.
 const PLAY_BASE = new URL('./', import.meta.url).href;
 const PLAY_STEPS = { planted: 1, fixed: 2, byte: 3 };
+const PLANTED_EFFECT = '1000 cents split three ways paid out 999.';
+const ANN_EXPECTED = 'Ann should get 334.';
 const PLAY_ERROR = 'The run stopped with an error.';
 const RISEN_FAILED = "The page could not load the risen receipt, so it could not check it.";
 const FULL_RUN_FAILED = "The receipt that holds the gate's full run could not be loaded.";
@@ -407,13 +409,14 @@ export function start({ document, location, fetch, navigator, matchMedia, play =
   // A contract row for the browser's result, drawn with the same classes as a receipt row. A passing row is one line. A
   // failing row adds the first lines of the assertion message that failed, and the whole message behind a details element
   // when those lines leave something out.
-  function playRow(r) {
+  function playRow(r, planted = false) {
     const li = contractRow({ name: r.name, result: r.result, required: null });
     const parts = r.result === 'fail' ? messageParts(r.message) : { preview: '', full: null };
     if (parts.preview) {
       li.append(' ');
       li.appendChild(make('span', 'note', parts.preview));
     }
+    if (planted && r.result === 'fail' && /^R2\.1(?!\d)/.test(String(r.name))) li.appendChild(make('p', 'play-expected', ANN_EXPECTED));
     if (parts.full !== null) {
       const more = make('details', 'play-more');
       more.appendChild(make('summary', '', 'Full message'));
@@ -542,7 +545,11 @@ export function start({ document, location, fetch, navigator, matchMedia, play =
     if (out.ok) {
       const failed = out.results.filter((r) => r.result === 'fail').length;
       const total = out.results.length;
-      if (failed > 0) {
+      const showsAnn = kind === 'planted' && out.results.some((r) => r.result === 'fail' && /^R2\.1(?!\d)/.test(String(r.name)));
+      if (failed > 0 && showsAnn) {
+        box.appendChild(verdictLine('refused', 'Refused.', PLANTED_EFFECT));
+        words = `Step ${n} done: the gate refuses the tick. ${PLANTED_EFFECT}`;
+      } else if (failed > 0) {
         box.appendChild(verdictLine('refused', 'Refused.', `${failed} of the ${total} contracts the browser ran ${failed === 1 ? 'fails' : 'fail'}, so the tick is refused.`));
         words = `Step ${n} done: the gate refuses the tick. ${failed} of ${total} contracts fail.`;
       } else {
@@ -552,7 +559,7 @@ export function start({ document, location, fetch, navigator, matchMedia, play =
       box.appendChild(scopeLine(total, full));
       box.appendChild(fullLine);
       const list = make('ul', 'contracts');
-      for (const r of out.results) list.appendChild(playRow(r));
+      for (const r of out.results) list.appendChild(playRow(r, kind === 'planted'));
       box.appendChild(list);
     } else {
       const message = clipMessage(out.message || PLAY_ERROR);
