@@ -1,0 +1,817 @@
+{
+  "spec": "receipt-viewer",
+  "gitCommit": "b8220e9a8533720f90785238c970883e8a5b7312",
+  "requirements": {
+    "path": ".kiro/specs/receipt-viewer/requirements.md",
+    "sha256": "79747e0c91df34ca3d2009258f2af2b7b0488a0dc3bb79fa2799574f7da8633c"
+  },
+  "contracts": [
+    {
+      "name": "R9.5 (revised Nov 16) on a first visit Try it here, the real-use line and the result (the whole element at 1280x800, the two large counts at 390x844) are in the first screen, with no horizontal scrolling and the way to open your own receipt on the page",
+      "path": "contracts/receipt-viewer/above-fold-v2.contract.test.js",
+      "sha256": "203937ff6260659b53707065df6242aa54aeb532d0c4d34e7a808f147055dc8e",
+      "result": "pass"
+    },
+    {
+      "name": "R3.1 the receipt hash is recomputed with Web Crypto from canonical JSON",
+      "path": "contracts/receipt-viewer/canon.contract.test.js",
+      "sha256": "09eeb20f187b71e831344c931d30201ecf1dba65b8383ccb8f848df4d6d01eeb",
+      "result": "pass"
+    },
+    {
+      "name": "R3.2 the page and necro compute the same receipt hash",
+      "path": "contracts/receipt-viewer/canon.contract.test.js",
+      "sha256": "09eeb20f187b71e831344c931d30201ecf1dba65b8383ccb8f848df4d6d01eeb",
+      "result": "pass"
+    },
+    {
+      "name": "R7.1 the task line is shown without Markdown emphasis markers",
+      "path": "contracts/receipt-viewer/clean.contract.test.js",
+      "sha256": "d74228af5c2284836da87154b3e68f03c728878df99df492a9fcf290a3a8b252",
+      "result": "pass"
+    },
+    {
+      "name": "R7.2 requirements and the contracts inside each one are ordered by criterion number",
+      "path": "contracts/receipt-viewer/clean.contract.test.js",
+      "sha256": "d74228af5c2284836da87154b3e68f03c728878df99df492a9fcf290a3a8b252",
+      "result": "pass"
+    },
+    {
+      "name": "R7.3 a contract that was not required is labelled \"not required for this task\" when it passes and \"not built yet\" when it fails",
+      "path": "contracts/receipt-viewer/clean.contract.test.js",
+      "sha256": "d74228af5c2284836da87154b3e68f03c728878df99df492a9fcf290a3a8b252",
+      "result": "pass"
+    },
+    {
+      "name": "R7.4 the sample and the re-run command use vijaygopalbalasa/contract-necromancer, and the README gives the page address",
+      "path": "contracts/receipt-viewer/clean.contract.test.js",
+      "sha256": "d74228af5c2284836da87154b3e68f03c728878df99df492a9fcf290a3a8b252",
+      "result": "pass"
+    },
+    {
+      "name": "R12.1 one short plain line between the story strip and the verdict banner states 11 of 11 without the gate and 0 of 19 with it, across two models, and links to the experiment write-up",
+      "path": "contracts/receipt-viewer/evidence.contract.test.js",
+      "sha256": "74dcf3bb7c8169c18b6192618e82b3c6e8b0761fba5decbda5ea58694a0eecfb",
+      "result": "pass"
+    },
+    {
+      "name": "R12.1 (revised Nov 16) the line is below the strip and above the banner with scripts on and off, with no sideways scroll, and in the first screen: the whole line at 1280x800, its two large counts at 390x844; the banner need not be (Requirement 9.5 as revised)",
+      "path": "contracts/receipt-viewer/evidence.contract.test.js",
+      "sha256": "74dcf3bb7c8169c18b6192618e82b3c6e8b0761fba5decbda5ea58694a0eecfb",
+      "result": "pass"
+    },
+    {
+      "name": "R12.2 no sentence on the page says that contracts re-run only in Node, and one says that necro verify re-runs JavaScript contracts and runner contracts such as pytest alike",
+      "path": "contracts/receipt-viewer/evidence.contract.test.js",
+      "sha256": "74dcf3bb7c8169c18b6192618e82b3c6e8b0761fba5decbda5ea58694a0eecfb",
+      "result": "pass"
+    },
+    {
+      "name": "R4.1 each pinned file is fetched at the commit, hashed, and marked matching or different",
+      "path": "contracts/receipt-viewer/files.contract.test.js",
+      "sha256": "41114194aba14d19cfa52f107c5574af3e9721b66a2d6e4996da05bd45533344",
+      "result": "pass"
+    },
+    {
+      "name": "R4.2 a receipt with no commit gets a message that the file check needs a commit",
+      "path": "contracts/receipt-viewer/files.contract.test.js",
+      "sha256": "41114194aba14d19cfa52f107c5574af3e9721b66a2d6e4996da05bd45533344",
+      "result": "pass"
+    },
+    {
+      "name": "R4.3 a file in uncommitted is marked not in the commit yet, not different",
+      "path": "contracts/receipt-viewer/files.contract.test.js",
+      "sha256": "41114194aba14d19cfa52f107c5574af3e9721b66a2d6e4996da05bd45533344",
+      "result": "pass"
+    },
+    {
+      "name": "R14.1 one short line beside the page heading names Design by Contract, from Eiffel (1986), raised for coding agents",
+      "path": "contracts/receipt-viewer/first-screen-v3.contract.test.js",
+      "sha256": "5017d637585f53daebbc4ec7f4c633e86bd7bee3ae56306e917abb659554e6e1",
+      "result": "pass"
+    },
+    {
+      "name": "R14.1 the page heading and the title stay as they were",
+      "path": "contracts/receipt-viewer/first-screen-v3.contract.test.js",
+      "sha256": "5017d637585f53daebbc4ec7f4c633e86bd7bee3ae56306e917abb659554e6e1",
+      "result": "pass"
+    },
+    {
+      "name": "R14.1 with scripts off the line is drawn next to the heading, inside the first screen",
+      "path": "contracts/receipt-viewer/first-screen-v3.contract.test.js",
+      "sha256": "5017d637585f53daebbc4ec7f4c633e86bd7bee3ae56306e917abb659554e6e1",
+      "result": "pass"
+    },
+    {
+      "name": "R12.1 (revised Nov 12) one element holds the result and the round 3 caveat, with the counts marked as large numbers and one plain link",
+      "path": "contracts/receipt-viewer/first-screen-v3.contract.test.js",
+      "sha256": "5017d637585f53daebbc4ec7f4c633e86bd7bee3ae56306e917abb659554e6e1",
+      "result": "pass"
+    },
+    {
+      "name": "R14.2 the result is drawn with more weight than body text: the two counts are large, bold and at AA contrast, and so is the caveat",
+      "path": "contracts/receipt-viewer/first-screen-v3.contract.test.js",
+      "sha256": "5017d637585f53daebbc4ec7f4c633e86bd7bee3ae56306e917abb659554e6e1",
+      "result": "pass"
+    },
+    {
+      "name": "R14.3 (revised Nov 16) with scripts on, no other control above the verdict banner is filled or glowing like Try it here, and the three buttons of the open play are among those checked",
+      "path": "contracts/receipt-viewer/first-screen-v3.contract.test.js",
+      "sha256": "5017d637585f53daebbc4ec7f4c633e86bd7bee3ae56306e917abb659554e6e1",
+      "result": "pass"
+    },
+    {
+      "name": "R14.3 with scripts off Try it here is not drawn, so the page never shows a button that does nothing",
+      "path": "contracts/receipt-viewer/first-screen-v3.contract.test.js",
+      "sha256": "5017d637585f53daebbc4ec7f4c633e86bd7bee3ae56306e917abb659554e6e1",
+      "result": "pass"
+    },
+    {
+      "name": "R14.4 a receipt with no task says so in its task line in plain words, not \"none recorded\": it was written by necro check, not by a tick",
+      "path": "contracts/receipt-viewer/first-screen-v3.contract.test.js",
+      "sha256": "5017d637585f53daebbc4ec7f4c633e86bd7bee3ae56306e917abb659554e6e1",
+      "result": "pass"
+    },
+    {
+      "name": "R9.5 (revised Nov 16) at 1280x800 Try it here, the whole result element and the real-use line are in the first screen, with no sideways scroll and the way to open your own receipt on the page; the banner need not be",
+      "path": "contracts/receipt-viewer/first-screen-v3.contract.test.js",
+      "sha256": "5017d637585f53daebbc4ec7f4c633e86bd7bee3ae56306e917abb659554e6e1",
+      "result": "pass"
+    },
+    {
+      "name": "R9.5 (revised Nov 16) at 390x844 Try it here, the two large counts and the real-use line are in the first screen, with no sideways scroll and the way to open your own receipt on the page",
+      "path": "contracts/receipt-viewer/first-screen-v3.contract.test.js",
+      "sha256": "5017d637585f53daebbc4ec7f4c633e86bd7bee3ae56306e917abb659554e6e1",
+      "result": "pass"
+    },
+    {
+      "name": "R12.1 (revised Nov 16) the result is below the strip and above the banner with scripts on and off, and in the first screen: the whole element at 1280x800, its two large counts at 390x844",
+      "path": "contracts/receipt-viewer/first-screen-v3.contract.test.js",
+      "sha256": "5017d637585f53daebbc4ec7f4c633e86bd7bee3ae56306e917abb659554e6e1",
+      "result": "pass"
+    },
+    {
+      "name": "R12.2 the sentences that the idea line and the result add keep the page safe for the frozen Requirement 12.2 contract: no sentence says contracts run only in Node, and one names necro verify with JavaScript contracts and runner contracts",
+      "path": "contracts/receipt-viewer/first-screen-v3.contract.test.js",
+      "sha256": "5017d637585f53daebbc4ec7f4c633e86bd7bee3ae56306e917abb659554e6e1",
+      "result": "pass"
+    },
+    {
+      "name": "R14.5 this file pins no pixel size or position: no px unit, no assertion against a numeric box value, and the window sizes appear only in the two named constants",
+      "path": "contracts/receipt-viewer/first-screen-v3.contract.test.js",
+      "sha256": "5017d637585f53daebbc4ec7f4c633e86bd7bee3ae56306e917abb659554e6e1",
+      "result": "pass"
+    },
+    {
+      "name": "R11.1 between the heading and the verdict banner, a strip of three plain-text beats taken from the real necro demo output: Kiro says task 4 is done, the gate refuses and names R2.1 and R2.2, then it accepts, writes a receipt and necro verify prints CONFIRMED",
+      "path": "contracts/receipt-viewer/first-screen.contract.test.js",
+      "sha256": "f489748f56590b4b926917fc73c5bc165d70cdd2eebe14455ee443a3ea0c7159",
+      "result": "pass"
+    },
+    {
+      "name": "R11.2 the strip animates in CSS only, and under prefers-reduced-motion: reduce all three beats show at once with no animation",
+      "path": "contracts/receipt-viewer/first-screen.contract.test.js",
+      "sha256": "f489748f56590b4b926917fc73c5bc165d70cdd2eebe14455ee443a3ea0c7159",
+      "result": "pass"
+    },
+    {
+      "name": "R11.3 the demo command and a copy button that copies it are in the first screen at 1280x800",
+      "path": "contracts/receipt-viewer/first-screen.contract.test.js",
+      "sha256": "f489748f56590b4b926917fc73c5bc165d70cdd2eebe14455ee443a3ea0c7159",
+      "result": "pass"
+    },
+    {
+      "name": "R11.4 the sample buttons read \"A passing receipt\" and \"A refused one\", and each sample note says in one sentence what a receipt is",
+      "path": "contracts/receipt-viewer/first-screen.contract.test.js",
+      "sha256": "f489748f56590b4b926917fc73c5bc165d70cdd2eebe14455ee443a3ea0c7159",
+      "result": "pass"
+    },
+    {
+      "name": "R11.5 an inline data: SVG favicon of the gravestone mark, so the browser requests no icon file, and a title that says what the page does, with the Content Security Policy unchanged",
+      "path": "contracts/receipt-viewer/first-screen.contract.test.js",
+      "sha256": "f489748f56590b4b926917fc73c5bc165d70cdd2eebe14455ee443a3ea0c7159",
+      "result": "pass"
+    },
+    {
+      "name": "R9.1 a page with no ?receipt= and nothing pasted shows the bundled sample at once, without a click, and says it is a sample",
+      "path": "contracts/receipt-viewer/first-visit.contract.test.js",
+      "sha256": "28c9b27ddb47bd4480aed046ee0129ee2f5f9523a0012467abd31c9e2c61980f",
+      "result": "pass"
+    },
+    {
+      "name": "R9.2 the page offers a risen and a buried sample from this repository, and one click switches between them",
+      "path": "contracts/receipt-viewer/first-visit.contract.test.js",
+      "sha256": "28c9b27ddb47bd4480aed046ee0129ee2f5f9523a0012467abd31c9e2c61980f",
+      "result": "pass"
+    },
+    {
+      "name": "R9.3 a receipt shown after a user action brings the verdict banner into view, with no scrolling animation under reduced motion",
+      "path": "contracts/receipt-viewer/first-visit.contract.test.js",
+      "sha256": "28c9b27ddb47bd4480aed046ee0129ee2f5f9523a0012467abd31c9e2c61980f",
+      "result": "pass"
+    },
+    {
+      "name": "R9.4 the root element paints the whole background fixed to the window, so a tall page has no band or seam at any scroll position",
+      "path": "contracts/receipt-viewer/first-visit.contract.test.js",
+      "sha256": "28c9b27ddb47bd4480aed046ee0129ee2f5f9523a0012467abd31c9e2c61980f",
+      "result": "pass"
+    },
+    {
+      "name": "R5.2 the command for the risen sample, pasted into sh with git and node but no necro, runs to CONFIRMED and changes nothing outside the folder it clones",
+      "path": "contracts/receipt-viewer/fresh-clone.contract.test.js",
+      "sha256": "c29dcfc72f48023905c2d6f2bfbd804b854397b3a31effc70b23bbecce0caf38",
+      "result": "pass"
+    },
+    {
+      "name": "R10.5 a short plain link above the verdict banner jumps to the How it works section, and the page still passes the frozen R9.5 contract",
+      "path": "contracts/receipt-viewer/jump.contract.test.js",
+      "sha256": "2c639f5faa917bbfb8d351a05d8759d8ce17677be796ac0682f7fb0b24dfba86",
+      "result": "pass"
+    },
+    {
+      "name": "R17.1 the figure is inside the header after the line of 14.1, the real-use line still comes directly after the header, and both read without JavaScript",
+      "path": "contracts/receipt-viewer/kiro-session.contract.test.js",
+      "sha256": "555e51d5200060bb2385a5664c1d4e7829e4ac53cbec34aea587fb35c13a0837",
+      "result": "fail"
+    },
+    {
+      "name": "R17.1 the caption is the quoted words in quotation marks and then the label, as text, drawn at both window sizes with scripts off",
+      "path": "contracts/receipt-viewer/kiro-session.contract.test.js",
+      "sha256": "555e51d5200060bb2385a5664c1d4e7829e4ac53cbec34aea587fb35c13a0837",
+      "result": "fail"
+    },
+    {
+      "name": "R17.2 and R17.4 the figure holds one img, its alt text is the quoted words, and the caption quotes the same words, so the two cannot drift",
+      "path": "contracts/receipt-viewer/kiro-session.contract.test.js",
+      "sha256": "555e51d5200060bb2385a5664c1d4e7829e4ac53cbec34aea587fb35c13a0837",
+      "result": "fail"
+    },
+    {
+      "name": "R17.2 the img source is an inline data:image/webp URL that decodes to exactly the bytes of site/kiro-session-nov8.webp",
+      "path": "contracts/receipt-viewer/kiro-session.contract.test.js",
+      "sha256": "555e51d5200060bb2385a5664c1d4e7829e4ac53cbec34aea587fb35c13a0837",
+      "result": "fail"
+    },
+    {
+      "name": "R17.2 the screenshot is drawn at 1280x800 and loads, and is not drawn at 390x844, where the caption carries the words",
+      "path": "contracts/receipt-viewer/kiro-session.contract.test.js",
+      "sha256": "555e51d5200060bb2385a5664c1d4e7829e4ac53cbec34aea587fb35c13a0837",
+      "result": "fail"
+    },
+    {
+      "name": "R17.3 the figure has no link and plays no video, and neither the figure nor anything in it or around it has an animation or a transition, with motion welcome",
+      "path": "contracts/receipt-viewer/kiro-session.contract.test.js",
+      "sha256": "555e51d5200060bb2385a5664c1d4e7829e4ac53cbec34aea587fb35c13a0837",
+      "result": "fail"
+    },
+    {
+      "name": "R17.4 this file pins no pixel size or position: no px unit, no assertion against a numeric box value, and the window sizes appear only in the two named constants",
+      "path": "contracts/receipt-viewer/kiro-session.contract.test.js",
+      "sha256": "555e51d5200060bb2385a5664c1d4e7829e4ac53cbec34aea587fb35c13a0837",
+      "result": "pass"
+    },
+    {
+      "name": "R8.1 a verdict banner comes first: \"Risen\" with the count of living contracts, or \"Still buried\" with the count of failing required contracts",
+      "path": "contracts/receipt-viewer/look.contract.test.js",
+      "sha256": "9f25a545c89a9ecae5b502bfd8cedf051ccfbd0d8669b9b8e69d7dfe3da67eb4",
+      "result": "pass"
+    },
+    {
+      "name": "R8.2 an inline SVG mark is drawn in the page with no external images or fonts, and text keeps AA contrast",
+      "path": "contracts/receipt-viewer/look.contract.test.js",
+      "sha256": "9f25a545c89a9ecae5b502bfd8cedf051ccfbd0d8669b9b8e69d7dfe3da67eb4",
+      "result": "pass"
+    },
+    {
+      "name": "R8.3 every animation is off under prefers-reduced-motion: reduce",
+      "path": "contracts/receipt-viewer/look.contract.test.js",
+      "sha256": "9f25a545c89a9ecae5b502bfd8cedf051ccfbd0d8669b9b8e69d7dfe3da67eb4",
+      "result": "pass"
+    },
+    {
+      "name": "R8.4 a failing contract row is drawn as a gravestone and a passing one as alive, with CSS only",
+      "path": "contracts/receipt-viewer/look.contract.test.js",
+      "sha256": "9f25a545c89a9ecae5b502bfd8cedf051ccfbd0d8669b9b8e69d7dfe3da67eb4",
+      "result": "pass"
+    },
+    {
+      "name": "R16.7 the browser contract files are found by scanning contracts/receipt-viewer, and there are some",
+      "path": "contracts/receipt-viewer/no-browser.contract.test.js",
+      "sha256": "8d372f4a341d414f8e56f335dd64ea379593b2bdc1ba493f01cbf893730614e5",
+      "result": "pass"
+    },
+    {
+      "name": "R16.7 above-fold-v2.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error",
+      "path": "contracts/receipt-viewer/no-browser.contract.test.js",
+      "sha256": "8d372f4a341d414f8e56f335dd64ea379593b2bdc1ba493f01cbf893730614e5",
+      "result": "pass"
+    },
+    {
+      "name": "R16.7 evidence.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error",
+      "path": "contracts/receipt-viewer/no-browser.contract.test.js",
+      "sha256": "8d372f4a341d414f8e56f335dd64ea379593b2bdc1ba493f01cbf893730614e5",
+      "result": "pass"
+    },
+    {
+      "name": "R16.7 first-screen-v3.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error",
+      "path": "contracts/receipt-viewer/no-browser.contract.test.js",
+      "sha256": "8d372f4a341d414f8e56f335dd64ea379593b2bdc1ba493f01cbf893730614e5",
+      "result": "pass"
+    },
+    {
+      "name": "R16.7 first-screen.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error",
+      "path": "contracts/receipt-viewer/no-browser.contract.test.js",
+      "sha256": "8d372f4a341d414f8e56f335dd64ea379593b2bdc1ba493f01cbf893730614e5",
+      "result": "pass"
+    },
+    {
+      "name": "R16.7 jump.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error",
+      "path": "contracts/receipt-viewer/no-browser.contract.test.js",
+      "sha256": "8d372f4a341d414f8e56f335dd64ea379593b2bdc1ba493f01cbf893730614e5",
+      "result": "pass"
+    },
+    {
+      "name": "R16.7 kiro-session.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error",
+      "path": "contracts/receipt-viewer/no-browser.contract.test.js",
+      "sha256": "8d372f4a341d414f8e56f335dd64ea379593b2bdc1ba493f01cbf893730614e5",
+      "result": "pass"
+    },
+    {
+      "name": "R16.7 play-page.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error",
+      "path": "contracts/receipt-viewer/no-browser.contract.test.js",
+      "sha256": "8d372f4a341d414f8e56f335dd64ea379593b2bdc1ba493f01cbf893730614e5",
+      "result": "pass"
+    },
+    {
+      "name": "R16.7 play-run.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error",
+      "path": "contracts/receipt-viewer/no-browser.contract.test.js",
+      "sha256": "8d372f4a341d414f8e56f335dd64ea379593b2bdc1ba493f01cbf893730614e5",
+      "result": "pass"
+    },
+    {
+      "name": "R16.7 play-start.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error",
+      "path": "contracts/receipt-viewer/no-browser.contract.test.js",
+      "sha256": "8d372f4a341d414f8e56f335dd64ea379593b2bdc1ba493f01cbf893730614e5",
+      "result": "pass"
+    },
+    {
+      "name": "R16.7 rerun-box.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error",
+      "path": "contracts/receipt-viewer/no-browser.contract.test.js",
+      "sha256": "8d372f4a341d414f8e56f335dd64ea379593b2bdc1ba493f01cbf893730614e5",
+      "result": "pass"
+    },
+    {
+      "name": "R16.7 story.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error",
+      "path": "contracts/receipt-viewer/no-browser.contract.test.js",
+      "sha256": "8d372f4a341d414f8e56f335dd64ea379593b2bdc1ba493f01cbf893730614e5",
+      "result": "pass"
+    },
+    {
+      "name": "R16.7 try-first.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error",
+      "path": "contracts/receipt-viewer/no-browser.contract.test.js",
+      "sha256": "8d372f4a341d414f8e56f335dd64ea379593b2bdc1ba493f01cbf893730614e5",
+      "result": "pass"
+    },
+    {
+      "name": "R5.3 the command takes the verifier from vijaygopalbalasa/contract-necromancer at one fixed commit, inside the folder it clones, never from the repository being verified",
+      "path": "contracts/receipt-viewer/pinned-verifier.contract.test.js",
+      "sha256": "f34b7a477f66a55ec5504f51a6bdc4ee82f699ef85840f5c766fee750c4fcc63",
+      "result": "pass"
+    },
+    {
+      "name": "R5.3 a project that ships its own bin/necro.js that always prints CONFIRMED cannot make the command print CONFIRMED",
+      "path": "contracts/receipt-viewer/pinned-verifier.contract.test.js",
+      "sha256": "f34b7a477f66a55ec5504f51a6bdc4ee82f699ef85840f5c766fee750c4fcc63",
+      "result": "pass"
+    },
+    {
+      "name": "R5.3 the page says next to the command that verifying runs the project's own contracts, which is code from that repository",
+      "path": "contracts/receipt-viewer/pinned-verifier.contract.test.js",
+      "sha256": "f34b7a477f66a55ec5504f51a6bdc4ee82f699ef85840f5c766fee750c4fcc63",
+      "result": "pass"
+    },
+    {
+      "name": "R13.1 site/play holds byte for byte copies of every file the risen and buried ledger receipts pin, the risen receipt is the gate's for task 4, and every pin matches the copies (the buried split.js with the planted change)",
+      "path": "contracts/receipt-viewer/play-files.contract.test.js",
+      "sha256": "17ec1594d20893c35d7f41da82acde42c8984d7de17bce727656dd563f5ad1bd",
+      "result": "pass"
+    },
+    {
+      "name": "R13.4 one changed byte of src/split.js gives the line necro verify prints, and the page code gives the same line",
+      "path": "contracts/receipt-viewer/play-files.contract.test.js",
+      "sha256": "17ec1594d20893c35d7f41da82acde42c8984d7de17bce727656dd563f5ad1bd",
+      "result": "pass"
+    },
+    {
+      "name": "R13.2 on the page, sending the tick with the planted change shows the tick refused: R2.1, R2.2 and R5.1 to R5.4 as gravestones with their assertion messages, R5.5 alive, drawn like the receipt rows",
+      "path": "contracts/receipt-viewer/play-page.contract.test.js",
+      "sha256": "9107584904301f22a10f2187e1c83aad55df7ddb9afd72c16be5094e5cb3eda1",
+      "result": "pass"
+    },
+    {
+      "name": "R13.2 a failing row on the page shows its contract name and at most the first three lines of its assertion message, with the full message behind a details element in that row; a passing row stays one line of state and name",
+      "path": "contracts/receipt-viewer/play-page.contract.test.js",
+      "sha256": "9107584904301f22a10f2187e1c83aad55df7ddb9afd72c16be5094e5cb3eda1",
+      "result": "pass"
+    },
+    {
+      "name": "R13.3 on the page, applying the fix shows all seven alive, the tick accepted, and the risen receipt with its hash recomputed (MATCH) and every pinned file hashed again from the copies",
+      "path": "contracts/receipt-viewer/play-page.contract.test.js",
+      "sha256": "9107584904301f22a10f2187e1c83aad55df7ddb9afd72c16be5094e5cb3eda1",
+      "result": "pass"
+    },
+    {
+      "name": "R13.4 on the page, changing one byte of src/split.js shows exactly the line necro verify prints, MISMATCH. Files changed: src/split.js., and marks only that file as different",
+      "path": "contracts/receipt-viewer/play-page.contract.test.js",
+      "sha256": "9107584904301f22a10f2187e1c83aad55df7ddb9afd72c16be5094e5cb3eda1",
+      "result": "pass"
+    },
+    {
+      "name": "R13.5 next to each browser run the page says the browser ran 7 of the ledger's 18 contracts and the other 11 start the command line, with the gate's full run on the same code, naming what failed: 9 of 18 failing for the planted change, 18 of 18 passing for the fix, and all of it before the contract rows",
+      "path": "contracts/receipt-viewer/play-page.contract.test.js",
+      "sha256": "9107584904301f22a10f2187e1c83aad55df7ddb9afd72c16be5094e5cb3eda1",
+      "result": "pass"
+    },
+    {
+      "name": "R13.10 the status line that repeats each result is visually hidden but stays in the polite live region, and the play opens with a small margin above its heading",
+      "path": "contracts/receipt-viewer/play-page.contract.test.js",
+      "sha256": "9107584904301f22a10f2187e1c83aad55df7ddb9afd72c16be5094e5cb3eda1",
+      "result": "pass"
+    },
+    {
+      "name": "R13.8 on the page, a worker that cannot start, a copy that fails its hash check and a run that takes too long each end in one plain sentence and the gate's full run, the buttons come back and nothing says running",
+      "path": "contracts/receipt-viewer/play-page.contract.test.js",
+      "sha256": "9107584904301f22a10f2187e1c83aad55df7ddb9afd72c16be5094e5cb3eda1",
+      "result": "pass"
+    },
+    {
+      "name": "R13.9 (revised Nov 16) with scripts on a start control is drawn in the first screen at 1280x800 and 390x844, at least 24 by 24, beside the command; the play is already open directly after the result element, and using the control moves focus to Send the tick with the play in the window",
+      "path": "contracts/receipt-viewer/play-page.contract.test.js",
+      "sha256": "9107584904301f22a10f2187e1c83aad55df7ddb9afd72c16be5094e5cb3eda1",
+      "result": "pass"
+    },
+    {
+      "name": "R13.9 (revised Nov 16) the contracts for Requirements 9, 10, 11 and 12 are pinned by the lock and equal their pins, and the R9.5 contract passes on its own against this page",
+      "path": "contracts/receipt-viewer/play-page.contract.test.js",
+      "sha256": "9107584904301f22a10f2187e1c83aad55df7ddb9afd72c16be5094e5cb3eda1",
+      "result": "pass"
+    },
+    {
+      "name": "R13.10 the play works with the keyboard alone: Tab reaches the start control, Enter on it moves focus into the open play and Enter runs each step, focus moves to each result, and a polite live region announces it",
+      "path": "contracts/receipt-viewer/play-page.contract.test.js",
+      "sha256": "9107584904301f22a10f2187e1c83aad55df7ddb9afd72c16be5094e5cb3eda1",
+      "result": "pass"
+    },
+    {
+      "name": "R13.10 under prefers-reduced-motion: reduce the results appear with no animation; at 390 px the page does not scroll sideways; the policy is unchanged; the play fetches only from its own origin and adds no sentence that breaks R12.2",
+      "path": "contracts/receipt-viewer/play-page.contract.test.js",
+      "sha256": "9107584904301f22a10f2187e1c83aad55df7ddb9afd72c16be5094e5cb3eda1",
+      "result": "pass"
+    },
+    {
+      "name": "R13.2 with the planted change the worker runs the two JavaScript-only ledger contract files against the copies and reports R2.1, R2.2 and R5.1 to R5.4 failing, each with its assertion message, and R5.5 passing",
+      "path": "contracts/receipt-viewer/play-run.contract.test.js",
+      "sha256": "7443e0edd1a70a38a17bb7bbf18d29d564b64afca57c861949a202a00303c828",
+      "result": "pass"
+    },
+    {
+      "name": "R13.3 with the fix the worker runs the same seven contracts against the copies as they are and all seven pass",
+      "path": "contracts/receipt-viewer/play-run.contract.test.js",
+      "sha256": "7443e0edd1a70a38a17bb7bbf18d29d564b64afca57c861949a202a00303c828",
+      "result": "pass"
+    },
+    {
+      "name": "R13.6 the worker runs a copy only after its hash matches the pin, builds modules only from those files and the two stand-ins, refuses an import it does not know, and takes no code from any input",
+      "path": "contracts/receipt-viewer/play-run.contract.test.js",
+      "sha256": "7443e0edd1a70a38a17bb7bbf18d29d564b64afca57c861949a202a00303c828",
+      "result": "pass"
+    },
+    {
+      "name": "R13.7 for the planted change and for the fix, each of the seven contracts has the same result in the browser as in a run of necro check ledger in Node.js on the same code",
+      "path": "contracts/receipt-viewer/play-run.contract.test.js",
+      "sha256": "7443e0edd1a70a38a17bb7bbf18d29d564b64afca57c861949a202a00303c828",
+      "result": "pass"
+    },
+    {
+      "name": "R13.8 a hash failure, a copy that cannot be loaded, a worker that cannot start and a run that takes too long each end in one plain sentence with the gate's full run from the receipts, never \"running\"",
+      "path": "contracts/receipt-viewer/play-run.contract.test.js",
+      "sha256": "7443e0edd1a70a38a17bb7bbf18d29d564b64afca57c861949a202a00303c828",
+      "result": "pass"
+    },
+    {
+      "name": "R13.9 Try it here is drawn as the main action, clearly different from Copy, both buttons at least 24 by 24 and at AA contrast, and the start control inside the first screen at 1280x800 and 390x844 in the browser that runs it (revised Nov 16: the verdict banner follows the open play and is no longer required there)",
+      "path": "contracts/receipt-viewer/play-start.contract.test.js",
+      "sha256": "d251ba334bb861fb5ae3a5a1adfc756d62fdecdb2da31b74f85ac98527c2248f",
+      "result": "pass"
+    },
+    {
+      "name": "R1.3 input that is not a valid receipt gets one plain sentence",
+      "path": "contracts/receipt-viewer/receipt.contract.test.js",
+      "sha256": "26957b085388526c95090abe2549da8a92ae4a7ee70c5f410959e8689f31d5cc",
+      "result": "pass"
+    },
+    {
+      "name": "R2.1 every contract is listed by name with pass or fail, with spec, commit and receipt hash",
+      "path": "contracts/receipt-viewer/receipt.contract.test.js",
+      "sha256": "26957b085388526c95090abe2549da8a92ae4a7ee70c5f410959e8689f31d5cc",
+      "result": "pass"
+    },
+    {
+      "name": "R2.2 contracts named R<n>.<m> are grouped by requirement",
+      "path": "contracts/receipt-viewer/receipt.contract.test.js",
+      "sha256": "26957b085388526c95090abe2549da8a92ae4a7ee70c5f410959e8689f31d5cc",
+      "result": "pass"
+    },
+    {
+      "name": "R1.2 a raw GitHub receipt link in the query is accepted and any other link is refused",
+      "path": "contracts/receipt-viewer/repo.contract.test.js",
+      "sha256": "d15bbc20079dd6623e6681bf8e17cec3e20547aa35a27dd8a16a290f8f453281",
+      "result": "pass"
+    },
+    {
+      "name": "R5.1 a copyable command clones the repository at the commit and runs necro verify on the receipt",
+      "path": "contracts/receipt-viewer/repo.contract.test.js",
+      "sha256": "d15bbc20079dd6623e6681bf8e17cec3e20547aa35a27dd8a16a290f8f453281",
+      "result": "pass"
+    },
+    {
+      "name": "R15.1 for a receipt with a valid commit and no uncommitted files the page offers the re-run command, and the command checks the commit out on a named branch, so a clone of the checkout has origin/HEAD",
+      "path": "contracts/receipt-viewer/rerun-box.contract.test.js",
+      "sha256": "cdb5b087d04be250cb67f9aad3d7b1111b4f423b5571c61fcded5562b07fbecb",
+      "result": "pass"
+    },
+    {
+      "name": "R15.2 for a receipt with uncommitted files the page offers no clone command, says the receipt was written before those files were committed, names them, and gives necro verify with a copy button",
+      "path": "contracts/receipt-viewer/rerun-box.contract.test.js",
+      "sha256": "cdb5b087d04be250cb67f9aad3d7b1111b4f423b5571c61fcded5562b07fbecb",
+      "result": "pass"
+    },
+    {
+      "name": "R15.3 for a receipt with no commit (the buried sample, a pasted demo receipt) the page offers no clone command, says it can be re-run only in the folder that made it, and gives necro verify with a copy button",
+      "path": "contracts/receipt-viewer/rerun-box.contract.test.js",
+      "sha256": "cdb5b087d04be250cb67f9aad3d7b1111b4f423b5571c61fcded5562b07fbecb",
+      "result": "pass"
+    },
+    {
+      "name": "R15.4 the page decides between the three from gitCommit and uncommitted alone, with no network request, and the Check files button keeps working",
+      "path": "contracts/receipt-viewer/rerun-box.contract.test.js",
+      "sha256": "cdb5b087d04be250cb67f9aad3d7b1111b4f423b5571c61fcded5562b07fbecb",
+      "result": "pass"
+    },
+    {
+      "name": "R15.5 without the network, the command for a committed receipt reaches CONFIRMED from a clone of this repository, including for a receipt that pins R5.2's contract, and receipts with uncommitted files or no commit get no clone command",
+      "path": "contracts/receipt-viewer/rerun-box.contract.test.js",
+      "sha256": "cdb5b087d04be250cb67f9aad3d7b1111b4f423b5571c61fcded5562b07fbecb",
+      "result": "pass"
+    },
+    {
+      "name": "R6.2 the page ships a real sample receipt from this repository and loads it when no receipt is open",
+      "path": "contracts/receipt-viewer/sample.contract.test.js",
+      "sha256": "87ce1e690ac80e4c32994f8b5592ff4978974e41cdf599c361c0d6c58d893d78",
+      "result": "pass"
+    },
+    {
+      "name": "R10.1 the page heading is one sentence naming the idea, above the sample bar",
+      "path": "contracts/receipt-viewer/story.contract.test.js",
+      "sha256": "b76a53acd2c9972ddb659790c6df1013e5ea6393d71f7bab572b598967b17085",
+      "result": "pass"
+    },
+    {
+      "name": "R10.2 (revised Nov 16) a \"How it works\" section follows the play, before the sample bar, with three steps, the demo command, a copy button and what the demo needs",
+      "path": "contracts/receipt-viewer/story.contract.test.js",
+      "sha256": "b76a53acd2c9972ddb659790c6df1013e5ea6393d71f7bab572b598967b17085",
+      "result": "pass"
+    },
+    {
+      "name": "R10.3 plain links to the demo video and the repository, with the Content Security Policy unchanged and nothing embedded",
+      "path": "contracts/receipt-viewer/story.contract.test.js",
+      "sha256": "b76a53acd2c9972ddb659790c6df1013e5ea6393d71f7bab572b598967b17085",
+      "result": "fail"
+    },
+    {
+      "name": "R10.3 with scripts on and settled the page has exactly one img element, the screenshot of Requirement 17, so an image added by the script counts against the one allowed",
+      "path": "contracts/receipt-viewer/story.contract.test.js",
+      "sha256": "b76a53acd2c9972ddb659790c6df1013e5ea6393d71f7bab572b598967b17085",
+      "result": "fail"
+    },
+    {
+      "name": "R10.4 the title starts with \"Contract Necromancer\", the page reads in the order it is drawn, and How it works has no fixed width and nothing in it that does not wrap but the demo command",
+      "path": "contracts/receipt-viewer/story.contract.test.js",
+      "sha256": "b76a53acd2c9972ddb659790c6df1013e5ea6393d71f7bab572b598967b17085",
+      "result": "pass"
+    },
+    {
+      "name": "R10.4 (revised Nov 17) the demo command stays on one line in its own box that scrolls sideways, every other code block wraps, and the page does not scroll sideways at 390x844",
+      "path": "contracts/receipt-viewer/story.contract.test.js",
+      "sha256": "b76a53acd2c9972ddb659790c6df1013e5ea6393d71f7bab572b598967b17085",
+      "result": "pass"
+    },
+    {
+      "name": "R6.1 dark theme with AA contrast, alive and gravestone contract styles, and a layout that can wrap at phone width",
+      "path": "contracts/receipt-viewer/style.contract.test.js",
+      "sha256": "47e17273eef50b96c039f01d4ab62d0c907bffe8f911b03d90a5dc1d4c19a08f",
+      "result": "pass"
+    },
+    {
+      "name": "R16.1 with scripts on the play is open on load without pressing Try it here, directly after the result element; with scripts off neither the play nor Try it here is drawn",
+      "path": "contracts/receipt-viewer/try-first.contract.test.js",
+      "sha256": "8b56574b777e5bcaadaede15285921a52db78d7862835efb1addd3e93fcc667f",
+      "result": "pass"
+    },
+    {
+      "name": "R16.1 Try it here moves focus to the Send the tick button and leaves the play heading and that button inside the window",
+      "path": "contracts/receipt-viewer/try-first.contract.test.js",
+      "sha256": "8b56574b777e5bcaadaede15285921a52db78d7862835efb1addd3e93fcc667f",
+      "result": "pass"
+    },
+    {
+      "name": "R16.1 the page reads in this order: brand and heading, real-use line, story strip, result element, play, How it works, sample bar, open your own receipt, verdict banner, receipt, hash check, re-run command, file check, about (the order sentence of 16.2 too)",
+      "path": "contracts/receipt-viewer/try-first.contract.test.js",
+      "sha256": "8b56574b777e5bcaadaede15285921a52db78d7862835efb1addd3e93fcc667f",
+      "result": "pass"
+    },
+    {
+      "name": "R16.2 the sample receipt shows its verdict banner and one summary line per requirement, each contract list folded, and one control that unfolds all of them",
+      "path": "contracts/receipt-viewer/try-first.contract.test.js",
+      "sha256": "8b56574b777e5bcaadaede15285921a52db78d7862835efb1addd3e93fcc667f",
+      "result": "pass"
+    },
+    {
+      "name": "R16.2 a requirement can be folded or unfolded on its own, and a second receipt starts folded again",
+      "path": "contracts/receipt-viewer/try-first.contract.test.js",
+      "sha256": "8b56574b777e5bcaadaede15285921a52db78d7862835efb1addd3e93fcc667f",
+      "result": "pass"
+    },
+    {
+      "name": "R16.3 after the page heading one line on real use, readable without JavaScript, says the gate refused Kiro's first tick on a real repository and the finished fix passed all six frozen contracts and was merged, with a link to pull request 29 and one to the case study in this repository",
+      "path": "contracts/receipt-viewer/try-first.contract.test.js",
+      "sha256": "8b56574b777e5bcaadaede15285921a52db78d7862835efb1addd3e93fcc667f",
+      "result": "pass"
+    },
+    {
+      "name": "R16.3 with scripts off the real-use line is drawn, with its two links, after the page heading and before the story strip",
+      "path": "contracts/receipt-viewer/try-first.contract.test.js",
+      "sha256": "8b56574b777e5bcaadaede15285921a52db78d7862835efb1addd3e93fcc667f",
+      "result": "pass"
+    },
+    {
+      "name": "R16.4 the result element also gives the size of the experiment, two models and the runs per cell, with the counts exactly as experiments/README.md gives them",
+      "path": "contracts/receipt-viewer/try-first.contract.test.js",
+      "sha256": "8b56574b777e5bcaadaede15285921a52db78d7862835efb1addd3e93fcc667f",
+      "result": "pass"
+    },
+    {
+      "name": "R16.4 with scripts off the size of the experiment is drawn inside the result element",
+      "path": "contracts/receipt-viewer/try-first.contract.test.js",
+      "sha256": "8b56574b777e5bcaadaede15285921a52db78d7862835efb1addd3e93fcc667f",
+      "result": "pass"
+    },
+    {
+      "name": "R16.6 with scripts off the first screen's text is drawn: the heading, the idea line, the real-use line, the three beats and the result element",
+      "path": "contracts/receipt-viewer/try-first.contract.test.js",
+      "sha256": "8b56574b777e5bcaadaede15285921a52db78d7862835efb1addd3e93fcc667f",
+      "result": "pass"
+    },
+    {
+      "name": "R16.6 the static summary in index.html gives the sample receipt's verdict and one line per requirement, and says the same as site/sample-receipt.json",
+      "path": "contracts/receipt-viewer/try-first.contract.test.js",
+      "sha256": "8b56574b777e5bcaadaede15285921a52db78d7862835efb1addd3e93fcc667f",
+      "result": "pass"
+    },
+    {
+      "name": "R16.6 with scripts off the static summary is drawn; with scripts on it gives way to the live receipt, whose summary lines are the same lines",
+      "path": "contracts/receipt-viewer/try-first.contract.test.js",
+      "sha256": "8b56574b777e5bcaadaede15285921a52db78d7862835efb1addd3e93fcc667f",
+      "result": "pass"
+    },
+    {
+      "name": "R16.5 this file pins no pixel size or position: no px unit, no assertion against a numeric box value, and the window sizes appear only in the two named constants",
+      "path": "contracts/receipt-viewer/try-first.contract.test.js",
+      "sha256": "8b56574b777e5bcaadaede15285921a52db78d7862835efb1addd3e93fcc667f",
+      "result": "pass"
+    },
+    {
+      "name": "R10.3 the page's demo video link is the same URL as the first youtu.be link in README.md, and the page has no other youtu.be link",
+      "path": "contracts/receipt-viewer/video-link.contract.test.js",
+      "sha256": "b604ee402a0f1003baafe00a27492b9d4e87f6522ae368a0e4b81d3eb9b60922",
+      "result": "pass"
+    },
+    {
+      "name": "R10.3 every youtu.be link in README.md is the page's video link, before and after the final cut replaces the earlier one",
+      "path": "contracts/receipt-viewer/video-link.contract.test.js",
+      "sha256": "b604ee402a0f1003baafe00a27492b9d4e87f6522ae368a0e4b81d3eb9b60922",
+      "result": "pass"
+    }
+  ],
+  "sources": [
+    {
+      "path": "site/app.js",
+      "sha256": "aaa05aeb440da58afc544dd42feeb096b322e69c56521f3a0287e8ce89770682"
+    },
+    {
+      "path": "site/lib/canon.js",
+      "sha256": "4b1b1133cc02b53351060f6b5296b5f3f194c56f1bfd46b29e6f8f28cd4e142e"
+    },
+    {
+      "path": "site/lib/files.js",
+      "sha256": "8bee4cd78ef67e5adcd282e1bbca3101266f93a29aa9e0c970972c233981813a"
+    },
+    {
+      "path": "site/lib/play-loader.js",
+      "sha256": "6c57d672ef95cdfca09da5bc104cc592c1347df3aaea670ffa32e2109728df60"
+    },
+    {
+      "path": "site/lib/play-node-assert.js",
+      "sha256": "0054b13167e31ce2e690bd4ab368f0cdd8990f7362262def1247d930d0b39d7b"
+    },
+    {
+      "path": "site/lib/play-node-test.js",
+      "sha256": "09ced50b8cd04154af837fda88231cb043dc059d5dc1f4ae060b46f8899f18f4"
+    },
+    {
+      "path": "site/lib/play-worker.js",
+      "sha256": "b8eedc1d68e4cc50918a0d37b835e914f78f2400f1ea9ba2f625d51e8dccdf35"
+    },
+    {
+      "path": "site/lib/play.js",
+      "sha256": "90afc4c706b52747c7fe7cf94a35988f2ed97b011886b63064ca04ba237ae5eb"
+    },
+    {
+      "path": "site/lib/receipt.js",
+      "sha256": "8023f9888d54ae03378ec24be8a3e84f8125ca8128f249f078bb7c012f3fcfac"
+    },
+    {
+      "path": "site/lib/repo.js",
+      "sha256": "93ca65af298d025deac7ba82d7d431b34485e4d52a1f286c8788963d71e23f8e"
+    },
+    {
+      "path": "site/lib/samples.js",
+      "sha256": "e64795e8aac3a857a060f1b32abcbe6a875f8c7ef4ab1a9e28fdb2f7a7aca2aa"
+    },
+    {
+      "path": "src/canon.js",
+      "sha256": "2b239ed2ebc3639d7444fb6ae952f38881e43fec2b80b4cee43893e172792ae8"
+    },
+    {
+      "path": "src/junit.js",
+      "sha256": "fde41825825f598b59d1ff9d9a34822a379dbcadffbc8e9056f631719da3689a"
+    },
+    {
+      "path": "src/receipts.js",
+      "sha256": "3060105d624fa76e577e6b5c88ebd3cc119f8a67390bdc96f6ed0787ba508a4f"
+    },
+    {
+      "path": "src/runners.js",
+      "sha256": "ed3a67ac58b5ad58d6b8f580f3a9d4ac9fab9f22edc5a64ff95ba09a3b6613dd"
+    }
+  ],
+  "task": {
+    "id": "34",
+    "line": "34. The truth fixes on the page (Req 6.1, 8.2, 8.3, 9.5, 10.1, 10.2, 10.4, 10.5, 11.1, 11.2, 11.3, 12.1, 12.2, 13.5, 13.9, 13.10, 14.1, 16.1, 16.3, 16.4, 16.6; revised Nov 17: 10.1, 10.2, 10.4, 11.2, 11.3, 13.5, 14.1)"
+  },
+  "required": [
+    "R10.1 the page heading is one sentence naming the idea, above the sample bar",
+    "R10.2 (revised Nov 16) a \"How it works\" section follows the play, before the sample bar, with three steps, the demo command, a copy button and what the demo needs",
+    "R10.4 (revised Nov 17) the demo command stays on one line in its own box that scrolls sideways, every other code block wraps, and the page does not scroll sideways at 390x844",
+    "R10.4 the title starts with \"Contract Necromancer\", the page reads in the order it is drawn, and How it works has no fixed width and nothing in it that does not wrap but the demo command",
+    "R10.5 a short plain link above the verdict banner jumps to the How it works section, and the page still passes the frozen R9.5 contract",
+    "R11.1 between the heading and the verdict banner, a strip of three plain-text beats taken from the real necro demo output: Kiro says task 4 is done, the gate refuses and names R2.1 and R2.2, then it accepts, writes a receipt and necro verify prints CONFIRMED",
+    "R11.2 the strip animates in CSS only, and under prefers-reduced-motion: reduce all three beats show at once with no animation",
+    "R11.3 the demo command and a copy button that copies it are in the first screen at 1280x800",
+    "R12.1 (revised Nov 12) one element holds the result and the round 3 caveat, with the counts marked as large numbers and one plain link",
+    "R12.1 (revised Nov 16) the line is below the strip and above the banner with scripts on and off, with no sideways scroll, and in the first screen: the whole line at 1280x800, its two large counts at 390x844; the banner need not be (Requirement 9.5 as revised)",
+    "R12.1 (revised Nov 16) the result is below the strip and above the banner with scripts on and off, and in the first screen: the whole element at 1280x800, its two large counts at 390x844",
+    "R12.1 one short plain line between the story strip and the verdict banner states 11 of 11 without the gate and 0 of 19 with it, across two models, and links to the experiment write-up",
+    "R12.2 no sentence on the page says that contracts re-run only in Node, and one says that necro verify re-runs JavaScript contracts and runner contracts such as pytest alike",
+    "R12.2 the sentences that the idea line and the result add keep the page safe for the frozen Requirement 12.2 contract: no sentence says contracts run only in Node, and one names necro verify with JavaScript contracts and runner contracts",
+    "R13.10 the play works with the keyboard alone: Tab reaches the start control, Enter on it moves focus into the open play and Enter runs each step, focus moves to each result, and a polite live region announces it",
+    "R13.10 the status line that repeats each result is visually hidden but stays in the polite live region, and the play opens with a small margin above its heading",
+    "R13.10 under prefers-reduced-motion: reduce the results appear with no animation; at 390 px the page does not scroll sideways; the policy is unchanged; the play fetches only from its own origin and adds no sentence that breaks R12.2",
+    "R13.5 next to each browser run the page says the browser ran 7 of the ledger's 18 contracts and the other 11 start the command line, with the gate's full run on the same code, naming what failed: 9 of 18 failing for the planted change, 18 of 18 passing for the fix, and all of it before the contract rows",
+    "R13.9 (revised Nov 16) the contracts for Requirements 9, 10, 11 and 12 are pinned by the lock and equal their pins, and the R9.5 contract passes on its own against this page",
+    "R13.9 (revised Nov 16) with scripts on a start control is drawn in the first screen at 1280x800 and 390x844, at least 24 by 24, beside the command; the play is already open directly after the result element, and using the control moves focus to Send the tick with the play in the window",
+    "R13.9 Try it here is drawn as the main action, clearly different from Copy, both buttons at least 24 by 24 and at AA contrast, and the start control inside the first screen at 1280x800 and 390x844 in the browser that runs it (revised Nov 16: the verdict banner follows the open play and is no longer required there)",
+    "R14.1 one short line beside the page heading names Design by Contract, from Eiffel (1986), raised for coding agents",
+    "R14.1 the page heading and the title stay as they were",
+    "R14.1 with scripts off the line is drawn next to the heading, inside the first screen",
+    "R16.1 Try it here moves focus to the Send the tick button and leaves the play heading and that button inside the window",
+    "R16.1 the page reads in this order: brand and heading, real-use line, story strip, result element, play, How it works, sample bar, open your own receipt, verdict banner, receipt, hash check, re-run command, file check, about (the order sentence of 16.2 too)",
+    "R16.1 with scripts on the play is open on load without pressing Try it here, directly after the result element; with scripts off neither the play nor Try it here is drawn",
+    "R16.3 after the page heading one line on real use, readable without JavaScript, says the gate refused Kiro's first tick on a real repository and the finished fix passed all six frozen contracts and was merged, with a link to pull request 29 and one to the case study in this repository",
+    "R16.3 with scripts off the real-use line is drawn, with its two links, after the page heading and before the story strip",
+    "R16.4 the result element also gives the size of the experiment, two models and the runs per cell, with the counts exactly as experiments/README.md gives them",
+    "R16.4 with scripts off the size of the experiment is drawn inside the result element",
+    "R16.6 the static summary in index.html gives the sample receipt's verdict and one line per requirement, and says the same as site/sample-receipt.json",
+    "R16.6 with scripts off the first screen's text is drawn: the heading, the idea line, the real-use line, the three beats and the result element",
+    "R16.6 with scripts off the static summary is drawn; with scripts on it gives way to the live receipt, whose summary lines are the same lines",
+    "R6.1 dark theme with AA contrast, alive and gravestone contract styles, and a layout that can wrap at phone width",
+    "R8.2 an inline SVG mark is drawn in the page with no external images or fonts, and text keeps AA contrast",
+    "R8.3 every animation is off under prefers-reduced-motion: reduce",
+    "R9.5 (revised Nov 16) at 1280x800 Try it here, the whole result element and the real-use line are in the first screen, with no sideways scroll and the way to open your own receipt on the page; the banner need not be",
+    "R9.5 (revised Nov 16) at 390x844 Try it here, the two large counts and the real-use line are in the first screen, with no sideways scroll and the way to open your own receipt on the page",
+    "R9.5 (revised Nov 16) on a first visit Try it here, the real-use line and the result (the whole element at 1280x800, the two large counts at 390x844) are in the first screen, with no horizontal scrolling and the way to open your own receipt on the page"
+  ],
+  "uncommitted": [],
+  "receiptHash": "a396e294ac01bd55d3f5833c85e1514b2e766b9016bc55f592d18bc3a4fd812b",
+  "createdAt": "2026-11-17T10:18:35.692Z"
+}

@@ -15,7 +15,7 @@ const read = (p) => fs.readFileSync(new URL(p, root), 'utf8');
 const html = read('site/index.html');
 const css = read('site/style.css').replace(/\/\*[\s\S]*?\*\//g, '');
 
-const IDEA = 'Kiro cannot call a task done until its frozen contracts pass.';
+const IDEA = 'A Kiro task is done only when its frozen contracts pass.';
 const DEMO = 'npx -y github:vijaygopalbalasa/contract-necromancer demo';
 const VIDEO = 'https://youtu.be/TYrSyhIYqlk';
 const REPO = 'https://github.com/vijaygopalbalasa/contract-necromancer';
@@ -165,15 +165,35 @@ test('R10.4 the title starts with "Contract Necromancer" and the story reads in 
   assert.doesNotMatch(css, /direction\s*:\s*rtl/);
 });
 
-test('R10.4 the section can wrap at phone width: no fixed widths, and the command block wraps', () => {
+test('R10.4 the section can wrap at phone width: no fixed widths, and only the demo command stays on one line', () => {
   assert.match(html, /<meta[^>]*name="viewport"/);
+  const OWN = /^(?:\.demo|pre\.demo|\.demo code|#demo-command)$/;
   const rules = [...css.matchAll(/(?:^|})\s*([^{}@]+){([^{}]*)}/g)].filter((m) => /\.(how|steps|demo|story)\b|#how\b/.test(m[1]));
   assert.ok(rules.length > 0, 'style.css styles the section');
   for (const m of rules) {
     assert.doesNotMatch(m[2], /(?:^|[\s;])(?:min-)?width\s*:\s*[\d.]+(?:px|rem|em|vw)/, `${m[1].trim()} sets a fixed width`);
+    if (m[1].split(',').every((sel) => OWN.test(sel.trim()))) continue;
     assert.doesNotMatch(m[2], /white-space\s*:\s*(?:pre|nowrap)\s*(?:;|$)/, `${m[1].trim()} stops wrapping`);
   }
   assert.match(css, /pre\s*{[^}]*white-space:\s*pre-wrap/);
+  const all = [...css.matchAll(/(?:^|[}{])\s*([^{}@]+){([^{}]*)}/g)];
+  const own = (re) => all.filter((m) => re.test(m[1].split(',').map((x) => x.trim()).join(' ')));
+  const has = (rules, re) => rules.some((m) => re.test(m[2]));
+  const demo = all.filter((m) => m[1].split(',').some((s) => /^\.demo$/.test(s.trim())));
+  const tryCode = all.filter((m) => m[1].split(',').some((s) => /^\.try code$/.test(s.trim())));
+  assert.ok(has(demo, /white-space\s*:\s*(?:pre|nowrap)\s*;/) && has(demo, /overflow-x\s*:\s*(?:auto|scroll)/), '.demo scrolls sideways on one line');
+  assert.ok(has(tryCode, /white-space\s*:\s*(?:pre|nowrap)\s*;/) && has(tryCode, /overflow-x\s*:\s*(?:auto|scroll)/), '.try code scrolls sideways on one line');
+  assert.ok(has(tryCode, /min-width\s*:\s*0\s*;/), '.try code keeps min-width 0');
+  assert.ok(!has(tryCode, /overflow-wrap\s*:\s*anywhere/), '.try code no longer breaks inside words');
+  void own;
+  // No other rule sets white-space nowrap or pre on a pre or a code, or on anything that is not the command's own box.
+  for (const m of all) {
+    if (!/white-space\s*:\s*(?:pre|nowrap)\s*(?:;|$)/.test(m[2])) continue;
+    const sels = m[1].split(',').map((x) => x.trim());
+    const ok = sels.every((x) => OWN.test(x) || x === '.try code');
+    const touchesCode = sels.some((x) => /(^|[\s>+~])(pre|code)\b|#local-command|\.play-result|\.facts|\.steps/.test(x));
+    if (touchesCode) assert.ok(ok, `${m[1].trim()} must not stop wrapping`);
+  }
 });
 
 // ---- R10.5 ----

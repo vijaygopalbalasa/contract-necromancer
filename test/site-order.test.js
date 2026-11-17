@@ -42,7 +42,7 @@ test('the jump link stays in the sample bar and points to How it works', () => {
 test('the only headings above the verdict banner are the page heading, the play heading and How it works', () => {
   const above = html.slice(0, idAt('verdict'));
   const headings = [...above.matchAll(/<(h[1-6])\b[^>]*>([\s\S]*?)<\/\1>/g)].map((m) => `${m[1]} ${m[2].replace(/<[^>]*>/g, '').trim()}`);
-  assert.deepEqual(headings, ['h1 Kiro cannot call a task done until its frozen contracts pass.', 'h3 Try the gate on this page', 'h2 How it works']);
+  assert.deepEqual(headings, ['h1 A Kiro task is done only when its frozen contracts pass.', 'h3 Try the gate on this page', 'h2 How it works']);
 });
 
 test('the play buttons do not use the fill or glow rules of Try it here', () => {

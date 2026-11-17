@@ -12,7 +12,7 @@ const root = new URL('../', import.meta.url);
 const read = (p) => fs.readFileSync(new URL(p, root), 'utf8');
 const html = read('site/index.html');
 
-const IDEA = 'Kiro cannot call a task done until its frozen contracts pass.';
+const IDEA = 'A Kiro task is done only when its frozen contracts pass.';
 const RAISED = 'Design by Contract, from Eiffel (1986), raised for coding agents.';
 const EXPERIMENT = 'https://github.com/vijaygopalbalasa/contract-necromancer/blob/main/experiments/README.md';
 const TITLE = 'Contract Necromancer: a task is done only when frozen contracts pass';
