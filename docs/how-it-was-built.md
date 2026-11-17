@@ -26,7 +26,9 @@ a commit that says so.
 The tool did not gate its own first tasks. The early tasks of `necro-core` were built before that spec was frozen, and they
 have no receipts. After the first freeze, the tool gated its own development: Kiro drafted the contracts from the
 requirements, a person reviewed and froze them, and the later tasks were ticked through the gate. The receipt viewer was
-built under the gate from its first task.
+built under the gate from its first task. Kiro drafts each freeze in a copy of the repository with the hooks off, so the
+task lines it writes then end with "do not tick task N": that binds the drafting session. After a person freezes, a build
+session is asked to tick the task, and the gate decides.
 
 Moments from the logs and the git history:
 

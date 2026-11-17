@@ -140,14 +140,14 @@ Three receipts to try, from a clone of this repository
 
 ```
 node bin/necro.js verify .necro/receipts/necro-core/1a24cb6dc025da9a0a09db0eea2332ee3120362730ab51ef33226539f9347c1f.json
-node bin/necro.js verify .necro/receipts/receipt-viewer/7b3af55f2c621a0dc7a318b3a4bc5051f9565d006d89b1ef330046c95faa0af7.json
+node bin/necro.js verify .necro/receipts/receipt-viewer/5b11925f3c30c6d9900cece15925c49be56652f215ffdd04ce40dd6df8f54174.json
 node bin/necro.js verify examples/pumpkin-ledger/.necro/receipts/ledger/86e6ee251eaacbfb90f621d45fd704e904bca4e803c0a2a644f9ce2f094a5801.json
 ```
 
 The first is the tool's own: `CONFIRMED` with pytest installed, `INCOMPLETE` naming R13.6 without it. The second is the
 page's: `CONFIRMED` with Chrome or Chromium, `INCOMPLETE` naming the missing browser without one. The third needs only
-Node.js. Older receipts print `SUPERSEDED`. Re-running all 122 receipts here with pytest and Chrome installed gives 10
-`CONFIRMED`, 109 `SUPERSEDED`, 3 `OTHER PROJECT` (the case-study copies) and no `MISMATCH`; without pytest, 5 of the 10
+Node.js. Older receipts print `SUPERSEDED`. Re-running all 125 receipts here with pytest and Chrome installed gives 10
+`CONFIRMED`, 112 `SUPERSEDED`, 3 `OTHER PROJECT` (the case-study copies) and no `MISMATCH`; without pytest, 5 of the 10
 print `INCOMPLETE` instead, and without a browser, the page's 2 newest receipts do.
 
 ## See it
