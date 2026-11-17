@@ -778,15 +778,11 @@ pre {
   line-height: 1.35;
 }
 
-/* The real Kiro session (Requirement 17): on its own row under the mark and the title. The screenshot is drawn from 52rem up;
-   below that the caption carries its words. Nothing in or around the figure animates or transitions. */
+/* The real Kiro session (Requirement 17): on its own row under the mark and the title. The quoted words are larger from 52rem up;
+   the label is the link to the evidence image. Nothing in or around the figure animates or transitions. */
 figure.session {
   flex: 0 0 100%;
   margin: 0;
-}
-
-figure.session img {
-  display: none;
 }
 
 figure.session figcaption {
@@ -800,11 +796,8 @@ figure.session .session-label {
 }
 
 @media (min-width: 52rem) {
-  figure.session img {
-    display: block;
-    max-width: 36rem;
-    height: auto;
-    margin-bottom: 0.25rem;
+  figure.session .session-words {
+    font-size: 1.25rem;
   }
 }
 

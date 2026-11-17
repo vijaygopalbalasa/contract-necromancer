@@ -1012,7 +1012,7 @@
             "R9.5 (revised Nov 16) on a first visit Try it here, the real-use line and the result (the whole element at 1280x800, the two large counts at 390x844) are in the first screen, with no horizontal scrolling and the way to open your own receipt on the page"
           ],
           "path": "contracts/receipt-viewer/above-fold-v2.contract.test.js",
-          "sha256": "203937ff6260659b53707065df6242aa54aeb532d0c4d34e7a808f147055dc8e"
+          "sha256": "9dd66cbb821ba14b3abdc01b19435a136d6ba0d701b27bb8e104400499ce1245"
         },
         {
           "name": "canon",
@@ -1042,7 +1042,7 @@
             "R12.2 no sentence on the page says that contracts re-run only in Node, and one says that necro verify re-runs JavaScript contracts and runner contracts such as pytest alike"
           ],
           "path": "contracts/receipt-viewer/evidence.contract.test.js",
-          "sha256": "74dcf3bb7c8169c18b6192618e82b3c6e8b0761fba5decbda5ea58694a0eecfb"
+          "sha256": "260f195c71e2276f55ea7a9018fd4b5521557eb4679f59ea13c27fb372051a47"
         },
         {
           "name": "files",
@@ -1072,7 +1072,7 @@
             "R14.5 this file pins no pixel size or position: no px unit, no assertion against a numeric box value, and the window sizes appear only in the two named constants"
           ],
           "path": "contracts/receipt-viewer/first-screen-v3.contract.test.js",
-          "sha256": "5017d637585f53daebbc4ec7f4c633e86bd7bee3ae56306e917abb659554e6e1"
+          "sha256": "814a37069f6ffe05fed9e2cf94a0092845e55c0936504cdb3a7b15f9667e691f"
         },
         {
           "name": "first-screen",
@@ -1084,7 +1084,7 @@
             "R11.5 an inline data: SVG favicon of the gravestone mark, so the browser requests no icon file, and a title that says what the page does, with the Content Security Policy unchanged"
           ],
           "path": "contracts/receipt-viewer/first-screen.contract.test.js",
-          "sha256": "f489748f56590b4b926917fc73c5bc165d70cdd2eebe14455ee443a3ea0c7159"
+          "sha256": "d527c2dff7a3edb7778dee8765921fd75016b6179d308d9e0d7337e886b792ee"
         },
         {
           "name": "first-visit",
@@ -1118,14 +1118,14 @@
           "names": [
             "R17.1 the figure is inside the header after the line of 14.1, the real-use line still comes directly after the header, and both read without JavaScript",
             "R17.1 the caption is the quoted words in quotation marks and then the label, as text, drawn at both window sizes with scripts off",
-            "R17.2 and R17.4 the figure holds one img, its alt text is the quoted words, and the caption quotes the same words, so the two cannot drift",
-            "R17.2 the img source is an inline data:image/webp URL that decodes to exactly the bytes of site/kiro-session-nov8.webp",
-            "R17.2 the screenshot is drawn at 1280x800 and loads, and is not drawn at 390x844, where the caption carries the words",
-            "R17.3 the figure has no link and plays no video, and neither the figure nor anything in it or around it has an animation or a transition, with motion welcome",
+            "R17.2 the figure holds no img and no other picture, with scripts off and with scripts on and settled, at both window sizes",
+            "R17.3 and R17.4 the label is the figure's only link, an a element whose text is exactly the label and whose href is the evidence image on GitHub, and the file at that path exists with the SHA-256 a person froze",
+            "R17.1 at 1280x800 the quoted words are set larger than the body text, compared with each other and not against a pixel value, and at 390x844 the caption is still shown",
+            "R17.3 the label's a is the only control in the figure, which plays no video, and neither the figure nor anything in it or around it has an animation or a transition, with motion welcome",
             "R17.4 this file pins no pixel size or position: no px unit, no assertion against a numeric box value, and the window sizes appear only in the two named constants"
           ],
           "path": "contracts/receipt-viewer/kiro-session.contract.test.js",
-          "sha256": "555e51d5200060bb2385a5664c1d4e7829e4ac53cbec34aea587fb35c13a0837"
+          "sha256": "69bd2bc290e72cc100d95137248c0459788f5863463eb4b307ad4b5c57426880"
         },
         {
           "name": "look",
@@ -1182,6 +1182,7 @@
           "names": [
             "R13.2 on the page, sending the tick with the planted change shows the tick refused: R2.1, R2.2 and R5.1 to R5.4 as gravestones with their assertion messages, R5.5 alive, drawn like the receipt rows",
             "R13.2 a failing row on the page shows its contract name and at most the first three lines of its assertion message, with the full message behind a details element in that row; a passing row stays one line of state and name",
+            "R13.2 after Send the tick the R2.1 row shows \"Ann should get 334.\" in an element of its own, outside the assertion message and with nothing to open, drawn at 1280x800 and 390x844, and the fix's result does not show it",
             "R13.3 on the page, applying the fix shows all seven alive, the tick accepted, and the risen receipt with its hash recomputed (MATCH) and every pinned file hashed again from the copies",
             "R13.4 on the page, changing one byte of src/split.js shows exactly the line necro verify prints, MISMATCH. Files changed: src/split.js., and marks only that file as different",
             "R13.5 next to each browser run the page says the browser ran 7 of the ledger's 18 contracts and the other 11 start the command line, with the gate's full run on the same code, naming what failed: 9 of 18 failing for the planted change, 18 of 18 passing for the fix, and all of it before the contract rows",
@@ -1193,7 +1194,7 @@
             "R13.10 under prefers-reduced-motion: reduce the results appear with no animation; at 390 px the page does not scroll sideways; the policy is unchanged; the play fetches only from its own origin and adds no sentence that breaks R12.2"
           ],
           "path": "contracts/receipt-viewer/play-page.contract.test.js",
-          "sha256": "9107584904301f22a10f2187e1c83aad55df7ddb9afd72c16be5094e5cb3eda1"
+          "sha256": "a7b8011a8abcd861e4fa946dca3a3b0715c88df433afa39d83630ed5e00e9357"
         },
         {
           "name": "play-run",
@@ -1205,7 +1206,7 @@
             "R13.8 a hash failure, a copy that cannot be loaded, a worker that cannot start and a run that takes too long each end in one plain sentence with the gate's full run from the receipts, never \"running\""
           ],
           "path": "contracts/receipt-viewer/play-run.contract.test.js",
-          "sha256": "7443e0edd1a70a38a17bb7bbf18d29d564b64afca57c861949a202a00303c828"
+          "sha256": "f7aa375a5f2f4d1f0e346ff1889b654e4b82ad7c64e82a343a43c7773a12f16e"
         },
         {
           "name": "play-start",
@@ -1213,7 +1214,7 @@
             "R13.9 Try it here is drawn as the main action, clearly different from Copy, both buttons at least 24 by 24 and at AA contrast, and the start control inside the first screen at 1280x800 and 390x844 in the browser that runs it (revised Nov 16: the verdict banner follows the open play and is no longer required there)"
           ],
           "path": "contracts/receipt-viewer/play-start.contract.test.js",
-          "sha256": "d251ba334bb861fb5ae3a5a1adfc756d62fdecdb2da31b74f85ac98527c2248f"
+          "sha256": "8e97810a2a0dfa7f112ffb3a74cf54b71ab7e99dc20ea17d7a58a2a619569cc3"
         },
         {
           "name": "receipt",
@@ -1260,12 +1261,12 @@
             "R10.1 the page heading is one sentence naming the idea, above the sample bar",
             "R10.2 (revised Nov 16) a \"How it works\" section follows the play, before the sample bar, with three steps, the demo command, a copy button and what the demo needs",
             "R10.3 plain links to the demo video and the repository, with the Content Security Policy unchanged and nothing embedded",
-            "R10.3 with scripts on and settled the page has exactly one img element, the screenshot of Requirement 17, so an image added by the script counts against the one allowed",
+            "R10.3 with scripts on and settled the page has no img element, so an image added by the script counts against the none allowed",
             "R10.4 the title starts with \"Contract Necromancer\", the page reads in the order it is drawn, and How it works has no fixed width and nothing in it that does not wrap but the demo command",
             "R10.4 (revised Nov 17) the demo command stays on one line in its own box that scrolls sideways, every other code block wraps, and the page does not scroll sideways at 390x844"
           ],
           "path": "contracts/receipt-viewer/story.contract.test.js",
-          "sha256": "b76a53acd2c9972ddb659790c6df1013e5ea6393d71f7bab572b598967b17085"
+          "sha256": "ff2ee4930de596650a831501dd7d97284788643fcd2a40d1d25dadc592bd40ed"
         },
         {
           "name": "style",
@@ -1293,7 +1294,7 @@
             "R16.5 this file pins no pixel size or position: no px unit, no assertion against a numeric box value, and the window sizes appear only in the two named constants"
           ],
           "path": "contracts/receipt-viewer/try-first.contract.test.js",
-          "sha256": "8b56574b777e5bcaadaede15285921a52db78d7862835efb1addd3e93fcc667f"
+          "sha256": "e8d483be07423d11f95b174bf1988ba39f2c6b2d689c12542d12688c8e718d96"
         },
         {
           "name": "video-link",
@@ -1305,10 +1306,10 @@
           "sha256": "b604ee402a0f1003baafe00a27492b9d4e87f6522ae368a0e4b81d3eb9b60922"
         }
       ],
-      "frozenAt": "2026-11-17T09:28:53.965Z",
+      "frozenAt": "2026-11-17T19:30:33.227Z",
       "requirements": {
         "path": ".kiro/specs/receipt-viewer/requirements.md",
-        "sha256": "79747e0c91df34ca3d2009258f2af2b7b0488a0dc3bb79fa2799574f7da8633c"
+        "sha256": "4115cdb6939d257b035f871241290864901445cc431a65e541f64a6bdafaaa0b"
       },
       "tasks": {
         "1": {
@@ -1622,6 +1623,55 @@
             "17.4"
           ],
           "text": "35. The real Kiro session on the first screen (Req 6.1, 8.2, 8.3, 9.5, 10.1, 10.2, 10.3, 10.4, 10.5, 11.1, 11.2, 11.3, 12.1, 12.2, 13.5, 13.9, 13.10, 14.1, 16.1, 16.3, 16.4, 16.6, 17.1, 17.2, 17.3, 17.4; new or revised Nov 17: 10.3, 17.1, 17.2, 17.3, 17.4)"
+        },
+        "36": {
+          "criteria": [
+            "6.1",
+            "8.2",
+            "8.3",
+            "9.5",
+            "10.1",
+            "10.2",
+            "10.3",
+            "10.4",
+            "10.5",
+            "11.1",
+            "11.2",
+            "11.3",
+            "12.1",
+            "12.2",
+            "13.5",
+            "13.9",
+            "13.10",
+            "14.1",
+            "14.3",
+            "16.1",
+            "16.3",
+            "16.4",
+            "16.6",
+            "17.1",
+            "17.2",
+            "17.3",
+            "17.4"
+          ],
+          "text": "36. The figure is Kiro's words, and the label opens the evidence image (Req 6.1, 8.2, 8.3, 9.5, 10.1, 10.2, 10.3, 10.4, 10.5, 11.1, 11.2, 11.3, 12.1, 12.2, 13.5, 13.9, 13.10, 14.1, 14.3, 16.1, 16.3, 16.4, 16.6, 17.1, 17.2, 17.3, 17.4; revised Nov 18: 10.3, 17.1, 17.2, 17.3, 17.4)"
+        },
+        "37": {
+          "criteria": [
+            "6.1",
+            "8.2",
+            "8.3",
+            "8.4",
+            "12.2",
+            "13.2",
+            "13.3",
+            "13.4",
+            "13.5",
+            "13.8",
+            "13.9",
+            "13.10"
+          ],
+          "text": "37. The refusal says what the planted change does, and the R2.1 row shows Ann's share (Req 6.1, 8.2, 8.3, 8.4, 12.2, 13.2, 13.3, 13.4, 13.5, 13.8, 13.9, 13.10; revised Nov 18: 13.2)"
         }
       },
       "ticked": [
@@ -1651,6 +1701,8 @@
         "30. The play opens on load and the page reads in the new order (Req 16.1, 16.5, and 9.5, 10.1, 10.2, 10.5, 12.1, 13.9, 14.3 as revised)",
         "31. The receipt folded by requirement, and the static summary for scripts off (Req 16.2, 16.5, 16.6)",
         "33. Browser contracts skip, with a reason, when there is no browser (Req 16.7)",
+        "34. The truth fixes on the page (Req 6.1, 8.2, 8.3, 9.5, 10.1, 10.2, 10.4, 10.5, 11.1, 11.2, 11.3, 12.1, 12.2, 13.5, 13.9, 13.10, 14.1, 16.1, 16.3, 16.4, 16.6; revised Nov 17: 10.1, 10.2, 10.4, 11.2, 11.3, 13.5, 14.1)",
+        "35. The real Kiro session on the first screen (Req 6.1, 8.2, 8.3, 9.5, 10.1, 10.2, 10.3, 10.4, 10.5, 11.1, 11.2, 11.3, 12.1, 12.2, 13.5, 13.9, 13.10, 14.1, 16.1, 16.3, 16.4, 16.6, 17.1, 17.2, 17.3, 17.4; new or revised Nov 17: 10.3, 17.1, 17.2, 17.3, 17.4)",
         "4. **Summary and grouping by requirement** (Req 2.1, 2.2)",
         "5. **Repository and URL parsing** (Req 1.2)",
         "6. **Run command** (Req 5.1)",

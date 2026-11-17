@@ -65,6 +65,22 @@ function serveSite(requests) {
   return new Promise((resolve) => server.listen(0, '127.0.0.1', () => resolve(server)));
 }
 
+// Wait for Chrome to write DevToolsActivePort (a port line and a path line) and give back the endpoint.
+export async function waitForEndpoint(profile) {
+  let endpoint = null;
+  for (let i = 0; i < 200 && !endpoint; i += 1) {
+    try {
+      const [port, wsPath] = fs.readFileSync(path.join(profile, 'DevToolsActivePort'), 'utf8').trim().split('\n');
+      if (port && wsPath) endpoint = `ws://127.0.0.1:${port}${wsPath}`;
+    } catch {
+      // Not there yet. A file that exists but is not fully written is not there either.
+    }
+    if (!endpoint) await sleep(100);
+  }
+  if (!endpoint) throw new Error('The browser did not start. Check that it runs headless, then run this again.');
+  return endpoint;
+}
+
 function connect(url) {
   const ws = new WebSocket(url);
   let next = 0;
@@ -130,16 +146,7 @@ export async function withBrowser(run) {
   );
   let client = null;
   try {
-    let endpoint = null;
-    for (let i = 0; i < 200 && !endpoint; i += 1) {
-      try {
-        const [port, wsPath] = fs.readFileSync(path.join(profile, 'DevToolsActivePort'), 'utf8').trim().split('\n');
-        if (port && wsPath) endpoint = `ws://127.0.0.1:${port}${wsPath}`;
-      } catch {
-        await sleep(100);
-      }
-    }
-    if (!endpoint) throw new Error('The browser did not start. Check that it runs headless, then run this again.');
+    const endpoint = await waitForEndpoint(profile);
     client = connect(endpoint);
     await client.opened;
 

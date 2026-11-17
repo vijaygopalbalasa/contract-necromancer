@@ -204,8 +204,6 @@ test('index.html and style.css load nothing external: no images, fonts, imports 
   assert.doesNotMatch(html, /<(picture|object|embed|iframe)\b/i);
   for (const m of html.matchAll(/<(\w+)\b[^>]*\s(?:src|href)="([^"]*)"/g)) {
     if (m[1] === 'a') continue;
-    // The one img is the inline screenshot of Requirement 17: a data: URL, so it loads nothing.
-    if (m[1] === 'img' && /^data:image\/webp;base64,/.test(m[2])) continue;
     // The one other thing a <link> may name is the inline favicon, which is data and loads nothing (Req 11.5).
     if (m[1] === 'link' && /^data:image\/svg\+xml,/.test(m[2])) continue;
     assert.ok(['style.css', 'main.js'].includes(m[2]), `<${m[1]}> loads ${m[2]}`);
