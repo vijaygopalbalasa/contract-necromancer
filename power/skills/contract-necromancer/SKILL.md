@@ -12,7 +12,8 @@ its contracts pass.
 
 ## Setup (once per machine and project)
 
-The power's MCP server runs the `necro` command, so put it on your PATH first:
+The MCP server starts through npx and needs Node.js 24 and git.
+Install the `necro` command line only to run it yourself:
 `npm install -g github:vijaygopalbalasa/contract-necromancer` (Node.js 24 or newer, no dependencies), or `npm link` from
 a clone. Then, in your project, run `necro init` to add the hooks, the steering file and the `necromancer` custom agent,
 trust the workspace in Kiro, and quit and reopen Kiro so the hooks load.

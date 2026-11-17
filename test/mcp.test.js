@@ -637,14 +637,14 @@ test('R10.5 power/plugin.json has the Agent Plugins 1.0.0 fields', () => {
   for (const k of p.keywords) assert.ok(typeof k === 'string' && k.length > 0);
 });
 
-test('R10.5 power/mcp.json starts necro mcp over stdio', () => {
+test('R10.5 power/mcp.json starts the MCP server through npx over stdio', () => {
   const m = readJson('mcp.json');
   assert.equal(m.$schema, 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json');
   const servers = Object.values(m.mcpServers);
   assert.equal(servers.length, 1);
   assert.equal(servers[0].type, 'stdio');
-  assert.equal(servers[0].command, 'necro');
-  assert.deepEqual(servers[0].args, ['mcp']);
+  assert.equal(servers[0].command, 'npx');
+  assert.deepEqual(servers[0].args, ['-y', 'github:vijaygopalbalasa/contract-necromancer', 'mcp']);
 });
 
 test('R10.5 power/skills/contract-necromancer/SKILL.md has front matter and teaches the workflow', () => {
@@ -663,4 +663,9 @@ test('R10.5 power/skills/contract-necromancer/SKILL.md has front matter and teac
   assert.match(body, /person[\s\S]{0,60}freez|freez[\s\S]{0,60}person/i);
   assert.match(body, /never[\s\S]{0,40}necro freeze|do not[\s\S]{0,40}necro freeze/i);
   assert.match(body, /before[\s\S]{0,60}tick/i);
+  const sentences = body.split(/(?<=[.!?])\s+/);
+  assert.ok(sentences.some((x) => /\bMCP server\b/i.test(x) && /\bNode\.js 24\b/.test(x) && /\bgit\b/i.test(x)));
+  assert.ok(!sentences.some((x) => /\bMCP server\b/i.test(x) && /\bnecro\b/.test(x) && /\bPATH\b/.test(x)));
+  assert.doesNotMatch(body, /The power's MCP server runs the `necro` command/);
+  assert.doesNotMatch(body, /MCP server[^.]*\bruns?\b[^.]*\bnecro\b[^.]*\bPATH\b/i);
 });

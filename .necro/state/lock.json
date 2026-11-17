@@ -254,10 +254,10 @@
             "R10.2 tools/list offers exactly necro_status, necro_check and necro_verify with input schemas, and each tool returns what Requirement 10 says",
             "R10.3 no tool freezes, edits or ticks, and an unknown tool, an unfrozen spec and malformed JSON each get an error reply while the server keeps running",
             "R10.4 a spec name or receipt path outside the project root is refused, also through ../ and a symbolic link",
-            "R10.5 power/ holds plugin.json with the Agent Plugins 1.0.0 fields, mcp.json that starts necro mcp, and a SKILL.md that teaches the workflow"
+            "R10.5 power/ holds plugin.json with the Agent Plugins 1.0.0 fields, mcp.json that starts the MCP server through npx, and a SKILL.md that teaches the workflow and says in one sentence that the MCP server needs Node.js 24 and git, without saying it runs necro from the PATH"
           ],
           "path": "contracts/necro-core/mcp.contract.test.js",
-          "sha256": "6b8ee5f9313e810e534b8f74cc75380e13f7f4102ff5ba9bdc27e473abc656f5"
+          "sha256": "8b75d341b4f393ed97c335c516b91e3b04d46e2d478de6763d1c88795a2d520d"
         },
         {
           "name": "person-freeze",
@@ -506,10 +506,10 @@
           "sha256": "a6938c76c75ea62351737a67ea61e10faa3264c7ac31641837ba2d08f811564c"
         }
       ],
-      "frozenAt": "2026-11-15T21:11:28.506Z",
+      "frozenAt": "2026-11-17T09:33:15.151Z",
       "requirements": {
         "path": ".kiro/specs/necro-core/requirements.md",
-        "sha256": "7a4eb7eae418d723c6cc8f83d6458fdda2f907d4bcd75990924d463d8903b1d9"
+        "sha256": "9fd92d935c74bc527ee22ecf1fb7616751e0708009833a10d32449e5bf4da131"
       },
       "tasks": {
         "1": {
@@ -887,6 +887,12 @@
           ],
           "text": "48. **Say OTHER PROJECT wherever the receipt file is filed** (Req 6.15, 6.7, 6.9)"
         },
+        "49": {
+          "criteria": [
+            "10.5"
+          ],
+          "text": "49. **Start the power's MCP server through npx** (Req 10.5 as revised Nov 17)"
+        },
         "3b": {
           "criteria": [
             "4.7",
@@ -985,6 +991,8 @@
         "44. **Say OTHER PROJECT for a receipt from elsewhere** (Req 6.15)",
         "45. **Name all five verify outcomes in the MCP tool, README and docs** (Req 10.2, 6.13 to 6.15)",
         "46. **Count a contract that cannot run as failing, and name what is missing, outside verify** (Req 6.16)",
+        "47. **Count a Node contract that skips with `cannot run:` as not run in verify** (Req 6.17)",
+        "48. **Say OTHER PROJECT wherever the receipt file is filed** (Req 6.15, 6.7, 6.9)",
         "5. **Verify** (Req 6.1, 6.2, 6.3)",
         "6. **PreToolUse: block edits to frozen files** (Req 3.1, 3.2, 3.4)",
         "7. **Gate on marking a task done** (Req 4.1, 4.2, 4.3, 4.4, 4.5, 4.6)",
@@ -1064,7 +1072,7 @@
             "R14.5 this file pins no pixel size or position: no px unit, no assertion against a numeric box value, and the window sizes appear only in the two named constants"
           ],
           "path": "contracts/receipt-viewer/first-screen-v3.contract.test.js",
-          "sha256": "927b29972a91909ca8960e577c4fe3c69d236937d1cf2e10126714abd33520e2"
+          "sha256": "5017d637585f53daebbc4ec7f4c633e86bd7bee3ae56306e917abb659554e6e1"
         },
         {
           "name": "first-screen",
@@ -1076,7 +1084,7 @@
             "R11.5 an inline data: SVG favicon of the gravestone mark, so the browser requests no icon file, and a title that says what the page does, with the Content Security Policy unchanged"
           ],
           "path": "contracts/receipt-viewer/first-screen.contract.test.js",
-          "sha256": "1b705b8734a182b107ceb6b31c56ccff82747f6700c8b54fbba34b408f6db6a8"
+          "sha256": "f489748f56590b4b926917fc73c5bc165d70cdd2eebe14455ee443a3ea0c7159"
         },
         {
           "name": "first-visit",
@@ -1106,6 +1114,20 @@
           "sha256": "2c639f5faa917bbfb8d351a05d8759d8ce17677be796ac0682f7fb0b24dfba86"
         },
         {
+          "name": "kiro-session",
+          "names": [
+            "R17.1 the figure is inside the header after the line of 14.1, the real-use line still comes directly after the header, and both read without JavaScript",
+            "R17.1 the caption is the quoted words in quotation marks and then the label, as text, drawn at both window sizes with scripts off",
+            "R17.2 and R17.4 the figure holds one img, its alt text is the quoted words, and the caption quotes the same words, so the two cannot drift",
+            "R17.2 the img source is an inline data:image/webp URL that decodes to exactly the bytes of site/kiro-session-nov8.webp",
+            "R17.2 the screenshot is drawn at 1280x800 and loads, and is not drawn at 390x844, where the caption carries the words",
+            "R17.3 the figure has no link and plays no video, and neither the figure nor anything in it or around it has an animation or a transition, with motion welcome",
+            "R17.4 this file pins no pixel size or position: no px unit, no assertion against a numeric box value, and the window sizes appear only in the two named constants"
+          ],
+          "path": "contracts/receipt-viewer/kiro-session.contract.test.js",
+          "sha256": "555e51d5200060bb2385a5664c1d4e7829e4ac53cbec34aea587fb35c13a0837"
+        },
+        {
           "name": "look",
           "names": [
             "R8.1 a verdict banner comes first: \"Risen\" with the count of living contracts, or \"Still buried\" with the count of failing required contracts",
@@ -1125,10 +1147,12 @@
             "R16.7 first-screen-v3.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error",
             "R16.7 first-screen.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error",
             "R16.7 jump.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error",
+            "R16.7 kiro-session.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error",
             "R16.7 play-page.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error",
             "R16.7 play-run.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error",
             "R16.7 play-start.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error",
             "R16.7 rerun-box.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error",
+            "R16.7 story.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error",
             "R16.7 try-first.contract.test.js with CHROME_PATH set to a path that does not exist skips its browser tests with a reason that starts with \"cannot run:\" and names the browser and CHROME_PATH, and none fails with the missing-browser error"
           ],
           "path": "contracts/receipt-viewer/no-browser.contract.test.js",
@@ -1169,7 +1193,7 @@
             "R13.10 under prefers-reduced-motion: reduce the results appear with no animation; at 390 px the page does not scroll sideways; the policy is unchanged; the play fetches only from its own origin and adds no sentence that breaks R12.2"
           ],
           "path": "contracts/receipt-viewer/play-page.contract.test.js",
-          "sha256": "375dd244dad5dfe21d0cdf977714ac489de4beacd2fffc23ef40c8c4553f2212"
+          "sha256": "9107584904301f22a10f2187e1c83aad55df7ddb9afd72c16be5094e5cb3eda1"
         },
         {
           "name": "play-run",
@@ -1236,10 +1260,12 @@
             "R10.1 the page heading is one sentence naming the idea, above the sample bar",
             "R10.2 (revised Nov 16) a \"How it works\" section follows the play, before the sample bar, with three steps, the demo command, a copy button and what the demo needs",
             "R10.3 plain links to the demo video and the repository, with the Content Security Policy unchanged and nothing embedded",
-            "R10.4 the title starts with \"Contract Necromancer\", the page reads in the order it is drawn, and it wraps at phone width"
+            "R10.3 with scripts on and settled the page has exactly one img element, the screenshot of Requirement 17, so an image added by the script counts against the one allowed",
+            "R10.4 the title starts with \"Contract Necromancer\", the page reads in the order it is drawn, and How it works has no fixed width and nothing in it that does not wrap but the demo command",
+            "R10.4 (revised Nov 17) the demo command stays on one line in its own box that scrolls sideways, every other code block wraps, and the page does not scroll sideways at 390x844"
           ],
           "path": "contracts/receipt-viewer/story.contract.test.js",
-          "sha256": "cbf4756864a9d62fd7aecfa45e26e40855fe6ba9471c2cea26472df91d8725db"
+          "sha256": "b76a53acd2c9972ddb659790c6df1013e5ea6393d71f7bab572b598967b17085"
         },
         {
           "name": "style",
@@ -1279,10 +1305,10 @@
           "sha256": "b604ee402a0f1003baafe00a27492b9d4e87f6522ae368a0e4b81d3eb9b60922"
         }
       ],
-      "frozenAt": "2026-11-16T16:40:59.869Z",
+      "frozenAt": "2026-11-17T09:28:53.965Z",
       "requirements": {
         "path": ".kiro/specs/receipt-viewer/requirements.md",
-        "sha256": "25ae5b4d16dc59f79cc5b6668961bead96a2d00f4704f2fc1b21713b2ae3aeae"
+        "sha256": "79747e0c91df34ca3d2009258f2af2b7b0488a0dc3bb79fa2799574f7da8633c"
       },
       "tasks": {
         "1": {
@@ -1539,6 +1565,63 @@
             "16.7"
           ],
           "text": "33. Browser contracts skip, with a reason, when there is no browser (Req 16.7)"
+        },
+        "34": {
+          "criteria": [
+            "6.1",
+            "8.2",
+            "8.3",
+            "9.5",
+            "10.1",
+            "10.2",
+            "10.4",
+            "10.5",
+            "11.1",
+            "11.2",
+            "11.3",
+            "12.1",
+            "12.2",
+            "13.5",
+            "13.9",
+            "13.10",
+            "14.1",
+            "16.1",
+            "16.3",
+            "16.4",
+            "16.6"
+          ],
+          "text": "34. The truth fixes on the page (Req 6.1, 8.2, 8.3, 9.5, 10.1, 10.2, 10.4, 10.5, 11.1, 11.2, 11.3, 12.1, 12.2, 13.5, 13.9, 13.10, 14.1, 16.1, 16.3, 16.4, 16.6; revised Nov 17: 10.1, 10.2, 10.4, 11.2, 11.3, 13.5, 14.1)"
+        },
+        "35": {
+          "criteria": [
+            "6.1",
+            "8.2",
+            "8.3",
+            "9.5",
+            "10.1",
+            "10.2",
+            "10.3",
+            "10.4",
+            "10.5",
+            "11.1",
+            "11.2",
+            "11.3",
+            "12.1",
+            "12.2",
+            "13.5",
+            "13.9",
+            "13.10",
+            "14.1",
+            "16.1",
+            "16.3",
+            "16.4",
+            "16.6",
+            "17.1",
+            "17.2",
+            "17.3",
+            "17.4"
+          ],
+          "text": "35. The real Kiro session on the first screen (Req 6.1, 8.2, 8.3, 9.5, 10.1, 10.2, 10.3, 10.4, 10.5, 11.1, 11.2, 11.3, 12.1, 12.2, 13.5, 13.9, 13.10, 14.1, 16.1, 16.3, 16.4, 16.6, 17.1, 17.2, 17.3, 17.4; new or revised Nov 17: 10.3, 17.1, 17.2, 17.3, 17.4)"
         }
       },
       "ticked": [
@@ -1563,7 +1646,11 @@
         "26. The play on the page (Req 13.2, 13.3, 13.4, 13.5, 13.8, 13.9, 13.10)",
         "27. The first screen names Design by Contract and leads with the result (Req 9.5 revised, 12.1 revised, 14.1 to 14.5)",
         "28. The re-run box offers a command that works for its receipt, or none (Req 15.1, 15.2, 15.3, 15.4, 15.5)",
+        "29. The real-use line and the size of the experiment on the first screen (Req 16.3, 16.4, 16.5)",
         "3. **Receipt parsing and validation** (Req 1.3)",
+        "30. The play opens on load and the page reads in the new order (Req 16.1, 16.5, and 9.5, 10.1, 10.2, 10.5, 12.1, 13.9, 14.3 as revised)",
+        "31. The receipt folded by requirement, and the static summary for scripts off (Req 16.2, 16.5, 16.6)",
+        "33. Browser contracts skip, with a reason, when there is no browser (Req 16.7)",
         "4. **Summary and grouping by requirement** (Req 2.1, 2.2)",
         "5. **Repository and URL parsing** (Req 1.2)",
         "6. **Run command** (Req 5.1)",

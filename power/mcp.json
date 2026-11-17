@@ -3,8 +3,8 @@
   "mcpServers": {
     "necro": {
       "type": "stdio",
-      "command": "necro",
-      "args": ["mcp"]
+      "command": "npx",
+      "args": ["-y", "github:vijaygopalbalasa/contract-necromancer", "mcp"]
     }
   }
 }
