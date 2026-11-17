@@ -1,0 +1,20 @@
+{"t":"2026-11-17T10:39:06.477Z","tool":"execute_bash","what":"cat && head && ls && grep && head"}
+{"t":"2026-11-17T10:39:09.484Z","tool":"execute_bash","what":"sed && grep && head && cat"}
+{"t":"2026-11-17T10:39:09.669Z","tool":"execute_bash","what":"cat && head && sed && sed && sed"}
+{"t":"2026-11-17T10:39:14.587Z","tool":"execute_bash","what":"cd && wc && sed && cut"}
+{"t":"2026-11-17T10:39:15.265Z","tool":"execute_bash","what":"grep && cut && head && grep && cut && tail"}
+{"t":"2026-11-17T10:39:20.765Z","tool":"execute_bash","what":"grep && cut && sed && cut && sed && grep"}
+{"t":"2026-11-17T10:39:23.709Z","tool":"execute_bash","what":"sed && cut && sed && cut"}
+{"t":"2026-11-17T10:39:29.860Z","tool":"execute_bash","what":"grep && sed && cut && sed && cut && sed && cut && git && head"}
+{"t":"2026-11-17T10:39:43.782Z","tool":"execute_bash","what":"python3 && base64,/) && assert.equal((html.match(/<script\"\"\",1) && picture && object && embed && iframe)\\\\b/i) && for && { && // && /^data:image\\\\/webp && base64,/.test(m[2])) && \"\"\",1) && open.open\"\""}
+{"t":"2026-11-17T10:39:56.862Z","tool":"execute_bash","what":"cat && import && import && // && const && const && const && const && const && const && test('R17.1 &&  && []).length, && const && assert.ok(header.includes(figure[0]), && < && assert.ok(html.indexOf('"}
+{"t":"2026-11-17T10:41:27.875Z","tool":"execute_bash","what":"python3 && head && npm && grep && head"}
+{"t":"2026-11-17T10:43:31.352Z","tool":"execute_bash","what":"npm && tail && node && grep && head"}
+{"t":"2026-11-17T10:43:41.506Z","tool":"execute_bash","what":"node && grep && (node && echo"}
+{"t":"2026-11-17T10:46:15.850Z","tool":"execute_bash","what":"sleep && tail && ls"}
+{"t":"2026-11-17T10:46:19.713Z","tool":"execute_bash","what":"grep && grep && head && grep && head"}
+{"t":"2026-11-17T10:46:30.781Z","tool":"execute_bash","what":"node && grep && await && return && return && }) && console.log(s.width, && } && E"}
+{"t":"2026-11-17T10:46:37.509Z","tool":"execute_bash","what":"rm && cd && python3 && \"/Applications/Google && grep && head && kill && cd && git"}
+{"t":"2026-11-17T10:46:41.609Z","tool":"execute_bash","what":"sed && grep && cut && git && ls && head"}
+{"t":"2026-11-17T10:51:06.385Z","tool":"str_replace","what":".kiro/specs/receipt-viewer/tasks.md"}
+{"t":"2026-11-17T10:51:09.606Z","tool":"execute_bash","what":"grep && cut && git && ls && head"}

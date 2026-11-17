@@ -170,6 +170,7 @@ pre {
 
 .intro {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
   padding: 0;
@@ -775,6 +776,36 @@ pre {
   color: var(--muted);
   font-size: 0.8125rem;
   line-height: 1.35;
+}
+
+/* The real Kiro session (Requirement 17): on its own row under the mark and the title. The screenshot is drawn from 52rem up;
+   below that the caption carries its words. Nothing in or around the figure animates or transitions. */
+figure.session {
+  flex: 0 0 100%;
+  margin: 0;
+}
+
+figure.session img {
+  display: none;
+}
+
+figure.session figcaption {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+figure.session .session-label {
+  color: var(--text);
+}
+
+@media (min-width: 52rem) {
+  figure.session img {
+    display: block;
+    max-width: 36rem;
+    height: auto;
+    margin-bottom: 0.25rem;
+  }
 }
 
 /* The line under the page heading that names the idea that is raised. */

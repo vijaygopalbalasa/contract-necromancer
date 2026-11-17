@@ -134,7 +134,10 @@ test('R10.3 the video and the repository are plain links in the section, and the
   assert.match(how, /<a\b[^>]*href="https:\/\/youtu\.be\/TYrSyhIYqlk"[^>]*>[^<]*video[^<]*<\/a>/i);
   assert.match(how, /<a\b[^>]*href="https:\/\/github\.com\/vijaygopalbalasa\/contract-necromancer"[^>]*>[^<]*<\/a>/);
   // Nothing is embedded or loaded: no frame, media, object, image, extra script or extra style sheet.
-  assert.doesNotMatch(html, /<(iframe|video|audio|embed|object|img|source|picture|style)\b/i);
+  // Since Requirement 17 the page holds one img: the inline data: screenshot of the figure.
+  assert.doesNotMatch(html, /<(iframe|video|audio|embed|object|source|picture|style)\b/i);
+  assert.equal((html.match(/<img\b/gi) || []).length, 1);
+  assert.match(/<img\b[^>]*\ssrc="([^"]*)"/.exec(html)[1], /^data:image\/webp;base64,/);
   assert.equal((html.match(/<script\b/g) || []).length, 1);
   // Two links: the style sheet and, since Requirement 11.5, the inline data: favicon (it loads nothing).
   const linkTags = html.match(/<link\b[^>]*>/g) || [];

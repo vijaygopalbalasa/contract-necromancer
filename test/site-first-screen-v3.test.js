@@ -358,7 +358,7 @@ test('R9.5 (revised Nov 16) at 1280x800 Try it here, the whole result and the re
   });
 });
 
-test('R9.5 (revised) at 390x844 the start control and the whole result are in the first screen, with no sideways scroll and the way to open your own receipt on the page', { skip: NO_BROWSER }, async () => {
+test('R9.5 (revised) at 390x844 the start control and the two large counts of the result are in the first screen, with no sideways scroll and the way to open your own receipt on the page', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     const m = await browser.measure(PHONE, () => {
       const box = (id) => {
@@ -374,6 +374,10 @@ test('R9.5 (revised) at 390x844 the start control and the whole result are in th
         body: document.body.scrollWidth,
         play: box('strip-play'),
         evidence: box('evidence'),
+        counts: [...document.querySelectorAll('#evidence .num')].map((e) => {
+          const b = e.getBoundingClientRect();
+          return { top: b.top, bottom: b.bottom, left: b.left, right: b.right, height: b.height };
+        }),
       };
       open.open = true;
       result.sidewaysOpen = document.documentElement.scrollWidth;
@@ -383,13 +387,15 @@ test('R9.5 (revised) at 390x844 the start control and the whole result are in th
     assert.equal(m.scrollY, 0);
     const inside = (b) => b.height > 0 && b.top >= 0 && b.bottom <= m.h && b.left >= 0 && b.right <= m.w;
     assert.ok(inside(m.play), `the start control spans ${Math.round(m.play.top)} to ${Math.round(m.play.bottom)} of ${m.h}`);
-    assert.ok(inside(m.evidence), `the result spans ${Math.round(m.evidence.top)} to ${Math.round(m.evidence.bottom)} of ${m.h}`);
+    // Revised Nov 16 (9.5): at 390x844 only the two large counts must be in the first screen.
+    assert.equal(m.counts.length, 2, 'the result has its two large counts');
+    m.counts.forEach((b, i) => assert.ok(inside(b), `count ${i + 1} spans ${Math.round(b.top)} to ${Math.round(b.bottom)} of ${m.h}`));
     assert.ok(m.sideways <= m.w && m.body <= m.w && m.sidewaysOpen <= m.w, 'no sideways scroll');
     assert.ok(m.openDrawn, 'the way to open your own receipt is on the page');
   });
 });
 
-test('R12.1 (revised) the result with its caveat is in the first screen at 1280x800 and 390x844, below the strip and above the banner, with scripts on and off', { skip: NO_BROWSER }, async () => {
+test('R12.1 (revised) the result with its caveat is in the first screen at 1280x800 (at 390x844 its two large counts are), below the strip and above the banner, with scripts on and off', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     for (const size of [DESKTOP, PHONE]) {
       for (const scripts of [true, false]) {
@@ -398,12 +404,22 @@ test('R12.1 (revised) the result with its caveat is in the first screen at 1280x
             const b = document.getElementById(id).getBoundingClientRect();
             return { top: b.top, bottom: b.bottom, left: b.left, right: b.right, height: b.height };
           };
-          return { w: innerWidth, h: innerHeight, strip: box('strip'), evidence: box('evidence'), verdict: box('verdict'), sideways: document.documentElement.scrollWidth };
+          const counts = [...document.querySelectorAll('#evidence .num')].map((e) => {
+            const b = e.getBoundingClientRect();
+            return { top: b.top, bottom: b.bottom, left: b.left, right: b.right, height: b.height };
+          });
+          return { w: innerWidth, h: innerHeight, counts, strip: box('strip'), evidence: box('evidence'), verdict: box('verdict'), sideways: document.documentElement.scrollWidth };
         });
         const at = `at ${size.width} with scripts ${scripts ? 'on' : 'off'}`;
         assert.ok(m.strip.bottom <= m.evidence.top, `${at}: below the strip`);
         if (scripts) assert.ok(m.evidence.bottom <= m.verdict.top, `${at}: above the banner`);
-        assert.ok(m.evidence.height > 0 && m.evidence.top >= 0 && m.evidence.bottom <= m.h && m.evidence.left >= 0 && m.evidence.right <= m.w, `${at}: inside the first screen, it spans ${Math.round(m.evidence.top)} to ${Math.round(m.evidence.bottom)} of ${m.h}`);
+        const inside = (b) => b.height > 0 && b.top >= 0 && b.bottom <= m.h && b.left >= 0 && b.right <= m.w;
+        if (size === PHONE) {
+          assert.equal(m.counts.length, 2, `${at}: the two large counts`);
+          m.counts.forEach((b, i) => assert.ok(inside(b), `${at}: count ${i + 1} is inside the first screen, it spans ${Math.round(b.top)} to ${Math.round(b.bottom)} of ${m.h}`));
+        } else {
+          assert.ok(inside(m.evidence), `${at}: inside the first screen, it spans ${Math.round(m.evidence.top)} to ${Math.round(m.evidence.bottom)} of ${m.h}`);
+        }
         assert.ok(m.sideways <= m.w, `${at}: no sideways scroll`);
       }
     }
