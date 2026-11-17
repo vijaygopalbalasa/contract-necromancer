@@ -1,0 +1,67 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=8
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=40
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=24
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=183
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=159
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=108
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=131
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Now the first failing assertions, and a check of the dash and px rules.
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=62
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=58
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+**(a) Changes** (only `contracts/receipt-viewer/kiro-session.contract.test.js`)
+- Line 420: `text: a ? a.textContent.replace(/\s+/g, ' ').trim() : null,`. The R17.2 and R17.3 exact-text check at line 432 compares this value with the label.
+- Line 482: `labelIsLink: [...figure.querySelectorAll('a')].map((e) => e.textContent.replace(/\s+/g, ' ').trim()),`. The deepEqual at line 504 compares this value with `[LABEL]`.
+- Lines 432 and 504 are unchanged. They compare values the page code now normalises, and the caption check at line 352 already normalised.
+- Line 398 now starts `R17.3 and R17.4 the label is the figure's only link, ...`.
+- Line 441 now starts `R17.1 at 1280x800 the quoted words are set larger than the body text, ...`.
+
+I did not run a test with wrapped link text. A wrapped link therefore passes by construction (the normalisation runs before the compare), not by observation. Link text that is not the label still fails, because the comparison is still exact after normalising.
+
+**(b) Results**
+- The test names are equal with `CHROME_PATH=/nonexistent` and with Chrome. Each run lists 7 names, and I compared the sorted lists. Without a browser, 1 test passes and 6 are skipped. The skipped tests still appear by name.
+- With Chrome against the unbuilt page, 3 pass and 4 fail. All 4 failures are R17 tests that wait for task 36. Each line gives the first failing assertion:
+  - `R17.2 the figure holds no img...`: "at 1280, scripts off: the figure holds no img and no other picture element".
+  - `R17.3 and R17.4 the label is the figure's only link...`: "at 1280, scripts off: the figure has exactly one link (it has 0)", `0 !== 1`.
+  - `R17.1 at 1280x800 the quoted words...`: "at 1280x800 the quoted words (13) are larger than the body text (16), 17.1 and 17.4".
+  - `R17.3 the label's a is the only control...`: "at 1280: the only control in the figure is the label's a", with an actual of `[]`.
+- The file has no em or en dashes. No other file was touched, and nothing was frozen or ticked. I removed my temporary files.
+
+**(c) Not done**
+- I did not run a wrapped-label test case against a built page, because the figure link doesn't exist yet.[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=170
+

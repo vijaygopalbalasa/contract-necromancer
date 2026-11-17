@@ -979,6 +979,8 @@ button:
 
 ### The figure of Requirement 17 (17.1 to 17.4)
 
+> Superseded on Nov 18 by "Freeze 4" at the end of this file: the figure no longer holds an image, and its label is a link. What follows is the design task 35 built from.
+
 Markup, inside `header#brand`, as the last child, after the `div` that holds `p#idea` and before `</header>`. The real-use
 line then still follows the header directly (16.3).
 
@@ -1122,3 +1124,114 @@ criterion and a space. New tests (R10.3 settled, R10.4 computed, the new file) a
 | 13.5 | `index.html` (`p.play-before`), `style.css` if needed, `play-page` R13.5 | 34 |
 | 17.1, 17.2, 17.3, 17.4 | `index.html` (`figure`), `style.css` (`.intro`, `.session`), `kiro-session` contract | 35 |
 | 10.3 | `index.html` (the one `img`), `story` R10.3 | 35 |
+
+## Freeze 4: the words-only figure, the refusal and the browser wait (Req 17, 10.3, 13.2 revised Nov 18)
+
+A person revised 17.1, 17.2, 17.3, 17.4, 10.3 and 13.2 after a judge read the page. The screenshot of Kiro's words sat above a
+caption with the same words, and the judge read one sentence printed twice. The refusal opened with the browser's own count (6
+of 7) beside two other counts, and the expected line sat folded under "Full message", so the lost cent could not be seen. Task
+36 builds the figure and task 37 the refusal, in that order. Both change `site/` only (`index.html`, `style.css`, `app.js`),
+and neither touches `site/lib/`, the worker or the Content Security Policy. A task line names every criterion, one by one, and
+never a range: the gate reads `17.1 to 17.4` as 17.1 and 17.4 only (`criteriaOf` in `src/lock.js`).
+
+### The figure (17.1 to 17.4, 10.3; task 36)
+
+The figure is Kiro's words as text, and the label is the way to check them. Markup, still the last child of `header#brand`:
+
+```html
+<figure class="session">
+  <figcaption><span class="session-words">"I couldn't mark task 4 complete. A hook blocked the edit to tasks.md and reported failing contracts, so the checkbox is still [ ]."</span> <a class="session-label" href="https://github.com/vijaygopalbalasa/contract-necromancer/blob/main/.kiro/build-log/film/take6-refusal.webp">Real Kiro session, recorded Nov 8, not a simulation.</a></figcaption>
+</figure>
+```
+
+- **No picture (17.2, 10.3).** The `img` goes, and with it the `figure.session img` rules and the `52rem` rule that drew it. The
+  figure holds a `figcaption` and nothing else. The page has no `img` at all, with scripts off and with scripts on and settled.
+  The Content Security Policy keeps `img-src 'self' data:` byte for byte (10.3 and the policy sentence of 10.3 say it is
+  unchanged); the page simply no longer uses it, and `look.contract.test.js` R8.2 still holds because it only forbids images
+  that are not `data:`.
+- **The label is the link (17.3).** One `a`, the figure's only link and only control, inside the caption. Its text is exactly the
+  label, and its `href` is the evidence image on GitHub. The file is `.kiro/build-log/film/take6-refusal.webp` in this
+  repository: two frames of the recording of Nov 8 (the prompt and the hook at 0:33, Kiro's answer at 0:40). The `a` takes the
+  page's `a` rule. It has no animation or transition and no filled or glowing look: it is a control above the verdict banner, and
+  R14.3 checks that no such control looks like Try it here.
+- **The quoted words are larger from 52rem up (17.1, 17.4).** The words sit in one `span` (`session-words`), and
+  `@media (min-width: 52rem) { figure.session .session-words { font-size: 1.25rem; } }` sets them above the body text. The
+  contract compares the computed size of the element that holds the words with the body's and pins no number, so `1.25rem` is a
+  layout choice. Below 52rem the words keep the caption's small type, which keeps the first screen at 390x844 within 9.5.
+- **What the caption test needs (R17.1).** The caption test reads the caption's text as one string and matches
+  `"words" label`. It passes only while the link text is exactly the label and a space in the text, not a margin, separates the
+  closing quotation mark from the `a`. The `span` around the words adds no characters, and the space stays between `</span>` and
+  `<a`.
+- **The first screen (9.5).** The image was the tallest thing in the figure, so removing it gives back more height than the larger
+  words cost at 1280x800. The task measures both windows and reports the numbers anyway: the spare under the whole result at
+  1280x800 and under the two counts at 390x844. If the spare at 1280x800 is under about 40 px, the words get a smaller size
+  before anything else moves.
+- **The evidence image (17.4).** `contracts/receipt-viewer/kiro-session.contract.test.js` reads the file at load, derives its path
+  from the link's `href` and checks that the file exists and that its SHA-256 equals a constant a person froze, taken with
+  `shasum -a 256` and never typed. The hash is `66c603dfa67e8e1de51d878fea32296f4b412064a82ec5489ba3cc2e851f9222`. A changed
+  evidence image fails the contract until a person freezes a new hash. The contract cannot check that the file is on GitHub's
+  `main` branch: it checks the local copy, and the address is a constant.
+- **`site/kiro-session-nov8.webp` is deleted.** Nothing reads it after this freeze: the page no longer embeds it, and the
+  contracts read the evidence image instead. `test/site-session-figure.test.js` read it for the old `data:` URL and is updated
+  with the task.
+
+### The refusal (13.2; task 37)
+
+- **The verdict line.** A refused run opens with `Refused.` in bold, a space, and `1000 cents split three ways paid out 999.`, so
+  the first line of the result reads `Refused. 1000 cents split three ways paid out 999.`. The sentence says what the planted change does
+  (`Math.round(cents / n)` and `const extra = 0;` pay out 999 of 1000 cents), not how many of the browser's contracts fail. It
+  stays the first child (`play-verdict`), before `play-scope`, `play-full` and the rows, and 13.5 is unchanged: the scope line
+  ("The browser ran 7 of the ledger's 18 contracts...") and the gate's full-run line (9 of 18 failing) keep their words and
+  their order, so the gate's count stays once, in the full-run line. The fix's verdict line, `Accepted. All 7 contracts the
+  browser ran pass, so the tick is accepted.`, does not change.
+- **Where the words come from.** Both new strings are constants in `site/app.js` next to `PLAY_STEPS`, in the same way the seven
+  contracts are a fixed list, never read from an assertion message. They are used only when the run shows what they say: the
+  planted run, with R2.1 among the failing contracts. A refused run in which R2.1 did not fail keeps the count line as it is
+  today and shows no `Ann` line, so the page never states what the planted change did when the run does not show it.
+- **"Ann should get 334."** In the R2.1 row of a refused run, a `p` of class `play-expected` holds exactly `Ann should get 334.`.
+  It is a child of the row, after the `.note` and before the `details`, so it is outside the assertion message, not inside
+  `.note` (the frozen R13.2 test counts at most three lines in `.note`, and the new line must not make a fourth), and not behind
+  anything to open. It is drawn at 1280x800 and at 390x844, and wraps at 390 px. The fix's result has no such line.
+- **The fix.** "That line SHALL NOT appear after the fix" is tested on the fix's own result. The page keeps the refused result on
+  screen after the fix, as each step has its own result box, so a visitor who sends the tick and then applies the fix sees the
+  line in the earlier box and not in the new one. 13.2 does not say the earlier result is cleared; if a person means the whole
+  page, the contract needs a change and so does the page, and that is a decision for the person.
+- **The wording of the first R13.2 contract and the verdict checks.** The words of the verdict are checked only in the R13.2 and
+  R13.3 tests. The R13.5 test only checks that the first line is `Refused.` or `Accepted.`, which both lines still satisfy.
+
+### The browser wait
+
+The wait for Chrome sleeps whenever no endpoint was read, so an empty or half-written `DevToolsActivePort` no longer ends it within milliseconds with "The browser did not start" (the ten browser contract files change only this, and task 36 makes the same change in `test/fixtures/browser.js`).
+
+### Where criteria seem to pull against each other (Nov 18)
+
+- **13.2 and 13.5 on the browser's count.** 13.2 drops the browser's own count from the refused verdict, and 13.5 still has the
+  scope line say the browser ran 7 of 18. They do not contradict: the count lives in the scope line. The fix's verdict keeps
+  its count (`All 7 contracts the browser ran pass`) because 13.3 did not change, so the two verdicts are no longer built the same
+  way. The refusal is a sentence about the planted change, and the acceptance is a count.
+- **10.3 "no `<img>`" and the policy `img-src 'self' data:`.** The policy is unchanged on purpose (10.3 keeps it unchanged), so it
+  allows a kind of image the page no longer has. The contract that pins the policy byte for byte and the contract that bans
+  images both pass.
+- **17.3 "SHALL NOT animate" and a link.** A link has hover and focus states. The contract reads `transition-duration` and
+  `animation-name` of the figure, everything in it and every ancestor, so the page's `a` rule must not transition.
+- **17.1 "larger than the body text" and 9.5.** Larger words cost height, and 9.5 and 16.1 measure the first screen. The image they
+  replace was taller, so the net is a gain, and the task measures it.
+- **Unlisted readers of `site/kiro-session-nov8.webp`.** `.necro/` (receipts and the lock) name the file because the earlier
+  contract hashed it. Those are records, not readers, and they are not touched.
+
+### The contracts of Nov 18
+
+| File | Tests |
+|---|---|
+| `kiro-session.contract.test.js` (revised) | Renamed, keeping the R prefix, because their names stated behaviour that was revised away: R17.2 the figure holds no img and no other picture, at both sizes with scripts off and on (was: one img, its alt text is the quoted words); R17.2 the label is the figure's only link, its text and its `href`, and the evidence image exists with the frozen SHA-256 (was: the img source decodes to the screenshot); R17.2 the quoted words are larger than the body text at 1280x800 and the caption is shown at 390x844 (was: the screenshot is drawn at 1280x800 and not at 390x844); R17.3 the label's `a` is the only control (was: the figure has no link). Not renamed: both R17.1 tests and the R17.4 test; the R17.1 caption test only gained a comment. |
+| `story.contract.test.js` (revised) | R10.3 the page has no `<img>` in `index.html`; R10.3 with scripts on and settled the page has no `img` element (renamed: it said exactly one); R10.4 computed, `images === 0` with the message that 10.3 allows none |
+| `play-page.contract.test.js` (revised) | R13.2 first test: the refused result opens with `Refused. 1000 cents split three ways paid out 999.`; R13.2 (new) the R2.1 row shows `Ann should get 334.` in an element of its own, outside `.note`, outside any `details`, drawn at 1280x800 and 390x844, and the fix's result has no such element |
+| the ten browser contract files | the browser-start wait only |
+
+### Requirement coverage (Nov 18)
+
+| Criterion | Where | Task |
+|---|---|---|
+| 17.1, 17.2, 17.3, 17.4 | `index.html` (`figure`), `style.css` (`.session-words`), `kiro-session` contract | 36 |
+| 10.3 | `index.html` (no `img`), `story` R10.3 | 36 |
+| 13.2 | `app.js` (`contractStep`, `playRow`), `play-page` R13.2 | 37 |

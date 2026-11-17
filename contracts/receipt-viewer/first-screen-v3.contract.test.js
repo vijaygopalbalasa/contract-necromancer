@@ -171,8 +171,9 @@ async function withBrowser(run) {
         const [port, wsPath] = fs.readFileSync(path.join(profile, 'DevToolsActivePort'), 'utf8').trim().split('\n');
         if (port && wsPath) endpoint = `ws://127.0.0.1:${port}${wsPath}`;
       } catch {
-        await sleep(100);
+        // Not there yet. A file that exists but is not fully written is not there either.
       }
+      if (!endpoint) await sleep(100);
     }
     if (!endpoint) throw new Error('The browser did not start. Check that it runs headless, then run this again.');
     client = connect(endpoint);

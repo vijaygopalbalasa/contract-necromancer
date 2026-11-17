@@ -1,0 +1,323 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=7
+I'll start by looking at the workspace and the diffs.
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=72
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=71
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=77
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Patch applied. Now the whole kiro-session contract tests.
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=85
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=403
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=52
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=720
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=107
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=91
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=36
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=204
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=51
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=130
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=871
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=2390
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run Command
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=130
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=41
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=93
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=55
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=131
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=50
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=157
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=47
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=268
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=125
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+Now build simulated pages in temp copies to test the ticks (36 built; 36 + 37 built).
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=52
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=430
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=83
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=82
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=69
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=164
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=123
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=90
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=249
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=87
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=131
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=112
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=94
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=192
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=317
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=102
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=142
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run Command
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=339
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=1490
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Failed: Run Command
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=1854
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=160
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=324
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=209
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=189
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=154
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Run Command
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=106
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+I drafted freeze 4 and applied the loop fix. I did not run `necro freeze`, tick anything or build the page. I edited only the three contract files, the ten browser contract files (wait hunk only), `design.md` and `tasks.md`.
+
+I ran the changed contracts in real Chrome on the current page. I also ran them on two throwaway page builds made outside the workspace, since removed: one with task 36 built, one with both. In those builds I replaced the lock's hashes with the new files' hashes, standing in for a person's freeze.
+
+**Renamed tests** (R prefix kept). Their names stated behaviour the person revised away.
+
+| Old name starts | New name starts |
+|---|---|
+| R17.2 and R17.4 the figure holds one img | R17.2 the figure holds no img and no other picture |
+| R17.2 the img source is an inline data:image/webp URL | R17.2 the label is the figure's only link |
+| R17.2 the screenshot is drawn at 1280x800 | R17.2 at 1280x800 the quoted words are set larger than the body text |
+| R17.3 the figure has no link | R17.3 the label's a is the only control |
+| R10.3 with scripts on and settled the page has exactly one img element | R10.3 with scripts on and settled the page has no img element |
+
+The two R17.1 tests, the R17.4 test, the R13.2 tests and the R10.4 computed test keep their names. The new R13.2 test brings the receipt-viewer total to 118 tests, up from 117. Line numbers in your brief came from the unpatched files, so the patch moved them by one.
+
+## (a) Changed and new tests
+
+All of these fail now only on what tasks 36 and 37 build, except R13.9, which fails on a lock hash comparison.
+
+| file:line | name starts | fails now? first failing assertion | waits for |
+|---|---|---|---|
+| kiro-session:372 | R17.2 the figure holds no img | yes: "at 1280, scripts off: the figure holds no img and no other picture element" (found IMG) | task 36 |
+| kiro-session:398 | R17.2 the label is the figure's only link | yes: "the figure has exactly one link (it has 0)". The SHA-256 and file-exists checks before the browser part pass. | task 36 |
+| kiro-session:441 | R17.2 at 1280x800 the quoted words are set larger | yes: "the quoted words (13) are larger than the body text (16)" | task 36 |
+| kiro-session:472 | R17.3 the label's a is the only control | yes: "the only control in the figure is the label's a" (found none) | task 36 |
+| kiro-session:341 | R17.1 the caption is the quoted words (comment only) | passes | none |
+| story:434 | R10.3 plain links... | yes: "the page has 1 `<img>` elements, and 10.3 allows none" | task 36 |
+| story:459 | R10.3 ...has no img element | yes: "at 1280: the settled page has 1 img elements, and 10.3 allows none" | task 36 |
+| story:534 (assertion at 582) | R10.4 (revised Nov 17) computed | yes: "with scripts on and settled the page has 1 img elements, and 10.3 allows none". It fails only on the `images === 0` check. | task 36 |
+| play-page:366 | R13.2 on the page, sending the tick | yes: "the refused result opens with the verdict line of 13.2" | task 37 |
+| play-page:453 (new) | R13.2 after Send the tick the R2.1 row shows "Ann should get 334." | yes: "exactly one element in the refused result holds exactly "Ann should get 334." (found 0)" | task 37 |
+| play-page:809 | R13.9 lock test (unchanged) | yes: "above-fold-v2... is not the file the lock pins" | a person's freeze. The loop fix changed the ten file hashes. |
+| jump | R10.5 | yes, same lock comparison, because it runs the R9.5 contract | a person's freeze |
+
+Other checks:
+- The pin in `kiro-session` is `66c603df…9222`. I took it with `shasum -a 256` and wrote it by script.
+- The 10 patched files pass with no name or count change, and no px value is pinned anywhere.
+- The checks you said must keep passing do pass: 378, 560 to 580, 609 and 637 (pre-patch numbers), and the R13.5 tests.
+
+## (b) Contracts a tick requires (task 32 open)
+
+I built the task table with `parseTasks`. I took names from a run of the 117 contract files, which includes the new and renamed tests. I called `requiredNames` on each tick.
+
+- **Tick 36:** 53 contracts, from 27 criteria. The page with 36 built passes all 53. On the current page 9 fail: the 4 R17 tests, 3 R10.3/R10.4 tests, and the 2 lock comparisons (R10.5, R13.9).
+- **Tick 37** (36 already ticked): 23 contracts, from 12 criteria. The page with both built passes all 23. On the current page 3 fail: both R13.2 page tests and the R13.9 lock test.
+- Without the stand-in freeze, R10.5 and R13.9 fail on the lock hashes. They pass once a person freezes.
+
+**Criteria in the lists:**
+- **Task 36:** your 21 criteria, plus 10.3, 14.3 and 17.1 to 17.4. I added 14.3 because the label is now a link above the banner, and R14.3 checks that no such control looks like Try it here.
+- **Task 37:** 13.2, 13.3, 13.5, 13.8 and 13.10, plus 13.4 and 13.9 (shared verdict code and start-control tests), 12.2 (the play's words are counted there), and 6.1, 8.2, 8.3, 8.4 (any stylesheet rule added).
+
+## (c) Not done, or open
+
+- **R5.2, R5.3 (two tests), R15.1 and R15.5 cannot run here.** This copy has no `.git`, and the tests need the real history and the network. They fail the same way on the unchanged copy. No task names them.
+- **13.2 "gone after the fix" is ambiguous.** The page keeps the refused result on screen after the fix, so the new test checks the fix's own result. If you mean the whole page, the contract and the page both need a change. I recorded this in `design.md`.
+- **The evidence link cannot be checked on GitHub.** The contract hashes the local file and pins the address as a constant.
+- **Your line numbers for the unit tests don't match.** The img check in `test/site-story.test.js` is at lines 137 to 140, not 128. I also added `test/site-style.test.js` lines 207 and 208 (a dead exemption for the screenshot) to task 36.
+- **Wait fix unit test:** the fixture's wait is inline, so task 36 first extracts `waitForEndpoint` unchanged, then writes the test red.[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=443
+

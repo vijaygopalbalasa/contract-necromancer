@@ -5,11 +5,13 @@
 // Node cannot lay a page out or load a video, so R10.1, R10.3 and R10.4 read site/index.html and site/style.css as text,
 // and R10.2 also runs the copy button of site/app.js against a small fake DOM built from the ids in index.html.
 // Revised Nov 17 (10.1, 10.2, 10.3, 10.4): the heading is "A Kiro task is done only when its frozen contracts pass."; step 3
-// says "a receipt you can re-run"; the page may hold one <img>, the screenshot of Requirement 17; and the demo commands
+// says "a receipt you can re-run"; and the demo commands
 // (#demo-command and #strip-command) stay on one line in a box that scrolls sideways while every other code block wraps. That
 // last check reads computed styles in real Chrome (one test, with its own lookup and the "cannot run:" skip of 16.7, carried
 // below as in try-first.contract.test.js), so no selector can slip past a regex over the CSS text. Every other test here
 // still needs no browser.
+// Revised Nov 18 (10.3): the page has no <img> at all, with scripts off and with scripts on and settled (the screenshot of
+// Requirement 17 is gone).
 // The above-fold contract (R9.5) is a separate frozen file that the gate runs on its own; R10.1 here checks the heading
 // and where it sits. Whether the page really fits 1280x800 and 390x844 is measured by hand in a headless browser.
 //
@@ -200,8 +202,9 @@ async function withBrowser(run) {
         const [port, wsPath] = fs.readFileSync(path.join(profile, 'DevToolsActivePort'), 'utf8').trim().split('\n');
         if (port && wsPath) endpoint = `ws://127.0.0.1:${port}${wsPath}`;
       } catch {
-        await sleep(100);
+        // Not there yet. A file that exists but is not fully written is not there either.
       }
+      if (!endpoint) await sleep(100);
     }
     if (!endpoint) throw new Error('The browser did not start. Check that it runs headless, then run this again.');
     client = connect(endpoint);
@@ -442,30 +445,25 @@ test('R10.3 plain links to the demo video and the repository, with the Content S
   assert.ok(csp, 'the page has a Content Security Policy');
   assert.equal(csp[1], CSP);
 
-  // Nothing is embedded or loaded for the story: no frame, media, object, extra script, style or style sheet. Revised Nov 17
-  // (10.3): exactly one <img> is allowed, the screenshot of Requirement 17, from an inline data:image/webp URL with alt text.
+  // Nothing is embedded or loaded for the story: no frame, media, object, extra script, style or style sheet. Revised Nov 18
+  // (10.3): the page has no <img> at all (the screenshot of Requirement 17 is gone; the figure's words are text).
   assert.doesNotMatch(HTML, /<(iframe|video|audio|embed|object|source|picture|style)\b/i);
   const images = HTML.match(/<img\b[^>]*>/gi) || [];
-  assert.equal(images.length, 1, 'the page has exactly one <img>, the screenshot of Requirement 17');
-  assert.match(images[0], /\ssrc="data:image\/webp[;,][^"]*"/i, 'its source is an inline data:image/webp URL');
-  const alt = /\salt="([^"]*)"/i.exec(images[0]);
-  assert.ok(alt && alt[1].trim() !== '', 'its alt text is not empty');
+  assert.equal(images.length, 0, `the page has ${images.length} <img> elements, and 10.3 allows none`);
   assert.equal((HTML.match(/<script\b/g) || []).length, 1, 'the one module script');
   assert.equal((HTML.match(/<link\b(?![^>]*rel="icon")/g) || []).length, 1, 'the one style sheet (the inline data: favicon of R11.5 aside)');
 });
 
 // Added Nov 17 after review: R10.3 above reads index.html, so an image that app.js adds is not counted there. This reads the page
-// as it is drawn, with scripts on and settled, at both sizes.
-test('R10.3 with scripts on and settled the page has exactly one img element, the screenshot of Requirement 17, so an image added by the script counts against the one allowed', { skip: NO_BROWSER }, async () => {
+// as it is drawn, with scripts on and settled, at both sizes. Revised Nov 18: none is allowed.
+test('R10.3 with scripts on and settled the page has no img element, so an image added by the script counts against the none allowed', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     for (const size of [DESKTOP, PHONE]) {
       const m = await browser.measure(size, () => ({
-        images: [...document.querySelectorAll('img')].map((e) => ({ inFigure: !!e.closest('figure'), dataUrl: (e.getAttribute('src') || '').startsWith('data:image/webp;base64,') })),
+        images: [...document.querySelectorAll('img')].map((e) => ({ inFigure: !!e.closest('figure'), src: (e.getAttribute('src') || '').slice(0, 30) })),
       }));
       const at = `at ${size.width}`;
-      assert.equal(m.images.length, 1, `${at}: the settled page has exactly one img element`);
-      assert.ok(m.images[0].inFigure, `${at}: the one img is in the figure`);
-      assert.ok(m.images[0].dataUrl, `${at}: its source is an inline data:image/webp URL`);
+      assert.equal(m.images.length, 0, `${at}: the settled page has ${m.images.length} img elements, and 10.3 allows none (${JSON.stringify(m.images)})`);
     }
   });
 });
@@ -531,9 +529,8 @@ test('R10.4 the title starts with "Contract Necromancer", the page reads in the 
 // innerWidth cannot show a page that scrolls sideways. This test therefore asserts that innerWidth is the width asked for, and
 // compares the page's scroll widths and each command box's right edge with document.documentElement.clientWidth, which stays
 // the window's width. No other size or position is compared, and no number is pinned. With scripts on and settled it also
-// counts the img elements and allows at most one, so an image that app.js adds counts against 10.3. It is "at most one" here
-// and not "exactly one" because this test belongs to task 34 and the one image is built by task 35 (a task that names 10.4 must
-// pass on a page with no figure yet). "Exactly one" is the R10.3 test above, with scripts on and settled.
+// counts the img elements and allows none (Revised Nov 18; before that, at most one), so an image that app.js adds counts
+// against 10.3. The R10.3 test above says the same, with scripts on and settled.
 test('R10.4 (revised Nov 17) the demo command stays on one line in its own box that scrolls sideways, every other code block wraps, and the page does not scroll sideways at 390x844', { skip: NO_BROWSER }, async () => {
   await withBrowser(async (browser) => {
     for (const size of [DESKTOP, PHONE]) {
@@ -582,7 +579,7 @@ test('R10.4 (revised Nov 17) the demo command stays on one line in its own box t
       });
       const at = `at ${size.width}`;
       assert.equal(m.innerWidth, size.width, `${at}: the window is ${size.width} wide (it is ${m.innerWidth}, so the page is wider than the window)`);
-      assert.ok(m.images <= 1, `${at}: with scripts on and settled the page has ${m.images} img elements, and 10.3 allows one, so the script added one`);
+      assert.ok(m.images === 0, `${at}: with scripts on and settled the page has ${m.images} img elements, and 10.3 allows none`);
       for (const c of m.commands) {
         assert.ok(c.found, `${at}: index.html has #${c.id}`);
         assert.ok(c.drawn, `${at}: #${c.id} is drawn`);

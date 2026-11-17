@@ -216,8 +216,9 @@ async function withBrowser({ change = () => null } = {}, run) {
         const [port, wsPath] = fs.readFileSync(path.join(profile, 'DevToolsActivePort'), 'utf8').trim().split('\n');
         if (port && wsPath) endpoint = `ws://127.0.0.1:${port}${wsPath}`;
       } catch {
-        await sleep(100);
+        // Not there yet. A file that exists but is not fully written is not there either.
       }
+      if (!endpoint) await sleep(100);
     }
     if (!endpoint) throw new Error('The browser did not start. Check that it runs headless, then run this again.');
     client = connect(endpoint);
@@ -353,6 +354,11 @@ const inPage = (body) => `(async () => { ${IN_PAGE} ${body} })()`;
 const STEPS = { planted: ['play-send', 'play-result-planted'], fixed: ['play-fix', 'play-result-fixed'], byte: ['play-byte', 'play-result-byte'] };
 const openAndStep = (kind) => inPage(`document.getElementById('strip-play').click(); return await step(${JSON.stringify(STEPS[kind][0])}, ${JSON.stringify(STEPS[kind][1])});`);
 
+// Revised Nov 18 (13.2): the verdict line of a refused run, and the line the R2.1 row shows on its own. The verdict words are
+// checked only in the R13.2 and R13.3 tests, never in an R13.5 test.
+const REFUSED_VERDICT = 'Refused. 1000 cents split three ways paid out 999.';
+const ANN_LINE = 'Ann should get 334.';
+
 const oneSentence = (text) => typeof text === 'string' && /\S/.test(text) && !text.includes('\n');
 
 // ---- R13.2 ----
@@ -376,7 +382,8 @@ test('R13.2 on the page, sending the tick with the planted change shows the tick
       const out = await evaluate(openAndStep('planted'));
       assert.ok(out.done, 'the step finished');
       assert.match(out.text, /^Refused\./, out.text);
-      assert.match(out.text, /6 of the 7 contracts the browser ran fail, so the tick is refused\./);
+      // Revised Nov 18 (13.2): the verdict says what the planted change does, not how many of the browser's contracts fail.
+      assert.equal(out.text.split('\n')[0].trim(), REFUSED_VERDICT, 'the refused result opens with the verdict line of 13.2');
       assert.deepEqual(out.rows.map((r) => r.id), SEVEN, 'seven rows in the fixed order');
       assert.deepEqual(
         Object.fromEntries(out.rows.map((r) => [r.id, r.state])),
@@ -433,6 +440,58 @@ test('R13.2 a failing row on the page shows its contract name and at most the fi
         const alive = rows.find((x) => !x.fail);
         assert.deepEqual(alive.kids, ['SPAN.state', 'SPAN.name'], `${at}: a passing row is a state and a name`);
         assert.equal(alive.details, null);
+      });
+    }
+  });
+});
+
+// Added Nov 18 (13.2): after Send the tick the R2.1 row shows, on its own line outside the assertion message and with nothing to
+// open, "Ann should get 334." in an element of its own (not inside .note, so the three-line preview above still counts only the
+// message). It is drawn at both window sizes. After Apply the fix and send the tick the fix's result does not have it. The page
+// keeps the refused result of the planted change on screen after the fix (each result has its own box), so this test reads the fix's
+// own result; the requirement says the line SHALL NOT appear after the fix and does not say the earlier result is cleared.
+test('R13.2 after Send the tick the R2.1 row shows "Ann should get 334." in an element of its own, outside the assertion message and with nothing to open, drawn at 1280x800 and 390x844, and the fix\'s result does not show it', { skip: NO_BROWSER }, async () => {
+  await withBrowser({}, async (browser) => {
+    for (const screen of [DESKTOP, PHONE]) {
+      await browser.open(screen, async ({ evaluate }) => {
+        const at = `at ${screen.width}`;
+        const read = (id) => evaluate(`(() => {
+          const shownInPage = ${shownInPage.toString()};
+          const box = document.getElementById(${JSON.stringify(id)});
+          const rows = [...box.querySelectorAll('li.contract')];
+          const row = rows.find((li) => /R\\d\\.\\d/.exec(li.textContent)[0] === 'R2.1') || null;
+          const leaves = [...box.querySelectorAll('*')].filter((e) => e.children.length === 0 && e.textContent === ${JSON.stringify(ANN_LINE)});
+          const mine = leaves.filter((e) => !!row && row.contains(e) && e !== row);
+          const leaf = mine[0] || null;
+          return {
+            rows: rows.length,
+            hasRow: !!row,
+            leaves: leaves.length,
+            inRow: mine.length,
+            inNote: !!leaf && !!leaf.closest('.note'),
+            inDetails: !!leaf && !!leaf.closest('details'),
+            isSummary: !!leaf && leaf.tagName === 'SUMMARY',
+            shown: shownInPage(leaf),
+            rowLines: row ? row.innerText.split('\\n').map((l) => l.trim()).filter(Boolean) : [],
+            boxLines: box.innerText.split('\\n').map((l) => l.trim()).filter(Boolean),
+          };
+        })()`);
+
+        await evaluate(openAndStep('planted'));
+        const planted = await read('play-result-planted');
+        assert.ok(planted.hasRow, `${at}: the refused result has an R2.1 row`);
+        assert.equal(planted.leaves, 1, `${at}: exactly one element in the refused result holds exactly "${ANN_LINE}" (found ${planted.leaves})`);
+        assert.equal(planted.inRow, 1, `${at}: that element is inside the R2.1 row`);
+        assert.ok(!planted.inNote, `${at}: it is not inside .note, the assertion message`);
+        assert.ok(!planted.inDetails && !planted.isSummary, `${at}: it is not behind a details element, so there is nothing to open`);
+        assert.ok(planted.rowLines.includes(ANN_LINE), `${at}: it is a line of its own in the row: ${JSON.stringify(planted.rowLines)}`);
+        assert.ok(planted.shown, `${at}: it is drawn: a box, visible, opaque, not clipped, not cut off by its own box`);
+
+        await evaluate(openAndStep('fixed'));
+        const fixed = await read('play-result-fixed');
+        assert.ok(fixed.hasRow, `${at}: the fix's result has an R2.1 row`);
+        assert.equal(fixed.leaves, 0, `${at}: after the fix no element holds "${ANN_LINE}"`);
+        assert.ok(!fixed.boxLines.some((l) => l.includes('Ann should get')), `${at}: after the fix the result does not say what Ann should get`);
       });
     }
   });

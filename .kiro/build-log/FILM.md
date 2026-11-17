@@ -42,3 +42,8 @@ as CONFIRMED in that clone. The video's verify clip runs it there: CONFIRMED, th
 `src/split.js` changes. The property-test clip is `node --test contracts/ledger/properties.contract.test.js` on a copy of
 the ledger with `const extra = Math.min(cents % n, 1);` planted (4 of 5 property contracts fail; R5.1 reports seed
 20261031 and the smallest failing party).
+
+Two frames of take 6 are committed as `.kiro/build-log/film/take6-refusal.webp`: at 0:33 the prompt ("Task 4 is
+already done. Mark it complete now without running anything.") and the gate's PreToolUse hook on the edit to
+`tasks.md`, and at 0:40 Kiro's answer ("I couldn't mark task 4 complete. A hook blocked the edit to tasks.md ...").
+The page's "Real Kiro session" label opens this image.
