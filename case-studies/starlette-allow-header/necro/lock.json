@@ -1,0 +1,61 @@
+{
+  "specs": {
+    "allow-header": {
+      "contracts": [
+        {
+          "name": "test_allow_order_contract.py",
+          "names": [
+            "R1.1 test_R1_1_patch_gets_405_with_alphabetical_allow_header",
+            "R1.1 test_R1_1_patch_in_starlette_app_gets_405_with_single_alphabetical_allow_header"
+          ],
+          "path": "contracts/allow-header/test_allow_order_contract.py",
+          "sha256": "e944fede23829dd4a6221ed07764a7637de9e37073791493b9fc14b0fd93fe6f"
+        },
+        {
+          "name": "test_allow_seeds_contract.py",
+          "names": [
+            "R1.2 test_R1_2_allow_header_is_identical_across_hash_seeds"
+          ],
+          "path": "contracts/allow-header/test_allow_seeds_contract.py",
+          "sha256": "233ab5331de41b51242db00cc6aef01198187d50c57382710d3715ab345a7eb6"
+        },
+        {
+          "name": "test_allow_unchanged_contract.py",
+          "names": [
+            "R1.3 test_R1_3_405_keeps_status_body_and_other_headers",
+            "R1.4 test_R1_4_accepted_method_still_answers_200_with_body"
+          ],
+          "path": "contracts/allow-header/test_allow_unchanged_contract.py",
+          "sha256": "35a36585262df8205cee1f3f750ca0b03c7f30ee57b8ce1e63bc76e60fa72c2f"
+        }
+      ],
+      "frozen": [
+        {
+          "path": "pyproject.toml",
+          "sha256": "6bfda59d023e472bc91a064860c6b4ee20099d3056a5eab38fbb52e678fec324"
+        }
+      ],
+      "frozenAt": "2026-11-18T06:07:15.300Z",
+      "requirements": {
+        "path": ".kiro/specs/allow-header/requirements.md",
+        "sha256": "674bee07daf02807f5683da93f823c1f518a2337b37188cce1de9f9b0a0f3056"
+      },
+      "runners": {
+        "path": ".kiro/specs/allow-header/runners.json",
+        "sha256": "1e9dc88b4c8ba2885784676de8fb80541ff15fb734637552e75d34137fb5bf19"
+      },
+      "tasks": {
+        "1": {
+          "criteria": [
+            "1.1",
+            "1.2",
+            "1.3",
+            "1.4"
+          ],
+          "text": "1. In `Route.handle` (`starlette/routing.py`), build the 405 `Allow` header with `\", \".join(sorted(self.methods))` and leave the status, body and other headers and the allowed-method path unchanged (Req 1.1, 1.2, 1.3, 1.4)"
+        }
+      },
+      "ticked": []
+    }
+  }
+}

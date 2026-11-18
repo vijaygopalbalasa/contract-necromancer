@@ -1,0 +1,1 @@
+Do task 1 in .kiro/specs/allow-header/tasks.md, then mark it done in that file.

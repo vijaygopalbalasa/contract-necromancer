@@ -1,0 +1,165 @@
+{
+  "spec": "allow-header",
+  "gitCommit": "271c277da0ff64e2048a4d46ecc812b9d61db5f6",
+  "requirements": {
+    "path": ".kiro/specs/allow-header/requirements.md",
+    "sha256": "674bee07daf02807f5683da93f823c1f518a2337b37188cce1de9f9b0a0f3056"
+  },
+  "contracts": [
+    {
+      "name": "R1.1 test_R1_1_patch_gets_405_with_alphabetical_allow_header",
+      "path": "contracts/allow-header/test_allow_order_contract.py",
+      "sha256": "e944fede23829dd4a6221ed07764a7637de9e37073791493b9fc14b0fd93fe6f",
+      "result": "pass"
+    },
+    {
+      "name": "R1.1 test_R1_1_patch_in_starlette_app_gets_405_with_single_alphabetical_allow_header",
+      "path": "contracts/allow-header/test_allow_order_contract.py",
+      "sha256": "e944fede23829dd4a6221ed07764a7637de9e37073791493b9fc14b0fd93fe6f",
+      "result": "pass"
+    },
+    {
+      "name": "R1.2 test_R1_2_allow_header_is_identical_across_hash_seeds",
+      "path": "contracts/allow-header/test_allow_seeds_contract.py",
+      "sha256": "233ab5331de41b51242db00cc6aef01198187d50c57382710d3715ab345a7eb6",
+      "result": "pass"
+    },
+    {
+      "name": "R1.3 test_R1_3_405_keeps_status_body_and_other_headers",
+      "path": "contracts/allow-header/test_allow_unchanged_contract.py",
+      "sha256": "35a36585262df8205cee1f3f750ca0b03c7f30ee57b8ce1e63bc76e60fa72c2f",
+      "result": "pass"
+    },
+    {
+      "name": "R1.4 test_R1_4_accepted_method_still_answers_200_with_body",
+      "path": "contracts/allow-header/test_allow_unchanged_contract.py",
+      "sha256": "35a36585262df8205cee1f3f750ca0b03c7f30ee57b8ce1e63bc76e60fa72c2f",
+      "result": "pass"
+    }
+  ],
+  "sources": [
+    {
+      "path": "starlette/__init__.py",
+      "sha256": "90b35d8dbf2ad4f17e9b6557068f989ab2b478c1547d8372b3493f4d5bcd987c"
+    },
+    {
+      "path": "starlette/_exception_handler.py",
+      "sha256": "098778c3e19778a1dc9d270b2742022b06e4af7e34aab5bbbf990c2957061d48"
+    },
+    {
+      "path": "starlette/_utils.py",
+      "sha256": "413355d540af9e719cefaa92c1ed70af338e263c375cb336644309b1d242a6f4"
+    },
+    {
+      "path": "starlette/applications.py",
+      "sha256": "81887e0baf7dda5811ba4b7a67e49cbbab7ae97b321ba72e475c797f989690e9"
+    },
+    {
+      "path": "starlette/authentication.py",
+      "sha256": "ac9c74c2f935c6c5627cbb3288757a3ff6f7a0085eac14575ba4245cac3700f3"
+    },
+    {
+      "path": "starlette/background.py",
+      "sha256": "0fe5e952915181406765e035b4783330e82e6dee8809564594e03830bd2ad53f"
+    },
+    {
+      "path": "starlette/concurrency.py",
+      "sha256": "3e9e245d060ef39716c58ed754db7995c62f8581d4aaec8b82e09e73b84a2a83"
+    },
+    {
+      "path": "starlette/config.py",
+      "sha256": "70d830e457cd4ca711204ae4dd24f67af718fa59e5ccb74a069c935efaab228c"
+    },
+    {
+      "path": "starlette/convertors.py",
+      "sha256": "791b6d17f8e01c7ea93021a9eb844074d594ad39834b94e3a07aab907c12ad73"
+    },
+    {
+      "path": "starlette/datastructures.py",
+      "sha256": "02a903330611ab1414eb39c89bc775636e200eaa6e35a5a5363affe7293cbd64"
+    },
+    {
+      "path": "starlette/endpoints.py",
+      "sha256": "34aea6a53dc929483e2ea70f73b15a122711cd2ef3a11261adb0b0b9c5e5b751"
+    },
+    {
+      "path": "starlette/exceptions.py",
+      "sha256": "fb4b0d98d34b6b8ea0f55eb1a6ca8eaaa3f00d124ca1ee2f12a0c06c25502535"
+    },
+    {
+      "path": "starlette/formparsers.py",
+      "sha256": "6fe3b95bd253788f4001a9a462607a841d591f4001639b58994ba69468c9d0e2"
+    },
+    {
+      "path": "starlette/requests.py",
+      "sha256": "86da15ffa9b425831728bde97a8d56f5f80156dfa701ff1aff891e0882820454"
+    },
+    {
+      "path": "starlette/responses.py",
+      "sha256": "0908b45206c92b4d7a617b0aaeddc672d9c9ca9484ecbf5940700b703043825a"
+    },
+    {
+      "path": "starlette/routing.py",
+      "sha256": "ef37c64b1bb116afcd8f52bfd601c1b63ac9dc782bbf941533ad02c4a2541464"
+    },
+    {
+      "path": "starlette/schemas.py",
+      "sha256": "2ca4daa66d6915c8b206a38bf3fba729ebd1f77af4dc3c8a7f1d89724bb756b2"
+    },
+    {
+      "path": "starlette/staticfiles.py",
+      "sha256": "50f5551817d2f21097859e3918d88829ebf93b62a59647b3be76157fd3141624"
+    },
+    {
+      "path": "starlette/status.py",
+      "sha256": "5d87159fe694e76d93609f012719745949dfe89ff7c814d0cfb4ea8327bc28ee"
+    },
+    {
+      "path": "starlette/templating.py",
+      "sha256": "cbe013950acd0e82cc66ce61ac7cd00536a9102043afdc0097e6ecf01964e63c"
+    },
+    {
+      "path": "starlette/testclient.py",
+      "sha256": "869a53e6511c25707432d7c91ca8cc22ea32775ac20c0fc8959ac609ad8a4d56"
+    },
+    {
+      "path": "starlette/types.py",
+      "sha256": "f3bc13bb0175d37e90c51b1ede62f9a8eb92f62e1af7168864ca938d8fa5befa"
+    },
+    {
+      "path": "starlette/websockets.py",
+      "sha256": "99f948f4b53095ff77feeba323cc3eb58fa7a12fb375111bcda52678e5433fd7"
+    }
+  ],
+  "task": {
+    "id": "1",
+    "line": "1. In `Route.handle` (`starlette/routing.py`), build the 405 `Allow` header with `\", \".join(sorted(self.methods))` and leave the status, body and other headers and the allowed-method path unchanged (Req 1.1, 1.2, 1.3, 1.4)"
+  },
+  "required": [
+    "R1.1 test_R1_1_patch_gets_405_with_alphabetical_allow_header",
+    "R1.1 test_R1_1_patch_in_starlette_app_gets_405_with_single_alphabetical_allow_header",
+    "R1.2 test_R1_2_allow_header_is_identical_across_hash_seeds",
+    "R1.3 test_R1_3_405_keeps_status_body_and_other_headers",
+    "R1.4 test_R1_4_accepted_method_still_answers_200_with_body"
+  ],
+  "runners": {
+    "path": ".kiro/specs/allow-header/runners.json",
+    "sha256": "1e9dc88b4c8ba2885784676de8fb80541ff15fb734637552e75d34137fb5bf19"
+  },
+  "frozen": [
+    {
+      "path": "pyproject.toml",
+      "sha256": "6bfda59d023e472bc91a064860c6b4ee20099d3056a5eab38fbb52e678fec324"
+    }
+  ],
+  "uncommitted": [
+    ".kiro/specs/allow-header/requirements.md",
+    ".kiro/specs/allow-header/runners.json",
+    "contracts/allow-header/test_allow_order_contract.py",
+    "contracts/allow-header/test_allow_seeds_contract.py",
+    "contracts/allow-header/test_allow_unchanged_contract.py",
+    "starlette/routing.py"
+  ],
+  "receiptHash": "8cc5dc430387f061a29f2026d6bc399fd26e6b4b6837d6ad8c9dea7eb27d1356",
+  "createdAt": "2026-11-18T06:07:53.989Z"
+}

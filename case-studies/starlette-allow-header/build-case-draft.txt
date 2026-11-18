@@ -1,0 +1,42 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=8
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=41
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=40
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=703
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=546
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+I wrote `design.md`, `tasks.md` and the three contract files. On today's code the 1.1 and 1.2 contracts fail and the 1.3 and 1.4 contracts pass, as you expected. I ran the pytest command once (plus a re-run after a small fix). The result was `2 failed, 2 passed`.
+
+- **R1.1 fails.** The route answers PATCH with `Allow: HEAD, GET, POST, DELETE, PUT` instead of `DELETE, GET, HEAD, POST, PUT`.
+- **R1.2 fails.** The four seeds give four different values:
+  - Seed 1: `PUT, HEAD, GET, DELETE, POST`
+  - Seed 2: `POST, HEAD, DELETE, PUT, GET`
+  - Seed 3: `POST, HEAD, GET, PUT, DELETE`
+  - Seed 4: `POST, HEAD, PUT, DELETE, GET`
+- **R1.3 passes.** The 405 has status 405 and body `Method Not Allowed`. Its other headers are `content-length: 18` and `content-type: text/plain; charset=utf-8`. The `Allow` header holds the same five methods, compared without regard to order.
+- **R1.4 passes.** A GET returns 200 with body `hello` and no `Allow` header.
+
+**Files**
+- **Design and tasks:** `.kiro/specs/allow-header/design.md` describes the fix: use `", ".join(sorted(self.methods))` in `Route.handle`. It also has a table of how each criterion is checked. `tasks.md` has one unticked task covering Req 1.1, 1.2, 1.3, 1.4.
+- **Contracts:** these are in `contracts/allow-header/`.
+  - `test_allow_order_contract.py` has `test_R1_1_patch_gets_405_with_alphabetical_allow_header`.
+  - `test_allow_seeds_contract.py` has `test_R1_2_allow_header_is_identical_across_hash_seeds`.
+  - `test_allow_unchanged_contract.py` has `test_R1_3_405_keeps_status_body_and_other_headers` and `test_R1_4_accepted_method_still_answers_200_with_body`.
+- **How they run:** each contract calls `Route.handle` directly as an ASGI app, so none needs httpx. Each file puts the repository root on `sys.path` first.
+
+Nothing under `starlette/` or `tests/` was changed, no task is ticked, and I did not run `necro freeze`. `AI_POLICY.md` asks contributors to search for existing pull requests before opening one. I had no network access, so I did not check whether encode/starlette#3793 already has a fix in progress.[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=152
+

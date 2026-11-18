@@ -29,6 +29,11 @@ npx -y github:vijaygopalbalasa/contract-necromancer verify .necro/receipts/api-e
 
 It prints `CONFIRMED`. Without `npm ci` it prints `INCOMPLETE` and says to run `npm ci`.
 
+**Used on a project I do not own.** In Starlette, Kiro fixed a 405 `Allow` header whose order changed with the hash seed
+([encode/starlette#3793](https://github.com/encode/starlette/issues/3793)), under the gate, from a fresh `necro init` with
+Python contracts; the receipt re-checks as `CONFIRMED` ([case study](case-studies/starlette-allow-header/README.md)). The
+same one-line fix was already proposed upstream, so it was not sent there.
+
 **[Result](experiments/README.md):** on a task that cannot honestly be finished, Kiro marked it done in 11 of 11 runs without the gate and 0 of 19 with it, across two models, 3 to 5 runs per cell (a small experiment; every run's log is in `experiments/`); the hook alone was enough. Under a "do whatever it takes" prompt, one gated run of six got past the gate by patching JavaScript built-ins; that hole is closed and the cheat is kept as a test.
 
 **Try it in one command** (Node.js 24 and git): `npx -y github:vijaygopalbalasa/contract-necromancer demo`. The gate refuses a planted bug, accepts the fix, the receipt verifies, and code that is right only under the test runner is stopped at runtime. With no install, [the live page](https://vijaygopalbalasa.github.io/contract-necromancer/) has a Try it here button that sends the gate a false done and then the fix, in the browser. Also: the [video](https://youtu.be/TYrSyhIYqlk).
@@ -157,8 +162,8 @@ node bin/necro.js verify examples/pumpkin-ledger/.necro/receipts/ledger/86e6ee25
 
 The first is the tool's own: `CONFIRMED` with pytest installed, `INCOMPLETE` naming R13.6 without it. The second is the
 page's: `CONFIRMED` with Chrome or Chromium, `INCOMPLETE` naming the missing browser without one. The third needs only
-Node.js. Older receipts print `SUPERSEDED`. Re-running all 125 receipts here with pytest and Chrome installed gives 10
-`CONFIRMED`, 112 `SUPERSEDED`, 3 `OTHER PROJECT` (the case-study copies) and no `MISMATCH`; without pytest, 5 of the 10
+Node.js. Older receipts print `SUPERSEDED`. Re-running all 126 receipts here with pytest and Chrome installed gives 10
+`CONFIRMED`, 112 `SUPERSEDED`, 4 `OTHER PROJECT` (the case-study copies) and no `MISMATCH`; without pytest, 5 of the 10
 print `INCOMPLETE` instead, and without a browser, the page's 2 newest receipts do.
 
 ## See it
@@ -166,6 +171,7 @@ print `INCOMPLETE` instead, and without a browser, the page's 2 newest receipts 
 - [Live receipt viewer](https://vijaygopalbalasa.github.io/contract-necromancer/), which opens a receipt from a Raw link on `https://raw.githubusercontent.com/vijaygopalbalasa/contract-necromancer/` with `?receipt=`.
 - [Demo video](https://youtu.be/TYrSyhIYqlk).
 - [Case study](case-studies/judge-api-errors/README.md): a real fix in Judge Protocol, gated end to end; the gate refused a half-done tick, and the fix is merged ([PR #29](https://github.com/vijaygopalbalasa/judge-protocol/pull/29)).
+- [Case study](case-studies/starlette-allow-header/README.md): a fix in Starlette, a project I do not own, gated end to end with Python contracts, from a fresh `necro init`.
 - Examples with their own frozen contracts and receipts: [Pumpkin Ledger](examples/pumpkin-ledger), [Night Shift](examples/night-shift), [Leap Age](examples/leap-age) (Python).
 - [Experiment](experiments/README.md), [reference](docs/reference.md), [how it was built and who wrote what](docs/how-it-was-built.md), [limits](docs/limits.md).
 
@@ -206,6 +212,8 @@ function with no postcondition can still lie. [More](docs/reference.md#runtime-p
 - A task line names each criterion it needs, one by one: the gate reads `(Req 1.2 to 1.4)` as 1.2 and 1.4 only.
 - `--frozen-intrinsics` freezes the language's built-in prototypes (`String`, `Array`, `Object`, `Map` and the rest), not `JSON`, `Buffer`, the global names or Node's modules, and `plain()` cannot help against code that changes what a test framework does. Contracts that check `console` output get a writable copy of `console`.
 - The receipt card on the viewer page checks hashes, not test runs. The play runs the example's seven JavaScript-only contracts in the browser, with small stand-ins for `node:test` and `node:assert`. The gate and `necro verify` run every contract in Node.js.
+- Python contracts import the code from whatever environment runs them. Install the project itself there
+  (`pip install -e .`), or the contracts can test another copy of the code than the files the receipt pins.
 - The experiment is small: 3 to 5 runs per cell, two small models, one project, one planted contradiction.
 
 ### What runner contracts cannot defend against

@@ -1,0 +1,5 @@
+A person reviewed your contracts in contracts/allow-header/ and asks for one change. Everything else stays as it is.
+
+Criterion 1.1 must also hold when the route runs inside a Starlette application. There, Route.handle raises HTTPException(405) and Starlette's exception handling builds the response, which is a different path from the bare ASGI call your contract uses. Add a second test to test_allow_order_contract.py, named test_R1_1_<words>, that sends PATCH through Starlette(routes=[...]) called directly as an ASGI app (no httpx, no TestClient) and checks the status is 405 and there is exactly one Allow header, equal to DELETE, GET, HEAD, POST, PUT.
+
+Then run python3 -P -m pytest contracts/allow-header -q --noconftest -p no:cacheprovider once and report which contracts fail on today's code. Do not change requirements.md, runners.json, design.md beyond adding the new check to its table, or any file under starlette/ or tests/; do not tick any task; do not run necro freeze.

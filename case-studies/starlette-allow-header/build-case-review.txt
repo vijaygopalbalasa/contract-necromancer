@@ -1,0 +1,41 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=9
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=33
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=200
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=50
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=128
+[tool] Run Command
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+I added the Starlette-app test and ran the suite once on today's code. Three contracts fail and two pass.
+
+**New test:** `test_R1_1_patch_in_starlette_app_gets_405_with_single_alphabetical_allow_header` is in `contracts/allow-header/test_allow_order_contract.py`. It calls `Starlette(routes=[route])` directly as an ASGI app, with no httpx or TestClient. It sends PATCH and checks for status 405 and exactly one `Allow` header equal to `DELETE, GET, HEAD, POST, PUT`.
+
+**Result of the single run:** 3 failed, 2 passed. I only saw the full failure text for two of the three and did not re-run to get the third's name. I inferred the other from the test count and from design.md, which says 1.3 and 1.4 pass today.
+
+| Contract | Result | Why |
+| --- | --- | --- |
+| `test_R1_1_patch_gets_405_with_alphabetical_allow_header` | Fails (inferred) | Header order follows the hash seed. |
+| `test_R1_1_patch_in_starlette_app_gets_405_with_single_alphabetical_allow_header` | Fails | Header was `HEAD, PUT, DELETE, POST, GET`, not the alphabetical order. |
+| `test_R1_2_allow_header_is_identical_across_hash_seeds` | Fails | Four hash seeds gave four different orderings. |
+| `test_R1_3_405_keeps_status_body_and_other_headers` | Passes | |
+| `test_R1_4_accepted_method_still_answers_200_with_body` | Passes | |
+
+The Starlette path returned a single `Allow` header and status 405. Only the order is wrong, so it fails for the same cause as the bare-route test.
+
+**design.md:** The file is at `.kiro/specs/allow-header/design.md`, not in `contracts/allow-header/`. I added one row to its verification table for the new check and changed nothing else there.
+
+I didn't touch `requirements.md` or `runners.json` (neither is in `contracts/allow-header/`). I also left alone `starlette/`, `tests/` and `.necro/`, ticked no tasks, and did not run `necro freeze`. The edited `test_allow_order_contract.py` is a frozen-contract file, so it needs re-freezing by a person. I left no temporary files.[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=144
+

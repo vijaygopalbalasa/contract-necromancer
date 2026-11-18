@@ -1,0 +1,9 @@
+This repository is Starlette. A person wrote .kiro/specs/allow-header/requirements.md and .kiro/specs/allow-header/runners.json; read both and do not change them. Then:
+
+1. Write .kiro/specs/allow-header/design.md: how to make the Allow header of Route.handle's 405 response deterministic and alphabetical, and how each acceptance criterion will be checked.
+2. Write .kiro/specs/allow-header/tasks.md as a checklist (lines starting "- [ ]"), one task per change. Each task line ends with every criterion it needs, listed one by one, like (Req 1.1, 1.2, 1.3, 1.4). Leave every box unticked.
+3. Write one pytest contract per acceptance criterion in contracts/allow-header/, in files named test_<topic>_contract.py, with test functions named test_R1_1_<words>, test_R1_2_<words>, test_R1_3_<words> and test_R1_4_<words>. The contracts must run offline with only pytest and Starlette's own dependencies installed; httpx is not installed, so call the ASGI app directly instead of TestClient. Each contract file first puts the repository root on the import path: sys.path.insert(0, str(Path(__file__).resolve().parents[2])). For criterion 1.2, run four separate Python processes (sys.executable) with PYTHONHASHSEED set to 1, 2, 3 and 4, and compare what they print.
+4. Run the contracts once with: python3 -P -m pytest contracts/allow-header -q --noconftest -p no:cacheprovider
+   On today's code, the 1.1 and 1.2 contracts should fail and the 1.3 and 1.4 contracts should pass. Report the result.
+
+Do not change any file under starlette/ or tests/, do not tick any task, and do not run necro freeze. A person reviews and freezes the contracts next.
