@@ -1,9 +1,12 @@
 # Case study: a nondeterministic Allow header in Starlette, gated by Contract Necromancer
 
-Starlette (https://github.com/encode/starlette) is a Python web framework I do not own. Issue
-[encode/starlette#3793](https://github.com/encode/starlette/issues/3793) reports that a 405 response lists its allowed
+Starlette (https://github.com/Kludex/starlette) is a Python web framework I do not own. Issue
+[Kludex/starlette#3793](https://github.com/Kludex/starlette/issues/3793) reports that a 405 response lists its allowed
 methods in a different order in different processes. On Nov 18 I installed the gate in a fresh clone at main `271c277`,
 the way a new user would, and ran one fix through it, start to finish. Nothing was sent to the Starlette repository.
+Starlette's repository now lives at Kludex/starlette (git still follows the old encode/starlette address; its issue
+links do not). The frozen requirement names the issue by the old address, because changing it would change the hash
+the receipt pins.
 
 ## The bug
 
@@ -53,7 +56,7 @@ Node.js 24, git and Python 3.11 or newer. From an empty folder, with this reposi
 `contract-necromancer`:
 
 ```
-git clone https://github.com/encode/starlette && cd starlette && git checkout 271c277
+git clone https://github.com/Kludex/starlette && cd starlette && git checkout 271c277
 git apply ../contract-necromancer/case-studies/starlette-allow-header/routing.py.diff
 mkdir -p .kiro/specs/allow-header contracts/allow-header .necro/receipts/allow-header
 cp ../contract-necromancer/case-studies/starlette-allow-header/spec/* .kiro/specs/allow-header/

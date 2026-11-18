@@ -30,7 +30,7 @@ npx -y github:vijaygopalbalasa/contract-necromancer verify .necro/receipts/api-e
 It prints `CONFIRMED`. Without `npm ci` it prints `INCOMPLETE` and says to run `npm ci`.
 
 **Used on a project I do not own.** In Starlette, Kiro fixed a 405 `Allow` header whose order changed with the hash seed
-([encode/starlette#3793](https://github.com/encode/starlette/issues/3793)), under the gate, from a fresh `necro init` with
+([Kludex/starlette#3793](https://github.com/Kludex/starlette/issues/3793)), under the gate, from a fresh `necro init` with
 Python contracts; the receipt re-checks as `CONFIRMED` ([case study](case-studies/starlette-allow-header/README.md)). The
 same one-line fix was already proposed upstream, so it was not sent there.
 
