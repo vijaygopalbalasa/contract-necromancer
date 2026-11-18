@@ -88,7 +88,7 @@ the clipboard cannot be tested in Node; they are checked by hand.
 
 ## The experiment
 
-3 to 5 runs per cell, two small models, one small project, one planted contradiction. It shows a large, consistent effect
+3 to 5 runs per cell, two models available in Kiro, one small project, one planted contradiction. It shows a large, consistent effect
 on this setup, not a general rate for every project or model. The gate-on condition includes the steering file, so it
 measures the tool as installed, not the hook alone (the hook-only arm covers that). The impossible spec is synthetic.
 One gated run took 986 s, and we did not break down where that time went. Details: [experiments/README.md](../experiments/README.md).

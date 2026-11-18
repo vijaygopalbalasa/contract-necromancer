@@ -18,7 +18,7 @@ a commit that says so.
 - Steering in `.kiro/steering/`: `product.md`, `structure.md`, `tech.md`, and `necromancer.md`, which tells Kiro not to edit
   frozen files.
 - A custom agent in `.kiro/agents/necromancer.json` (task 21): the gate's hooks plus Kiro permission rules.
-- Hooks in `.kiro/hooks/`: `necromancer.json` is the gate (`PreToolUse`, `PostToolUse` and `Stop` calling
+- Hooks in `.kiro/hooks/`: `necromancer.json` is the gate (`PreToolUse`, `PostToolUse`, `Stop` and `PostTaskExec` calling
   `node bin/necro.js hook ...`). `session-log.json` appends the tool and path of each Kiro tool call to
   `.kiro/build-log/sess_*.jsonl`. For shell commands it keeps only program names.
 - Build logs in `.kiro/build-log/`: `build-*.txt` are Kiro's session output for each piece of work.

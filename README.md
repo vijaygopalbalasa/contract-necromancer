@@ -163,9 +163,9 @@ node bin/necro.js verify examples/pumpkin-ledger/.necro/receipts/ledger/86e6ee25
 
 The first is the tool's own: `CONFIRMED` with pytest installed, `INCOMPLETE` naming R13.6 without it. The second is the
 page's: `CONFIRMED` with Chrome or Chromium, `INCOMPLETE` naming the missing browser without one. The third needs only
-Node.js. Older receipts print `SUPERSEDED`. Re-running all 126 receipts here with pytest and Chrome installed gives 10
-`CONFIRMED`, 112 `SUPERSEDED`, 4 `OTHER PROJECT` (the case-study copies) and no `MISMATCH`; without pytest, 5 of the 10
-print `INCOMPLETE` instead, and without a browser, the page's 2 newest receipts do.
+Node.js. Older receipts print `SUPERSEDED`. Re-running all 127 receipts here with pytest and Chrome installed gives 11
+`CONFIRMED`, 112 `SUPERSEDED`, 4 `OTHER PROJECT` (the case-study copies) and no `MISMATCH`; without pytest, 5 of the 11
+print `INCOMPLETE` instead, and without a browser, the page's 3 newest receipts do.
 
 ## See it
 
@@ -215,7 +215,7 @@ function with no postcondition can still lie. [More](docs/reference.md#runtime-p
 - The receipt card on the viewer page checks hashes, not test runs. The play runs the example's seven JavaScript-only contracts in the browser, with small stand-ins for `node:test` and `node:assert`. The gate and `necro verify` run every contract in Node.js.
 - Python contracts import the code from whatever environment runs them. Install the project itself there
   (`pip install -e .`), or the contracts can test another copy of the code than the files the receipt pins.
-- The experiment is small: 3 to 5 runs per cell, two small models, one project, one planted contradiction.
+- The experiment is small: 3 to 5 runs per cell, two models available in Kiro, one project, one planted contradiction.
 
 ### What runner contracts cannot defend against
 
