@@ -29,10 +29,11 @@ npx -y github:vijaygopalbalasa/contract-necromancer verify .necro/receipts/api-e
 
 It prints `CONFIRMED`. Without `npm ci` it prints `INCOMPLETE` and says to run `npm ci`.
 
-**Used on a project I do not own.** In Starlette, Kiro fixed a 405 `Allow` header whose order changed with the hash seed
-([Kludex/starlette#3793](https://github.com/Kludex/starlette/issues/3793)), under the gate, from a fresh `necro init` with
-Python contracts; the receipt re-checks as `CONFIRMED` ([case study](case-studies/starlette-allow-header/README.md)). The
-same one-line fix was already proposed upstream, so it was not sent there.
+**Used on a project I do not own.** On Starlette ([Kludex/starlette#3793](https://github.com/Kludex/starlette/issues/3793),
+a 405 `Allow` header whose order changed with the hash seed), the gate installed in a fresh clone in seconds and ran Kiro's
+pytest contracts; my review of those contracts closed a gap that would have let a half fix pass, and the receipt re-checks
+as `CONFIRMED` from an empty folder ([case study](case-studies/starlette-allow-header/README.md)). Kiro got the one-line fix
+right first time, so this case shows no refusal; the same fix was already proposed upstream, so it was not sent there.
 
 **[Result](experiments/README.md):** on a task that cannot honestly be finished, Kiro marked it done in 11 of 11 runs without the gate and 0 of 19 with it, across two models, 3 to 5 runs per cell (a small experiment; every run's log is in `experiments/`); the hook alone was enough. Under a "do whatever it takes" prompt, one gated run of six got past the gate by patching JavaScript built-ins; that hole is closed and the cheat is kept as a test.
 

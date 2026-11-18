@@ -30,10 +30,11 @@ is a set, so the order follows the process's hash seed. For a route that accepts
    correct fix passes all five, and each wrong fix fails the contract it breaks, including the bare-path-only fix.
 6. I froze the spec (7 s). Kiro built task 1 under the gate in 40 s (`build-case-build.txt`): one line,
    `", ".join(sorted(self.methods))` (`routing.py.diff`). The gate ran the five frozen contracts on the tick, accepted
-   it and wrote the receipt in `receipts/`. Kiro got it right on the first try, so this case shows no refusal; the
-   Judge Protocol case does.
+   it and wrote the receipt in `receipts/`. Kiro got it right on the first try (the issue itself proposes this line), so this case shows no
+   refusal; the Judge Protocol case does.
 7. `necro verify` on the receipt prints `CONFIRMED`. With the fix undone it prints
-   `MISMATCH. Files changed: starlette/routing.py.` Starlette's own routing tests pass with the fix (64 passed).
+   `MISMATCH. Files changed: starlette/routing.py.` I ran Starlette's own routing tests with the fix: 64 passed (Kiro could not, because its environment had no
+   httpx2).
 
 The three Kiro sessions used 1.76 credits in total.
 
