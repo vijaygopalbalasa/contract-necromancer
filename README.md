@@ -4,6 +4,17 @@ Design by Contract, from Eiffel (1986), raised for coding agents.
 
 A coding agent can mark a task done in Kiro when the work does not meet the requirements. Contract Necromancer's Kiro hooks refuse the tick in `tasks.md` until the frozen contracts for that task pass, and each passing task leaves a receipt you can re-run.
 
+![Two frames of a real Kiro session on Nov 8: the gate's PreToolUse hook blocks the edit to tasks.md, then Kiro says it could not mark task 4 complete](.kiro/build-log/film/take6-refusal.webp)
+
+*Real Kiro session, recorded Nov 8, not a simulation: the gate's PreToolUse hook blocks the edit to `tasks.md`, then Kiro says it could not mark task 4 complete.*
+
+**How Kiro built this.** I wrote the requirements and some task descriptions. Kiro drafted the designs, task lists and
+contracts, and wrote all the code, task by task; I reviewed the contracts and froze them. From `necro-core` task 17 on, and
+for every task of the page, the gate held Kiro's own ticks. The specs are in [`.kiro/specs`](.kiro/specs), the gate in
+[`.kiro/hooks`](.kiro/hooks), the steering in [`.kiro/steering`](.kiro/steering), the custom agent in
+[`.kiro/agents`](.kiro/agents), the Kiro power in [`power/`](power), and the build sessions' logs in
+[`.kiro/build-log`](.kiro/build-log). Who wrote what: [how it was built](docs/how-it-was-built.md).
+
 **Used on a real fix.** In Judge Protocol, a live project of mine, Kiro fixed two real bugs in the API under the gate: an
 error response could hand a caller the chain RPC URL (which can carry a provider key), and an evidence route could serve
 the wrong file. The gate refused Kiro's first tick, because only one of the two error paths logged the full error and the
@@ -191,7 +202,7 @@ function with no postcondition can still lie. [More](docs/reference.md#runtime-p
 
 - Guard rails, not a sandbox: a shell command or the contract code can change any file, including `.necro/`. The guarantee is `necro verify`, which trusts `.necro/lock.json`; commit it and check `git diff` before you trust a receipt. CONFIRMED means the same files give the same results, so a receipt that records failing contracts can be CONFIRMED too; in CI, run `necro audit`, which fails unless every ticked task's contracts pass.
 - Receipts are files in the project, so an agent able to write files can add one. A forged receipt can only make `necro audit` accept a task whose required contracts pass now: it can fake where a tick came from, not whether the work holds.
-- Each tick runs every frozen contract of the spec, one file after another, inside the hooks' 300 second limit; on this repository a tick takes four to five minutes. In kiro-cli a hook that runs past its limit is stopped and the edit goes through, so such a tick lands with no receipt, and the Stop hook puts the task back to `[ ]` when the turn ends.
+- Each tick runs every frozen contract of the spec, one file after another, inside the hooks' 300 second limit. On the Node.js examples (13 and 18 contracts) that run takes about a second on a laptop; on this repository's own specs (117 and 209 contracts) a tick takes four to five minutes. In kiro-cli a hook that runs past its limit is stopped and the edit goes through, so such a tick lands with no receipt, and the Stop hook puts the task back to `[ ]` when the turn ends.
 - A task line names each criterion it needs, one by one: the gate reads `(Req 1.2 to 1.4)` as 1.2 and 1.4 only.
 - `--frozen-intrinsics` freezes the language's built-in prototypes (`String`, `Array`, `Object`, `Map` and the rest), not `JSON`, `Buffer`, the global names or Node's modules, and `plain()` cannot help against code that changes what a test framework does. Contracts that check `console` output get a writable copy of `console`.
 - The receipt card on the viewer page checks hashes, not test runs. The play runs the example's seven JavaScript-only contracts in the browser, with small stand-ins for `node:test` and `node:assert`. The gate and `necro verify` run every contract in Node.js.
