@@ -17,7 +17,7 @@ const css = read('site/style.css').replace(/\/\*[\s\S]*?\*\//g, '');
 
 const IDEA = 'A Kiro task is done only when its frozen contracts pass.';
 const DEMO = 'npx -y github:vijaygopalbalasa/contract-necromancer demo';
-const VIDEO = 'https://youtu.be/EadyZHfgx4g';
+const VIDEO = 'https://youtu.be/sBgX1E0Gtrc';
 const REPO = 'https://github.com/vijaygopalbalasa/contract-necromancer';
 const CSP =
   "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'";
@@ -131,7 +131,7 @@ test('R10.3 the video and the repository are plain links in the section, and the
   const hrefs = links.map((l) => /\bhref="([^"]*)"/.exec(l.attrs)?.[1]);
   assert.deepEqual(hrefs.sort(), [REPO, VIDEO].sort());
   for (const l of links) assert.ok(l.text.length > 0 && !/<|>/.test(l.text), 'each link has plain words');
-  assert.match(how, /<a\b[^>]*href="https:\/\/youtu\.be\/EadyZHfgx4g"[^>]*>[^<]*video[^<]*<\/a>/i);
+  assert.match(how, /<a\b[^>]*href="https:\/\/youtu\.be\/sBgX1E0Gtrc"[^>]*>[^<]*video[^<]*<\/a>/i);
   assert.match(how, /<a\b[^>]*href="https:\/\/github\.com\/vijaygopalbalasa\/contract-necromancer"[^>]*>[^<]*<\/a>/);
   // Nothing is embedded or loaded: no frame, media, object, image, extra script or extra style sheet.
   assert.doesNotMatch(html, /<(iframe|video|audio|embed|object|source|picture|style)\b/i);

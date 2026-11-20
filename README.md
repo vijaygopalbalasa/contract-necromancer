@@ -37,7 +37,7 @@ right first time, so this case shows no refusal; the same fix was already propos
 
 **[Result](experiments/README.md):** on a task that cannot honestly be finished, Kiro marked it done in 11 of 11 runs without the gate and 0 of 19 with it, across two models, 3 to 5 runs per cell (a small experiment; every run's log is in `experiments/`); the hook alone was enough. Under a "do whatever it takes" prompt, one gated run of six got past the gate by patching JavaScript built-ins; that hole is closed and the cheat is kept as a test.
 
-**Try it in one command** (Node.js 24 and git): `npx -y github:vijaygopalbalasa/contract-necromancer demo`. The gate refuses a planted bug, accepts the fix, the receipt verifies, and code that is right only under the test runner is stopped at runtime. With no install, [the live page](https://vijaygopalbalasa.github.io/contract-necromancer/) has a Try it here button that sends the gate a false done and then the fix, in the browser. Also: the [video](https://youtu.be/EadyZHfgx4g).
+**Try it in one command** (Node.js 24 and git): `npx -y github:vijaygopalbalasa/contract-necromancer demo`. The gate refuses a planted bug, accepts the fix, the receipt verifies, and code that is right only under the test runner is stopped at runtime. With no install, [the live page](https://vijaygopalbalasa.github.io/contract-necromancer/) has a Try it here button that sends the gate a false done and then the fix, in the browser. Also: the [video](https://youtu.be/sBgX1E0Gtrc).
 
 [![Tests and receipts](https://github.com/vijaygopalbalasa/contract-necromancer/actions/workflows/test.yml/badge.svg)](https://github.com/vijaygopalbalasa/contract-necromancer/actions/workflows/test.yml)
 
@@ -170,7 +170,7 @@ print `INCOMPLETE` instead, and without a browser, the page's 3 newest receipts 
 ## See it
 
 - [Live receipt viewer](https://vijaygopalbalasa.github.io/contract-necromancer/), which opens a receipt from a Raw link on `https://raw.githubusercontent.com/vijaygopalbalasa/contract-necromancer/` with `?receipt=`.
-- [Demo video](https://youtu.be/EadyZHfgx4g).
+- [Demo video](https://youtu.be/sBgX1E0Gtrc).
 - [Case study](case-studies/judge-api-errors/README.md): a real fix in Judge Protocol, gated end to end; the gate refused a half-done tick, and the fix is merged ([PR #29](https://github.com/vijaygopalbalasa/judge-protocol/pull/29)).
 - [Case study](case-studies/starlette-allow-header/README.md): a fix in Starlette, a project I do not own, gated end to end with Python contracts, from a fresh `necro init`.
 - Examples with their own frozen contracts and receipts: [Pumpkin Ledger](examples/pumpkin-ledger), [Night Shift](examples/night-shift), [Leap Age](examples/leap-age) (Python).
