@@ -163,9 +163,9 @@ node bin/necro.js verify examples/pumpkin-ledger/.necro/receipts/ledger/86e6ee25
 
 The first is the tool's own: `CONFIRMED` with pytest installed, `INCOMPLETE` naming R13.6 without it. The second is the
 page's: `CONFIRMED` with Chrome or Chromium, `INCOMPLETE` naming the missing browser without one. The third needs only
-Node.js. Older receipts print `SUPERSEDED`. Re-running all 127 receipts here with pytest and Chrome installed gives 11
-`CONFIRMED`, 112 `SUPERSEDED`, 4 `OTHER PROJECT` (the case-study copies) and no `MISMATCH`; without pytest, 5 of the 11
-print `INCOMPLETE` instead, and without a browser, the page's 3 newest receipts do.
+Node.js. Older receipts print `SUPERSEDED`. Re-running all 128 receipts here with pytest and Chrome installed gives 12
+`CONFIRMED`, 112 `SUPERSEDED`, 4 `OTHER PROJECT` (the case-study copies) and no `MISMATCH`; without pytest, 5 of the 12
+print `INCOMPLETE` instead, and without a browser, the page's 4 newest receipts do.
 
 ## See it
 
